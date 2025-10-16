@@ -1,7 +1,29 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
     <!-- Base application theme. -->
-    <style name="Base.Theme.VoiceBridge" parent="Theme.Material3.DayNight.NoActionBar">
-        <!-- Customize your dark theme here. -->
-        <!-- <item name="colorPrimary">@color/my_dark_primary</item> -->
+    <style name="Base.Theme.VoiceBridge" parent="Theme.MaterialComponents.Light.NoActionBar">
+        <item name="colorPrimary">@color/green</item>
+        <item name="colorPrimaryDark">@color/green_dark</item>
+        <item name="colorAccent">@color/green</item>
+        <item name="android:fontFamily">@font/fonts</item>
+        <item name="android:forceDarkAllowed" tools:targetApi="q">false</item>
     </style>
+
+    <style name="Theme.VoiceBridge" parent="Base.Theme.VoiceBridge" />
+
+    <style name="SolidGreenButton">
+        <item name="android:background">@drawable/green_btn</item>
+    </style>
+
+    <style name="SolidPinkButton">
+        <item name="android:background">@drawable/pink_btn</item>
+    </style>
+
+    <style name="SolidOrangeButton">
+        <item name="android:background">@drawable/orange_btn</item>
+    </style>
+
+    <style name="OutlinedButton">
+        <item name="android:background">@drawable/outline_btn</item>
+    </style>
+
 </resources>
