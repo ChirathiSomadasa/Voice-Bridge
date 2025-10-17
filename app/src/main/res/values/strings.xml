@@ -12,4 +12,11 @@
     <string name="please_select_your_user_type">Please select your user type</string>
     <string name="child">Child</string>
     <string name="teacher">Teacher</string>
+    <string name="child_registration">Child Registration</string>
+    <string name="first_name">First Name</string>
+    <string name="last_name">Last Name</string>
+    <string name="age">Age</string>
+    <string name="confirm_password">Confirm Password</string>
+    <string name="sign_up">Sign Up</string>
+    <string name="i_already_have_an_account">I already have an account</string>
 </resources>
