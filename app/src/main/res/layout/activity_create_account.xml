@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/create_account_bg"
+    tools:context=".CreateAccountActivity">
+
+
+    <TextView
+        android:id="@+id/title"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerHorizontal="true"
+        android:text="@string/create_account_text"
+        android:textSize="24sp"
+        android:textStyle="bold"
+        android:layout_marginTop="170dp"
+        android:textColor="@color/green_dark" />
+
+
+    <TextView
+        android:id="@+id/subtitle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/title"
+        android:layout_centerHorizontal="true"
+        android:text="@string/please_select_your_user_type"
+        android:textStyle="bold"
+        android:textSize="16sp"
+        android:layout_marginTop="10dp"
+        android:textColor="@color/green_dark" />
+
+
+    <LinearLayout
+        android:id="@+id/button_layout"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/subtitle"
+        android:layout_centerHorizontal="true"
+        android:orientation="horizontal"
+        android:layout_marginTop="90dp">
+
+
+        <LinearLayout
+            android:id="@+id/child_layout"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:layout_marginRight="20dp"
+            android:gravity="center">
+
+            <ImageView
+                android:id="@+id/child_image"
+                android:layout_width="150dp"
+                android:layout_height="150dp"
+                android:src="@drawable/account_child" />
+
+            <Button
+                android:id="@+id/child_btn"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/child"
+                android:background="@drawable/account_btn_child"
+                app:backgroundTint="@color/green"
+                android:textStyle="bold"
+                android:textColor="@color/white"
+                android:textSize="16sp" />
+        </LinearLayout>
+
+
+        <LinearLayout
+            android:id="@+id/teacher_layout"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:layout_marginLeft="20dp"
+            android:gravity="center">
+
+            <ImageView
+                android:id="@+id/teacher_image"
+                android:layout_width="150dp"
+                android:layout_height="150dp"
+                android:src="@drawable/account_teacher" />
+
+            <Button
+                android:id="@+id/teacher_btn"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/teacher"
+                android:background="@drawable/account_btn_teacher"
+                app:backgroundTint="@color/light_orange"
+                android:textStyle="bold"
+                android:textColor="@color/white"
+                android:textSize="16sp" />
+        </LinearLayout>
+
+    </LinearLayout>
+
+
+</RelativeLayout>

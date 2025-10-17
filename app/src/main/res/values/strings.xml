@@ -8,4 +8,8 @@
     <string name="login">Login</string>
     <string name="i_don_t_have_an_account">I don\'t have an account</string>
     <string name="create_account">Create Account</string>
+    <string name="create_account_text">Create Account</string>
+    <string name="please_select_your_user_type">Please select your user type</string>
+    <string name="child">Child</string>
+    <string name="teacher">Teacher</string>
 </resources>
