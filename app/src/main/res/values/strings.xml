@@ -19,4 +19,5 @@
     <string name="confirm_password">Confirm Password</string>
     <string name="sign_up">Sign Up</string>
     <string name="i_already_have_an_account">I already have an account</string>
+    <string name="teacher_registration">Teacher Registration</string>
 </resources>
