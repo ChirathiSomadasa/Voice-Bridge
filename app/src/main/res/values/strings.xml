@@ -1,4 +1,11 @@
 <resources>
     <string name="app_name">Voice Bridge</string>
     <string name="voice_bridge">Voice Bridge</string>
+    <string name="welcome_to_voice_bridge">Welcome to Voice Bridge</string>
+    <string name="connect_speak_and_grow_with_n_confidence">Connect, speak, and grow with \n confidence</string>
+    <string name="email">Email</string>
+    <string name="password">Password</string>
+    <string name="login">Login</string>
+    <string name="i_don_t_have_an_account">I don\'t have an account</string>
+    <string name="create_account">Create Account</string>
 </resources>
