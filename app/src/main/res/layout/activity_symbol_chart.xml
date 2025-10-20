@@ -14,7 +14,7 @@
         android:layout_height="250dp"
         android:contentDescription="@string/image_dashboard"
         android:scaleType="fitXY"
-        android:src="@drawable/quick_words_dashboard"
+        android:src="@drawable/symbol_chart_dashboard"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.0"
         app:layout_constraintStart_toStartOf="parent"
