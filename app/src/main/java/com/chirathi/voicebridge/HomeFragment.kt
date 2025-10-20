@@ -1,5 +1,6 @@
 package com.chirathi.voicebridge
 
+import android.annotation.SuppressLint
 import android.content.Intent
 import android.os.Bundle
 import android.view.LayoutInflater
@@ -22,6 +23,13 @@ class HomeFragment : Fragment() {
             val intent = Intent(context, SpeechPracticeActivity::class.java)
             startActivity(intent)
         }
+
+        val symbolCommunication = view.findViewById<ConstraintLayout>(R.id.symbol_communication)
+        symbolCommunication.setOnClickListener {
+            val intent = Intent(context, SymbolCommunicationActivity::class.java)
+            startActivity(intent)
+        }
+
         return view
     }
 }

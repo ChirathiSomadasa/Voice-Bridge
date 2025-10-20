@@ -32,4 +32,10 @@
     <string name="talk_with_nsymbols">Talk With\nSymbols</string>
     <string name="little_nadventure">Little\nAdventure</string>
     <string name="learn_nknowledge">Learn\nKnowledge</string>
+    <string name="let_s_talking_with_symbols">Let\'s Talking With Symbols!</string>
+    <string name="quick_words">Quick Words</string>
+    <string name="symbol_charts">Symbol Charts</string>
+    <string name="todo">TODO</string>
+    <string name="bottom">bottom</string>
+    <string name="image_dashboard">image_dashboard</string>
 </resources>
