@@ -71,7 +71,7 @@
                 android:id="@+id/tvTitle"
                 android:layout_width="281dp"
                 android:layout_height="83dp"
-                android:layout_marginTop="15dp"
+                android:layout_marginTop="20dp"
                 android:lineSpacingExtra="8dp"
                 android:text="@string/let_s_talking_with_symbols"
                 android:textAlignment="center"

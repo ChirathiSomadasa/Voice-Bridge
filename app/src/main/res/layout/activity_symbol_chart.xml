@@ -5,7 +5,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@color/white"
-    tools:context=".QuickWordsActivity"
+    tools:context=".SymbolChartActivity"
     >
 
     <ImageView
@@ -74,7 +74,7 @@
                 android:layout_height="45dp"
                 android:lineSpacingExtra="8dp"
                 android:layout_marginTop="17dp"
-                android:text="Quick Words"
+                android:text="Symbol Chart"
                 android:textAlignment="center"
                 android:textColor="@color/green"
                 android:textSize="28sp"
@@ -86,7 +86,7 @@
                 android:layout_height="20dp"
                 android:lineSpacingExtra="10dp"
                 android:layout_marginTop="10dp"
-                android:text="Say something fast!"
+                android:text="Tap what you need!"
                 android:textAlignment="center"
                 android:textColor="@color/green"
                 android:textSize="15sp" />
@@ -96,7 +96,7 @@
                 android:layout_width="208dp"
                 android:layout_height="20dp"
                 android:lineSpacingExtra="4dp"
-                android:text="Need to say “Yes”"
+                android:text="If you want to eat, drink, or go "
                 android:textAlignment="center"
                 android:textColor="@color/green"
                 android:textSize="15sp" />
@@ -106,20 +106,11 @@
                 android:layout_width="208dp"
                 android:layout_height="20dp"
                 android:lineSpacingExtra="4dp"
-                android:text="-Just tap a picture of “Yes” "
+                android:text="— just tap the right symbol. "
                 android:textAlignment="center"
                 android:textColor="@color/green"
                 android:textSize="15sp" />
 
-            <TextView
-                android:id="@+id/tvTitle4"
-                android:layout_width="208dp"
-                android:layout_height="20dp"
-                android:lineSpacingExtra="4dp"
-                android:text="and it talk for you."
-                android:textAlignment="center"
-                android:textColor="@color/green"
-                android:textSize="15sp" />
 
             <Button
                 android:id="@+id/btn_Go_quick"
