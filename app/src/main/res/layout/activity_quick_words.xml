@@ -5,7 +5,8 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@color/white"
-    tools:context=".SymbolCommunicationActivity">
+    tools:context=".QuickWordsActivity"
+    >
 
     <ImageView
         android:id="@+id/topImage"
@@ -13,7 +14,7 @@
         android:layout_height="250dp"
         android:contentDescription="@string/image_dashboard"
         android:scaleType="fitXY"
-        android:src="@drawable/communication_dashboard"
+        android:src="@drawable/quick_words_dashboard"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.0"
         app:layout_constraintStart_toStartOf="parent"
@@ -70,40 +71,70 @@
             <TextView
                 android:id="@+id/tvTitle"
                 android:layout_width="281dp"
-                android:layout_height="83dp"
-                android:layout_marginTop="15dp"
+                android:layout_height="45dp"
                 android:lineSpacingExtra="8dp"
-                android:text="@string/let_s_talking_with_symbols"
+                android:layout_marginTop="17dp"
+                android:text="Quick Words"
                 android:textAlignment="center"
                 android:textColor="@color/green"
-                android:textSize="26sp"
+                android:textSize="28sp"
                 android:textStyle="bold" />
 
+            <TextView
+                android:id="@+id/tvTitle1"
+                android:layout_width="208dp"
+                android:layout_height="20dp"
+                android:lineSpacingExtra="10dp"
+                android:layout_marginTop="10dp"
+                android:text="Say something fast!"
+                android:textAlignment="center"
+                android:textColor="@color/green"
+                android:textSize="15sp" />
+
+            <TextView
+                android:id="@+id/tvTitle2"
+                android:layout_width="208dp"
+                android:layout_height="20dp"
+                android:lineSpacingExtra="4dp"
+                android:text="Need to say “Yes”"
+                android:textAlignment="center"
+                android:textColor="@color/green"
+                android:textSize="15sp" />
+
+            <TextView
+                android:id="@+id/tvTitle3"
+                android:layout_width="208dp"
+                android:layout_height="20dp"
+                android:lineSpacingExtra="4dp"
+                android:text="-Just tap a picture of “Yes” "
+                android:textAlignment="center"
+                android:textColor="@color/green"
+                android:textSize="15sp" />
+
+            <TextView
+                android:id="@+id/tvTitle4"
+                android:layout_width="208dp"
+                android:layout_height="20dp"
+                android:lineSpacingExtra="4dp"
+                android:text="and it talk for you."
+                android:textAlignment="center"
+                android:textColor="@color/green"
+                android:textSize="15sp" />
+
             <Button
-                android:id="@+id/btn_quick_words"
+                android:id="@+id/btn_Go_quick"
                 style="@style/SolidGreenButton"
                 android:layout_width="match_parent"
                 android:layout_height="55dp"
                 android:layout_marginTop="40dp"
-                android:text="@string/quick_words"
+                android:text="Let's Go"
                 android:textAllCaps="false"
                 android:textColor="@color/white"
                 android:textSize="20sp"
                 android:textStyle="bold"
                 app:backgroundTint="@color/green" />
 
-            <Button
-                android:id="@+id/btn_symbol_charts"
-                style="@style/SolidPinkButton"
-                android:layout_width="match_parent"
-                android:layout_height="55dp"
-                android:layout_marginTop="24dp"
-                android:text="@string/symbol_charts"
-                android:textAllCaps="false"
-                android:textColor="@color/white"
-                android:textSize="20sp"
-                android:textStyle="bold"
-                app:backgroundTint="@color/pink" />
+
 
         </LinearLayout>
     </ScrollView>

@@ -1,6 +1,8 @@
 package com.chirathi.voicebridge
 
+import android.content.Intent
 import android.os.Bundle
+import android.widget.Button
 import android.widget.ImageView
 import androidx.appcompat.app.AppCompatActivity
 
@@ -13,5 +15,13 @@ class SymbolCommunicationActivity : AppCompatActivity() {
         backBtn.setOnClickListener {
             finish()
         }
+
+        // Quick Words button functionality
+        val quickWordsBtn = findViewById<Button>(R.id.btn_quick_words)
+        quickWordsBtn.setOnClickListener {
+            val intent = Intent(this, QuickWordsActivity::class.java)
+            startActivity(intent)
+        }
+
     }
 }
