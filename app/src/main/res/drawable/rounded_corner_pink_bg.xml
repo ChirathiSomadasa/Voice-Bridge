@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <shape xmlns:android="http://schemas.android.com/apk/res/android"
     android:shape="rectangle">
-    <solid android:color="@color/pink" /> <!-- Default color, will be replaced by backgroundTint -->
+    <solid android:color="@color/pink" />
     <corners android:radius="24dp" />
 </shape>
