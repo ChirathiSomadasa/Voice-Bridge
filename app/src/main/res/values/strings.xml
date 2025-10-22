@@ -41,4 +41,6 @@
     <string name="play_sound">Play Sound</string>
     <string name="next">Next</string>
     <string name="letter_sound">Letter Sound</string>
+    <string name="level_2_words">Level 2 - Words</string>
+    <string name="now_let_s_make_words_put_letters_n_together_and_practice_saying_whole_n_words">Now let’s make words! Put letters\n together and practice saying whole\n words.</string>
 </resources>
