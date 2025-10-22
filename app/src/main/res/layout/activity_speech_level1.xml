@@ -5,14 +5,14 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@color/white"
-    tools:context=".SpeechPracticeActivity">
+    tools:context=".SpeechLevel1Activity">
 
     <ImageView
         android:id="@+id/topImage"
         android:layout_width="0dp"
         android:layout_height="250dp"
         android:scaleType="fitXY"
-        android:src="@drawable/speech_dashboard"
+        android:src="@drawable/level1"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.0"
         app:layout_constraintStart_toStartOf="parent"
@@ -70,11 +70,21 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:lineSpacingExtra="8dp"
-                android:text="@string/let_s_practice_speaking_n_fun"
+                android:text="@string/level_1_letters"
                 android:textAlignment="center"
                 android:textColor="@color/green_dark"
                 android:textSize="26sp"
                 android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/tvSubTitle"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/let_s_start_with_letters_say_each_n_letter_sound_out_loud_and_practice_n_speaking_clearly"
+                android:textAlignment="center"
+                android:textColor="@color/green_dark"
+                android:textSize="18sp"
+                android:paddingTop="20dp"/>
 
             <Button
                 android:id="@+id/btn_level1"
@@ -82,38 +92,14 @@
                 android:layout_width="match_parent"
                 android:layout_height="55dp"
                 android:layout_marginTop="40dp"
-                android:text="@string/level_1"
+                android:text="@string/let_s_speak"
                 android:textAllCaps="false"
                 android:textColor="@color/white"
                 android:textSize="20sp"
                 android:textStyle="bold"
                 app:backgroundTint="@color/green" />
 
-            <Button
-                android:id="@+id/btn_level2"
-                style="@style/SolidPinkButton"
-                android:layout_width="match_parent"
-                android:layout_height="55dp"
-                android:layout_marginTop="24dp"
-                android:text="@string/level_2"
-                android:textAllCaps="false"
-                android:textColor="@color/white"
-                android:textSize="20sp"
-                android:textStyle="bold"
-                app:backgroundTint="@color/pink" />
 
-            <Button
-                android:id="@+id/check_progress"
-                style="@style/SolidOrangeButton"
-                android:layout_width="match_parent"
-                android:layout_height="55dp"
-                android:layout_marginTop="24dp"
-                android:text="@string/check_progress"
-                android:textAllCaps="false"
-                android:textColor="@color/white"
-                android:textSize="20sp"
-                android:textStyle="bold"
-                app:backgroundTint="@color/light_orange" />
 
         </LinearLayout>
     </ScrollView>

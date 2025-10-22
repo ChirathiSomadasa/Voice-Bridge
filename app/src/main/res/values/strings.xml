@@ -32,4 +32,7 @@
     <string name="talk_with_nsymbols">Talk With\nSymbols</string>
     <string name="little_nadventure">Little\nAdventure</string>
     <string name="learn_nknowledge">Learn\nKnowledge</string>
+    <string name="level_1_letters">Level 1 - Letters</string>
+    <string name="let_s_speak">Let\'s Speak!</string>
+    <string name="let_s_start_with_letters_say_each_n_letter_sound_out_loud_and_practice_n_speaking_clearly">Let’s start with letters! Say each\n letter sound out loud and practice\n speaking clearly.</string>
 </resources>
