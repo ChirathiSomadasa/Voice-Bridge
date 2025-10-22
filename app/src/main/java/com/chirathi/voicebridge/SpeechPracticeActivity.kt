@@ -21,5 +21,11 @@ class SpeechPracticeActivity : AppCompatActivity() {
             val intent = Intent(this, SpeechLevel1Activity::class.java)
             startActivity(intent)
         }
+
+        val level2 = findViewById<Button>(R.id.btn_level2)
+        level2.setOnClickListener {
+            val intent = Intent(this, SpeechLevel2Activity::class.java)
+            startActivity(intent)
+        }
     }
 }
