@@ -1,0 +1,136 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/white"
+    tools:context=".SpeechPracticeActivity">
+
+    <!-- Top Bamboo Background -->
+
+    <!-- Back Button -->
+    <ImageView
+        android:id="@+id/topGameImage1"
+        android:layout_width="0dp"
+        android:layout_height="250dp"
+        android:alpha="0.7"
+        android:scaleType="fitXY"
+        android:scaleX="1.5"
+        android:scaleY="1.5"
+        android:src="@drawable/game_bg"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.0"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <ImageView
+        android:id="@+id/backGame"
+        android:layout_width="45dp"
+        android:layout_height="45dp"
+        android:layout_marginStart="16dp"
+        android:layout_marginTop="16dp"
+        android:clickable="true"
+        android:focusable="true"
+        android:contentDescription="@string/back_button"
+        app:srcCompat="@drawable/back"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <!-- Panda Image on Top -->
+    <ImageView
+        android:id="@+id/pandaImage"
+        android:layout_width="180dp"
+        android:layout_height="180dp"
+        android:layout_marginTop="70dp"
+        android:layout_marginEnd="250dp"
+        android:scaleType="fitCenter"
+        android:src="@drawable/panda"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <!-- Scrollable Bottom Section -->
+    <ScrollView
+        android:id="@+id/contentScroll"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:layout_marginTop="-10dp"
+        android:background="@drawable/white_bottom_bg"
+        android:fillViewport="true"
+        app:layout_constraintTop_toBottomOf="@id/topGameImage1"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent">
+
+        <LinearLayout
+            android:id="@+id/layoutContent"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:gravity="center_horizontal"
+            android:padding="20dp">
+
+
+            <!-- Emotion Image -->
+            <ImageView
+                android:id="@+id/emotionImage"
+                android:layout_width="260dp"
+                android:layout_height="260dp"
+                android:src="@drawable/scared_kid"
+                android:scaleType="fitCenter"
+                android:layout_marginBottom="1dp" />
+
+            <!-- Option Buttons -->
+            <Button
+                android:id="@+id/btn_angry"
+                style="@style/SolidGreenButton"
+                android:layout_width="match_parent"
+                android:layout_height="55dp"
+                android:text="Angry"
+                android:textSize="18sp"
+                android:textAllCaps="false"
+                app:backgroundTint="@color/green"
+                android:textColor="@color/white"
+                android:layout_marginBottom="12dp" />
+
+            <Button
+                android:id="@+id/btn_scared"
+                style="@style/SolidGreenButton"
+                android:layout_width="match_parent"
+                android:layout_height="55dp"
+                android:text="Scared"
+                android:textSize="18sp"
+                android:textAllCaps="false"
+                app:backgroundTint="@color/green"
+                android:textColor="@color/white"
+                android:layout_marginBottom="12dp" />
+
+            <Button
+                android:id="@+id/btn_calm"
+                style="@style/SolidGreenButton"
+                android:layout_width="match_parent"
+                android:layout_height="55dp"
+                android:text="Calm"
+                android:textSize="18sp"
+                android:textAllCaps="false"
+                app:backgroundTint="@color/green"
+                android:textColor="@color/white"
+                android:layout_marginBottom="12dp" />
+
+            <Button
+                android:id="@+id/btn_frustrated"
+                style="@style/SolidGreenButton"
+                android:layout_width="match_parent"
+                android:layout_height="55dp"
+                android:text="Frustrated"
+                android:textSize="18sp"
+                android:textAllCaps="false"
+                app:backgroundTint="@color/green"
+                android:textColor="@color/white"
+                android:layout_marginBottom="20dp" />
+
+        </LinearLayout>
+    </ScrollView>
+
+</androidx.constraintlayout.widget.ConstraintLayout>

@@ -9,4 +9,5 @@
     <color name="dark_orange">#FFA726</color>
     <color name="light_pink">#FFBECC</color>
     <color name="light_green">#BEE9C0</color>
+    <color name="gray_light">#E6E6E6</color>
 </resources>

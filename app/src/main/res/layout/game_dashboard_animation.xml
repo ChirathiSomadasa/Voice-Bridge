@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/white"
+    tools:context=".SpeechPracticeActivity">
+
+    <!-- Background Bamboo Image -->
+    <ImageView
+        android:id="@+id/bg_bamboo"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:src="@drawable/game_bg"
+        android:scaleX="1.3"
+        android:scaleY="1.3"
+        android:alpha="0.8"
+        android:scaleType="fitXY"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
+
+    <!-- Back Button -->
+    <ImageView
+        android:id="@+id/backButton"
+        android:layout_width="45dp"
+        android:layout_height="45dp"
+        android:layout_marginStart="16dp"
+        android:layout_marginTop="16dp"
+        android:clickable="true"
+        android:focusable="true"
+        android:contentDescription="@string/back_button"
+        app:srcCompat="@drawable/back"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <!-- Title -->
+    <TextView
+        android:id="@+id/titleText"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="mood match intro"
+        android:textColor="@color/white"
+        android:textSize="14sp"
+        android:textStyle="bold"
+        android:layout_marginTop="12dp"
+        app:layout_constraintTop_toBottomOf="@id/backButton"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
+
+    <!-- Panda Image -->
+    <ImageView
+        android:id="@+id/pandaImage"
+        android:layout_width="1180dp"
+        android:layout_height="1080dp"
+        android:scaleType="fitCenter"
+        android:src="@drawable/panda"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent" />
+
+    <!-- Speech Bubble -->
+    <LinearLayout
+        android:id="@+id/speechBubble"
+        android:layout_width="658dp"
+        android:layout_height="671dp"
+        android:layout_marginStart="392dp"
+        android:layout_marginBottom="1dp"
+        android:background="@drawable/cloud1"
+        android:elevation="4dp"
+        android:orientation="vertical"
+        android:padding="14dp"
+        app:layout_constraintBottom_toTopOf="@id/pandaImage"
+        app:layout_constraintStart_toStartOf="@id/pandaImage">
+
+        <TextView
+            android:id="@+id/speechText"
+            android:layout_width="632dp"
+            android:layout_height="494dp"
+            android:gravity="center"
+            android:text="Hi there!\nI'm Emo! 💛\nI'm so happy\nyou're here!"
+            android:textColor="@color/black"
+            android:textSize="46sp"
+            android:textStyle="bold" />
+    </LinearLayout>
+
+</androidx.constraintlayout.widget.ConstraintLayout>
