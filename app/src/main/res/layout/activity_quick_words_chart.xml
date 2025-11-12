@@ -77,9 +77,13 @@
                     android:padding="8dp">
 
                     <ImageView
+                        android:id="@+id/imgYes"
                         android:layout_width="90dp"
                         android:layout_height="90dp"
-                        android:contentDescription="Yes" />
+                        android:contentDescription="Yes"
+                        android:clickable="true"
+                        android:focusable="true"
+                        app:srcCompat="@drawable/yes"/>
 
                     <TextView
                         android:layout_width="wrap_content"
@@ -125,9 +129,13 @@
                     android:padding="8dp">
 
                     <ImageView
+                        android:id="@+id/imgNo"
                         android:layout_width="90dp"
                         android:layout_height="90dp"
-                        android:contentDescription="No" />
+                        android:contentDescription="No"
+                        android:clickable="true"
+                        android:focusable="true"
+                        app:srcCompat="@drawable/no"/>
 
                     <TextView
                         android:layout_width="wrap_content"
@@ -151,15 +159,19 @@
                     android:padding="8dp">
 
                     <ImageView
+                        android:id="@+id/imgThankyou"
                         android:layout_width="90dp"
                         android:layout_height="90dp"
-                        android:contentDescription="Yes" />
+                        android:contentDescription="Thankyou"
+                        android:clickable="true"
+                        android:focusable="true"
+                        app:srcCompat="@drawable/thanks"/>
 
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="1dp"
-                        android:text="Yes"
+                        android:text="Thank You"
                         android:textColor="@color/black"
                         android:textSize="16sp"
                         android:textStyle="bold" />
@@ -175,15 +187,19 @@
                     android:padding="8dp">
 
                     <ImageView
+                        android:id="@+id/imgHelp"
                         android:layout_width="90dp"
                         android:layout_height="90dp"
-                        android:contentDescription="No" />
+                        android:contentDescription="Help"
+                        android:clickable="true"
+                        android:focusable="true"
+                        app:srcCompat="@drawable/help"/>
 
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="1dp"
-                        android:text="No"
+                        android:text="Help"
                         android:textColor="@color/black"
                         android:textSize="16sp"
                         android:textStyle="bold" />
@@ -199,15 +215,19 @@
                     android:padding="8dp">
 
                     <ImageView
+                        android:id="@+id/imgSorry"
                         android:layout_width="90dp"
                         android:layout_height="90dp"
-                        android:contentDescription="No" />
+                        android:contentDescription="Sorry"
+                        android:clickable="true"
+                        android:focusable="true"
+                        app:srcCompat="@drawable/sorry"/>
 
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="1dp"
-                        android:text="No"
+                        android:text="sorry"
                         android:textColor="@color/black"
                         android:textSize="16sp"
                         android:textStyle="bold" />
@@ -225,15 +245,19 @@
                     android:padding="8dp">
 
                     <ImageView
+                        android:id="@+id/imgWashroom"
                         android:layout_width="90dp"
                         android:layout_height="90dp"
-                        android:contentDescription="Yes" />
+                        android:contentDescription="Washroom"
+                        android:clickable="true"
+                        android:focusable="true"
+                        app:srcCompat="@drawable/washroom"/>
 
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="1dp"
-                        android:text="Yes"
+                        android:text="Wash room"
                         android:textColor="@color/black"
                         android:textSize="16sp"
                         android:textStyle="bold" />
@@ -249,15 +273,19 @@
                     android:padding="8dp">
 
                     <ImageView
+                        android:id="@+id/imgHungry"
                         android:layout_width="90dp"
                         android:layout_height="90dp"
-                        android:contentDescription="No" />
+                        android:contentDescription="Hungry"
+                        android:clickable="true"
+                        android:focusable="true"
+                        app:srcCompat="@drawable/hungry"/>
 
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="1dp"
-                        android:text="No"
+                        android:text="Hungry"
                         android:textColor="@color/black"
                         android:textSize="16sp"
                         android:textStyle="bold" />
@@ -273,15 +301,19 @@
                     android:padding="8dp">
 
                     <ImageView
+                        android:id="@+id/imgBathe"
                         android:layout_width="90dp"
                         android:layout_height="90dp"
-                        android:contentDescription="No" />
+                        android:contentDescription="Sorry"
+                        android:clickable="true"
+                        android:focusable="true"
+                        app:srcCompat="@drawable/bathe"/>
 
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="1dp"
-                        android:text="No"
+                        android:text="Bathe"
                         android:textColor="@color/black"
                         android:textSize="16sp"
                         android:textStyle="bold" />
@@ -327,15 +359,19 @@
                     android:padding="8dp">
 
                     <ImageView
+                        android:id="@+id/imgTv"
                         android:layout_width="90dp"
                         android:layout_height="90dp"
-                        android:contentDescription="No" />
+                        android:contentDescription="Tv"
+                        android:clickable="true"
+                        android:focusable="true"
+                        app:srcCompat="@drawable/tv"/>
 
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="1dp"
-                        android:text="No"
+                        android:text="TV"
                         android:textColor="@color/black"
                         android:textSize="16sp"
                         android:textStyle="bold" />
@@ -351,15 +387,19 @@
                     android:padding="8dp">
 
                     <ImageView
+                        android:id="@+id/imgSnak"
                         android:layout_width="90dp"
                         android:layout_height="90dp"
-                        android:contentDescription="No" />
+                        android:contentDescription="Snak"
+                        android:clickable="true"
+                        android:focusable="true"
+                        app:srcCompat="@drawable/snak"/>
 
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="1dp"
-                        android:text="No"
+                        android:text="Snaks"
                         android:textColor="@color/black"
                         android:textSize="16sp"
                         android:textStyle="bold" />
@@ -377,15 +417,19 @@
                     android:padding="8dp">
 
                     <ImageView
+                        android:id="@+id/imgDrink"
                         android:layout_width="90dp"
                         android:layout_height="90dp"
-                        android:contentDescription="Yes" />
+                        android:contentDescription="Drink"
+                        android:clickable="true"
+                        android:focusable="true"
+                        app:srcCompat="@drawable/drink"/>
 
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="1dp"
-                        android:text="Yes"
+                        android:text="Drink"
                         android:textColor="@color/black"
                         android:textSize="16sp"
                         android:textStyle="bold" />
@@ -401,15 +445,19 @@
                     android:padding="8dp">
 
                     <ImageView
+                        android:id="@+id/imgPain"
                         android:layout_width="90dp"
                         android:layout_height="90dp"
-                        android:contentDescription="No" />
+                        android:contentDescription="Pain"
+                        android:clickable="true"
+                        android:focusable="true"
+                        app:srcCompat="@drawable/pain"/>
 
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="1dp"
-                        android:text="No"
+                        android:text="Pain"
                         android:textColor="@color/black"
                         android:textSize="16sp"
                         android:textStyle="bold" />
