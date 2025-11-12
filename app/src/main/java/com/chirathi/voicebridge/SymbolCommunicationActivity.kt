@@ -23,7 +23,7 @@ class SymbolCommunicationActivity : AppCompatActivity() {
             startActivity(intent)
         }
 
-        // Quick Words button functionality
+        // symbol chart button functionality
         val symbolChartBtn = findViewById<Button>(R.id.btn_symbol_charts)
         symbolChartBtn.setOnClickListener {
             val intent = Intent(this, SymbolChartActivity::class.java)

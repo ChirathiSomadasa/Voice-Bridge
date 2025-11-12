@@ -14,9 +14,14 @@ class PhraseActivity : AppCompatActivity()  {
 
         val refreshBtn = findViewById<ImageView>(R.id.ivRefresh)
         refreshBtn.setOnClickListener {
-            val intent = Intent(this, QuickWordsChartsActivity::class.java)
-            startActivity(intent)
+            finish()
         }
+
+//        val refreshBtn = findViewById<ImageView>(R.id.ivRefresh)
+//        refreshBtn.setOnClickListener {
+//            val intent = Intent(this, QuickWordsChartsActivity::class.java)
+//            startActivity(intent)
+//        }
 
         val speakerBtn = findViewById<ImageView>(R.id.ivSpeaker)
         speakerBtn.setOnClickListener {
