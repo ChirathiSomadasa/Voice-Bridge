@@ -13,6 +13,21 @@
         android:theme="@style/Theme.VoiceBridge"
         tools:targetApi="31">
         <activity
+            android:name=".PhraseActivity"
+            android:exported="false" />
+        <activity
+            android:name=".QuickWordsChartsActivity"
+            android:exported="false" />
+        <activity
+            android:name=".SymbolChartActivity"
+            android:exported="false" />
+        <activity
+            android:name=".QuickWordsActivity"
+            android:exported="false" />
+        <activity
+            android:name=".SymbolCommunicationActivity"
+            android:exported="false"/>
+        <activity
             android:name=".SpeechLevel2TaskActivity"
             android:exported="false" />
         <activity
