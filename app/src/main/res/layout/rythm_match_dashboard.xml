@@ -137,9 +137,9 @@
                         android:contentDescription="Play song" />
 
                     <ImageButton
-                        android:layout_width="30dp"
-                        android:layout_height="30dp"
-                        android:src="@drawable/play"
+                        android:layout_width="60dp"
+                        android:layout_height="60dp"
+                        android:src="@drawable/playSound"
                         android:background="?attr/selectableItemBackgroundBorderless"
                         android:scaleType="centerInside"
                         android:contentDescription="Play"
@@ -222,9 +222,9 @@
                         android:contentDescription="Play song" />
 
                     <ImageButton
-                        android:layout_width="30dp"
-                        android:layout_height="30dp"
-                        android:src="@drawable/play"
+                        android:layout_width="60dp"
+                        android:layout_height="60dp"
+                        android:src="@drawable/playSound"
                         android:background="?attr/selectableItemBackgroundBorderless"
                         android:scaleType="centerInside"
                         android:contentDescription="Play"
@@ -314,9 +314,9 @@
                         android:contentDescription="Play song" />
 
                     <ImageButton
-                        android:layout_width="30dp"
-                        android:layout_height="30dp"
-                        android:src="@drawable/play"
+                        android:layout_width="60dp"
+                        android:layout_height="60dp"
+                        android:src="@drawable/playSound"
                         android:background="?attr/selectableItemBackgroundBorderless"
                         android:scaleType="centerInside"
                         android:contentDescription="Play"
