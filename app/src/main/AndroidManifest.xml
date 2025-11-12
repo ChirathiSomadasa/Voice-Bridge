@@ -26,6 +26,18 @@
             android:exported="false" />
         <activity
             android:name=".SymbolCommunicationActivity"
+            android:exported="false"/>
+        <activity
+            android:name=".SpeechLevel2TaskActivity"
+            android:exported="false" />
+        <activity
+            android:name=".SpeechLevel1TaskActivity"
+            android:exported="false" />
+        <activity
+            android:name=".SpeechLevel2Activity"
+            android:exported="false" />
+        <activity
+            android:name=".SpeechLevel1Activity"
             android:exported="false" />
         <activity
             android:name=".SpeechPracticeActivity"
