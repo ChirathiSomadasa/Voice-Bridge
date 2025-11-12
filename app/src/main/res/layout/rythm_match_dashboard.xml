@@ -59,7 +59,7 @@
             <!-- Song 1: Twinkle Twinkle Little Star -->
             <androidx.appcompat.widget.LinearLayoutCompat
                 android:layout_width="match_parent"
-                android:layout_height="240dp"
+                android:layout_height="wrap_content"
                 android:orientation="horizontal"
                 android:layout_marginBottom="16dp"
                 android:background="@drawable/rounded_button_background_g"
@@ -69,10 +69,11 @@
                 android:focusable="true">
 
                 <ImageView
-                    android:layout_width="450dp"
-                    android:layout_height="230dp"
+                    android:layout_width="0dp"
+                    android:layout_height="100dp"
+                    android:layout_weight="1.5"
                     android:src="@drawable/twinkle"
-                    android:scaleType="centerInside"
+                    android:scaleType="centerCrop"
                     android:layout_marginEnd="16dp"
                     android:contentDescription="Twinkle Twinkle Little Star" />
 
@@ -86,7 +87,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="Twinkle Twinkle"
-                        android:textSize="24sp"
+                        android:textSize="20sp"
                         android:textColor="@color/white"
                         android:textStyle="bold" />
 
@@ -94,18 +95,19 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="Little Star"
-                        android:textSize="24sp"
+                        android:textSize="20sp"
                         android:textColor="@color/white" />
 
                     <LinearLayout
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:orientation="horizontal"
-                        android:gravity="center_vertical">
+                        android:gravity="center_vertical"
+                        android:layout_marginTop="8dp">
 
                         <ImageView
-                            android:layout_width="24dp"
-                            android:layout_height="24dp"
+                            android:layout_width="20dp"
+                            android:layout_height="20dp"
                             android:src="@drawable/clock"
                             android:scaleType="centerInside"
                             android:layout_marginEnd="8dp"
@@ -115,7 +117,7 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:text="1.05"
-                            android:textSize="24sp"
+                            android:textSize="18sp"
                             android:textColor="@color/white"
                             android:textStyle="bold" />
                     </LinearLayout>
@@ -123,8 +125,8 @@
 
                 <!-- Play button with green circle -->
                 <FrameLayout
-                    android:layout_width="80dp"
-                    android:layout_height="80dp"
+                    android:layout_width="60dp"
+                    android:layout_height="60dp"
                     android:layout_marginStart="16dp">
 
                     <ImageView
@@ -135,8 +137,8 @@
                         android:contentDescription="Play song" />
 
                     <ImageButton
-                        android:layout_width="40dp"
-                        android:layout_height="40dp"
+                        android:layout_width="30dp"
+                        android:layout_height="30dp"
                         android:src="@drawable/play"
                         android:background="?attr/selectableItemBackgroundBorderless"
                         android:scaleType="centerInside"
@@ -149,7 +151,7 @@
             <!-- Song 2: Jack Jill -->
             <androidx.appcompat.widget.LinearLayoutCompat
                 android:layout_width="match_parent"
-                android:layout_height="240dp"
+                android:layout_height="wrap_content"
                 android:orientation="horizontal"
                 android:layout_marginBottom="16dp"
                 android:background="@drawable/rounded_button_background_g"
@@ -159,10 +161,11 @@
                 android:focusable="true">
 
                 <ImageView
-                    android:layout_width="450dp"
-                    android:layout_height="230dp"
+                    android:layout_width="0dp"
+                    android:layout_height="100dp"
+                    android:layout_weight="1.5"
                     android:src="@drawable/jack"
-                    android:scaleType="centerInside"
+                    android:scaleType="centerCrop"
                     android:layout_marginEnd="16dp"
                     android:contentDescription="Jack and Jill" />
 
@@ -176,7 +179,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="Jack and Jill"
-                        android:textSize="24sp"
+                        android:textSize="20sp"
                         android:textColor="@color/white"
                         android:textStyle="bold" />
 
@@ -184,11 +187,12 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:orientation="horizontal"
-                        android:gravity="center_vertical">
+                        android:gravity="center_vertical"
+                        android:layout_marginTop="8dp">
 
                         <ImageView
-                            android:layout_width="24dp"
-                            android:layout_height="24dp"
+                            android:layout_width="20dp"
+                            android:layout_height="20dp"
                             android:src="@drawable/clock"
                             android:scaleType="centerInside"
                             android:layout_marginEnd="8dp"
@@ -198,7 +202,7 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:text="1.05"
-                            android:textSize="24sp"
+                            android:textSize="18sp"
                             android:textColor="@color/white"
                             android:textStyle="bold" />
                     </LinearLayout>
@@ -206,8 +210,8 @@
 
                 <!-- Play button with green circle -->
                 <FrameLayout
-                    android:layout_width="80dp"
-                    android:layout_height="80dp"
+                    android:layout_width="60dp"
+                    android:layout_height="60dp"
                     android:layout_marginStart="16dp">
 
                     <ImageView
@@ -218,8 +222,8 @@
                         android:contentDescription="Play song" />
 
                     <ImageButton
-                        android:layout_width="40dp"
-                        android:layout_height="40dp"
+                        android:layout_width="30dp"
+                        android:layout_height="30dp"
                         android:src="@drawable/play"
                         android:background="?attr/selectableItemBackgroundBorderless"
                         android:scaleType="centerInside"
@@ -232,7 +236,7 @@
             <!-- Song 3: Row Row Row Your Boat -->
             <androidx.appcompat.widget.LinearLayoutCompat
                 android:layout_width="match_parent"
-                android:layout_height="240dp"
+                android:layout_height="wrap_content"
                 android:orientation="horizontal"
                 android:layout_marginBottom="16dp"
                 android:background="@drawable/rounded_button_background_g"
@@ -242,10 +246,11 @@
                 android:focusable="true">
 
                 <ImageView
-                    android:layout_width="450dp"
-                    android:layout_height="230dp"
+                    android:layout_width="0dp"
+                    android:layout_height="100dp"
+                    android:layout_weight="1.5"
                     android:src="@drawable/row"
-                    android:scaleType="centerInside"
+                    android:scaleType="centerCrop"
                     android:layout_marginEnd="16dp"
                     android:contentDescription="Row Row Row Your Boat" />
 
@@ -259,7 +264,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="Row Row Row Your"
-                        android:textSize="24sp"
+                        android:textSize="20sp"
                         android:textColor="@color/white"
                         android:textStyle="bold" />
 
@@ -267,18 +272,19 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="Boat"
-                        android:textSize="24sp"
+                        android:textSize="20sp"
                         android:textColor="@color/white" />
 
                     <LinearLayout
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:orientation="horizontal"
-                        android:gravity="center_vertical">
+                        android:gravity="center_vertical"
+                        android:layout_marginTop="8dp">
 
                         <ImageView
-                            android:layout_width="24dp"
-                            android:layout_height="24dp"
+                            android:layout_width="20dp"
+                            android:layout_height="20dp"
                             android:src="@drawable/clock"
                             android:scaleType="centerInside"
                             android:layout_marginEnd="8dp"
@@ -288,7 +294,7 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:text="1.05"
-                            android:textSize="24sp"
+                            android:textSize="18sp"
                             android:textColor="@color/white"
                             android:textStyle="bold" />
                     </LinearLayout>
@@ -296,8 +302,8 @@
 
                 <!-- Play button with green circle -->
                 <FrameLayout
-                    android:layout_width="80dp"
-                    android:layout_height="80dp"
+                    android:layout_width="60dp"
+                    android:layout_height="60dp"
                     android:layout_marginStart="16dp">
 
                     <ImageView
@@ -308,8 +314,8 @@
                         android:contentDescription="Play song" />
 
                     <ImageButton
-                        android:layout_width="40dp"
-                        android:layout_height="40dp"
+                        android:layout_width="30dp"
+                        android:layout_height="30dp"
                         android:src="@drawable/play"
                         android:background="?attr/selectableItemBackgroundBorderless"
                         android:scaleType="centerInside"
