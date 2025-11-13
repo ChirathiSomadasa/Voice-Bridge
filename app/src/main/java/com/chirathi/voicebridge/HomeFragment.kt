@@ -30,6 +30,12 @@ class HomeFragment : Fragment() {
             startActivity(intent)
         }
 
+        val gameSection = view.findViewById<ConstraintLayout>(R.id.game)
+        gameSection.setOnClickListener {
+            val intent = Intent(context, GameDashboardActivity::class.java)
+            startActivity(intent)
+        }
+
         return view
     }
 }

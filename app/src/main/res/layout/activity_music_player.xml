@@ -1,0 +1,262 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/white"
+    tools:context=".MusicPlayerActivity">
+
+    <!-- Guidelines for responsive positioning -->
+    <androidx.constraintlayout.widget.Guideline
+        android:id="@+id/guideline_top"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        app:layout_constraintGuide_percent="0.05" />
+
+    <androidx.constraintlayout.widget.Guideline
+        android:id="@+id/guideline_middle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        app:layout_constraintGuide_percent="0.65" />
+
+    <androidx.constraintlayout.widget.Guideline
+        android:id="@+id/guideline_bottom_buttons"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        app:layout_constraintGuide_percent="0.85" />
+
+    <!-- Background Image -->
+    <ImageView
+        android:id="@+id/backgroundImage"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:scaleType="centerCrop"
+        android:src="@color/green"
+        android:alpha="0.7"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <!-- Top Bar with Song Info -->
+    <LinearLayout
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="16dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="@+id/guideline_top">
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="ROW ROW ROW YOUR BOAT"
+            android:textSize="20sp"
+            android:textStyle="bold"
+            android:textColor="@color/white"
+            android:gravity="center"
+            android:layout_marginBottom="8dp" />
+    </LinearLayout>
+
+    <!-- Album Art - Larger responsive sizing -->
+    <ImageView
+        android:id="@+id/albumArt"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:src="@drawable/row_album_art"
+        android:scaleType="centerCrop"
+        app:layout_constraintTop_toBottomOf="@+id/guideline_top"
+        app:layout_constraintBottom_toTopOf="@+id/guideline_middle"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintWidth_default="percent"
+        app:layout_constraintWidth_percent="0.95"
+        app:layout_constraintDimensionRatio="1:1"
+        android:layout_marginTop="106dp"
+        android:layout_marginBottom="16dp" />
+
+    <!-- Additional Controls (Like and Repeat) - Moved further away from album art -->
+    <LinearLayout
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center"
+        android:padding="16dp"
+        app:layout_constraintTop_toBottomOf="@+id/guideline_middle"
+        app:layout_constraintBottom_toTopOf="@+id/progressLayout"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintWidth_percent="0.8"
+        android:layout_marginBottom="16dp">
+
+        <!-- Repeat Button -->
+        <ImageButton
+            android:id="@+id/repeatButton"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:src="@drawable/reload"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:scaleType="centerInside"
+            android:contentDescription="Repeat"
+            android:layout_marginEnd="54dp" />
+
+        <!-- Like Button -->
+        <ImageButton
+            android:id="@+id/likeButton"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:src="@drawable/heart"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:scaleType="centerInside"
+            android:contentDescription="Like"
+            android:layout_marginEnd="24dp" />
+
+    </LinearLayout>
+
+    <!-- Progress Section - Moved closer to control buttons -->
+    <LinearLayout
+        android:id="@+id/progressLayout"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:paddingHorizontal="16dp"
+        app:layout_constraintTop_toBottomOf="@+id/guideline_middle"
+        app:layout_constraintBottom_toTopOf="@+id/controlButtons"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintWidth_percent="0.9"
+        android:layout_marginBottom="32dp">
+
+        <!-- Time Indicators -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginBottom="8dp">
+
+            <TextView
+                android:id="@+id/currentTime"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="0.32"
+                android:textSize="14sp"
+                android:textColor="@color/white" />
+
+            <TextView
+                android:id="@+id/totalTime"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="1.05"
+                android:textSize="14sp"
+                android:textColor="@color/white"
+                android:gravity="end" />
+        </LinearLayout>
+
+        <!-- Progress Bar -->
+        <SeekBar
+            android:id="@+id/progressBar"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:progress="30"
+            android:max="100"
+            android:progressTint="@color/white"
+            android:thumbTint="@color/white"
+            android:backgroundTint="#80FFFFFF" />
+    </LinearLayout>
+
+    <!-- Control Buttons -->
+    <LinearLayout
+        android:id="@+id/controlButtons"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center"
+        android:padding="16dp"
+        app:layout_constraintTop_toTopOf="@+id/guideline_bottom_buttons"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintWidth_percent="0.9"
+        app:layout_constraintVertical_bias="0.5">
+
+        <!-- Previous Button with Green Circle -->
+        <FrameLayout
+            android:layout_width="60dp"
+            android:layout_height="60dp"
+            android:layout_marginEnd="32dp">
+
+            <ImageView
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:src="@drawable/green_circle"
+                android:scaleType="fitCenter"
+                android:contentDescription="Previous" />
+
+            <ImageButton
+                android:id="@+id/prevButton"
+                android:layout_width="30dp"
+                android:layout_height="40dp"
+                android:src="@drawable/previous"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:scaleType="centerInside"
+                android:contentDescription="Previous"
+                android:layout_gravity="center" />
+        </FrameLayout>
+
+        <!-- Play/Pause Button with Green Circle -->
+        <FrameLayout
+            android:layout_width="80dp"
+            android:layout_height="80dp"
+            android:layout_marginHorizontal="24dp">
+
+            <ImageView
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:src="@drawable/green_circle"
+                android:scaleType="fitCenter"
+                android:contentDescription="Play/Pause" />
+
+            <ImageButton
+                android:id="@+id/playPauseButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:src="@drawable/sound"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:scaleType="centerInside"
+                android:contentDescription="Play/Pause"
+                android:layout_gravity="center" />
+        </FrameLayout>
+
+        <!-- Next Button with Green Circle -->
+        <FrameLayout
+            android:layout_width="60dp"
+            android:layout_height="60dp"
+            android:layout_marginStart="32dp">
+
+            <ImageView
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:src="@drawable/green_circle"
+                android:scaleType="fitCenter"
+                android:contentDescription="Next" />
+
+            <ImageButton
+                android:id="@+id/nextButton"
+                android:layout_width="30dp"
+                android:layout_height="40dp"
+                android:src="@drawable/next"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:scaleType="centerInside"
+                android:contentDescription="Next"
+                android:layout_gravity="center" />
+        </FrameLayout>
+    </LinearLayout>
+
+</androidx.constraintlayout.widget.ConstraintLayout>

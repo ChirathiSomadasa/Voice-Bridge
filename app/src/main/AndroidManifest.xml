@@ -12,6 +12,28 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.VoiceBridge"
         tools:targetApi="31">
+
+        <activity
+            android:name=".MusicPlayerActivity"
+            android:exported="false" />
+        <activity
+            android:name=".SongSelectionActivity"
+            android:exported="false" />
+        <activity
+            android:name=".ActivitySequenceUnderActivity"
+            android:exported="false" />
+        <activity
+            android:name=".RoutineSelectionActivity"
+            android:exported="false" />
+        <activity
+            android:name=".MoodMatchSevenUpActivity"
+            android:exported="false" />
+        <activity
+            android:name=".PandaIntroActivity"
+            android:exported="false" />
+        <activity
+            android:name=".GameDashboardActivity"
+            android:exported="false" />
         <activity
             android:name=".SymbolCard1Activity"
             android:exported="false"/>
@@ -29,7 +51,7 @@
             android:exported="false" />
         <activity
             android:name=".SymbolCommunicationActivity"
-            android:exported="false"/>
+            android:exported="false" />
         <activity
             android:name=".SpeechLevel2TaskActivity"
             android:exported="false" />
@@ -69,6 +91,7 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
     </application>
 
 </manifest>
