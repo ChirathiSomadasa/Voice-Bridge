@@ -89,7 +89,8 @@
                 android:text="Tap what you need!"
                 android:textAlignment="center"
                 android:textColor="@color/green"
-                android:textSize="15sp" />
+                android:textSize="15sp"
+                android:textStyle="bold"/>
 
             <TextView
                 android:id="@+id/tvTitle2"
@@ -99,7 +100,8 @@
                 android:text="If you want to eat, drink, or go "
                 android:textAlignment="center"
                 android:textColor="@color/green"
-                android:textSize="15sp" />
+                android:textSize="15sp"
+                android:textStyle="bold"/>
 
             <TextView
                 android:id="@+id/tvTitle3"
@@ -109,7 +111,8 @@
                 android:text="— just tap the right symbol. "
                 android:textAlignment="center"
                 android:textColor="@color/green"
-                android:textSize="15sp" />
+                android:textSize="15sp"
+                android:textStyle="bold"/>
 
 
             <Button
