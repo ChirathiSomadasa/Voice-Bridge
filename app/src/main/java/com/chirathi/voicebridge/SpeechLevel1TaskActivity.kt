@@ -6,7 +6,7 @@ import android.widget.Button
 import android.widget.TextView
 
 class SpeechLevel1TaskActivity : AppCompatActivity() {
-    
+
     private val graphemeList = listOf(
         "B", "D", "F", "G", "H",
         "J", "K", "I", "M", "N", "U", "P", "R", "S", "T",
