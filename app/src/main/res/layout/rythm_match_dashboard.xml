@@ -139,7 +139,7 @@
                     <ImageButton
                         android:layout_width="60dp"
                         android:layout_height="60dp"
-                        android:src="@drawable/playSound"
+                        android:src="@drawable/sound"
                         android:background="?attr/selectableItemBackgroundBorderless"
                         android:scaleType="centerInside"
                         android:contentDescription="Play"
@@ -224,7 +224,7 @@
                     <ImageButton
                         android:layout_width="60dp"
                         android:layout_height="60dp"
-                        android:src="@drawable/playSound"
+                        android:src="@drawable/sound"
                         android:background="?attr/selectableItemBackgroundBorderless"
                         android:scaleType="centerInside"
                         android:contentDescription="Play"
@@ -316,7 +316,7 @@
                     <ImageButton
                         android:layout_width="60dp"
                         android:layout_height="60dp"
-                        android:src="@drawable/playSound"
+                        android:src="@drawable/sound"
                         android:background="?attr/selectableItemBackgroundBorderless"
                         android:scaleType="centerInside"
                         android:contentDescription="Play"
