@@ -103,7 +103,7 @@
                 app:backgroundTint="@color/pink" />
 
             <Button
-                android:id="@+id/check_progress"
+                android:id="@+id/btn_level3"
                 style="@style/SolidOrangeButton"
                 android:layout_width="match_parent"
                 android:layout_height="55dp"

@@ -62,7 +62,9 @@
                 android:orientation="horizontal"
                 android:layout_marginBottom="16dp">
 
+                <!-- Add ID here for Morning Routine -->
                 <LinearLayout
+                    android:id="@+id/morningRoutineLayout"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
@@ -92,6 +94,7 @@
 
                 <!-- Local-Time Routine (Locked) -->
                 <LinearLayout
+                    android:id="@+id/localTimeRoutineLayout"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
@@ -145,6 +148,7 @@
 
                 <!-- School Routine (Locked) -->
                 <LinearLayout
+                    android:id="@+id/schoolRoutineLayout"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"

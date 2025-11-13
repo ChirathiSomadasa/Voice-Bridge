@@ -58,6 +58,7 @@
 
             <!-- Song 1: Twinkle Twinkle Little Star -->
             <androidx.appcompat.widget.LinearLayoutCompat
+                android:id="@+id/twinkleLayout"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="horizontal"
@@ -150,6 +151,7 @@
 
             <!-- Song 2: Jack Jill -->
             <androidx.appcompat.widget.LinearLayoutCompat
+                android:id="@+id/jackJillLayout"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="horizontal"
@@ -235,6 +237,7 @@
 
             <!-- Song 3: Row Row Row Your Boat -->
             <androidx.appcompat.widget.LinearLayoutCompat
+                android:id="@+id/rowRowBoatLayout"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="horizontal"
