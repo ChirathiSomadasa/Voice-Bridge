@@ -9,10 +9,11 @@ import android.widget.ImageView
 class GameDashboardActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.game_dashboard)
+        setContentView(R.layout.activity_game_dashboard)
 
         val moodMatchBtn = findViewById<Button>(R.id.btn_game1)
         val myDayBtn = findViewById<Button>(R.id.btn_level2)
+        val singTimeBtn = findViewById<Button>(R.id.btn_level3)
         val backBtn = findViewById<ImageView>(R.id.backGame)
 
         // Mood Match button click - navigate to PandaIntroActivity
@@ -24,6 +25,11 @@ class GameDashboardActivity : AppCompatActivity() {
         // My Day button click - navigate to RoutineSelectionActivity
         myDayBtn.setOnClickListener {
             val intent = Intent(this, RoutineSelectionActivity::class.java)
+            startActivity(intent)
+        }
+
+        singTimeBtn.setOnClickListener {
+            val intent = Intent(this, SongSelectionActivity::class.java)
             startActivity(intent)
         }
 
