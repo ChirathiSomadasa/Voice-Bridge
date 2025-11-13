@@ -159,7 +159,7 @@
                 android:id="@+id/playPauseButton"
                 android:layout_width="80dp"
                 android:layout_height="80dp"
-                android:src="@drawable/playSound"
+                android:src="@drawable/sound"
                 android:background="?attr/selectableItemBackgroundBorderless"
                 android:scaleType="centerInside"
                 android:contentDescription="Play/Pause"
