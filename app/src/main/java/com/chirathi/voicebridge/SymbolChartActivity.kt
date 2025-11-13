@@ -19,7 +19,7 @@ class SymbolChartActivity : AppCompatActivity() {
 
         val goBtn = findViewById<Button>(R.id.btn_Go_symbol)
         goBtn.setOnClickListener {
-            val intent = Intent(this, QuickWordsChartsActivity::class.java)
+            val intent = Intent(this, SymbolCard1Activity::class.java)
             startActivity(intent)
         }
     }
