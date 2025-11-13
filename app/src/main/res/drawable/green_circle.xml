@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="oval">
+
+    <!-- Solid green color -->
+    <solid android:color="#4CAF50" />
+
+    <!-- Optional: Add a border -->
+    <stroke
+        android:width="2dp"
+        android:color="#388E3C" />
+
+    <!-- Optional: Add shadow/elevation effect -->
+    <gradient
+        android:type="radial"
+        android:gradientRadius="40dp"
+        android:centerX="0.5"
+        android:centerY="0.5"
+        android:startColor="#66BB6A"
+        android:endColor="#388E3C" />
+
+</shape>
