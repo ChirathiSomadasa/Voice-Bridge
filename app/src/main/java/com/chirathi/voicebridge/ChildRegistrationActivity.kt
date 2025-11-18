@@ -67,13 +67,13 @@ class ChildRegistrationActivity : AppCompatActivity() {
         signupBtn.setOnClickListener {
             val firstNameText = firstName.text.toString().trim()
             val lastNameText = lastName.text.toString().trim()
-            val addressText = age.text.toString().trim()
+            val ageText = age.text.toString().trim()
             val emailText = email.text.toString().trim()
             val passwordText = password.text.toString().trim()
             val confirmPasswordText = confirmPassword.text.toString().trim()
 
             // Check if all fields are filled
-            if (firstNameText.isEmpty() || lastNameText.isEmpty() || addressText.isEmpty() || emailText.isEmpty() || passwordText.isEmpty() || confirmPasswordText.isEmpty()) {
+            if (firstNameText.isEmpty() || lastNameText.isEmpty() || ageText.isEmpty() || emailText.isEmpty() || passwordText.isEmpty() || confirmPasswordText.isEmpty()) {
                 Toast.makeText(this, "Please fill all fields", Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
             }
@@ -101,7 +101,7 @@ class ChildRegistrationActivity : AppCompatActivity() {
                         val userMap = hashMapOf(
                             "firstName" to firstNameText,
                             "lastName" to lastNameText,
-                            "address" to addressText,
+                            "address" to ageText,
                             "email" to emailText,
                             "isTeacher" to false  // Child is not a Teacher
                         )
