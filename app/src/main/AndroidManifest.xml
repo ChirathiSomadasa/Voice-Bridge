@@ -13,6 +13,42 @@
         android:theme="@style/Theme.VoiceBridge"
         tools:targetApi="31">
         <activity
+            android:name=".RMGuidanceActivity"
+            android:exported="false" />
+        <activity
+            android:name=".RMIntroActivity"
+            android:exported="false" />
+        <activity
+            android:name=".WrongAnswerSBActivity"
+            android:exported="false" />
+        <activity
+            android:name=".RMScoreboardActivity"
+            android:exported="false" />
+        <activity
+            android:name=".ASequenceScoreboardActivity"
+            android:exported="false" />
+        <activity
+            android:name=".UnlockStickerActivity"
+            android:exported="false" />
+        <activity
+            android:name=".ASGuidanceWrongActivity"
+            android:exported="false" />
+        <activity
+            android:name=".ASGuideActivity"
+            android:exported="false" />
+        <activity
+            android:name=".MMScoreboardActivity"
+            android:exported="false" />
+        <activity
+            android:name=".AllCorrectGrandPrizeActivity"
+            android:exported="false" />
+        <activity
+            android:name=".MMFeedbackBadActivity"
+            android:exported="false" />
+        <activity
+            android:name=".MMFeedbackGoodActivity"
+            android:exported="false" />
+        <activity
             android:name=".MusicPlayerActivity"
             android:exported="false" />
         <activity
@@ -30,7 +66,6 @@
         <activity
             android:name=".PandaIntroActivity"
             android:exported="false" />
-
         <activity
             android:name=".GameDashboardActivity"
             android:exported="false" />
@@ -88,7 +123,6 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-
     </application>
 
 </manifest>
