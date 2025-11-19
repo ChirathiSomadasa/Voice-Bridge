@@ -8,10 +8,10 @@
             <InsightsFilterSettings>
               <option name="connection">
                 <ConnectionSetting>
-                  <option name="appId" value="PLACEHOLDER" />
-                  <option name="mobileSdkAppId" value="" />
-                  <option name="projectId" value="" />
-                  <option name="projectNumber" value="" />
+                  <option name="appId" value="com.chirathi.voicebridge" />
+                  <option name="mobileSdkAppId" value="1:907709735406:android:d57a34426cd6df68e4eeff" />
+                  <option name="projectId" value="voice-bridge-app" />
+                  <option name="projectNumber" value="907709735406" />
                 </ConnectionSetting>
               </option>
               <option name="signal" value="SIGNAL_UNSPECIFIED" />

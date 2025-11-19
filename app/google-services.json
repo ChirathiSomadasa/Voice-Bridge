@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "907709735406",
+    "project_id": "voice-bridge-app",
+    "storage_bucket": "voice-bridge-app.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:907709735406:android:d57a34426cd6df68e4eeff",
+        "android_client_info": {
+          "package_name": "com.chirathi.voicebridge"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDCG7q-mzI6dRZBOjHkz6bn6AbP3J0P25k"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
