@@ -89,7 +89,7 @@ class LoginActivity : AppCompatActivity() {
 
                     // Navigate based on user role (teacher / child)
                     val destinationActivity = if (isTeacher) {
-                        SpeechLevel1TaskActivity::class.java
+                        TeacherDashboardActivity::class.java
                     } else {
                         HomeActivity::class.java
                     }

@@ -70,7 +70,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:lineSpacingExtra="8dp"
-                android:text="@string/let_s_do_education_therapyActivities"
+                android:text="Select Subject (Age 6-10)"
                 android:textAlignment="center"
                 android:textColor="@color/green_dark"
                 android:textSize="26sp"
@@ -82,7 +82,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="55dp"
                 android:layout_marginTop="40dp"
-                android:text="@string/age4_6"
+                android:text="Math"
                 android:textAllCaps="false"
                 android:textColor="@color/white"
                 android:textSize="20sp"
@@ -95,7 +95,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="55dp"
                 android:layout_marginTop="20dp"
-                android:text="@string/age6_10"
+                android:text="Science"
                 android:textAllCaps="false"
                 android:textColor="@color/white"
                 android:textSize="20sp"
@@ -108,7 +108,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="55dp"
                 android:layout_marginTop="20dp"
-                android:text="@string/age10_12"
+                android:text="Art"
                 android:textAllCaps="false"
                 android:textColor="@color/white"
                 android:textSize="20sp"
@@ -121,7 +121,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="55dp"
                 android:layout_marginTop="20dp"
-                android:text="Level 4"
+                android:text="subjects..."
                 android:textAllCaps="false"
                 android:textColor="@color/white"
                 android:textSize="20sp"
@@ -144,16 +144,5 @@
 
         </LinearLayout>
     </ScrollView>
-
-    <!-- ADD THIS: This is the container where your level fragments will appear -->
-<!--    <androidx.fragment.app.FragmentContainerView-->
-<!--        android:id="@+id/fragment_container"-->
-<!--        android:layout_width="0dp"-->
-<!--        android:layout_height="0dp"-->
-<!--        android:visibility="gone"-->
-<!--        app:layout_constraintTop_toTopOf="parent"-->
-<!--        app:layout_constraintBottom_toBottomOf="parent"-->
-<!--        app:layout_constraintStart_toStartOf="parent"-->
-<!--        app:layout_constraintEnd_toEndOf="parent" />-->
 
 </androidx.constraintlayout.widget.ConstraintLayout>
