@@ -391,19 +391,19 @@
                     android:padding="8dp">
 
                     <ImageView
-                        android:id="@+id/imgSnak"
+                        android:id="@+id/imgSnack"
                         android:layout_width="90dp"
                         android:layout_height="90dp"
-                        android:contentDescription="Snak"
+                        android:contentDescription="Snack"
                         android:clickable="true"
                         android:focusable="true"
-                        app:srcCompat="@drawable/snak"/>
+                        app:srcCompat="@drawable/snack"/>
 
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="1dp"
-                        android:text="Snaks"
+                        android:text="Snacks"
                         android:textColor="@color/black"
                         android:textSize="16sp"
                         android:textStyle="bold" />
