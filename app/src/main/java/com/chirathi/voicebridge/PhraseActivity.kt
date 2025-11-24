@@ -8,6 +8,7 @@ import android.util.Log
 import android.widget.ImageView
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
+import java.text.SimpleDateFormat
 import java.util.*
 
 class PhraseActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
@@ -15,6 +16,7 @@ class PhraseActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
     private var tts: TextToSpeech? = null
     private var speakerBtn: ImageView? = null
     private var phraseText: TextView? = null
+    private var greetingText: TextView? = null
     private var selectedPhrase: String = "I want to play"
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -28,6 +30,7 @@ class PhraseActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
         // Initialize views
         val quickWordImage = findViewById<ImageView>(R.id.imgQuickWord)
         phraseText = findViewById<TextView>(R.id.tvPhrase)
+        greetingText = findViewById<TextView>(R.id.tvGreeting)
         val refreshBtn = findViewById<ImageView>(R.id.ivRefresh)
         speakerBtn = findViewById<ImageView>(R.id.ivSpeaker)
 
@@ -35,12 +38,40 @@ class PhraseActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
         quickWordImage.setImageResource(selectedIconDrawable)
         phraseText?.text = selectedPhrase
 
+        setTimeAndGreeting()
+
         // Initialize TextToSpeech with specific engine if needed
         tts = TextToSpeech(this, this)
 
         speakerBtn?.isEnabled = false
         refreshBtn.setOnClickListener { finish() }
         speakerBtn?.setOnClickListener { speakOut() }
+    }
+
+    private fun setTimeAndGreeting() {
+        // Set Sri Lanka timezone (Asia/Colombo)
+        val sriLankaTimeZone = TimeZone.getTimeZone("Asia/Colombo")
+        val calendar = Calendar.getInstance(sriLankaTimeZone)
+
+        // Format time
+        val timeFormat = SimpleDateFormat("hh:mm a", Locale.getDefault())
+        timeFormat.timeZone = sriLankaTimeZone
+        val currentTime = timeFormat.format(calendar.time)
+
+        // Get appropriate greeting based on time
+        val hour = calendar.get(Calendar.HOUR_OF_DAY)
+        val greeting = getEnglishGreeting(hour)
+
+        // Set the greeting text with time and date
+        greetingText?.text = "$greeting\n$currentTime"
+    }
+    private fun getEnglishGreeting(hour: Int): String {
+        return when (hour) {
+            in 5..11 -> "Good Morning!"
+            in 12..15 -> "Good Afternoon!"
+            in 16..18 -> "Good Evening!"
+            else -> "Good Night!"
+        }
     }
 
     override fun onInit(status: Int) {
