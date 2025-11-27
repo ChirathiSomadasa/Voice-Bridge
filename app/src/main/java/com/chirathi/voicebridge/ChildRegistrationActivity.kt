@@ -101,7 +101,7 @@ class ChildRegistrationActivity : AppCompatActivity() {
                         val userMap = hashMapOf(
                             "firstName" to firstNameText,
                             "lastName" to lastNameText,
-                            "address" to ageText,
+                            "age" to ageText,
                             "email" to emailText,
                             "isTeacher" to false  // Child is not a Teacher
                         )
