@@ -196,7 +196,7 @@
 
 
             <androidx.constraintlayout.widget.ConstraintLayout
-                android:id="@+id/learn"
+                android:id="@+id/education_therapy"
                 android:layout_width="match_parent"
                 android:layout_height="160dp"
                 android:layout_marginBottom="16dp"

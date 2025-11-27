@@ -87,6 +87,12 @@ class HomeFragment : Fragment() {
             startActivity(intent)
         }
 
+        val education_therapy = view.findViewById<ConstraintLayout>(R.id.education_therapy)
+        education_therapy.setOnClickListener {
+            val intent = Intent(context, Education_therapyActivity::class.java)
+            startActivity(intent)
+        }
+
         return view
     }
 }

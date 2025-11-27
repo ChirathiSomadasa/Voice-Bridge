@@ -5,21 +5,18 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@color/white"
-    tools:context=".SymbolChartActivity"
-    >
+    tools:context=".SpeechPracticeActivity">
 
     <ImageView
         android:id="@+id/topImage"
         android:layout_width="0dp"
         android:layout_height="250dp"
-        android:contentDescription="@string/image_dashboard"
         android:scaleType="fitXY"
-        android:src="@drawable/symbol_chart_dashboard"
+        android:src="@drawable/speech_dashboard"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.0"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
-
 
     <ImageView
         android:id="@+id/back"
@@ -39,7 +36,6 @@
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:adjustViewBounds="true"
-        android:contentDescription="@string/bottom"
         android:scaleType="fitXY"
         android:src="@drawable/bottom_bg"
         app:layout_constraintBottom_toBottomOf="parent"
@@ -47,9 +43,10 @@
         app:layout_constraintStart_toStartOf="parent" />
 
     <ScrollView
+        android:id="@+id/menuScrollView"
         android:layout_width="0dp"
         android:layout_height="0dp"
-        android:layout_marginTop="-18dp"
+        android:layout_marginTop="-30dp"
         android:background="@drawable/white_bottom_bg"
         android:fillViewport="true"
         app:layout_constraintBottom_toTopOf="@id/bottom_bg"
@@ -70,58 +67,61 @@
 
             <TextView
                 android:id="@+id/tvTitle"
-                android:layout_width="281dp"
-                android:layout_height="45dp"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
                 android:lineSpacingExtra="8dp"
-                android:layout_marginTop="17dp"
-                android:text="Symbol Chart"
+                android:text="Select Subject (Age 4-6)"
                 android:textAlignment="center"
-                android:textColor="@color/green"
-                android:textSize="28sp"
+                android:textColor="@color/green_dark"
+                android:textSize="26sp"
                 android:textStyle="bold" />
 
-            <TextView
-                android:id="@+id/tvTitle1"
-                android:layout_width="208dp"
-                android:layout_height="20dp"
-                android:lineSpacingExtra="10dp"
-                android:layout_marginTop="10dp"
-                android:text="Tap what you need!"
-                android:textAlignment="center"
-                android:textColor="@color/green"
-                android:textSize="15sp"
-                android:textStyle="bold"/>
-
-            <TextView
-                android:id="@+id/tvTitle2"
-                android:layout_width="208dp"
-                android:layout_height="20dp"
-                android:lineSpacingExtra="4dp"
-                android:text="If you want to eat, drink, or go "
-                android:textAlignment="center"
-                android:textColor="@color/green"
-                android:textSize="15sp"
-                android:textStyle="bold"/>
-
-            <TextView
-                android:id="@+id/tvTitle3"
-                android:layout_width="208dp"
-                android:layout_height="20dp"
-                android:lineSpacingExtra="4dp"
-                android:text="— just tap the right symbol. "
-                android:textAlignment="center"
-                android:textColor="@color/green"
-                android:textSize="15sp"
-                android:textStyle="bold"/>
-
-
             <Button
-                android:id="@+id/btn_Go_symbol"
+                android:id="@+id/btn_subject1"
                 style="@style/SolidGreenButton"
                 android:layout_width="match_parent"
                 android:layout_height="55dp"
-                android:layout_marginTop="50dp"
-                android:text="Let's Go"
+                android:layout_marginTop="40dp"
+                android:text="Math"
+                android:textAllCaps="false"
+                android:textColor="@color/white"
+                android:textSize="20sp"
+                android:textStyle="bold"
+                app:backgroundTint="@color/green" />
+
+            <Button
+                android:id="@+id/btn_subject2"
+                style="@style/SolidPinkButton"
+                android:layout_width="match_parent"
+                android:layout_height="55dp"
+                android:layout_marginTop="20dp"
+                android:text="Science"
+                android:textAllCaps="false"
+                android:textColor="@color/white"
+                android:textSize="20sp"
+                android:textStyle="bold"
+                app:backgroundTint="@color/pink" />
+
+            <Button
+                android:id="@+id/btn_subject3"
+                style="@style/SolidGreenButton"
+                android:layout_width="match_parent"
+                android:layout_height="55dp"
+                android:layout_marginTop="20dp"
+                android:text="Art"
+                android:textAllCaps="false"
+                android:textColor="@color/white"
+                android:textSize="20sp"
+                android:textStyle="bold"
+                app:backgroundTint="@color/dark_orange" />
+
+            <Button
+                android:id="@+id/btn_level4"
+                style="@style/SolidPinkButton"
+                android:layout_width="match_parent"
+                android:layout_height="55dp"
+                android:layout_marginTop="20dp"
+                android:text="subjects..."
                 android:textAllCaps="false"
                 android:textColor="@color/white"
                 android:textSize="20sp"
@@ -129,6 +129,18 @@
                 app:backgroundTint="@color/green" />
 
 
+            <Button
+                android:id="@+id/check_progress"
+                style="@style/SolidOrangeButton"
+                android:layout_width="match_parent"
+                android:layout_height="55dp"
+                android:layout_marginTop="38dp"
+                android:text="@string/check_progress"
+                android:textAllCaps="false"
+                android:textColor="@color/white"
+                android:textSize="20sp"
+                android:textStyle="bold"
+                app:backgroundTint="@color/light_orange" />
 
         </LinearLayout>
     </ScrollView>
