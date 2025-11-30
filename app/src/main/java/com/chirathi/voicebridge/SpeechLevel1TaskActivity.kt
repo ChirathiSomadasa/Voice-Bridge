@@ -8,9 +8,7 @@ import android.widget.TextView
 class SpeechLevel1TaskActivity : AppCompatActivity() {
 
     private val graphemeList = listOf(
-        "B", "D", "F", "G", "H",
-        "J", "K", "I", "M", "N", "U", "P", "R", "S", "T",
-        "V", "Y", "Z", "E", "I", "W", "O"
+        "B", "F", "G", "K",  "M", "U", "P", "R", "S", "Z",
     )
     // State variable to track the current index in the list
     private var currentGraphemeIndex = 0

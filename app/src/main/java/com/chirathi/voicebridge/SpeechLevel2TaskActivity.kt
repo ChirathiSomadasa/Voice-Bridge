@@ -11,18 +11,20 @@ class SpeechLevel2TaskActivity : AppCompatActivity() {
     data class WordItem(val word: String, val imageResourceId: Int)
 
     private val wordList = listOf(
-            // CVC words starting with common phonemes for articulation practice
-            WordItem("Ball", R.drawable.ball),
-            WordItem("Cat", R.drawable.cat),
-            WordItem("Spoon", R.drawable.spoon),
-            WordItem("Rabbit", R.drawable.rabbit),
-            WordItem("Chair", R.drawable.chair)
+        // CVC words starting with common phonemes for articulation practice
+        WordItem("Ball", R.drawable.ball),
+        WordItem("Cat", R.drawable.cat),
+        WordItem("Spoon", R.drawable.spoon),
+        WordItem("Rabbit", R.drawable.rabbit),
+        WordItem("Chair", R.drawable.chair),
+        WordItem("Tap", R.drawable.tap),
+        WordItem("Leaf", R.drawable.leaf),
+        WordItem("Shoe", R.drawable.shoe),
+        WordItem("Bottle", R.drawable.bottle),
+        WordItem("Cup", R.drawable.cup)
     )
 
-    // State variable to track the current index in the list
     private var currentWordIndex = 0
-
-    // Late-initialised Views
     private lateinit var tvWord: TextView
     private lateinit var ivWordImage: ImageView
 
@@ -34,7 +36,6 @@ class SpeechLevel2TaskActivity : AppCompatActivity() {
         ivWordImage = findViewById(R.id.ivWordImage)
         val btnNext: Button = findViewById(R.id.btnNext)
 
-        // Set the initial word and image
         displayCurrentWord()
 
         btnNext.setOnClickListener {
@@ -42,22 +43,23 @@ class SpeechLevel2TaskActivity : AppCompatActivity() {
         }
     }
 
-    // Updates the TextView and ImageView with the current word item from the list
     private fun displayCurrentWord() {
         if (wordList.isNotEmpty()) {
             val currentItem = wordList[currentWordIndex]
             tvWord.text = currentItem.word
             ivWordImage.setImageResource(currentItem.imageResourceId)
         }
+        // NOTE: If wordList is empty, the app will display nothing, which is safe.
     }
 
-    // Increments the index to move to the next word.
     private fun moveToNextWord() {
+        if (wordList.isEmpty()) return // Prevent crash if list is unexpectedly empty
 
+        // Increment the index and use the modulo operator to ensure it wraps around
+        // to 0 when it reaches the size of the list.
         currentWordIndex = (currentWordIndex + 1) % wordList.size
 
         // Update the views
         displayCurrentWord()
-
     }
 }
