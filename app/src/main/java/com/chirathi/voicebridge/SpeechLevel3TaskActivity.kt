@@ -12,7 +12,7 @@ class SpeechLevel3TaskActivity : AppCompatActivity() {
 
     private val SentenceList = listOf(
         // CVC words starting with common phonemes for articulation practice
-        SentenceItem("The cat has a key to the cool cave", R.drawable.cat_level3),
+        SentenceItem("The big dog ran fast in the park", R.drawable.dog_level3),
         SentenceItem("The pretty bird flew up to the sky", R.drawable.bird_level3),
         SentenceItem("Ben builds big blue blocks", R.drawable.blue_box_level3),
         SentenceItem("Sam saw a sunfish swimming", R.drawable.fish_level3),
@@ -20,7 +20,7 @@ class SpeechLevel3TaskActivity : AppCompatActivity() {
         SentenceItem("The little lion likes to play", R.drawable.lion_level3),
         SentenceItem("The rabbit runs around the rock", R.drawable.rabbit_level3),
         SentenceItem("The sun is bright and warm today", R.drawable.sun_level3),
-        SentenceItem("She go to the garden and get the green grapes", R.drawable.grapes_level3),
+        SentenceItem("She gets the green grapes", R.drawable.grapes_level3),
         SentenceItem("Jhon rides a race car really fast", R.drawable.car_level3)
     )
 
