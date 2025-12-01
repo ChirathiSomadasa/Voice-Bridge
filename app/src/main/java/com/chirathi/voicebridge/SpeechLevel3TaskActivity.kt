@@ -1,17 +1,19 @@
 package com.chirathi.voicebridge
 
-import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import android.speech.tts.TextToSpeech
 import android.widget.Button
 import android.widget.ImageView
+import android.widget.LinearLayout
 import android.widget.TextView
+import androidx.appcompat.app.AppCompatActivity
+import java.util.*
 
-class SpeechLevel3TaskActivity : AppCompatActivity() {
+class SpeechLevel3TaskActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
 
     data class SentenceItem(val sentence: String, val imageResourceId: Int)
 
-    private val SentenceList = listOf(
-        // CVC words starting with common phonemes for articulation practice
+    private val sentenceList = listOf(
         SentenceItem("The big dog ran fast in the park", R.drawable.dog_level3),
         SentenceItem("The pretty bird flew up to the sky", R.drawable.bird_level3),
         SentenceItem("Ben builds big blue blocks", R.drawable.blue_box_level3),
@@ -21,15 +23,17 @@ class SpeechLevel3TaskActivity : AppCompatActivity() {
         SentenceItem("The rabbit runs around the rock", R.drawable.rabbit_level3),
         SentenceItem("The sun is bright and warm today", R.drawable.sun_level3),
         SentenceItem("She gets the green grapes", R.drawable.grapes_level3),
-        SentenceItem("Jhon rides a race car really fast", R.drawable.car_level3)
+        SentenceItem("John rides a race car really fast", R.drawable.car_level3)
     )
 
-    // State variable to track the current index in the list
     private var currentSentenceIndex = 0
 
-    // Late-initialised Views
     private lateinit var tvSentence: TextView
     private lateinit var ivSentenceImage: ImageView
+    private lateinit var llPlaySound: LinearLayout
+
+    private var tts: TextToSpeech? = null
+    private var isTtsReady = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -38,31 +42,50 @@ class SpeechLevel3TaskActivity : AppCompatActivity() {
         tvSentence = findViewById(R.id.tvSentence)
         ivSentenceImage = findViewById(R.id.ivSentenceImage)
         val btnNext: Button = findViewById(R.id.btnNext)
+        llPlaySound = findViewById(R.id.llPlaySound)
 
-        // Set the initial sentence and image
+        // Initialize TTS
+        tts = TextToSpeech(this, this)
+
         displayCurrentSentence()
 
-        btnNext.setOnClickListener {
-            moveToNextSentence()
+        btnNext.setOnClickListener { moveToNextSentence() }
+
+        llPlaySound.setOnClickListener {
+            if (isTtsReady) {
+                speakSentence(tvSentence.text.toString())
+            }
         }
     }
 
-    // Updates the TextView and ImageView with the current sentence item from the list
+    override fun onInit(status: Int) {
+        if (status == TextToSpeech.SUCCESS) {
+            tts?.language = Locale.US
+            tts?.setSpeechRate(0.7f)  // slow for kids
+            tts?.setPitch(1.1f)       // friendly tone
+            isTtsReady = true
+        }
+    }
+
+
+    private fun speakSentence(sentence: String) {
+        tts?.speak(sentence, TextToSpeech.QUEUE_FLUSH, null, "sentenceID")
+    }
+
     private fun displayCurrentSentence() {
-        if (SentenceList.isNotEmpty()) {
-            val currentItem = SentenceList[currentSentenceIndex]
-            tvSentence.text = currentItem.sentence
-            ivSentenceImage.setImageResource(currentItem.imageResourceId)
-        }
+        val currentItem = sentenceList[currentSentenceIndex]
+        tvSentence.text = currentItem.sentence
+        ivSentenceImage.setImageResource(currentItem.imageResourceId)
     }
 
-    // Increments the index to move to the next sentence.
     private fun moveToNextSentence() {
-
-        currentSentenceIndex = (currentSentenceIndex + 1) % SentenceList.size
-
-        // Update the views
+        currentSentenceIndex = (currentSentenceIndex + 1) % sentenceList.size
         displayCurrentSentence()
+    }
 
+    override fun onDestroy() {
+        tts?.stop()
+        tts?.shutdown()
+        super.onDestroy()
     }
 }
