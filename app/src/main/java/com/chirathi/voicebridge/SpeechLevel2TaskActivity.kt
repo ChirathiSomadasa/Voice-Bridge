@@ -1,19 +1,17 @@
 package com.chirathi.voicebridge
 
+import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.widget.Button
 import android.widget.ImageView
-import android.widget.LinearLayout
 import android.widget.TextView
-import android.speech.tts.TextToSpeech
-import androidx.appcompat.app.AppCompatActivity
-import java.util.*
 
-class SpeechLevel2TaskActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
+class SpeechLevel2TaskActivity : AppCompatActivity() {
 
     data class WordItem(val word: String, val imageResourceId: Int)
 
     private val wordList = listOf(
+        // CVC words starting with common phonemes for articulation practice
         WordItem("Ball", R.drawable.ball),
         WordItem("Cat", R.drawable.cat),
         WordItem("Spoon", R.drawable.spoon),
@@ -27,13 +25,8 @@ class SpeechLevel2TaskActivity : AppCompatActivity(), TextToSpeech.OnInitListene
     )
 
     private var currentWordIndex = 0
-
     private lateinit var tvWord: TextView
     private lateinit var ivWordImage: ImageView
-    private lateinit var llPlaySound: LinearLayout
-
-    private var tts: TextToSpeech? = null
-    private var isTtsReady = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -42,50 +35,31 @@ class SpeechLevel2TaskActivity : AppCompatActivity(), TextToSpeech.OnInitListene
         tvWord = findViewById(R.id.tvWord)
         ivWordImage = findViewById(R.id.ivWordImage)
         val btnNext: Button = findViewById(R.id.btnNext)
-        llPlaySound = findViewById(R.id.llPlaySound)
-
-        // Initialize TTS
-        tts = TextToSpeech(this, this)
 
         displayCurrentWord()
 
-        btnNext.setOnClickListener { moveToNextWord() }
-
-        llPlaySound.setOnClickListener {
-            if (isTtsReady) {
-                speakWord(tvWord.text.toString())
-            }
+        btnNext.setOnClickListener {
+            moveToNextWord()
         }
-    }
-
-    override fun onInit(status: Int) {
-        if (status == TextToSpeech.SUCCESS) {
-            tts?.language = Locale.US
-            tts?.setSpeechRate(0.7f)  // slow for kids
-            tts?.setPitch(1.1f)       // friendly tone
-            isTtsReady = true
-        }
-    }
-
-
-    private fun speakWord(word: String) {
-        tts?.speak(word, TextToSpeech.QUEUE_FLUSH, null, "wordID")
     }
 
     private fun displayCurrentWord() {
-        val currentItem = wordList[currentWordIndex]
-        tvWord.text = currentItem.word
-        ivWordImage.setImageResource(currentItem.imageResourceId)
+        if (wordList.isNotEmpty()) {
+            val currentItem = wordList[currentWordIndex]
+            tvWord.text = currentItem.word
+            ivWordImage.setImageResource(currentItem.imageResourceId)
+        }
+        // NOTE: If wordList is empty, the app will display nothing, which is safe.
     }
 
     private fun moveToNextWord() {
-        currentWordIndex = (currentWordIndex + 1) % wordList.size
-        displayCurrentWord()
-    }
+        if (wordList.isEmpty()) return // Prevent crash if list is unexpectedly empty
 
-    override fun onDestroy() {
-        tts?.stop()
-        tts?.shutdown()
-        super.onDestroy()
+        // Increment the index and use the modulo operator to ensure it wraps around
+        // to 0 when it reaches the size of the list.
+        currentWordIndex = (currentWordIndex + 1) % wordList.size
+
+        // Update the views
+        displayCurrentWord()
     }
 }
