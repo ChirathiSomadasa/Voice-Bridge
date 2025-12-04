@@ -14,4 +14,9 @@
     <color name="dark_gray">#666666</color>
     <color name="white_50">#80FFFFFF</color>
     <color name="light_orange_51">#FCEBD1</color>
+    <color name="score_red">#FF3B30</color>
+    <color name="score_orange">#F69C1D</color>
+    <color name="score_green">#4CAF50</color>
+    <color name="bg_gray_track">#F0F0F0</color>
+    <color name="progress_gray">#E6E6E6</color>
 </resources>

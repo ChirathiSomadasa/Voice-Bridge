@@ -103,6 +103,19 @@
                 app:backgroundTint="@color/pink" />
 
             <Button
+                android:id="@+id/btn_level3"
+                style="@style/SolidPinkButton"
+                android:layout_width="match_parent"
+                android:layout_height="55dp"
+                android:layout_marginTop="24dp"
+                android:text="@string/level_3"
+                android:textAllCaps="false"
+                android:textColor="@color/white"
+                android:textSize="20sp"
+                android:textStyle="bold"
+                app:backgroundTint="@color/light_orange" />
+
+            <Button
                 android:id="@+id/check_progress"
                 style="@style/SolidOrangeButton"
                 android:layout_width="match_parent"
@@ -113,7 +126,7 @@
                 android:textColor="@color/white"
                 android:textSize="20sp"
                 android:textStyle="bold"
-                app:backgroundTint="@color/light_orange" />
+                app:backgroundTint="@color/green" />
 
         </LinearLayout>
     </ScrollView>

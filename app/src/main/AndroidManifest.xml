@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
-    <uses-permission android:name="android.permission.INTERNET"/>
 
+    <uses-permission android:name="android.permission.INTERNET" />
 
     <application
         android:allowBackup="true"
@@ -13,7 +13,25 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.VoiceBridge"
-        tools:targetApi="31" >
+        tools:targetApi="31">
+        <activity
+            android:name=".SpeechLevel3TaskActivity"
+            android:exported="false" />
+        <activity
+            android:name=".SpeechLevel3Activity"
+            android:exported="false" />
+        <activity
+            android:name=".SpeechProgressActivity"
+            android:exported="false" />
+        <activity
+            android:name=".Education_subjects_Activity"
+            android:exported="false" />
+        <activity
+            android:name=".Education_age6_10_Activity"
+            android:exported="false" />
+        <activity
+            android:name=".Education_age4_6_Activity"
+            android:exported="false" />
         <activity
             android:name=".TeacherDashboardActivity"
             android:exported="false" />
@@ -91,7 +109,7 @@
             android:exported="false" />
         <activity
             android:name=".SplashActivity"
-            android:exported="true" >
+            android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
