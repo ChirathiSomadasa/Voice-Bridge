@@ -15,6 +15,12 @@
         android:theme="@style/Theme.VoiceBridge"
         tools:targetApi="31">
         <activity
+            android:name=".DrinkSymbolActivity"
+            android:exported="false" />
+        <activity
+            android:name=".SanackSymbolActivity"
+            android:exported="false" />
+        <activity
             android:name=".SpeechLevel3TaskActivity"
             android:exported="false" />
         <activity
