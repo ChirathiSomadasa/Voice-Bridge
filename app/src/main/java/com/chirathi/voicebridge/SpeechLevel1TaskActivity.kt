@@ -4,18 +4,19 @@ import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.widget.Button
 import android.widget.TextView
+import android.widget.LinearLayout
+import android.speech.tts.TextToSpeech
+import java.util.Locale
 
-class SpeechLevel1TaskActivity : AppCompatActivity() {
+class SpeechLevel1TaskActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
 
     private val graphemeList = listOf(
-        "B", "D", "F", "G", "H",
-        "J", "K", "I", "M", "N", "U", "P", "R", "S", "T",
-        "V", "Y", "Z", "E", "I", "W", "O"
+        "B", "F", "G", "K", "M", "U", "P", "R", "S", "Z"
     )
-    // State variable to track the current index in the list
-    private var currentGraphemeIndex = 0
 
+    private var currentGraphemeIndex = 0
     private lateinit var tvLetter: TextView
+    private var tts: TextToSpeech? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -23,28 +24,56 @@ class SpeechLevel1TaskActivity : AppCompatActivity() {
 
         tvLetter = findViewById(R.id.tvLetter)
         val btnNext: Button = findViewById(R.id.btnNext)
+        val llPlaySound: LinearLayout = findViewById(R.id.llPlaySound)
 
-        // Set the initial letter from the list
+        // Initialize Text-to-Speech
+        tts = TextToSpeech(this, this)
+
+        // Show first letter
         displayCurrentGrapheme()
 
-        // Set the click listener for the Next button
+        // NEXT button
         btnNext.setOnClickListener {
             moveToNextGrapheme()
         }
-    }
 
-    // Updates the TextView with the current grapheme from the list.
-    private fun displayCurrentGrapheme() {
-        if (graphemeList.isNotEmpty()) {
-            tvLetter.text = graphemeList[currentGraphemeIndex]
+        // PLAY SOUND button
+        llPlaySound.setOnClickListener {
+            val text = tvLetter.text.toString()
+            speakLetter(text)
         }
     }
-    // Increments the index to move to the next grapheme
+
+    // TTS initialization
+    override fun onInit(status: Int) {
+        if (status == TextToSpeech.SUCCESS) {
+            tts?.language = Locale.US
+            tts?.setSpeechRate(0.8f) // better for kids
+        }
+    }
+
+    // Speak the letter
+    private fun speakLetter(letter: String) {
+        val speakText = when (letter) {
+            "Z" -> "Zed"     // instead of "Zee"
+            else -> letter
+        }
+        tts?.speak(speakText, TextToSpeech.QUEUE_FLUSH, null, "letterID")
+    }
+
+
+    private fun displayCurrentGrapheme() {
+        tvLetter.text = graphemeList[currentGraphemeIndex]
+    }
+
     private fun moveToNextGrapheme() {
-
         currentGraphemeIndex = (currentGraphemeIndex + 1) % graphemeList.size
-
         displayCurrentGrapheme()
+    }
 
+    override fun onDestroy() {
+        tts?.stop()
+        tts?.shutdown()
+        super.onDestroy()
     }
 }

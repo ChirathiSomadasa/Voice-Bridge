@@ -24,8 +24,8 @@
     <string name="hello_blank_fragment">Hello blank fragment</string>
     <string name="back_button">Back button</string>
     <string name="let_s_practice_speaking_n_fun">Let’s Practice Speaking\n Fun!</string>
-    <string name="level_1">Level 1</string>
-    <string name="level_2">Level 2</string>
+    <string name="level_1">Level 1 - Letters </string>
+    <string name="level_2">Level 2 - Words</string>
     <string name="check_progress">Check Progress</string>
     <string name="welcome">Welcome</string>
     <string name="let_s_talk">Let\'s Talk</string>
@@ -50,4 +50,13 @@
     <string name="level_2_words">Level 2 - Words</string>
     <string name="now_let_s_make_words_put_letters_n_together_and_practice_saying_whole_n_words">Now let’s make words! Put letters\n together and practice saying whole\n words.</string>
     <string name="let_s_do_education_therapyActivities">Let’s Learn and Have\nFun!</string>
+    <string name="age4_6">Age 4-6</string>
+    <string name="age6_10">Age 6-10</string>
+    <string name="age10_12">Age 10-12</string>
+    <string name="instruction_video">Instruction Video</string>
+    <string name="level_3">Level 3 - Sentences</string>
+    <string name="level_3_sentences">Level 3 - Sentences</string>
+    <string name="now_let_s_make_sentences_put_words_n_together_and_practice_saying_whole_n_sentences">Now let’s make sentences! Put words\n together and practice saying whole\n sentences.</string>
+    <string name="say_sentence">Say Sentence</string>
+    <string name="ok">OK</string>
 </resources>
