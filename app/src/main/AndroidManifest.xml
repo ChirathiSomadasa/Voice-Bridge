@@ -45,9 +45,6 @@
             android:name=".RMIntroActivity"
             android:exported="false" />
         <activity
-            android:name=".WrongAnswerSBActivity"
-            android:exported="false" />
-        <activity
             android:name=".RMScoreboardActivity"
             android:exported="false" />
         <activity
@@ -88,6 +85,9 @@
             android:exported="false" />
         <activity
             android:name=".MoodMatchSevenUpActivity"
+            android:exported="false" />
+        <activity
+            android:name=".MoodMatchSevenDownActivity"
             android:exported="false" />
         <activity
             android:name=".PandaIntroActivity"
