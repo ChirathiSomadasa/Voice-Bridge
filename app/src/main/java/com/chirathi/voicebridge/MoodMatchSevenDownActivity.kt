@@ -18,7 +18,7 @@ class MoodMatchSevenDownActivity : AppCompatActivity() {
     // Define all emotions
     private val emotions = listOf(
         "happy", "sad", "angry", "scared",
-        "bored", "embarrassed", "proud",
+        "bored", "embarrassed", "proud"
     )
 
     private lateinit var emotionImage: ImageView
@@ -33,9 +33,13 @@ class MoodMatchSevenDownActivity : AppCompatActivity() {
     private var currentEmotion = ""
     private var correctOption = 1 // 1 for option1, 2 for option2
     private var score = 0
+    private var correctAnswersCount = 0
     private var currentRound = 1
-    private val totalRounds = 10
+    private val totalRounds = 5  // Changed from 10 to 5
     private var isAnswerSelected = false
+
+    // Track used emotions to prevent duplicates
+    private var usedEmotions = mutableSetOf<String>()
 
     private var mediaPlayer: MediaPlayer? = null
 
@@ -104,8 +108,13 @@ class MoodMatchSevenDownActivity : AppCompatActivity() {
         isAnswerSelected = false
         btnNext.visibility = View.GONE
 
-        // Select random emotion for this round
-        currentEmotion = emotions.random()
+        // Select random emotion for this round without repeating
+        currentEmotion = getUniqueEmotion()
+
+        if (currentEmotion.isEmpty()) {
+            // If we've used all emotions (shouldn't happen with 7 emotions and 5 rounds)
+            currentEmotion = emotions.random()
+        }
 
         Log.d(TAG, "Current emotion: $currentEmotion")
 
@@ -113,8 +122,8 @@ class MoodMatchSevenDownActivity : AppCompatActivity() {
         setEmotionImage(currentEmotion)
 
         // Determine correct and wrong options
-        val wrongEmotions = emotions.filter { it != currentEmotion }
-        val wrongEmotion = wrongEmotions.random()
+        val availableWrongEmotions = emotions.filter { it != currentEmotion }
+        val wrongEmotion = availableWrongEmotions.random()
 
         // Randomly assign correct option to button 1 or 2
         correctOption = Random.nextInt(1, 3)
@@ -139,6 +148,23 @@ class MoodMatchSevenDownActivity : AppCompatActivity() {
 
         // Update round display
         tvRound.text = "Round: $currentRound/$totalRounds"
+    }
+
+    private fun getUniqueEmotion(): String {
+        // Get all emotions that haven't been used yet
+        val availableEmotions = emotions.filter { !usedEmotions.contains(it) }
+
+        return if (availableEmotions.isNotEmpty()) {
+            val selected = availableEmotions.random()
+            usedEmotions.add(selected)
+            selected
+        } else {
+            // If all emotions have been used, clear the set and start over
+            usedEmotions.clear()
+            val selected = emotions.random()
+            usedEmotions.add(selected)
+            selected
+        }
     }
 
     private fun setEmotionImage(emotion: String) {
@@ -172,6 +198,7 @@ class MoodMatchSevenDownActivity : AppCompatActivity() {
         if (selectedOption == correctOption) {
             // Correct answer
             score += 10
+            correctAnswersCount++  // Increment correct answers count
             tvScore.text = "Score: $score"
 
             if (selectedOption == 1) {
@@ -260,8 +287,11 @@ class MoodMatchSevenDownActivity : AppCompatActivity() {
         currentRound++
 
         if (currentRound > totalRounds) {
-            // Game over, go to result screen or dashboard
-            val intent = Intent(this, GameDashboardActivity::class.java)
+            // Game over, go to scoreboard screen
+            val intent = Intent(this, MMScoreboardActivity::class.java)
+            // Pass the correct answers count and total rounds
+            intent.putExtra("CORRECT_ANSWERS", correctAnswersCount)
+            intent.putExtra("TOTAL_ROUNDS", totalRounds)
             intent.putExtra("SCORE", score)
             intent.flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
             startActivity(intent)
