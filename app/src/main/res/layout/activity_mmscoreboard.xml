@@ -89,13 +89,12 @@
             app:layout_constraintWidth_default="percent"
             app:layout_constraintWidth_percent="0.6">
 
-            <!-- Score Text inside Button -->
+            <!-- Score Text inside Button - REMOVED HARDCODED TEXT -->
             <TextView
                 android:id="@+id/scoreText"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:gravity="center"
-                android:text="8/10"
                 android:textColor="@color/white"
                 android:textSize="28dp"
                 android:textStyle="bold"
