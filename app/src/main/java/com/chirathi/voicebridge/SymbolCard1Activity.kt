@@ -28,5 +28,36 @@ class SymbolCard1Activity : AppCompatActivity() {
             val intent = Intent(this, DrinkSymbolActivity::class.java)
             startActivity(intent)
         }
+
+        val toyBtn = findViewById<ImageView>(R.id.imgToys)
+        toyBtn.setOnClickListener {
+            val intent = Intent(this, ToysSymbolActivity::class.java)
+            startActivity(intent)
+        }
+
+        val clothesBtn = findViewById<ImageView>(R.id.imgClothes)
+        clothesBtn.setOnClickListener {
+            val intent = Intent(this, ClothesSymbolActivity::class.java)
+            startActivity(intent)
+        }
+
+        val coloursBtn = findViewById<ImageView>(R.id.imgColours)
+        coloursBtn.setOnClickListener {
+            val intent = Intent(this, ColoursSymbolsActivity::class.java)
+            startActivity(intent)
+        }
+
+        val foodsBtn = findViewById<ImageView>(R.id.imgFoods)
+        foodsBtn.setOnClickListener {
+            val intent = Intent(this, FoodSymbolsActivity::class.java)
+            startActivity(intent)
+        }
+
+        val sanitationsBtn = findViewById<ImageView>(R.id.imgSanitations)
+        sanitationsBtn.setOnClickListener {
+            val intent = Intent(this, ColoursSymbolsActivity::class.java)
+            startActivity(intent)
+        }
+
     }
 }

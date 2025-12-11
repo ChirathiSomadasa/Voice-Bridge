@@ -310,7 +310,7 @@
                         android:contentDescription="NightSuit"
                         android:clickable="true"
                         android:focusable="true"
-                        app:srcCompat="@drawable/night_Suit"/>
+                        app:srcCompat="@drawable/nightsuit"/>
 
                     <TextView
                         android:layout_width="wrap_content"

@@ -60,7 +60,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="800dp"
                 android:alignmentMode="alignMargins"
-                android:columnCount="2"
+                android:columnCount="3"
                 android:rowCount="3"
                 android:paddingTop="20dp"
                 android:rowOrderPreserved="false"
@@ -69,7 +69,7 @@
                 <LinearLayout
                     android:id="@+id/snackBtn"
                     android:layout_width="8dp"
-                    android:layout_height="170dp"
+                    android:layout_height="160dp"
                     android:layout_row="0"
                     android:layout_column="0"
                     android:layout_columnWeight="1"
@@ -81,8 +81,8 @@
 
                     <ImageView
                         android:id="@+id/imgSnacks"
-                        android:layout_width="120dp"
-                        android:layout_height="120dp"
+                        android:layout_width="100dp"
+                        android:layout_height="100dp"
                         android:contentDescription="Snacks"
                         android:clickable="true"
                         android:focusable="true"
@@ -91,7 +91,7 @@
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="4dp"
+                        android:layout_marginTop="8dp"
                         android:text="Snacks"
                         android:textColor="@color/black"
                         android:textSize="17sp"
@@ -100,7 +100,7 @@
 
                 <LinearLayout
                     android:layout_width="8dp"
-                    android:layout_height="170dp"
+                    android:layout_height="160dp"
                     android:layout_columnWeight="1"
                     android:background="@drawable/rounded_green_border_m"
                     android:gravity="center"
@@ -109,8 +109,8 @@
 
                     <ImageView
                         android:id="@+id/imgDrinks"
-                        android:layout_width="120dp"
-                        android:layout_height="120dp"
+                        android:layout_width="100dp"
+                        android:layout_height="100dp"
                         android:contentDescription="Drinks"
                         android:clickable="true"
                         android:focusable="true"
@@ -119,7 +119,7 @@
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="4dp"
+                        android:layout_marginTop="8dp"
                         android:text="Drinks"
                         android:textColor="@color/black"
                         android:textSize="17sp"
@@ -128,9 +128,9 @@
 
                 <LinearLayout
                     android:layout_width="8dp"
-                    android:layout_height="170dp"
-                    android:layout_row="1"
-                    android:layout_column="0"
+                    android:layout_height="160dp"
+                    android:layout_row="0"
+                    android:layout_column="2"
                     android:layout_columnWeight="1"
                     android:background="@drawable/rounded_green_border_m"
                     android:gravity="center"
@@ -139,8 +139,8 @@
 
                     <ImageView
                         android:id="@+id/imgClothes"
-                        android:layout_width="120dp"
-                        android:layout_height="120dp"
+                        android:layout_width="100dp"
+                        android:layout_height="100dp"
                         android:contentDescription="Clothes"
                         android:clickable="true"
                         android:focusable="true"
@@ -149,7 +149,7 @@
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="4dp"
+                        android:layout_marginTop="8dp"
                         android:text="Clothes"
                         android:textColor="@color/black"
                         android:textSize="17sp"
@@ -158,7 +158,7 @@
 
                 <LinearLayout
                     android:layout_width="8dp"
-                    android:layout_height="170dp"
+                    android:layout_height="160dp"
                     android:layout_columnWeight="1"
                     android:background="@drawable/rounded_green_border_m"
                     android:gravity="center"
@@ -168,7 +168,7 @@
                     <ImageView
                         android:id="@+id/imgToys"
                         android:layout_width="120dp"
-                        android:layout_height="120dp"
+                        android:layout_height="110dp"
                         android:contentDescription="Toys"
                         android:clickable="true"
                         android:focusable="true"
@@ -186,7 +186,7 @@
 
                 <LinearLayout
                     android:layout_width="8dp"
-                    android:layout_height="170dp"
+                    android:layout_height="160dp"
                     android:layout_columnWeight="1"
                     android:background="@drawable/rounded_green_border_m"
                     android:gravity="center"
@@ -195,8 +195,8 @@
 
                     <ImageView
                         android:id="@+id/imgActions"
-                        android:layout_width="120dp"
-                        android:layout_height="120dp"
+                        android:layout_width="110dp"
+                        android:layout_height="110dp"
                         android:contentDescription="Actions"
                         android:clickable="true"
                         android:focusable="true"
@@ -214,7 +214,7 @@
 
                 <LinearLayout
                     android:layout_width="8dp"
-                    android:layout_height="170dp"
+                    android:layout_height="160dp"
                     android:layout_columnWeight="1"
                     android:background="@drawable/rounded_green_border_m"
                     android:gravity="center"
@@ -223,8 +223,8 @@
 
                     <ImageView
                         android:id="@+id/imgEmotions"
-                        android:layout_width="120dp"
-                        android:layout_height="120dp"
+                        android:layout_width="90dp"
+                        android:layout_height="90dp"
                         android:contentDescription="Emotions"
                         android:clickable="true"
                         android:focusable="true"
@@ -233,12 +233,98 @@
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="4dp"
+                        android:layout_marginTop="18dp"
                         android:text="Emotions"
                         android:textColor="@color/black"
                         android:textSize="17sp"
                         android:textStyle="bold" />
                 </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="8dp"
+                    android:layout_height="160dp"
+                    android:layout_columnWeight="1"
+                    android:background="@drawable/rounded_green_border_m"
+                    android:gravity="center"
+                    android:orientation="vertical"
+                    android:padding="8dp">
+
+                    <ImageView
+                        android:id="@+id/imgFoods"
+                        android:layout_width="110dp"
+                        android:layout_height="110dp"
+                        android:contentDescription="Foods"
+                        android:clickable="true"
+                        android:focusable="true"
+                        app:srcCompat="@drawable/foods"/>
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="4dp"
+                        android:text="Foods"
+                        android:textColor="@color/black"
+                        android:textSize="17sp"
+                        android:textStyle="bold" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="8dp"
+                    android:layout_height="160dp"
+                    android:layout_columnWeight="1"
+                    android:background="@drawable/rounded_green_border_m"
+                    android:gravity="center"
+                    android:orientation="vertical"
+                    android:padding="8dp">
+
+                    <ImageView
+                        android:id="@+id/imgColours"
+                        android:layout_width="120dp"
+                        android:layout_height="110dp"
+                        android:contentDescription="Colours"
+                        android:clickable="true"
+                        android:focusable="true"
+                        app:srcCompat="@drawable/colour"/>
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="1dp"
+                        android:text="Colours"
+                        android:textColor="@color/black"
+                        android:textSize="17sp"
+                        android:textStyle="bold" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="8dp"
+                    android:layout_height="160dp"
+                    android:layout_columnWeight="1"
+                    android:background="@drawable/rounded_green_border_m"
+                    android:gravity="center"
+                    android:orientation="vertical"
+                    android:padding="8dp">
+
+                    <ImageView
+                        android:id="@+id/imgSanitations"
+                        android:layout_width="90dp"
+                        android:layout_height="90dp"
+                        android:contentDescription="Sanitations"
+                        android:clickable="true"
+                        android:focusable="true"
+                        app:srcCompat="@drawable/sanitations"/>
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="18dp"
+                        android:text="Sanitations"
+                        android:textColor="@color/black"
+                        android:textSize="17sp"
+                        android:textStyle="bold" />
+                </LinearLayout>
+
+
 
 
             </GridLayout>
