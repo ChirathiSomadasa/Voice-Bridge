@@ -2,109 +2,235 @@
 <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
-    android:id="@+id/main"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@drawable/rounded_white_shadow"
-    android:padding="24dp"
+    android:background="@color/white"
     tools:context=".MMScoreboardActivity">
 
-    <!-- Completed Text -->
-    <TextView
-        android:id="@+id/completedText"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:layout_marginBottom="16dp"
-        android:gravity="center"
-        android:text="Completed!!!"
-        android:textColor="@color/black"
-        android:textSize="32sp"
-        android:textStyle="bold"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+    <!-- ScrollView to make the screen scrollable -->
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:fillViewport="true"
+        android:overScrollMode="never">
 
-    <!-- Celebration Image -->
-    <ImageView
-        android:id="@+id/celebrationImage"
-        android:layout_width="400dp"
-        android:layout_height="400dp"
-        android:layout_marginBottom="24dp"
-        android:scaleType="fitCenter"
-        android:src="@drawable/panda"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/completedText" />
-
-    <!-- Your Score Text - Bold and Yellow -->
-    <TextView
-        android:id="@+id/yourScoreText"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:layout_marginBottom="16dp"
-        android:gravity="center"
-        android:text="Your Score"
-        android:textColor="@color/dark_orange"
-        android:textSize="24sp"
-        android:textStyle="bold"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/celebrationImage" />
-
-    <!-- Container for Trophy and Score Button -->
-    <androidx.constraintlayout.widget.ConstraintLayout
-        android:id="@+id/trophyButtonContainer"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:layout_marginBottom="32dp"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/yourScoreText"
-        app:layout_constraintWidth_percent="0.9">
-
-        <!-- Trophy Image -->
-        <ImageView
-            android:id="@+id/trophyImage"
-            android:layout_width="120dp"
-            android:layout_height="120dp"
-            android:rotation="-30"
-            android:scaleType="fitCenter"
-            android:src="@drawable/trophy"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent" />
-
-        <!-- Score Button Container -->
         <androidx.constraintlayout.widget.ConstraintLayout
-            android:id="@+id/scoreButtonContainer"
-            android:layout_width="202dp"
-            android:layout_height="70dp"
-            android:background="@drawable/rounded_button_background"
-            android:padding="16dp"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintHorizontal_bias="0.5"
-            app:layout_constraintStart_toEndOf="@+id/trophyImage"
-            app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintWidth_default="percent"
-            app:layout_constraintWidth_percent="0.6">
+            android:id="@+id/main"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:padding="16dp">
 
-            <!-- Score Text inside Button - REMOVED HARDCODED TEXT -->
-            <TextView
-                android:id="@+id/scoreText"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:gravity="center"
-                android:textColor="@color/white"
-                android:textSize="28dp"
-                android:textStyle="bold"
-                app:layout_constraintBottom_toBottomOf="parent"
+            <!-- Top Background -->
+            <ImageView
+                android:id="@+id/scoreBg"
+                android:layout_width="0dp"
+                android:layout_height="200dp"
+                android:scaleType="centerCrop"
+                android:src="@drawable/game_bg"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toTopOf="parent" />
 
-        </androidx.constraintlayout.widget.ConstraintLayout>
+            <!-- Panda Image -->
+            <ImageView
+                android:id="@+id/pandaImage"
+                android:layout_width="120dp"
+                android:layout_height="120dp"
+                android:layout_marginTop="40dp"
+                android:src="@drawable/panda"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent" />
 
-    </androidx.constraintlayout.widget.ConstraintLayout>
+            <!-- Trophy Image with Animation Container -->
+            <FrameLayout
+                android:id="@+id/trophyContainer"
+                android:layout_width="140dp"
+                android:layout_height="140dp"
+                android:layout_marginTop="16dp"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@id/pandaImage">
+
+                <!-- Animated Background Circle -->
+                <ImageView
+                    android:id="@+id/trophyBg"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:src="@drawable/circle_gold"
+                    android:scaleType="fitCenter"
+                    android:visibility="visible" />
+
+                <!-- Trophy Image -->
+                <ImageView
+                    android:id="@+id/trophyImage"
+                    android:layout_width="100dp"
+                    android:layout_height="100dp"
+                    android:layout_gravity="center"
+                    android:scaleType="fitCenter"
+                    android:src="@drawable/trophy" />
+
+                <!-- Sparkle Effect 1 -->
+                <ImageView
+                    android:id="@+id/sparkle1"
+                    android:layout_width="30dp"
+                    android:layout_height="30dp"
+                    android:layout_gravity="top|start"
+                    android:layout_margin="8dp"
+                    android:src="@drawable/sparkle"
+                    android:visibility="invisible" />
+
+                <!-- Sparkle Effect 2 -->
+                <ImageView
+                    android:id="@+id/sparkle2"
+                    android:layout_width="30dp"
+                    android:layout_height="30dp"
+                    android:layout_gravity="top|end"
+                    android:layout_margin="8dp"
+                    android:src="@drawable/sparkle"
+                    android:visibility="invisible" />
+
+                <!-- Sparkle Effect 3 -->
+                <ImageView
+                    android:id="@+id/sparkle3"
+                    android:layout_width="30dp"
+                    android:layout_height="30dp"
+                    android:layout_gravity="bottom|start"
+                    android:layout_margin="8dp"
+                    android:src="@drawable/sparkle"
+                    android:visibility="invisible" />
+
+                <!-- Sparkle Effect 4 -->
+                <ImageView
+                    android:id="@+id/sparkle4"
+                    android:layout_width="30dp"
+                    android:layout_height="30dp"
+                    android:layout_gravity="bottom|end"
+                    android:layout_margin="8dp"
+                    android:src="@drawable/sparkle"
+                    android:visibility="invisible" />
+
+            </FrameLayout>
+
+            <!-- Score Title -->
+            <TextView
+                android:id="@+id/titleText"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="20dp"
+                android:text="Your Score"
+                android:textColor="@color/dark_gray"
+                android:textSize="24sp"
+                android:textStyle="bold"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@id/trophyContainer" />
+
+            <!-- Score Container -->
+            <LinearLayout
+                android:id="@+id/scoreContainer"
+                android:layout_width="180dp"
+                android:layout_height="80dp"
+                android:layout_marginTop="12dp"
+                android:background="@drawable/rounded_score_background"
+                android:gravity="center"
+                android:orientation="vertical"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@id/titleText">
+
+                <!-- Score Display -->
+                <TextView
+                    android:id="@+id/scoreText"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="0/5"
+                    android:textColor="@color/white"
+                    android:textSize="36sp"
+                    android:textStyle="bold" />
+
+                <!-- Score Description -->
+                <TextView
+                    android:id="@+id/scoreDescription"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Correct Answers"
+                    android:textColor="@color/white"
+                    android:textSize="14sp" />
+
+            </LinearLayout>
+
+            <!-- Total Score -->
+            <TextView
+                android:id="@+id/totalScoreText"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="24dp"
+                android:text="Total Points: 0"
+                android:textColor="@color/blue"
+                android:textSize="18sp"
+                android:textStyle="bold"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@id/scoreContainer" />
+
+            <!-- Performance Details -->
+            <TextView
+                android:id="@+id/performanceDetails"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:layout_marginStart="24dp"
+                android:layout_marginEnd="24dp"
+                android:gravity="center"
+                android:text=""
+                android:textColor="@color/dark_gray"
+                android:textSize="16sp"
+                android:lineSpacingExtra="4dp"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@id/totalScoreText" />
+
+            <!-- Buttons Container -->
+            <LinearLayout
+                android:id="@+id/buttonsContainer"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="32dp"
+                android:layout_marginBottom="32dp"
+                android:gravity="center"
+                android:orientation="vertical"
+                android:spacing="16dp"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@id/performanceDetails">
+
+                <!-- Play Again Button -->
+                <Button
+                    android:id="@+id/btnPlayAgain"
+                    android:layout_width="200dp"
+                    android:layout_height="55dp"
+                    android:text="Play Again"
+                    android:textAllCaps="false"
+                    android:textColor="@color/white"
+                    android:textSize="18sp"
+                    app:backgroundTint="@color/green" />
+
+                <!-- Dashboard Button -->
+                <Button
+                    android:id="@+id/btnDashboard"
+                    android:layout_width="200dp"
+                    android:layout_height="55dp"
+                    android:text="Dashboard"
+                    android:textAllCaps="false"
+                    android:textColor="@color/white"
+                    android:textSize="18sp"
+                    app:backgroundTint="@color/light_orange" />
+
+            </LinearLayout>
+
+        </androidx.constraintlayout.widget.ConstraintLayout>
+    </ScrollView>
 
 </androidx.constraintlayout.widget.ConstraintLayout>
