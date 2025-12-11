@@ -15,6 +15,9 @@
         android:theme="@style/Theme.VoiceBridge"
         tools:targetApi="31">
         <activity
+            android:name=".SanitationSymbolsActivity"
+            android:exported="false" />
+        <activity
             android:name=".ColoursSymbolsActivity"
             android:exported="false" />
         <activity

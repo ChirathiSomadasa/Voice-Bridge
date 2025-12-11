@@ -55,7 +55,7 @@ class SymbolCard1Activity : AppCompatActivity() {
 
         val sanitationsBtn = findViewById<ImageView>(R.id.imgSanitations)
         sanitationsBtn.setOnClickListener {
-            val intent = Intent(this, ColoursSymbolsActivity::class.java)
+            val intent = Intent(this, SanitationSymbolsActivity::class.java)
             startActivity(intent)
         }
 
