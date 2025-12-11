@@ -57,10 +57,10 @@
             <GridLayout
                 android:id="@+id/gridLayout"
                 android:layout_width="match_parent"
-                android:layout_height="800dp"
+                android:layout_height="1500dp"
                 android:alignmentMode="alignMargins"
                 android:columnCount="3"
-                android:rowCount="5"
+                android:rowCount="8"
                 android:rowOrderPreserved="false"
                 android:useDefaultMargins="true">
 
@@ -379,6 +379,344 @@
                         android:textSize="16sp"
                         android:textStyle="bold" />
                 </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="8dp"
+                    android:layout_height="127dp"
+                    android:layout_columnWeight="1"
+                    android:background="@drawable/rounded_green_border"
+                    android:gravity="center"
+                    android:orientation="vertical"
+                    android:padding="8dp">
+
+                    <ImageView
+                        android:id="@+id/imgSandals"
+                        android:layout_width="90dp"
+                        android:layout_height="90dp"
+                        android:contentDescription="Sandals"
+                        android:clickable="true"
+                        android:focusable="true"
+                        app:srcCompat="@drawable/sandals"/>
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="1dp"
+                        android:text="Sandals"
+                        android:textColor="@color/black"
+                        android:textSize="16sp"
+                        android:textStyle="bold" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="8dp"
+                    android:layout_height="127dp"
+                    android:layout_columnWeight="1"
+                    android:background="@drawable/rounded_green_border"
+                    android:gravity="center"
+                    android:orientation="vertical"
+                    android:padding="8dp">
+
+                    <ImageView
+                        android:id="@+id/imgWatch"
+                        android:layout_width="90dp"
+                        android:layout_height="90dp"
+                        android:contentDescription="Watch"
+                        android:clickable="true"
+                        android:focusable="true"
+                        app:srcCompat="@drawable/watch"/>
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="1dp"
+                        android:text="Watch"
+                        android:textColor="@color/black"
+                        android:textSize="16sp"
+                        android:textStyle="bold" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="8dp"
+                    android:layout_height="127dp"
+                    android:layout_columnWeight="1"
+                    android:background="@drawable/rounded_green_border"
+                    android:gravity="center"
+                    android:orientation="vertical"
+                    android:padding="8dp">
+
+                    <ImageView
+                        android:id="@+id/imgScarf"
+                        android:layout_width="90dp"
+                        android:layout_height="90dp"
+                        android:contentDescription="Scarf"
+                        android:clickable="true"
+                        android:focusable="true"
+                        app:srcCompat="@drawable/scarf"/>
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="1dp"
+                        android:text="Scarf"
+                        android:textColor="@color/black"
+                        android:textSize="16sp"
+                        android:textStyle="bold" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="8dp"
+                    android:layout_height="127dp"
+                    android:layout_columnWeight="1"
+                    android:background="@drawable/rounded_green_border"
+                    android:gravity="center"
+                    android:orientation="vertical"
+                    android:padding="8dp">
+
+                    <ImageView
+                        android:id="@+id/imgHankerchief"
+                        android:layout_width="90dp"
+                        android:layout_height="90dp"
+                        android:contentDescription="Hankerchief"
+                        android:clickable="true"
+                        android:focusable="true"
+                        app:srcCompat="@drawable/hankerchief"/>
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="1dp"
+                        android:text="Hankerchief"
+                        android:textColor="@color/black"
+                        android:textSize="16sp"
+                        android:textStyle="bold" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="8dp"
+                    android:layout_height="127dp"
+                    android:layout_columnWeight="1"
+                    android:background="@drawable/rounded_green_border"
+                    android:gravity="center"
+                    android:orientation="vertical"
+                    android:padding="8dp">
+
+                    <ImageView
+                        android:id="@+id/imgWallet"
+                        android:layout_width="90dp"
+                        android:layout_height="90dp"
+                        android:contentDescription="Wallet"
+                        android:clickable="true"
+                        android:focusable="true"
+                        app:srcCompat="@drawable/wallet"/>
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="1dp"
+                        android:text="Wallet"
+                        android:textColor="@color/black"
+                        android:textSize="16sp"
+                        android:textStyle="bold" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="8dp"
+                    android:layout_height="127dp"
+                    android:layout_columnWeight="1"
+                    android:background="@drawable/rounded_green_border"
+                    android:gravity="center"
+                    android:orientation="vertical"
+                    android:padding="8dp">
+
+                    <ImageView
+                        android:id="@+id/imgGlasses"
+                        android:layout_width="90dp"
+                        android:layout_height="90dp"
+                        android:contentDescription="Glasses"
+                        android:clickable="true"
+                        android:focusable="true"
+                        app:srcCompat="@drawable/glasses"/>
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="1dp"
+                        android:text="Glasses"
+                        android:textColor="@color/black"
+                        android:textSize="16sp"
+                        android:textStyle="bold" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="8dp"
+                    android:layout_height="127dp"
+                    android:layout_columnWeight="1"
+                    android:background="@drawable/rounded_green_border"
+                    android:gravity="center"
+                    android:orientation="vertical"
+                    android:padding="8dp">
+
+                    <ImageView
+                        android:id="@+id/imgSunGlasses"
+                        android:layout_width="90dp"
+                        android:layout_height="90dp"
+                        android:contentDescription="SunGlasses"
+                        android:clickable="true"
+                        android:focusable="true"
+                        app:srcCompat="@drawable/sunglasses"/>
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="1dp"
+                        android:text="Sun Glasses"
+                        android:textColor="@color/black"
+                        android:textSize="16sp"
+                        android:textStyle="bold" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="8dp"
+                    android:layout_height="127dp"
+                    android:layout_columnWeight="1"
+                    android:background="@drawable/rounded_green_border"
+                    android:gravity="center"
+                    android:orientation="vertical"
+                    android:padding="8dp">
+
+                    <ImageView
+                        android:id="@+id/imgSocks"
+                        android:layout_width="90dp"
+                        android:layout_height="90dp"
+                        android:contentDescription="Socks"
+                        android:clickable="true"
+                        android:focusable="true"
+                        app:srcCompat="@drawable/socks"/>
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="1dp"
+                        android:text="Socks"
+                        android:textColor="@color/black"
+                        android:textSize="16sp"
+                        android:textStyle="bold" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="8dp"
+                    android:layout_height="127dp"
+                    android:layout_columnWeight="1"
+                    android:background="@drawable/rounded_green_border"
+                    android:gravity="center"
+                    android:orientation="vertical"
+                    android:padding="8dp">
+
+                    <ImageView
+                        android:id="@+id/imgUmbrella"
+                        android:layout_width="90dp"
+                        android:layout_height="90dp"
+                        android:contentDescription="Umbrella"
+                        android:clickable="true"
+                        android:focusable="true"
+                        app:srcCompat="@drawable/umbrella"/>
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="1dp"
+                        android:text="Umbrella"
+                        android:textColor="@color/black"
+                        android:textSize="16sp"
+                        android:textStyle="bold" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="8dp"
+                    android:layout_height="127dp"
+                    android:layout_columnWeight="1"
+                    android:background="@drawable/rounded_green_border"
+                    android:gravity="center"
+                    android:orientation="vertical"
+                    android:padding="8dp">
+
+                    <ImageView
+                        android:id="@+id/imgTie"
+                        android:layout_width="90dp"
+                        android:layout_height="90dp"
+                        android:contentDescription="Tie"
+                        android:clickable="true"
+                        android:focusable="true"
+                        app:srcCompat="@drawable/tie"/>
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="1dp"
+                        android:text="Tie"
+                        android:textColor="@color/black"
+                        android:textSize="16sp"
+                        android:textStyle="bold" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="8dp"
+                    android:layout_height="127dp"
+                    android:layout_columnWeight="1"
+                    android:background="@drawable/rounded_green_border"
+                    android:gravity="center"
+                    android:orientation="vertical"
+                    android:padding="8dp">
+
+                    <ImageView
+                        android:id="@+id/imgBowTie"
+                        android:layout_width="90dp"
+                        android:layout_height="90dp"
+                        android:contentDescription="BowTie"
+                        android:clickable="true"
+                        android:focusable="true"
+                        app:srcCompat="@drawable/bow_tie"/>
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="1dp"
+                        android:text="Bow Tie"
+                        android:textColor="@color/black"
+                        android:textSize="16sp"
+                        android:textStyle="bold" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="8dp"
+                    android:layout_height="127dp"
+                    android:layout_columnWeight="1"
+                    android:background="@drawable/rounded_green_border"
+                    android:gravity="center"
+                    android:orientation="vertical"
+                    android:padding="8dp">
+
+                    <ImageView
+                        android:id="@+id/imgCap"
+                        android:layout_width="90dp"
+                        android:layout_height="90dp"
+                        android:contentDescription="Cap"
+                        android:clickable="true"
+                        android:focusable="true"
+                        app:srcCompat="@drawable/cap"/>
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="1dp"
+                        android:text="Cap"
+                        android:textColor="@color/black"
+                        android:textSize="16sp"
+                        android:textStyle="bold" />
+                </LinearLayout>
+
+
 
             </GridLayout>
 
