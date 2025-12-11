@@ -14,7 +14,8 @@ class SymbolCard1Activity : AppCompatActivity() {
 
         val backBtn = findViewById<ImageView>(R.id.back)
         backBtn.setOnClickListener {
-            finish()
+            val intent = Intent(this, SymbolCommunicationActivity::class.java)
+            startActivity(intent)
         }
 
         val snackBtn = findViewById<ImageView>(R.id.imgSnacks)
