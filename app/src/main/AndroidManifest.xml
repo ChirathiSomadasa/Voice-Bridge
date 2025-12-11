@@ -15,6 +15,9 @@
         android:theme="@style/Theme.VoiceBridge"
         tools:targetApi="31">
         <activity
+            android:name=".ToysSymbolActivity"
+            android:exported="false" />
+        <activity
             android:name=".DrinkSymbolActivity"
             android:exported="false" />
         <activity

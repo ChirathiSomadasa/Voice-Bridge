@@ -17,10 +17,16 @@ class SymbolCard1Activity : AppCompatActivity() {
             finish()
         }
 
-//        val goBtn = findViewById<Button>(R.id.btn_Go_symbol)
-//        goBtn.setOnClickListener {
-//            val intent = Intent(this, QuickWordsChartsActivity::class.java)
-//            startActivity(intent)
-//        }
+        val snackBtn = findViewById<ImageView>(R.id.imgSnacks)
+        snackBtn.setOnClickListener {
+            val intent = Intent(this, SanackSymbolActivity::class.java)
+            startActivity(intent)
+        }
+
+        val drinkBtn = findViewById<ImageView>(R.id.imgDrinks)
+        drinkBtn.setOnClickListener {
+            val intent = Intent(this, DrinkSymbolActivity::class.java)
+            startActivity(intent)
+        }
     }
 }

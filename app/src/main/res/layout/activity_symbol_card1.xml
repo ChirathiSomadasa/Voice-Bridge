@@ -67,6 +67,7 @@
                 android:useDefaultMargins="true">
 
                 <LinearLayout
+                    android:id="@+id/snackBtn"
                     android:layout_width="8dp"
                     android:layout_height="170dp"
                     android:layout_row="0"
