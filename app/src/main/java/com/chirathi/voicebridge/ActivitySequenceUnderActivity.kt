@@ -3,6 +3,7 @@ package com.chirathi.voicebridge
 import android.content.Intent
 import android.os.Bundle
 import android.os.Handler
+import android.os.Looper
 import android.view.Gravity
 import android.view.View
 import android.view.animation.AnimationUtils
@@ -20,6 +21,16 @@ class ActivitySequenceUnderActivity : AppCompatActivity() {
     private val correctOrder = listOf("get_up", "brush_teeth", "wash_face")
     private var selectedOrder = mutableListOf<String>()
     private var isGameComplete = false
+    private var attemptsCount = 0
+    private var correctAnswers = 0
+    private var totalQuestions = 3
+
+    // Timer variables
+    private var gameStartTime: Long = 0L
+    private var elapsedTime: Long = 0L
+    private val timerHandler = Handler(Looper.getMainLooper())
+    private lateinit var timerRunnable: Runnable
+    private var isTimerRunning = false
 
     // UI Elements
     private lateinit var horizontalContainer: LinearLayout
@@ -28,6 +39,7 @@ class ActivitySequenceUnderActivity : AppCompatActivity() {
     private lateinit var gameTitle: TextView
     private lateinit var tvInstruction: TextView
     private lateinit var btnStart: Button
+    private lateinit var timerTextView: TextView
 
     // TextViews for order display
     private lateinit var tvOrder1: TextView
@@ -55,6 +67,7 @@ class ActivitySequenceUnderActivity : AppCompatActivity() {
 
         initViews()
         setupInitialView()
+        setupTimer()
     }
 
     private fun initViews() {
@@ -65,6 +78,7 @@ class ActivitySequenceUnderActivity : AppCompatActivity() {
         gameTitle = findViewById(R.id.game_title)
         tvInstruction = findViewById(R.id.tv_instruction)
         btnStart = findViewById(R.id.btn_start)
+        timerTextView = findViewById(R.id.timerTextView)
 
         tvOrder1 = findViewById(R.id.tv_order_1)
         tvOrder2 = findViewById(R.id.tv_order_2)
@@ -85,10 +99,46 @@ class ActivitySequenceUnderActivity : AppCompatActivity() {
         }
     }
 
+    private fun setupTimer() {
+        // Initialize timer runnable
+        timerRunnable = object : Runnable {
+            override fun run() {
+                if (isTimerRunning) {
+                    elapsedTime = System.currentTimeMillis() - gameStartTime
+                    updateTimerDisplay()
+                    timerHandler.postDelayed(this, 1000) // Update every second
+                }
+            }
+        }
+    }
+
+    private fun updateTimerDisplay() {
+        val seconds = (elapsedTime / 1000) % 60
+        val minutes = (elapsedTime / (1000 * 60)) % 60
+
+        timerTextView.text = String.format("%02d:%02d", minutes, seconds)
+    }
+
+    private fun startTimer() {
+        gameStartTime = System.currentTimeMillis()
+        elapsedTime = 0L
+        isTimerRunning = true
+        timerHandler.post(timerRunnable)
+        timerTextView.visibility = View.VISIBLE
+    }
+
+    private fun stopTimer() {
+        isTimerRunning = false
+        timerHandler.removeCallbacks(timerRunnable)
+        elapsedTime = System.currentTimeMillis() - gameStartTime
+        updateTimerDisplay()
+    }
+
     private fun setupInitialView() {
         // Show horizontal layout and start button
         horizontalContainer.visibility = View.VISIBLE
         btnStart.visibility = View.VISIBLE
+        timerTextView.visibility = View.GONE // Hide timer initially
 
         // Hide vertical layout and other elements
         verticalContainer.visibility = View.GONE
@@ -109,6 +159,9 @@ class ActivitySequenceUnderActivity : AppCompatActivity() {
     private fun startGame() {
         // Hide start button
         btnStart.visibility = View.GONE
+
+        // Start the timer
+        startTimer()
 
         // Transition to vertical layout
         transitionToVerticalLayout()
@@ -285,13 +338,20 @@ class ActivitySequenceUnderActivity : AppCompatActivity() {
         Handler().postDelayed({
             val isCorrect = selectedOrder == correctOrder
 
+            // Increment attempts counter
+            attemptsCount++
+
             if (isCorrect) {
                 // Correct order
+                correctAnswers = 3
                 playSuccessAnimation()
                 isGameComplete = true
 
+                // Stop the timer
+                stopTimer()
+
                 Handler().postDelayed({
-                    goToScoreboard(3)
+                    goToScoreboard()
                 }, 2000)
             } else {
                 // Wrong order
@@ -334,11 +394,16 @@ class ActivitySequenceUnderActivity : AppCompatActivity() {
     private fun resetGameState() {
         selectedOrder.clear()
         isGameComplete = false
+        attemptsCount = 0
+        correctAnswers = 0
 
         // Clear order display
         tvOrder1.text = "1. "
         tvOrder2.text = "2. "
         tvOrder3.text = "3. "
+
+        // Reset timer display
+        timerTextView.text = "00:00"
     }
 
     private fun playSuccessAnimation() {
@@ -383,11 +448,20 @@ class ActivitySequenceUnderActivity : AppCompatActivity() {
         Toast.makeText(this, "Wrong order! Try again.", Toast.LENGTH_SHORT).show()
     }
 
-    private fun goToScoreboard(correctAnswers: Int) {
+    private fun goToScoreboard() {
         val intent = Intent(this, ASequenceScoreboardActivity::class.java)
         intent.putExtra("CORRECT_ANSWERS", correctAnswers)
-        intent.putExtra("TOTAL_QUESTIONS", 3)
+        intent.putExtra("TOTAL_QUESTIONS", totalQuestions)
+        intent.putExtra("ATTEMPTS", attemptsCount) // Send actual attempts count
+        intent.putExtra("ELAPSED_TIME", elapsedTime) // Send elapsed time
         startActivity(intent)
         finish()
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        // Stop timer to prevent memory leaks
+        isTimerRunning = false
+        timerHandler.removeCallbacks(timerRunnable)
     }
 }

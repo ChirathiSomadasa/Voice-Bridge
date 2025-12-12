@@ -16,6 +16,7 @@
         android:src="@drawable/activity_sequence"
         app:layout_constraintTop_toTopOf="parent" />
 
+
     <!-- Main content container -->
     <LinearLayout
         android:id="@+id/main_content_container"
@@ -36,6 +37,14 @@
             android:textStyle="bold"
             android:gravity="center"
             android:layout_marginBottom="24dp"/>
+
+        <TextView
+            android:id="@+id/timerTextView"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="00:00"
+            android:textSize="20sp"
+            android:textStyle="bold" />
 
         <!-- Horizontal images (initial state) -->
         <LinearLayout
