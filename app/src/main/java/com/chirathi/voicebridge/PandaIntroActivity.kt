@@ -29,7 +29,7 @@ class PandaIntroActivity : AppCompatActivity() {
         skipButton = findViewById(R.id.skipButton)
 
         // Initialize VideoView WITHOUT any MediaController or controls
-        val videoPath = "android.resource://" + packageName + "/" + R.raw.emotion_match_intro
+        val videoPath = "android.resource://" + packageName + "/" + R.raw.game_intro
         val uri = Uri.parse(videoPath)
         videoView.setVideoURI(uri)
 

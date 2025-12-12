@@ -78,6 +78,9 @@
             android:name=".SongSelectionActivity"
             android:exported="false" />
         <activity
+            android:name=".ActivitySequenceOverActivity"
+            android:exported="false" />
+        <activity
             android:name=".ActivitySequenceUnderActivity"
             android:exported="false" />
         <activity
