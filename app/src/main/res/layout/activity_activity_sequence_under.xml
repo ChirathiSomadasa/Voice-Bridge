@@ -1,0 +1,163 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/white"
+    tools:context=".ActivitySequenceUnderActivity">
+
+    <ImageView
+        android:id="@+id/topGameImage"
+        android:layout_width="match_parent"
+        android:layout_height="250dp"
+        android:scaleType="fitXY"
+        android:src="@drawable/activity_sequence"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <!-- Main content container -->
+    <LinearLayout
+        android:id="@+id/main_content_container"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:orientation="vertical"
+        android:padding="24dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/topGameImage">
+
+        <!-- Game title -->
+        <TextView
+            android:id="@+id/game_title"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Arrange Morning Routine"
+            android:textSize="20sp"
+            android:textStyle="bold"
+            android:gravity="center"
+            android:layout_marginBottom="24dp"/>
+
+        <!-- Horizontal images (initial state) -->
+        <LinearLayout
+            android:id="@+id/horizontal_images_container"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center"
+            android:layout_marginBottom="24dp">
+
+            <!-- Image 1: Get Up -->
+            <FrameLayout
+                android:id="@+id/frame_get_up"
+                android:layout_width="100dp"
+                android:layout_height="100dp"
+                android:layout_margin="8dp">
+
+                <ImageView
+                    android:id="@+id/img_get_up"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:src="@drawable/img_get_up"/>
+            </FrameLayout>
+
+            <!-- Image 2: Brush Teeth -->
+            <FrameLayout
+                android:id="@+id/frame_brush_teeth"
+                android:layout_width="100dp"
+                android:layout_height="100dp"
+                android:layout_margin="8dp">
+
+                <ImageView
+                    android:id="@+id/img_brush_teeth"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:src="@drawable/img_brush_teeth"/>
+            </FrameLayout>
+
+            <!-- Image 3: Wash Face -->
+            <FrameLayout
+                android:id="@+id/frame_wash_face"
+                android:layout_width="100dp"
+                android:layout_height="100dp"
+                android:layout_margin="8dp">
+
+                <ImageView
+                    android:id="@+id/img_wash_face"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:src="@drawable/img_wash_face"/>
+            </FrameLayout>
+        </LinearLayout>
+
+        <!-- START BUTTON -->
+        <Button
+            android:id="@+id/btn_start"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Start Game"
+            android:layout_gravity="center"
+            android:background="@drawable/rounded_button_background_g"
+            android:textColor="@color/white"
+            android:paddingStart="32dp"
+            android:paddingEnd="32dp"
+            android:layout_marginBottom="24dp"/>
+
+        <!-- Vertical images container (hidden initially) -->
+        <LinearLayout
+            android:id="@+id/vertical_images_container"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:gravity="center"
+            android:layout_marginBottom="24dp"
+            android:visibility="gone">
+
+            <!-- Note: Vertical images will be added programmatically -->
+        </LinearLayout>
+
+        <!-- Order display (hidden initially) -->
+        <LinearLayout
+            android:id="@+id/order_display_container"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="16dp"
+            android:layout_marginBottom="16dp"
+            android:visibility="gone">
+
+            <TextView
+                android:id="@+id/tv_order_1"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="1. "
+                android:textSize="16sp"/>
+
+            <TextView
+                android:id="@+id/tv_order_2"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="2. "
+                android:textSize="16sp"/>
+
+            <TextView
+                android:id="@+id/tv_order_3"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="3. "
+                android:textSize="16sp"/>
+        </LinearLayout>
+
+        <!-- Instruction text (hidden initially) -->
+        <TextView
+            android:id="@+id/tv_instruction"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Tap the images in correct order"
+            android:textSize="16sp"
+            android:gravity="center"
+            android:visibility="gone"
+            android:layout_marginBottom="16dp"/>
+
+    </LinearLayout>
+
+</androidx.constraintlayout.widget.ConstraintLayout>
