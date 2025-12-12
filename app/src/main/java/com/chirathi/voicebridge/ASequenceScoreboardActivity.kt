@@ -4,6 +4,7 @@ import android.content.Intent
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
+import android.util.Log
 import android.view.View
 import android.view.animation.Animation
 import android.view.animation.AnimationUtils
@@ -15,9 +16,9 @@ import androidx.appcompat.app.AppCompatActivity
 
 class ASequenceScoreboardActivity : AppCompatActivity() {
 
-    private var attempts = 1
+    private var attempts = 0
     private var completionTime = 0L
-    private var startTime: Long = 0L  // Fixed: Initialize with default value
+    private var accuracy = 100
 
     private lateinit var star1: ImageView
     private lateinit var star2: ImageView
@@ -25,29 +26,110 @@ class ASequenceScoreboardActivity : AppCompatActivity() {
     private lateinit var line1: View
     private lateinit var line2: View
     private lateinit var pandaImage: ImageView
+    private lateinit var celebrationText: TextView
+    private lateinit var subtitleText: TextView
+    private lateinit var attemptsText: TextView
+    private lateinit var timeText: TextView
+    private lateinit var accuracyText: TextView
+
     private val sparkles = mutableListOf<ImageView>()
 
     // Handler for glow animations
     private val glowHandler = Handler(Looper.getMainLooper())
     private val glowRunnables = mutableListOf<Runnable>()
 
+    companion object {
+        private const val TAG = "ScoreboardDebug"
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_asequence_scoreboard)
 
-        // Get data passed from game
-        attempts = intent.getIntExtra("ATTEMPTS", 1)
-        startTime = intent.getLongExtra("START_TIME", System.currentTimeMillis())
-        completionTime = System.currentTimeMillis() - startTime
+        Log.d(TAG, "=== onCreate STARTED ===")
+        Log.d(TAG, "Intent received: ${intent}")
+        Log.d(TAG, "Intent extras: ${intent.extras}")
 
-        // Initialize views
-        val celebrationText = findViewById<TextView>(R.id.celebrationText)
-        val subtitleText = findViewById<TextView>(R.id.subtitleText)
-        val attemptsText = findViewById<TextView>(R.id.attemptsText)
-        val timeText = findViewById<TextView>(R.id.timeText)
-        val accuracyText = findViewById<TextView>(R.id.accuracyText)
-        val btnTryAnother = findViewById<Button>(R.id.btnTryAnother)
-        val btnHome = findViewById<Button>(R.id.btnHome)
+        // Get data passed from game
+        val correctAnswers = intent.getIntExtra("CORRECT_ANSWERS", 0)
+        val totalQuestions = intent.getIntExtra("TOTAL_QUESTIONS", 1)
+        val attemptsFromGame = intent.getIntExtra("ATTEMPTS", 1)
+        completionTime = intent.getLongExtra("ELAPSED_TIME", 0L)
+
+        // Use the attempts sent from the game
+        attempts = attemptsFromGame
+
+        // Calculate accuracy
+        accuracy = if (totalQuestions > 0) {
+            (correctAnswers * 100) / totalQuestions
+        } else {
+            100
+        }
+
+        Log.d(TAG, "=== RAW INTENT DATA ===")
+        Log.d(TAG, "CORRECT_ANSWERS: $correctAnswers")
+        Log.d(TAG, "TOTAL_QUESTIONS: $totalQuestions")
+        Log.d(TAG, "ATTEMPTS: $attemptsFromGame")
+        Log.d(TAG, "ELAPSED_TIME: $completionTime ms")
+        Log.d(TAG, "=== CALCULATED VALUES ===")
+        Log.d(TAG, "Attempts: $attempts")
+        Log.d(TAG, "Completion time: $completionTime ms")
+        Log.d(TAG, "Accuracy: $accuracy%")
+        Log.d(TAG, "Formatted time: ${formatTime(completionTime)}")
+
+        // Check if intent has any extras at all
+        if (intent.extras == null) {
+            Log.w(TAG, "⚠️ WARNING: Intent has NO extras!")
+        } else {
+            Log.d(TAG, "Intent has ${intent.extras!!.size()} extras")
+            for (key in intent.extras!!.keySet()) {
+                Log.d(TAG, "Extra key: '$key', value: ${intent.extras!!.get(key)}")
+            }
+        }
+
+        // If completionTime is 0 or not provided, use a default
+        if (completionTime == 0L) {
+            Log.w(TAG, "⚠️ completionTime is 0, using default (10 seconds)")
+            completionTime = 10000 // Default 10 seconds
+        }
+
+        // Initialize all views
+        initializeViews()
+
+        // Set stats to views
+        setStatsToViews()
+
+        // Set celebration message based on attempts and accuracy
+        updateCelebrationMessage()
+
+        // Start animations with delay
+        Handler(Looper.getMainLooper()).postDelayed({
+            startPandaAnimation()
+            startStarAnimationSequence()
+        }, 500)
+
+        // Start sparkle animations
+        startSparkleAnimations()
+
+        // Button click listeners
+        setupButtonListeners()
+
+        Log.d(TAG, "=== onCreate COMPLETED ===")
+    }
+
+    private fun initializeViews() {
+        Log.d(TAG, "Initializing views...")
+
+        celebrationText = findViewById(R.id.celebrationText)
+        subtitleText = findViewById(R.id.subtitleText)
+        attemptsText = findViewById(R.id.attemptsText)
+        timeText = findViewById(R.id.timeText)
+        accuracyText = findViewById(R.id.accuracyText)
+
+        // Log initial text values
+        Log.d(TAG, "attemptsText initial text: ${attemptsText.text}")
+        Log.d(TAG, "timeText initial text: ${timeText.text}")
+        Log.d(TAG, "accuracyText initial text: ${accuracyText.text}")
 
         // Animation views
         star1 = findViewById(R.id.star1)
@@ -62,75 +144,117 @@ class ASequenceScoreboardActivity : AppCompatActivity() {
         sparkles.add(findViewById(R.id.sparkle2))
         sparkles.add(findViewById(R.id.sparkle3))
         sparkles.add(findViewById(R.id.sparkle4))
+    }
 
-        // Set stats
-        attemptsText.text = attempts.toString()
+    private fun setStatsToViews() {
+        Log.d(TAG, "=== setStatsToViews STARTED ===")
+        Log.d(TAG, "Raw attempts value: $attempts")
+
+        // Make sure attempts is at least 1
+        val displayAttempts = if (attempts <= 0) {
+            Log.d(TAG, "Attempts was <= 0, setting to 1 for display")
+            1
+        } else {
+            attempts
+        }
+
+        Log.d(TAG, "Display attempts: $displayAttempts")
+        attemptsText.text = displayAttempts.toString()
+        Log.d(TAG, "attemptsText after setting: ${attemptsText.text}")
+
         timeText.text = formatTime(completionTime)
-        accuracyText.text = "100%"
+        Log.d(TAG, "timeText after setting: ${timeText.text}")
 
-        // Set celebration message based on attempts
-        updateCelebrationMessage(celebrationText, subtitleText, attempts)
+        accuracyText.text = "$accuracy%"
+        Log.d(TAG, "accuracyText after setting: ${accuracyText.text}")
 
-        // Start animations with delay
-        Handler(Looper.getMainLooper()).postDelayed({
-            startPandaAnimation()
-            startStarAnimationSequence()
-        }, 500)
-
-        // Start sparkle animations
-        startSparkleAnimations()
-
-        // Button click listeners
-        btnTryAnother.setOnClickListener {
-            // Go back to sequence selection
-            val intent = Intent(this, ActivitySequenceUnderActivity::class.java)
-            intent.flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
-            startActivity(intent)
-            finish()
-        }
-
-        btnHome.setOnClickListener {
-            // Go to main menu or dashboard
-            val intent = Intent(this, GameDashboardActivity::class.java)
-            intent.flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
-            startActivity(intent)
-            finish()
-        }
+        Log.d(TAG, "=== setStatsToViews COMPLETED ===")
     }
 
     private fun formatTime(millis: Long): String {
+        Log.d(TAG, "formatTime called with: $millis ms")
+
+        // Handle invalid or zero time
+        if (millis <= 0) {
+            Log.d(TAG, "formatTime: millis <= 0, returning '0s'")
+            return "0s"
+        }
+
         val seconds = millis / 1000
-        return if (seconds < 60) {
+        val milliseconds = millis % 1000
+
+        val result = if (seconds == 0L) {
+            "${milliseconds}ms"
+        } else if (seconds < 60) {
             "${seconds}s"
         } else {
             val minutes = seconds / 60
             val remainingSeconds = seconds % 60
             "${minutes}m ${remainingSeconds}s"
         }
+
+        Log.d(TAG, "formatTime result: $result")
+        return result
     }
 
-    private fun updateCelebrationMessage(
-        celebrationText: TextView,
-        subtitleText: TextView,
-        attempts: Int
-    ) {
-        when (attempts) {
-            1 -> {
-                celebrationText.text = "🎉 Perfect on First Try! 🎉"
-                subtitleText.text = "You're a sequencing superstar! ⭐"
+    private fun updateCelebrationMessage() {
+        Log.d(TAG, "=== updateCelebrationMessage ===")
+        // Determine star rating based on attempts and time
+        val starRating = calculateStarRating()
+
+        Log.d(TAG, "Star rating calculated: $starRating")
+
+        when (starRating) {
+            3 -> {
+                celebrationText.text = "🎉 Perfect! ⭐⭐⭐ 🎉"
+                subtitleText.text = "Flawless victory! You're amazing!"
             }
-            in 2..3 -> {
-                celebrationText.text = "🎊 Excellent Work! 🎊"
-                subtitleText.text = "You figured it out quickly! 🚀"
+            2 -> {
+                celebrationText.text = "🌟 Excellent! ⭐⭐ 🌟"
+                subtitleText.text = "Great job! Almost perfect!"
+            }
+            1 -> {
+                celebrationText.text = "✨ Good Job! ⭐ ✨"
+                subtitleText.text = "You completed the sequence!"
             }
             else -> {
-                celebrationText.text = "🌟 Great Persistence! 🌟"
-                subtitleText.text = "You never gave up! 💪"
+                celebrationText.text = "✅ Complete! ✅"
+                subtitleText.text = "You finished the activity!"
             }
         }
+
+        Log.d(TAG, "Celebration text set to: ${celebrationText.text}")
+        Log.d(TAG, "Subtitle text set to: ${subtitleText.text}")
+    }
+
+    private fun calculateStarRating(): Int {
+        Log.d(TAG, "=== calculateStarRating ===")
+        Log.d(TAG, "Attempts: $attempts")
+        Log.d(TAG, "Completion time seconds: ${completionTime / 1000}")
+
+        val seconds = completionTime / 1000
+
+        val rating = when {
+            attempts <= 2 && seconds <= 30 -> {
+                Log.d(TAG, "Rating: 3 stars (attempts <= 2, seconds <= 30)")
+                3
+            }
+            attempts <= 4 && seconds <= 60 -> {
+                Log.d(TAG, "Rating: 2 stars (attempts <= 4, seconds <= 60)")
+                2
+            }
+            else -> {
+                Log.d(TAG, "Rating: 1 star (default)")
+                1
+            }
+        }
+
+        Log.d(TAG, "Final star rating: $rating")
+        return rating
     }
 
     private fun startPandaAnimation() {
+        Log.d(TAG, "Starting panda animation...")
         // Panda bounce animation
         val bounceAnimation = ScaleAnimation(
             0.5f, 1.2f, 0.5f, 1.2f,
@@ -155,6 +279,7 @@ class ASequenceScoreboardActivity : AppCompatActivity() {
     }
 
     private fun startGentleBounceAnimation() {
+        Log.d(TAG, "Starting gentle bounce animation...")
         // Continuous gentle bounce for panda
         val gentleBounce = ScaleAnimation(
             1f, 1.05f, 1f, 1.05f,
@@ -170,25 +295,58 @@ class ASequenceScoreboardActivity : AppCompatActivity() {
     }
 
     private fun startStarAnimationSequence() {
-        // Animate stars one by one
-        Handler(Looper.getMainLooper()).postDelayed({
-            fillStar(star1)
-            fillLine(line1)
-        }, 300)
+        Log.d(TAG, "Starting star animation sequence...")
+        val starRating = calculateStarRating()
 
-        Handler(Looper.getMainLooper()).postDelayed({
-            fillStar(star2)
-            fillLine(line2)
-        }, 800)
+        // Animate stars based on rating
+        when (starRating) {
+            3 -> {
+                Log.d(TAG, "Animating 3 stars")
+                Handler(Looper.getMainLooper()).postDelayed({
+                    fillStar(star1)
+                    fillLine(line1)
+                }, 300)
 
-        Handler(Looper.getMainLooper()).postDelayed({
-            fillStar(star3)
-            // Final celebration
-            playFinalCelebration()
-        }, 1300)
+                Handler(Looper.getMainLooper()).postDelayed({
+                    fillStar(star2)
+                    fillLine(line2)
+                }, 800)
+
+                Handler(Looper.getMainLooper()).postDelayed({
+                    fillStar(star3)
+                    playFinalCelebration()
+                }, 1300)
+            }
+            2 -> {
+                Log.d(TAG, "Animating 2 stars")
+                Handler(Looper.getMainLooper()).postDelayed({
+                    fillStar(star1)
+                    fillLine(line1)
+                }, 300)
+
+                Handler(Looper.getMainLooper()).postDelayed({
+                    fillStar(star2)
+                    // Don't fill line2 or star3
+                    Handler(Looper.getMainLooper()).postDelayed({
+                        playFinalCelebration()
+                    }, 500)
+                }, 800)
+            }
+            1 -> {
+                Log.d(TAG, "Animating 1 star")
+                Handler(Looper.getMainLooper()).postDelayed({
+                    fillStar(star1)
+                    // Only one star
+                    Handler(Looper.getMainLooper()).postDelayed({
+                        playFinalCelebration()
+                    }, 500)
+                }, 300)
+            }
+        }
     }
 
     private fun fillStar(star: ImageView) {
+        Log.d(TAG, "Filling star...")
         // Change star from outline to filled
         star.setImageResource(R.drawable.star_filled)
 
@@ -210,6 +368,7 @@ class ASequenceScoreboardActivity : AppCompatActivity() {
     }
 
     private fun startGlowingAnimation(star: ImageView) {
+        Log.d(TAG, "Starting glow animation...")
         val glowRunnable = object : Runnable {
             private var isGlowing = false
             private var isAnimating = true
@@ -242,6 +401,7 @@ class ASequenceScoreboardActivity : AppCompatActivity() {
     }
 
     private fun fillLine(line: View) {
+        Log.d(TAG, "Filling line...")
         // Animate line from gray to gold
         line.animate()
             .setDuration(500)
@@ -263,6 +423,7 @@ class ASequenceScoreboardActivity : AppCompatActivity() {
     }
 
     private fun playFinalCelebration() {
+        Log.d(TAG, "Playing final celebration...")
         // Big celebration animation for star container
         val celebrationAnimation = ScaleAnimation(
             0.8f, 1.5f, 0.8f, 1.5f,
@@ -294,6 +455,7 @@ class ASequenceScoreboardActivity : AppCompatActivity() {
     }
 
     private fun stopGlowingAnimations() {
+        Log.d(TAG, "Stopping glow animations...")
         // Clear all runnables
         glowRunnables.forEach {
             glowHandler.removeCallbacks(it)
@@ -302,6 +464,7 @@ class ASequenceScoreboardActivity : AppCompatActivity() {
     }
 
     private fun pandaHappyDance() {
+        Log.d(TAG, "Starting panda happy dance...")
         // Panda rotation animation
         val rotateAnimation = android.view.animation.RotateAnimation(
             -15f, 15f,
@@ -329,6 +492,7 @@ class ASequenceScoreboardActivity : AppCompatActivity() {
     }
 
     private fun startSparkleAnimations() {
+        Log.d(TAG, "Starting sparkle animations...")
         sparkles.forEachIndexed { index, sparkle ->
             Handler(Looper.getMainLooper()).postDelayed({
                 animateSparkle(sparkle)
@@ -366,6 +530,7 @@ class ASequenceScoreboardActivity : AppCompatActivity() {
     }
 
     private fun triggerConfetti() {
+        Log.d(TAG, "Triggering confetti...")
         // Simple confetti effect using text emojis
         for (i in 1..15) {
             Handler(Looper.getMainLooper()).postDelayed({
@@ -417,8 +582,33 @@ class ASequenceScoreboardActivity : AppCompatActivity() {
             .start()
     }
 
+    private fun setupButtonListeners() {
+        Log.d(TAG, "Setting up button listeners...")
+        val btnTryAnother = findViewById<Button>(R.id.btnTryAnother)
+        val btnHome = findViewById<Button>(R.id.btnHome)
+
+        btnTryAnother.setOnClickListener {
+            Log.d(TAG, "Try Another button clicked")
+            // Go back to sequence selection
+            val intent = Intent(this, ActivitySequenceUnderActivity::class.java)
+            intent.flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
+            startActivity(intent)
+            finish()
+        }
+
+        btnHome.setOnClickListener {
+            Log.d(TAG, "Home button clicked")
+            // Go to main menu or dashboard
+            val intent = Intent(this, GameDashboardActivity::class.java)
+            intent.flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
+            startActivity(intent)
+            finish()
+        }
+    }
+
     override fun onDestroy() {
         super.onDestroy()
+        Log.d(TAG, "onDestroy called")
         // Clear animations to prevent memory leaks
         star1.clearAnimation()
         star2.clearAnimation()
