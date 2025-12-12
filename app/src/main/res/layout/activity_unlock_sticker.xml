@@ -25,7 +25,7 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent" />
 
-    <!-- Panda Image - Centered -->
+
     <ImageView
         android:id="@+id/feedbackImage"
         android:layout_width="400dp"
