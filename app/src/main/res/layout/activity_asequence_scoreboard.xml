@@ -5,107 +5,299 @@
     android:id="@+id/main"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@drawable/rounded_white_shadow"
-    android:padding="24dp"
+    android:padding="16dp"
     tools:context=".ASequenceScoreboardActivity">
 
-    <!-- Completed Text -->
-    <TextView
-        android:id="@+id/completedText"
+    <!-- Celebration Container -->
+    <LinearLayout
+        android:id="@+id/celebrationContainer"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginBottom="16dp"
         android:gravity="center"
-        android:text="Completed!!!"
-        android:textColor="@color/black"
-        android:textSize="32sp"
-        android:textStyle="bold"
+        android:orientation="vertical"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+        app:layout_constraintTop_toTopOf="parent">
 
-    <!-- Celebration Image -->
-    <ImageView
-        android:id="@+id/celebrationImage"
-        android:layout_width="400dp"
-        android:layout_height="400dp"
-        android:layout_marginBottom="24dp"
-        android:scaleType="fitCenter"
-        android:src="@drawable/panda"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/completedText" />
+        <!-- Celebration Text with Emoji -->
+        <TextView
+            android:id="@+id/celebrationText"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="🎉 Complete! 🎉"
+            android:textColor="@color/blue"
+            android:textSize="28sp"
+            android:textStyle="bold" />
 
-    <!-- Your Score Text - Bold and Yellow -->
-    <TextView
-        android:id="@+id/yourScoreText"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:layout_marginBottom="16dp"
-        android:gravity="center"
-        android:text="Your Score"
-        android:textColor="@color/dark_orange"
-        android:textSize="24sp"
-        android:textStyle="bold"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/celebrationImage" />
+        <!-- Subtitle -->
+        <TextView
+            android:id="@+id/subtitleText"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:text="You arranged everything perfectly!"
+            android:textColor="@color/gray"
+            android:textSize="16sp" />
+    </LinearLayout>
 
-    <!-- Container for Trophy and Score Button -->
+    <!-- Progress Visualizer - Star Collection -->
     <androidx.constraintlayout.widget.ConstraintLayout
-        android:id="@+id/trophyButtonContainer"
+        android:id="@+id/starContainer"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
+        android:layout_marginTop="24dp"
         android:layout_marginBottom="32dp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/yourScoreText"
+        app:layout_constraintTop_toBottomOf="@id/celebrationContainer"
         app:layout_constraintWidth_percent="0.9">
 
-        <!-- Trophy Image -->
+        <!-- Stars (initially empty) -->
         <ImageView
-            android:id="@+id/trophyImage"
-            android:layout_width="120dp"
-            android:layout_height="120dp"
-            android:rotation="-30"
-            android:scaleType="fitCenter"
-            android:src="@drawable/trophy"
+            android:id="@+id/star1"
+            android:layout_width="60dp"
+            android:layout_height="60dp"
+            android:src="@drawable/star_outline"
             app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toStartOf="@id/star2"
+            app:layout_constraintHorizontal_chainStyle="spread"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
 
-        <!-- Score Button Container -->
-        <androidx.constraintlayout.widget.ConstraintLayout
-            android:id="@+id/scoreButtonContainer"
-            android:layout_width="202dp"
-            android:layout_height="70dp"
-            android:background="@drawable/rounded_button_background"
-            android:padding="16dp"
+        <ImageView
+            android:id="@+id/star2"
+            android:layout_width="80dp"
+            android:layout_height="80dp"
+            android:src="@drawable/star_outline"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toStartOf="@id/star3"
+            app:layout_constraintStart_toEndOf="@id/star1"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <ImageView
+            android:id="@+id/star3"
+            android:layout_width="60dp"
+            android:layout_height="60dp"
+            android:src="@drawable/star_outline"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintHorizontal_bias="0.5"
-            app:layout_constraintStart_toEndOf="@+id/trophyImage"
-            app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintWidth_default="percent"
-            app:layout_constraintWidth_percent="0.6">
+            app:layout_constraintStart_toEndOf="@id/star2"
+            app:layout_constraintTop_toTopOf="parent" />
 
-            <!-- Score Text inside Button -->
-            <TextView
-                android:id="@+id/scoreText"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:gravity="center"
-                android:text="8/10"
-                android:textColor="@color/white"
-                android:textSize="28dp"
-                android:textStyle="bold"
-                app:layout_constraintBottom_toBottomOf="parent"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toTopOf="parent" />
+        <!-- Connecting Dots -->
+        <View
+            android:id="@+id/line1"
+            android:layout_width="0dp"
+            android:layout_height="4dp"
+            android:background="@color/gray"
+            app:layout_constraintBottom_toBottomOf="@id/star1"
+            app:layout_constraintEnd_toStartOf="@id/star2"
+            app:layout_constraintStart_toEndOf="@id/star1"
+            app:layout_constraintTop_toTopOf="@id/star1" />
 
-        </androidx.constraintlayout.widget.ConstraintLayout>
+        <View
+            android:id="@+id/line2"
+            android:layout_width="0dp"
+            android:layout_height="4dp"
+            android:background="@color/gray"
+            app:layout_constraintBottom_toBottomOf="@id/star2"
+            app:layout_constraintEnd_toStartOf="@id/star3"
+            app:layout_constraintStart_toEndOf="@id/star2"
+            app:layout_constraintTop_toTopOf="@id/star2" />
 
     </androidx.constraintlayout.widget.ConstraintLayout>
+
+    <!-- Panda Celebration Image -->
+    <ImageView
+        android:id="@+id/pandaImage"
+        android:layout_width="200dp"
+        android:layout_height="200dp"
+        android:layout_marginTop="16dp"
+        android:layout_marginBottom="32dp"
+        android:src="@drawable/panda"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/starContainer" />
+
+    <!-- Performance Stats -->
+    <LinearLayout
+        android:id="@+id/statsContainer"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="32dp"
+        android:background="@drawable/rounded_white_shadow"
+        android:orientation="vertical"
+        android:padding="20dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/pandaImage"
+        app:layout_constraintWidth_percent="0.85">
+
+        <!-- Stat Row 1: Attempts -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="12dp"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Attempts:"
+                android:textColor="@color/gray"
+                android:textSize="18sp" />
+
+            <TextView
+                android:id="@+id/attemptsText"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="1"
+                android:textColor="@color/red_dark"
+                android:textSize="20sp"
+                android:textStyle="bold" />
+        </LinearLayout>
+
+        <!-- Stat Row 2: Time Taken -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="12dp"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Completion Time:"
+                android:textColor="@color/gray"
+                android:textSize="18sp" />
+
+            <TextView
+                android:id="@+id/timeText"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="10s"
+                android:textColor="@color/red_dark"
+                android:textSize="20sp"
+                android:textStyle="bold" />
+        </LinearLayout>
+
+        <!-- Stat Row 3: Accuracy -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Accuracy:"
+                android:textColor="@color/gray"
+                android:textSize="18sp" />
+
+            <TextView
+                android:id="@+id/accuracyText"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="100%"
+                android:textColor="@color/green"
+                android:textSize="20sp"
+                android:textStyle="bold" />
+        </LinearLayout>
+
+    </LinearLayout>
+
+    <!-- Action Buttons -->
+    <LinearLayout
+        android:id="@+id/buttonContainer"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="24dp"
+        android:gravity="center"
+        android:orientation="horizontal"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/statsContainer"
+        app:layout_constraintWidth_percent="0.9">
+
+        <!-- Try Another Sequence Button -->
+        <Button
+            android:id="@+id/btnTryAnother"
+            android:layout_width="0dp"
+            android:layout_height="56dp"
+            android:layout_marginEnd="8dp"
+            android:layout_weight="1"
+            android:background="@drawable/rounded_button_background"
+            android:text="Play Another"
+            android:textAllCaps="false"
+            android:textColor="@color/white"
+            android:textSize="16sp" />
+
+        <!-- Home Button -->
+        <Button
+            android:id="@+id/btnHome"
+            android:layout_width="0dp"
+            android:layout_height="56dp"
+            android:layout_marginStart="8dp"
+            android:layout_weight="1"
+            android:background="@drawable/rounded_white_shadow"
+            android:text="Home"
+            android:textAllCaps="false"
+            android:textColor="@color/white"
+            android:textSize="16sp" />
+
+    </LinearLayout>
+
+    <!-- Sparkle Effects (for animation) -->
+    <ImageView
+        android:id="@+id/sparkle1"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:layout_marginTop="100dp"
+        android:layout_marginStart="50dp"
+        android:src="@drawable/sparkle"
+        android:visibility="invisible"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <ImageView
+        android:id="@+id/sparkle2"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:layout_marginTop="150dp"
+        android:layout_marginEnd="50dp"
+        android:src="@drawable/sparkle"
+        android:visibility="invisible"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <ImageView
+        android:id="@+id/sparkle3"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:layout_marginBottom="100dp"
+        android:layout_marginStart="80dp"
+        android:src="@drawable/sparkle"
+        android:visibility="invisible"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent" />
+
+    <ImageView
+        android:id="@+id/sparkle4"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:layout_marginBottom="150dp"
+        android:layout_marginEnd="80dp"
+        android:src="@drawable/sparkle"
+        android:visibility="invisible"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

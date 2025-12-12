@@ -7,7 +7,26 @@
     android:background="@color/white"
     tools:context=".MoodMatchSevenUpActivity">
 
-    <!-- Top Bamboo Background -->
+    <!-- Video Player (Initially visible, fades out after playing) -->
+    <FrameLayout
+        android:id="@+id/videoContainer"
+        android:layout_width="0dp"
+        android:layout_height="250dp"
+        android:scaleX="1.5"
+        android:scaleY="1.5"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent">
+
+        <VideoView
+            android:id="@+id/videoView"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:scaleType="fitXY" />
+
+    </FrameLayout>
+
+    <!-- Top Bamboo Background (Initially invisible, becomes visible after video) -->
     <ImageView
         android:id="@+id/topGameImage1"
         android:layout_width="0dp"
@@ -17,12 +36,13 @@
         android:scaleX="1.5"
         android:scaleY="1.5"
         android:src="@drawable/game_bg"
+        android:visibility="invisible"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.0"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
-    <!-- Panda Image on Top -->
+    <!-- Panda Image on Top (Initially invisible, becomes visible after video) -->
     <ImageView
         android:id="@+id/pandaImage"
         android:layout_width="180dp"
@@ -30,11 +50,12 @@
         android:layout_marginTop="70dp"
         android:scaleType="fitCenter"
         android:src="@drawable/panda"
+        android:visibility="invisible"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
-    <!-- Current Score & Round -->
+    <!-- Current Score & Round (Initially invisible, becomes visible after video) -->
     <TextView
         android:id="@+id/tvScore"
         android:layout_width="wrap_content"
@@ -44,6 +65,7 @@
         android:textSize="20sp"
         android:textColor="@color/white"
         android:textStyle="bold"
+        android:visibility="invisible"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/pandaImage" />
@@ -56,6 +78,7 @@
         android:text="Round: 1/5"
         android:textSize="18sp"
         android:textColor="@color/white"
+        android:visibility="invisible"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/tvScore" />
@@ -157,7 +180,7 @@
 
     </LinearLayout>
 
-    <!-- Next Button at Bottom -->
+    <!-- Next Button at Bottom (Initially invisible, becomes visible after video) -->
     <Button
         android:id="@+id/btnNext"
         android:layout_width="match_parent"
