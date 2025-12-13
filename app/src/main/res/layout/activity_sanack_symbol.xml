@@ -293,6 +293,34 @@
                         android:textStyle="bold" />
                 </LinearLayout>
 
+                <LinearLayout
+                    android:layout_width="8dp"
+                    android:layout_height="127dp"
+                    android:layout_columnWeight="1"
+                    android:background="@drawable/rounded_green_border"
+                    android:gravity="center"
+                    android:orientation="vertical"
+                    android:padding="8dp">
+
+                    <ImageView
+                        android:id="@+id/imgToffee"
+                        android:layout_width="90dp"
+                        android:layout_height="90dp"
+                        android:contentDescription="Toffee"
+                        android:clickable="true"
+                        android:focusable="true"
+                        app:srcCompat="@drawable/toffee"/>
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="1dp"
+                        android:text="Toffee"
+                        android:textColor="@color/black"
+                        android:textSize="16sp"
+                        android:textStyle="bold" />
+                </LinearLayout>
+
 
 
             </GridLayout>
