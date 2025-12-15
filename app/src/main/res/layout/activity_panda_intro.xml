@@ -13,74 +13,101 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_margin="16dp"
+        android:layout_marginTop="4dp"
+        android:layout_marginEnd="16dp"
+        android:background="@drawable/rounded_button_background_g"
+        android:clickable="true"
+        android:focusable="true"
         android:padding="12dp"
-        android:background="@drawable/rounded_skip_button"
         android:text="Skip"
         android:textColor="@color/white"
         android:textSize="16sp"
         android:textStyle="bold"
-        android:clickable="true"
-        android:focusable="true"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintEnd_toEndOf="parent" />
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
 
-    <!-- User's Adventure Text -->
+    <!-- Image Background for Adventure Text -->
+
+    <!-- User's Adventure Text (centered on the board image) -->
+
+    <!-- Centered VideoView -->
+
+    <!-- Let's Go Button Container -->
+
+    <ImageView
+        android:id="@+id/introBoard"
+        android:layout_width="414dp"
+        android:layout_height="156dp"
+        android:layout_marginTop="16dp"
+        android:scaleType="fitCenter"
+        android:src="@drawable/intro_board"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.333"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
     <TextView
         android:id="@+id/adventureText"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="32dp"
-        android:text="Anne's Adventure"
+        android:gravity="center"
+        android:text="Anne's\nAdventure"
+        android:textColor="@color/white"
         android:textSize="24sp"
         android:textStyle="bold"
-        android:textColor="@color/black"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent" />
+        android:maxLines="2"
+        android:lineSpacingExtra="4sp"
+        app:layout_constraintBottom_toBottomOf="@id/introBoard"
+        app:layout_constraintEnd_toEndOf="@id/introBoard"
+        app:layout_constraintStart_toStartOf="@id/introBoard"
+        app:layout_constraintTop_toTopOf="@id/introBoard" />
 
-    <!-- Centered VideoView -->
     <VideoView
         android:id="@+id/videoView"
-        android:layout_width="0dp"
-        android:layout_height="0dp"
-        app:layout_constraintWidth_default="percent"
-        app:layout_constraintWidth_percent="0.8"
+        android:layout_width="360dp"
+        android:layout_height="451dp"
+        app:layout_constraintBottom_toTopOf="@+id/buttonContainer"
+        app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHeight_default="percent"
         app:layout_constraintHeight_percent="0.5"
-        app:layout_constraintTop_toBottomOf="@+id/adventureText"
-        app:layout_constraintBottom_toTopOf="@+id/buttonContainer"
+        app:layout_constraintHorizontal_bias="0.49"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent" />
+        app:layout_constraintTop_toBottomOf="@+id/introBoard"
+        app:layout_constraintVertical_bias="0.0"
+        app:layout_constraintWidth_default="percent"
+        app:layout_constraintWidth_percent="0.8" />
 
-    <!-- Let's Go Button Container -->
     <androidx.constraintlayout.widget.ConstraintLayout
         android:id="@+id/buttonContainer"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
+        android:layout_width="307dp"
+        android:layout_height="65dp"
         android:layout_margin="32dp"
-        android:padding="16dp"
+        android:layout_marginBottom="24dp"
         android:background="@drawable/rounded_button_background"
+        android:padding="16dp"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent">
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent">
 
         <!-- Let's Go Button -->
         <Button
             android:id="@+id/letsGoButton"
             android:layout_width="match_parent"
             android:layout_height="56dp"
+            android:layout_marginBottom="5dp"
+            android:background="@android:color/transparent"
+            android:clickable="false"
+            android:enabled="false"
+            android:focusable="false"
             android:text="Let's Go"
+            android:textColor="@color/white"
             android:textSize="18sp"
             android:textStyle="bold"
-            android:background="@drawable/rounded_button_background"
-            android:textColor="@color/white"
-            android:enabled="false"
-            android:clickable="false"
-            android:focusable="false"
-            android:alpha="0.5"
-            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintHorizontal_bias="0.0"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintEnd_toEndOf="parent" />
+            app:layout_constraintTop_toTopOf="parent" />
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 

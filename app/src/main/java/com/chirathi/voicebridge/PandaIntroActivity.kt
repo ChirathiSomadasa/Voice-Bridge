@@ -63,21 +63,21 @@ class PandaIntroActivity : AppCompatActivity() {
                 .addOnSuccessListener { document ->
                     if (document.exists()) {
                         val firstName = document.getString("firstName")
-                        // Set adventure text with user's first name
+                        // Set adventure text with user's first name on two lines
                         if (!firstName.isNullOrEmpty()) {
-                            adventureText.text = "$firstName's Adventure"
+                            adventureText.text = "$firstName's\nAdventure"
                         } else {
-                            adventureText.text = "Your Adventure"
+                            adventureText.text = "Your\nAdventure"
                         }
                     } else {
-                        adventureText.text = "Your Adventure"
+                        adventureText.text = "Your\nAdventure"
                     }
                 }
                 .addOnFailureListener {
-                    adventureText.text = "Your Adventure"
+                    adventureText.text = "Your\nAdventure"
                 }
         } else {
-            adventureText.text = "Your Adventure"
+            adventureText.text = "Your\nAdventure"
         }
     }
 
