@@ -2,18 +2,19 @@ package com.chirathi.voicebridge
 
 import android.content.Intent
 import android.net.Uri
-import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.widget.TextView
 import android.widget.VideoView
+import androidx.appcompat.app.AppCompatActivity
+import com.google.firebase.Firebase
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.firestore
-import com.google.firebase.Firebase
 
 class PandaIntroActivity : AppCompatActivity() {
 
     private lateinit var videoView: VideoView
     private lateinit var skipButton: TextView
+    private lateinit var adventureText: TextView
     private lateinit var auth: FirebaseAuth
     private val db = Firebase.firestore
 
@@ -27,6 +28,7 @@ class PandaIntroActivity : AppCompatActivity() {
         // Initialize views
         videoView = findViewById(R.id.videoView)
         skipButton = findViewById(R.id.skipButton)
+        adventureText = findViewById(R.id.adventureText)
 
         // Initialize VideoView WITHOUT any MediaController or controls
         val videoPath = "android.resource://" + packageName + "/" + R.raw.game_intro
@@ -36,7 +38,10 @@ class PandaIntroActivity : AppCompatActivity() {
         // No MediaController - no playback controls at all
         // No screen tap listener - only skip button works
 
-        // Start playing
+        // Load user data and set adventure text
+        loadUserData()
+
+        // Start playing video
         videoView.start()
 
         // Set click listener ONLY on skip button
@@ -47,6 +52,32 @@ class PandaIntroActivity : AppCompatActivity() {
         // When video ends, automatically check age and navigate
         videoView.setOnCompletionListener {
             checkUserAgeAndNavigate()
+        }
+    }
+
+    private fun loadUserData() {
+        val currentUser = auth.currentUser
+        if (currentUser != null) {
+            // Fetch user data from Firestore to get first name
+            db.collection("users").document(currentUser.uid).get()
+                .addOnSuccessListener { document ->
+                    if (document.exists()) {
+                        val firstName = document.getString("firstName")
+                        // Set adventure text with user's first name
+                        if (!firstName.isNullOrEmpty()) {
+                            adventureText.text = "$firstName's Adventure"
+                        } else {
+                            adventureText.text = "Your Adventure"
+                        }
+                    } else {
+                        adventureText.text = "Your Adventure"
+                    }
+                }
+                .addOnFailureListener {
+                    adventureText.text = "Your Adventure"
+                }
+        } else {
+            adventureText.text = "Your Adventure"
         }
     }
 
