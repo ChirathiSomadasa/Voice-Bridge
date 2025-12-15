@@ -4,7 +4,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/white"
+    android:background="@drawable/intro_bg"
     tools:context=".PandaIntroActivity">
 
     <!-- Skip Button at Top Right -->
@@ -26,26 +26,20 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
-    <!-- Image Background for Adventure Text -->
-
-    <!-- User's Adventure Text (centered on the board image) -->
-
-    <!-- Centered VideoView -->
-
-    <!-- Let's Go Button Container -->
-
+    <!-- Adventure Board -->
     <ImageView
         android:id="@+id/introBoard"
         android:layout_width="414dp"
         android:layout_height="156dp"
-        android:layout_marginTop="16dp"
+        android:layout_marginTop="72dp"
         android:scaleType="fitCenter"
         android:src="@drawable/intro_board"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.333"
+        app:layout_constraintHorizontal_bias="0.0"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
+    <!-- User's Adventure Text -->
     <TextView
         android:id="@+id/adventureText"
         android:layout_width="wrap_content"
@@ -62,53 +56,130 @@
         app:layout_constraintStart_toStartOf="@id/introBoard"
         app:layout_constraintTop_toTopOf="@id/introBoard" />
 
+    <!-- VideoView -->
     <VideoView
         android:id="@+id/videoView"
         android:layout_width="360dp"
         android:layout_height="451dp"
-        app:layout_constraintBottom_toTopOf="@+id/buttonContainer"
+        android:layout_marginTop="4dp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHeight_default="percent"
         app:layout_constraintHeight_percent="0.5"
         app:layout_constraintHorizontal_bias="0.49"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/introBoard"
-        app:layout_constraintVertical_bias="0.0"
         app:layout_constraintWidth_default="percent"
         app:layout_constraintWidth_percent="0.8" />
 
-    <androidx.constraintlayout.widget.ConstraintLayout
-        android:id="@+id/buttonContainer"
-        android:layout_width="307dp"
-        android:layout_height="65dp"
-        android:layout_margin="32dp"
-        android:layout_marginBottom="24dp"
-        android:background="@drawable/rounded_button_background"
-        android:padding="16dp"
-        app:layout_constraintBottom_toBottomOf="parent"
+    <!-- Sparkle Animation 1 -->
+    <ImageView
+        android:id="@+id/sparkle1"
+        android:layout_width="32dp"
+        android:layout_height="32dp"
+        android:layout_marginStart="40dp"
+        android:layout_marginTop="200dp"
+        android:src="@drawable/sparkle"
+        android:visibility="invisible"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <!-- Sparkle Animation 2 -->
+    <ImageView
+        android:id="@+id/sparkle2"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:layout_marginTop="300dp"
+        android:layout_marginEnd="50dp"
+        android:src="@drawable/sparkle"
+        android:visibility="invisible"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent">
+        app:layout_constraintTop_toTopOf="parent" />
 
-        <!-- Let's Go Button -->
-        <Button
-            android:id="@+id/letsGoButton"
-            android:layout_width="match_parent"
-            android:layout_height="56dp"
-            android:layout_marginBottom="5dp"
-            android:background="@android:color/transparent"
-            android:clickable="false"
-            android:enabled="false"
-            android:focusable="false"
-            android:text="Let's Go"
-            android:textColor="@color/white"
-            android:textSize="18sp"
-            android:textStyle="bold"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintHorizontal_bias="0.0"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent" />
+    <!-- Sparkle Animation 3 -->
+    <ImageView
+        android:id="@+id/sparkle3"
+        android:layout_width="28dp"
+        android:layout_height="28dp"
+        android:layout_marginStart="80dp"
+        android:layout_marginTop="500dp"
+        android:src="@drawable/sparkle"
+        android:visibility="invisible"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
 
-    </androidx.constraintlayout.widget.ConstraintLayout>
+    <!-- Butterfly Animation 1 -->
+    <ImageView
+        android:id="@+id/butterfly1"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
+        android:layout_marginTop="150dp"
+        android:layout_marginEnd="30dp"
+        android:src="@drawable/butterfly_animation"
+        android:visibility="invisible"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <!-- Butterfly Animation 2 -->
+    <ImageView
+        android:id="@+id/butterfly2"
+        android:layout_width="42dp"
+        android:layout_height="42dp"
+        android:layout_marginStart="60dp"
+        android:layout_marginTop="400dp"
+        android:src="@drawable/butterfly_animation"
+        android:visibility="invisible"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <!-- Banner Image -->
+    <ImageView
+        android:id="@+id/bannerImage"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="536dp"
+        android:adjustViewBounds="true"
+        android:scaleType="fitCenter"
+        android:src="@drawable/banner_game"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.0"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <!-- "Let's begin our" Text -->
+    <TextView
+        android:id="@+id/letsBeginText"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="92dp"
+        android:shadowColor="#000000"
+        android:shadowDx="1"
+        android:shadowDy="1"
+        android:shadowRadius="2"
+        android:text="Let's begin our"
+        android:textColor="#FFFFFF"
+        android:textSize="18sp"
+        android:textStyle="bold"
+        app:layout_constraintEnd_toEndOf="@id/bannerImage"
+        app:layout_constraintHorizontal_bias="0.478"
+        app:layout_constraintStart_toStartOf="@id/bannerImage"
+        app:layout_constraintTop_toTopOf="@id/bannerImage" />
+
+    <!-- "adventure" Text -->
+    <TextView
+        android:id="@+id/adventureText2"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="adventure"
+        android:textColor="#FFD700"
+        android:textSize="22sp"
+        android:textStyle="bold"
+        android:shadowColor="#000000"
+        android:shadowDx="1"
+        android:shadowDy="1"
+        android:shadowRadius="2"
+        app:layout_constraintEnd_toEndOf="@id/bannerImage"
+        app:layout_constraintStart_toStartOf="@id/bannerImage"
+        app:layout_constraintTop_toBottomOf="@id/letsBeginText"
+        android:layout_marginTop="4dp" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>
