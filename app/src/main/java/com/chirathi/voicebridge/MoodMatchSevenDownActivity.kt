@@ -18,7 +18,7 @@ class MoodMatchSevenDownActivity : AppCompatActivity() {
     // Define all emotions
     private val emotions = listOf(
         "happy", "sad", "angry", "scared",
-        "bored", "embarrassed", "proud"
+        "bored", "shy", "proud"
     )
 
     private lateinit var emotionImage: ImageView
