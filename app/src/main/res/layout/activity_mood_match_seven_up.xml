@@ -7,13 +7,14 @@
     android:background="@color/white"
     tools:context=".MoodMatchSevenUpActivity">
 
-    <!-- Video Player (Initially visible, fades out after playing) -->
+    <!-- Video Player (Plays on top, but game area is still visible and playable) -->
     <FrameLayout
         android:id="@+id/videoContainer"
         android:layout_width="0dp"
         android:layout_height="250dp"
         android:scaleX="1.5"
         android:scaleY="1.5"
+        android:background="@android:color/transparent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent">
@@ -22,7 +23,8 @@
             android:id="@+id/videoView"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:scaleType="fitXY" />
+            android:scaleType="fitXY"
+            android:background="@android:color/transparent" />
 
     </FrameLayout>
 
@@ -102,7 +104,7 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/tvScore" />
 
-    <!-- Game Content Area -->
+    <!-- Game Content Area (Visible from start - THIS IS PLAYABLE IMMEDIATELY) -->
     <LinearLayout
         android:id="@+id/gameContent"
         android:layout_width="0dp"
@@ -112,6 +114,7 @@
         android:orientation="vertical"
         android:gravity="center_horizontal"
         android:padding="16dp"
+        android:visibility="visible"
         app:layout_constraintTop_toBottomOf="@id/topGameImage1"
         app:layout_constraintBottom_toTopOf="@id/btnNext"
         app:layout_constraintStart_toStartOf="parent"
@@ -135,7 +138,7 @@
             android:columnOrderPreserved="false"
             android:useDefaultMargins="true">
 
-            <!-- Option 1 -->
+            <!-- Option buttons remain the same -->
             <Button
                 android:id="@+id/btnOption1"
                 style="@style/SolidGreenButton"
@@ -150,7 +153,6 @@
                 app:backgroundTint="@color/green"
                 android:textColor="@color/white" />
 
-            <!-- Option 2 -->
             <Button
                 android:id="@+id/btnOption2"
                 style="@style/SolidGreenButton"
@@ -165,7 +167,6 @@
                 app:backgroundTint="@color/green"
                 android:textColor="@color/white" />
 
-            <!-- Option 3 -->
             <Button
                 android:id="@+id/btnOption3"
                 style="@style/SolidGreenButton"
@@ -180,7 +181,6 @@
                 app:backgroundTint="@color/green"
                 android:textColor="@color/white" />
 
-            <!-- Option 4 -->
             <Button
                 android:id="@+id/btnOption4"
                 style="@style/SolidGreenButton"
@@ -199,7 +199,7 @@
 
     </LinearLayout>
 
-    <!-- Next Button at Bottom (Initially invisible, becomes visible after video) -->
+    <!-- Next Button at Bottom (Visible from start) -->
     <Button
         android:id="@+id/btnNext"
         android:layout_width="match_parent"
