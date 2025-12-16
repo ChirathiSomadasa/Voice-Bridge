@@ -57,7 +57,7 @@
             android:name=".ASGuidanceWrongActivity"
             android:exported="false" />
         <activity
-            android:name=".ASGuideActivity"
+            android:name=".ASGuide_BelowActivity"
             android:exported="false" />
         <activity
             android:name=".MMScoreboardActivity"

@@ -7,7 +7,7 @@
     android:layout_height="match_parent"
     android:background="@drawable/rounded_white_shadow"
     android:padding="24dp"
-    tools:context=".ASGuideActivity">
+    tools:context=".ASGuide_BelowActivity">
 
     <!-- Panda Image - Centered -->
     <ImageView

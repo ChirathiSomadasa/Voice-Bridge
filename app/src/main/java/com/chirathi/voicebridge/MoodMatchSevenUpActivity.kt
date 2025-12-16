@@ -36,6 +36,8 @@ class MoodMatchSevenUpActivity : AppCompatActivity() {
     private lateinit var tvRound: TextView
     private lateinit var gameContent: View
 
+    private lateinit var guessText : TextView
+
     private var currentEmotion = ""
     private var correctOption = 0 // 1-4 for which option is correct
     private var score = 0
@@ -81,12 +83,13 @@ class MoodMatchSevenUpActivity : AppCompatActivity() {
         tvScore = findViewById(R.id.tvScore)
         tvRound = findViewById(R.id.tvRound)
         gameContent = findViewById(R.id.gameContent)
+        guessText = findViewById(R.id.guessText)
     }
 
     private fun setupVideoPlayer() {
         try {
             // Set video path - using emotion_match_guide.mp4 from raw folder
-            val videoPath = "android.resource://" + packageName + "/" + R.raw.emotion_match_guide
+            val videoPath = "android.resource://" + packageName + "/" + R.raw.animated_bear_asks_about_emotion
             val uri = Uri.parse(videoPath)
             videoView.setVideoURI(uri)
 
@@ -128,6 +131,7 @@ class MoodMatchSevenUpActivity : AppCompatActivity() {
                 pandaImage.visibility = View.VISIBLE
                 tvScore.visibility = View.VISIBLE
                 tvRound.visibility = View.VISIBLE
+                guessText.visibility = View.VISIBLE
 
                 // Note: gameContent is already visible from the start
 
@@ -136,11 +140,13 @@ class MoodMatchSevenUpActivity : AppCompatActivity() {
                 pandaImage.alpha = 0f
                 tvScore.alpha = 0f
                 tvRound.alpha = 0f
+                guessText.alpha = 0f
 
                 topGameImage1.animate().alpha(1f).setDuration(1000).start()
                 pandaImage.animate().alpha(1f).setDuration(1000).start()
                 tvScore.animate().alpha(1f).setDuration(1000).start()
-                tvRound.animate().alpha(1f).setDuration(1000).withEndAction {
+                tvRound.animate().alpha(1f).setDuration(1000).start()
+                guessText.animate().alpha(1f).setDuration(1000).withEndAction{
                     // Setup game only after fade-in animation completes
                     setupGame()
                 }.start()
