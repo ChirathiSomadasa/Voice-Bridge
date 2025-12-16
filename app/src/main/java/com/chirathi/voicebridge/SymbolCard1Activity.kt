@@ -60,5 +60,17 @@ class SymbolCard1Activity : AppCompatActivity() {
             startActivity(intent)
         }
 
+        val emotionsBtn = findViewById<ImageView>(R.id.imgEmotions)
+        emotionsBtn.setOnClickListener {
+            val intent = Intent(this, EmotionSymbolsActivity::class.java)
+            startActivity(intent)
+        }
+
+        val activityBtn = findViewById<ImageView>(R.id.imgActivities)
+        activityBtn.setOnClickListener {
+            val intent = Intent(this, ActivitySymbolsActivity::class.java)
+            startActivity(intent)
+        }
+
     }
 }

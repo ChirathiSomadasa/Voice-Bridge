@@ -15,6 +15,15 @@
         android:theme="@style/Theme.VoiceBridge"
         tools:targetApi="31">
         <activity
+            android:name=".PainSymbolsActivity"
+            android:exported="false" />
+        <activity
+            android:name=".ActivitySymbolsActivity"
+            android:exported="false" />
+        <activity
+            android:name=".EmotionSymbolsActivity"
+            android:exported="false" />
+        <activity
             android:name=".SanitationSymbolsActivity"
             android:exported="false" />
         <activity

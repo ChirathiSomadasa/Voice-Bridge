@@ -250,19 +250,19 @@
                     android:padding="8dp">
 
                     <ImageView
-                        android:id="@+id/imgActions"
+                        android:id="@+id/imgActivities"
                         android:layout_width="110dp"
                         android:layout_height="110dp"
-                        android:contentDescription="Actions"
+                        android:contentDescription="Activities"
                         android:clickable="true"
                         android:focusable="true"
-                        app:srcCompat="@drawable/actions"/>
+                        app:srcCompat="@drawable/activities"/>
 
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="4dp"
-                        android:text="Actions"
+                        android:text="Activities"
                         android:textColor="@color/black"
                         android:textSize="17sp"
                         android:textStyle="bold" />

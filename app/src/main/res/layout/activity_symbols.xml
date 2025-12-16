@@ -1,12 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/main"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/white"
-    tools:context=".QuickWordsChartsActivity">
+    tools:context=".ActivitySymbolsActivity">
 
     <ImageView
         android:id="@+id/back"
@@ -47,7 +46,7 @@
                 android:layout_width="281dp"
                 android:layout_height="40dp"
                 android:lineSpacingExtra="4dp"
-                android:text="Quick Words"
+                android:text="Activities"
                 android:textAlignment="center"
                 android:textColor="@color/green"
                 android:textSize="28sp"
@@ -77,19 +76,19 @@
                     android:padding="8dp">
 
                     <ImageView
-                        android:id="@+id/imgYes"
+                        android:id="@+id/imgCycle"
                         android:layout_width="90dp"
                         android:layout_height="90dp"
-                        android:contentDescription="Yes"
+                        android:contentDescription="Cycle"
                         android:clickable="true"
                         android:focusable="true"
-                        app:srcCompat="@drawable/yes"/>
+                        app:srcCompat="@drawable/cycle"/>
 
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="1dp"
-                        android:text="Yes"
+                        android:text="Cycle"
                         android:textColor="@color/black"
                         android:textSize="16sp"
                         android:textStyle="bold" />
@@ -105,19 +104,19 @@
                     android:padding="8dp">
 
                     <ImageView
-                        android:id="@+id/imgOk"
+                        android:id="@+id/imgTV"
                         android:layout_width="90dp"
                         android:layout_height="90dp"
-                        android:contentDescription="Ok"
+                        android:contentDescription="TV"
                         android:clickable="true"
                         android:focusable="true"
-                        app:srcCompat="@drawable/ok"/>
+                        app:srcCompat="@drawable/flatscreen_tv"/>
 
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="1dp"
-                        android:text="Ok"
+                        android:text="TV"
                         android:textColor="@color/black"
                         android:textSize="16sp"
                         android:textStyle="bold" />
@@ -133,19 +132,19 @@
                     android:padding="8dp">
 
                     <ImageView
-                        android:id="@+id/imgNo"
+                        android:id="@+id/imgStudy"
                         android:layout_width="90dp"
                         android:layout_height="90dp"
-                        android:contentDescription="No"
+                        android:contentDescription="Study"
                         android:clickable="true"
                         android:focusable="true"
-                        app:srcCompat="@drawable/no"/>
+                        app:srcCompat="@drawable/study"/>
 
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="1dp"
-                        android:text="No"
+                        android:text="Study"
                         android:textColor="@color/black"
                         android:textSize="16sp"
                         android:textStyle="bold" />
@@ -163,19 +162,19 @@
                     android:padding="8dp">
 
                     <ImageView
-                        android:id="@+id/imgThankyou"
+                        android:id="@+id/imgBathe"
                         android:layout_width="90dp"
                         android:layout_height="90dp"
-                        android:contentDescription="Thankyou"
+                        android:contentDescription="Bathe"
                         android:clickable="true"
                         android:focusable="true"
-                        app:srcCompat="@drawable/thanks"/>
+                        app:srcCompat="@drawable/bathe"/>
 
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="1dp"
-                        android:text="Thank You"
+                        android:text="Bathe"
                         android:textColor="@color/black"
                         android:textSize="16sp"
                         android:textStyle="bold" />
@@ -191,19 +190,19 @@
                     android:padding="8dp">
 
                     <ImageView
-                        android:id="@+id/imgHello"
+                        android:id="@+id/imgWashFace"
                         android:layout_width="90dp"
                         android:layout_height="90dp"
-                        android:contentDescription="Hello"
+                        android:contentDescription="WashFace"
                         android:clickable="true"
                         android:focusable="true"
-                        app:srcCompat="@drawable/hello"/>
+                        app:srcCompat="@drawable/wash_face"/>
 
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="1dp"
-                        android:text="Hello"
+                        android:text="Wash Face"
                         android:textColor="@color/black"
                         android:textSize="16sp"
                         android:textStyle="bold" />
@@ -219,19 +218,20 @@
                     android:padding="8dp">
 
                     <ImageView
-                        android:id="@+id/imgGoodBye"
+                        android:id="@+id/imgWashHands"
                         android:layout_width="90dp"
                         android:layout_height="90dp"
-                        android:contentDescription="GoodBye"
+                        android:contentDescription="WashHands"
                         android:clickable="true"
                         android:focusable="true"
-                        app:srcCompat="@drawable/goodbye"/>
+                        app:srcCompat="@drawable/wash_hands"/>
 
                     <TextView
-                        android:layout_width="wrap_content"
+                        android:layout_width="125dp"
+                        android:layout_marginStart="12dp"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="1dp"
-                        android:text="Good Bye"
+                        android:text="Wash Hands"
                         android:textColor="@color/black"
                         android:textSize="16sp"
                         android:textStyle="bold" />
@@ -249,19 +249,19 @@
                     android:padding="8dp">
 
                     <ImageView
-                        android:id="@+id/imgWashroom"
+                        android:id="@+id/imgRun"
                         android:layout_width="90dp"
                         android:layout_height="90dp"
-                        android:contentDescription="Washroom"
+                        android:contentDescription="Run"
                         android:clickable="true"
                         android:focusable="true"
-                        app:srcCompat="@drawable/washroom"/>
+                        app:srcCompat="@drawable/run"/>
 
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="1dp"
-                        android:text="Wash room"
+                        android:text="Run"
                         android:textColor="@color/black"
                         android:textSize="16sp"
                         android:textStyle="bold" />
@@ -277,19 +277,19 @@
                     android:padding="8dp">
 
                     <ImageView
-                        android:id="@+id/imgHungry"
+                        android:id="@+id/imgGo"
                         android:layout_width="90dp"
                         android:layout_height="90dp"
-                        android:contentDescription="Hungry"
+                        android:contentDescription="Go"
                         android:clickable="true"
                         android:focusable="true"
-                        app:srcCompat="@drawable/hungry"/>
+                        app:srcCompat="@drawable/go"/>
 
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="1dp"
-                        android:text="Hungry"
+                        android:text="Go"
                         android:textColor="@color/black"
                         android:textSize="16sp"
                         android:textStyle="bold" />
@@ -307,19 +307,19 @@
                     android:padding="8dp">
 
                     <ImageView
-                        android:id="@+id/imgThirsty"
+                        android:id="@+id/imgSit"
                         android:layout_width="90dp"
                         android:layout_height="90dp"
-                        android:contentDescription="Thirsty"
+                        android:contentDescription="Sit"
                         android:clickable="true"
                         android:focusable="true"
-                        app:srcCompat="@drawable/thirsty"/>
+                        app:srcCompat="@drawable/sit"/>
 
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="1dp"
-                        android:text="Thirsty"
+                        android:text="Sit"
                         android:textColor="@color/black"
                         android:textSize="16sp"
                         android:textStyle="bold" />
@@ -335,19 +335,19 @@
                     android:padding="8dp">
 
                     <ImageView
-                        android:id="@+id/imgGood"
+                        android:id="@+id/imgExercise"
                         android:layout_width="90dp"
                         android:layout_height="90dp"
-                        android:contentDescription="Good"
+                        android:contentDescription="Exercise"
                         android:clickable="true"
                         android:focusable="true"
-                        app:srcCompat="@drawable/good"/>
+                        app:srcCompat="@drawable/exercise"/>
 
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="1dp"
-                        android:text="Good"
+                        android:text="Exercise"
                         android:textColor="@color/black"
                         android:textSize="16sp"
                         android:textStyle="bold" />
@@ -363,19 +363,19 @@
                     android:padding="8dp">
 
                     <ImageView
-                        android:id="@+id/imgPlease"
+                        android:id="@+id/imgSwim"
                         android:layout_width="90dp"
                         android:layout_height="90dp"
-                        android:contentDescription="Please"
+                        android:contentDescription="Swim"
                         android:clickable="true"
                         android:focusable="true"
-                        app:srcCompat="@drawable/please"/>
+                        app:srcCompat="@drawable/swim"/>
 
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="1dp"
-                        android:text="Please"
+                        android:text="Swim"
                         android:textColor="@color/black"
                         android:textSize="16sp"
                         android:textStyle="bold" />
@@ -391,19 +391,19 @@
                     android:padding="8dp">
 
                     <ImageView
-                        android:id="@+id/imgBad"
+                        android:id="@+id/imgSwing"
                         android:layout_width="90dp"
                         android:layout_height="90dp"
-                        android:contentDescription="Bad"
+                        android:contentDescription="Swing"
                         android:clickable="true"
                         android:focusable="true"
-                        app:srcCompat="@drawable/bad"/>
+                        app:srcCompat="@drawable/swing"/>
 
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="1dp"
-                        android:text="Bad"
+                        android:text="Swing"
                         android:textColor="@color/black"
                         android:textSize="16sp"
                         android:textStyle="bold" />
@@ -421,19 +421,19 @@
                     android:padding="8dp">
 
                     <ImageView
-                        android:id="@+id/imgPlay"
+                        android:id="@+id/imgCelebrate"
                         android:layout_width="90dp"
                         android:layout_height="90dp"
-                        android:contentDescription="Play"
+                        android:contentDescription="Celebrate"
                         android:clickable="true"
                         android:focusable="true"
-                        app:srcCompat="@drawable/play"/>
+                        app:srcCompat="@drawable/celebrate"/>
 
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="1dp"
-                        android:text="Play"
+                        android:text="Celebrate"
                         android:textColor="@color/black"
                         android:textSize="16sp"
                         android:textStyle="bold" />
@@ -443,25 +443,25 @@
                     android:layout_width="8dp"
                     android:layout_height="127dp"
                     android:layout_columnWeight="1"
-                    android:background="@drawable/rounded_green_border_m"
+                    android:background="@drawable/rounded_green_border"
                     android:gravity="center"
                     android:orientation="vertical"
                     android:padding="8dp">
 
                     <ImageView
-                        android:id="@+id/imgPain"
+                        android:id="@+id/imgCelebrateBirth"
                         android:layout_width="90dp"
                         android:layout_height="90dp"
-                        android:contentDescription="Pain"
+                        android:contentDescription="CelebrateBirth"
                         android:clickable="true"
                         android:focusable="true"
-                        app:srcCompat="@drawable/pain"/>
+                        app:srcCompat="@drawable/celebrate_birth"/>
 
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="1dp"
-                        android:text="Pain"
+                        android:text="Birth Day"
                         android:textColor="@color/black"
                         android:textSize="16sp"
                         android:textStyle="bold" />

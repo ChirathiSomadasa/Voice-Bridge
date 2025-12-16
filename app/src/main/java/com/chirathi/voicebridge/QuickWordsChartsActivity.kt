@@ -16,6 +16,12 @@ class QuickWordsChartsActivity : AppCompatActivity() {
             startActivity(intent)
         }
 
+        val painBtn = findViewById<ImageView>(R.id.imgPain)
+        painBtn.setOnClickListener {
+            val intent = Intent(this, PainSymbolsActivity::class.java)
+            startActivity(intent)
+        }
+
         setupIconClickListeners()
 
 //        val playIcon = findViewById<ImageView>(R.id.imgPlay)
@@ -43,7 +49,7 @@ class QuickWordsChartsActivity : AppCompatActivity() {
             R.id.imgPlease to Pair(R.drawable.please, "Please"),
             R.id.imgBad to Pair(R.drawable.bad, "Bad"),
             R.id.imgGood to Pair(R.drawable.good, "Good"),
-            R.id.imgPain to Pair(R.drawable.pain, "I have pain"),
+            //R.id.imgPain to Pair(R.drawable.pain, "I have pain"),
             R.id.imgStop to Pair(R.drawable.stop, "Stop")
         )
 
