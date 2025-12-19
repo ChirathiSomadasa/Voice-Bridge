@@ -13,7 +13,8 @@ import android.widget.VideoView
 import androidx.appcompat.app.AppCompatActivity
 import kotlin.random.Random
 
-class MoodMatchSevenUpActivity : AppCompatActivity() {
+class MoodMatchSevenUpActivity : AppCompatActivity(),
+    FeedbackDialogFragment.FeedbackCompletionListener {
 
     // Define all emotions for Seven Up (more emotions)
     private val emotions = listOf(
@@ -28,7 +29,7 @@ class MoodMatchSevenUpActivity : AppCompatActivity() {
         "cheerful" to listOf("happy", "proud"),
         "proud" to listOf("happy", "cheerful"),
         "tired" to listOf("sleepy", "bored"),
-        "sleepy" to listOf("tired", "bored","sad"),
+        "sleepy" to listOf("tired", "bored", "sad"),
         "bored" to listOf("tired", "sleepy"),
         "scared" to listOf("anxious"),
         "anxious" to listOf("scared"),
@@ -411,22 +412,78 @@ class MoodMatchSevenUpActivity : AppCompatActivity() {
         currentRound++
 
         if (currentRound > totalRounds) {
-            val intent = Intent(this, MMScoreboardActivity::class.java)
-            intent.putExtra("CORRECT_ANSWERS", correctAnswersCount)
-            intent.putExtra("TOTAL_ROUNDS", totalRounds)
-            intent.putExtra("SCORE", score)
-            intent.flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
-            startActivity(intent)
-            finish()
+            // Game over, show feedback popup based on score
+            Log.d(TAG, "=== GAME OVER ===")
+            Log.d(TAG, "Final Score: $score, Correct Answers: $correctAnswersCount/$totalRounds")
+            showFeedbackPopup()
         } else {
             startNewRound()
         }
+    }
+
+    private fun showFeedbackPopup() {
+        // Determine if it's good or bad feedback
+        // For 4 options, let's use 3+ correct as good feedback (60%+)
+        val isGoodFeedback = correctAnswersCount >= 3
+
+        Log.d(TAG, "=== SHOWING FEEDBACK ===")
+        Log.d(TAG, "Is good feedback: $isGoodFeedback")
+        Log.d(TAG, "Correct answers: $correctAnswersCount")
+        Log.d(TAG, "Total rounds: $totalRounds")
+        Log.d(TAG, "Score: $score")
+
+        // Create the dialog with data
+        val feedbackDialog = FeedbackDialogFragment.newInstance(
+            isGood = isGoodFeedback,
+            correctAnswers = correctAnswersCount,
+            totalRounds = totalRounds,
+            score = score
+        )
+
+        // Show the dialog
+        feedbackDialog.show(supportFragmentManager, "feedback_dialog")
+
+        Log.d(TAG, "Feedback dialog shown")
+    }
+
+    // Interface callback implementation
+    override fun onFeedbackCompleted(correctAnswers: Int, totalRounds: Int, score: Int) {
+        Log.d(TAG, "=== FEEDBACK COMPLETED CALLBACK ===")
+        Log.d(TAG, "Received from dialog - Correct: $correctAnswers, Total: $totalRounds, Score: $score")
+
+        // Navigate to scoreboard
+        navigateToScoreboard(correctAnswers, totalRounds, score)
+    }
+
+    private fun navigateToScoreboard(correctAnswers: Int, totalRounds: Int, score: Int) {
+        Log.d(TAG, "Navigating to scoreboard...")
+
+        val intent = Intent(this, MMScoreboardActivity::class.java)
+        intent.putExtra("CORRECT_ANSWERS", correctAnswers)
+        intent.putExtra("TOTAL_ROUNDS", totalRounds)
+        intent.putExtra("SCORE", score)
+        intent.putExtra("GAME_MODE", "seven_up")
+        intent.flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
+
+        Log.d(TAG, "Starting scoreboard activity")
+        startActivity(intent)
+
+        Log.d(TAG, "Finishing game activity")
+        finish()
     }
 
     override fun onPause() {
         super.onPause()
         if (videoView.isPlaying) {
             videoView.pause()
+        }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        // Resume video if it's still playing
+        if (!isVideoFinished && videoView.visibility == View.VISIBLE) {
+            videoView.resume()
         }
     }
 
