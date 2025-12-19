@@ -4,233 +4,197 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/white"
+    android:background="@drawable/scoreboard_bg"
     tools:context=".MMScoreboardActivity">
 
-    <!-- ScrollView to make the screen scrollable -->
-    <ScrollView
+    <!-- Remove ScrollView since we want fixed positioning -->
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/main"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:fillViewport="true"
-        android:overScrollMode="never">
+        android:padding="16dp">
 
-        <androidx.constraintlayout.widget.ConstraintLayout
-            android:id="@+id/main"
-            android:layout_width="match_parent"
+        <!-- Stars above "YOU WON" text -->
+
+        <ImageView
+            android:id="@+id/starLeft"
+            android:layout_width="62dp"
+            android:layout_height="55dp"
+            android:layout_marginTop="88dp"
+            android:src="@drawable/star_outline"
+            app:layout_constraintEnd_toStartOf="@+id/starMiddle"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <ImageView
+            android:id="@+id/starMiddle"
+            android:layout_width="100dp"
+            android:layout_height="92dp"
+            android:layout_marginTop="48dp"
+            android:src="@drawable/star_outline"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintHorizontal_bias="0.498"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <ImageView
+            android:id="@+id/starRight"
+            android:layout_width="63dp"
+            android:layout_height="54dp"
+            android:layout_marginTop="88dp"
+            android:src="@drawable/star_outline"
+            app:layout_constraintStart_toEndOf="@+id/starMiddle"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <TextView
+            android:id="@+id/titleWon"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:padding="16dp">
+            android:layout_marginTop="144dp"
+            android:text="YOU WON"
+            android:textColor="#E4D00A"
+            android:textSize="36sp"
+            android:textStyle="bold"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintHorizontal_bias="0.497"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
 
-            <!-- Top Background -->
-            <ImageView
-                android:id="@+id/scoreBg"
-                android:layout_width="0dp"
-                android:layout_height="200dp"
-                android:scaleType="centerCrop"
-                android:src="@drawable/game_bg"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toTopOf="parent" />
+        <TextView
+            android:id="@+id/scoreValue"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:text="Your Score"
+            android:textColor="#333333"
+            android:textSize="43sp"
+            android:textStyle="bold"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/titleWon" />
 
-            <!-- Panda Image -->
-            <ImageView
-                android:id="@+id/pandaImage"
-                android:layout_width="120dp"
-                android:layout_height="120dp"
-                android:layout_marginTop="40dp"
-                android:src="@drawable/panda"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toTopOf="parent" />
+        <TextView
+            android:id="@+id/scoreLabel"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:text="40"
+            android:textColor="@color/white"
+            android:textSize="40sp"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/scoreValue" />
 
-            <!-- Trophy Image with Animation Container -->
-            <FrameLayout
-                android:id="@+id/trophyContainer"
-                android:layout_width="140dp"
-                android:layout_height="140dp"
-                android:layout_marginTop="16dp"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@id/pandaImage">
+        <!-- Buttons Container - Fixed at center -->
 
-                <!-- Animated Background Circle -->
-                <ImageView
-                    android:id="@+id/trophyBg"
-                    android:layout_width="match_parent"
-                    android:layout_height="match_parent"
-                    android:src="@drawable/circle_gold"
-                    android:scaleType="fitCenter"
-                    android:visibility="visible" />
+        <!-- Unlock Gift Card - Fixed at bottom -->
 
-                <!-- Trophy Image -->
-                <ImageView
-                    android:id="@+id/trophyImage"
-                    android:layout_width="100dp"
-                    android:layout_height="100dp"
-                    android:layout_gravity="center"
-                    android:scaleType="fitCenter"
-                    android:src="@drawable/trophy" />
+        <LinearLayout
+            android:id="@+id/buttonsContainer"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="32dp"
+            android:layout_marginEnd="32dp"
+            android:gravity="center"
+            android:orientation="vertical"
+            android:spacing="16dp"
+            app:layout_constraintBottom_toTopOf="@+id/btnUnlockGift"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintHorizontal_bias="0.0"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/scoreLabel"
+            app:layout_constraintVertical_bias="0.098"
+            app:layout_constraintVertical_chainStyle="packed">
 
-                <!-- Sparkle Effect 1 -->
-                <ImageView
-                    android:id="@+id/sparkle1"
-                    android:layout_width="30dp"
-                    android:layout_height="30dp"
-                    android:layout_gravity="top|start"
-                    android:layout_margin="8dp"
-                    android:src="@drawable/sparkle"
-                    android:visibility="invisible" />
+            <!-- Play Again Button -->
+            <androidx.appcompat.widget.AppCompatButton
+                android:id="@+id/btnPlayAgain"
+                android:layout_width="200dp"
+                android:layout_height="55dp"
+                android:backgroundTint="#4CAF50"
+                android:elevation="6dp"
+                android:padding="0dp"
+                android:text="Replay"
+                android:textAllCaps="false"
+                android:textColor="#FFFFFF"
+                android:textSize="18sp"
+                android:textStyle="bold" />
 
-                <!-- Sparkle Effect 2 -->
-                <ImageView
-                    android:id="@+id/sparkle2"
-                    android:layout_width="30dp"
-                    android:layout_height="30dp"
-                    android:layout_gravity="top|end"
-                    android:layout_margin="8dp"
-                    android:src="@drawable/sparkle"
-                    android:visibility="invisible" />
+            <!-- Home Button -->
+            <androidx.appcompat.widget.AppCompatButton
+                android:id="@+id/btnDashboard"
+                android:layout_width="200dp"
+                android:layout_height="55dp"
+                android:backgroundTint="#2196F3"
+                android:elevation="6dp"
+                android:padding="0dp"
+                android:text="Home"
+                android:textAllCaps="false"
+                android:textColor="#FFFFFF"
+                android:textSize="18sp"
+                android:textStyle="bold" />
 
-                <!-- Sparkle Effect 3 -->
-                <ImageView
-                    android:id="@+id/sparkle3"
-                    android:layout_width="30dp"
-                    android:layout_height="30dp"
-                    android:layout_gravity="bottom|start"
-                    android:layout_margin="8dp"
-                    android:src="@drawable/sparkle"
-                    android:visibility="invisible" />
+        </LinearLayout>
 
-                <!-- Sparkle Effect 4 -->
-                <ImageView
-                    android:id="@+id/sparkle4"
-                    android:layout_width="30dp"
-                    android:layout_height="30dp"
-                    android:layout_gravity="bottom|end"
-                    android:layout_margin="8dp"
-                    android:src="@drawable/sparkle"
-                    android:visibility="invisible" />
+        <androidx.cardview.widget.CardView
+            android:id="@+id/btnUnlockGift"
+            android:layout_width="250dp"
+            android:layout_height="65dp"
+            android:layout_marginBottom="80dp"
+            app:cardBackgroundColor="@color/white"
+            app:cardCornerRadius="35dp"
+            app:cardElevation="8dp"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent">
 
-            </FrameLayout>
-
-            <!-- Score Title -->
-            <TextView
-                android:id="@+id/titleText"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="20dp"
-                android:text="Your Score"
-                android:textColor="@color/dark_gray"
-                android:textSize="24sp"
-                android:textStyle="bold"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@id/trophyContainer" />
-
-            <!-- Score Container -->
             <LinearLayout
-                android:id="@+id/scoreContainer"
-                android:layout_width="180dp"
-                android:layout_height="80dp"
-                android:layout_marginTop="12dp"
-                android:background="@drawable/rounded_score_background"
-                android:gravity="center"
-                android:orientation="vertical"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@id/titleText">
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:paddingHorizontal="20dp">
 
-                <!-- Score Display -->
+                <!-- Gift Box Icon -->
+                <ImageView
+                    android:id="@+id/giftBoxIcon"
+                    android:layout_width="40dp"
+                    android:layout_height="40dp"
+                    android:layout_marginEnd="12dp"
+                    android:scaleType="fitCenter"
+                    android:src="@drawable/giftbox" />
+
+                <!-- Gift Text -->
                 <TextView
-                    android:id="@+id/scoreText"
-                    android:layout_width="wrap_content"
+                    android:layout_width="0dp"
                     android:layout_height="wrap_content"
-                    android:text="0/5"
-                    android:textColor="@color/white"
-                    android:textSize="36sp"
+                    android:layout_weight="1"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:gravity="center_vertical"
+                    android:text="Unlock Your Gift"
+                    android:textAllCaps="false"
+                    android:textColor="@color/black"
+                    android:textSize="18sp"
                     android:textStyle="bold" />
 
-                <!-- Score Description -->
-                <TextView
-                    android:id="@+id/scoreDescription"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Correct Answers"
-                    android:textColor="@color/white"
-                    android:textSize="14sp" />
-
             </LinearLayout>
 
-            <!-- Total Score -->
-            <TextView
-                android:id="@+id/totalScoreText"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="24dp"
-                android:text="Total Points: 0"
-                android:textColor="@color/blue"
-                android:textSize="18sp"
-                android:textStyle="bold"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@id/scoreContainer" />
+        </androidx.cardview.widget.CardView>
 
-            <!-- Performance Details -->
-            <TextView
-                android:id="@+id/performanceDetails"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="16dp"
-                android:layout_marginStart="24dp"
-                android:layout_marginEnd="24dp"
-                android:gravity="center"
-                android:text=""
-                android:textColor="@color/dark_gray"
-                android:textSize="16sp"
-                android:lineSpacingExtra="4dp"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@id/totalScoreText" />
+        <!-- Performance Text (Optional - Add this if you want to show performance) -->
+        <TextView
+            android:id="@+id/performanceText"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:text=""
+            android:textColor="@color/white"
+            android:textSize="16sp"
+            android:visibility="gone"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/scoreLabel" />
 
-            <!-- Buttons Container -->
-            <LinearLayout
-                android:id="@+id/buttonsContainer"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="32dp"
-                android:layout_marginBottom="32dp"
-                android:gravity="center"
-                android:orientation="vertical"
-                android:spacing="16dp"
-                app:layout_constraintBottom_toBottomOf="parent"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@id/performanceDetails">
-
-                <!-- Play Again Button -->
-                <Button
-                    android:id="@+id/btnPlayAgain"
-                    android:layout_width="200dp"
-                    android:layout_height="55dp"
-                    android:text="Play Again"
-                    android:textAllCaps="false"
-                    android:textColor="@color/white"
-                    android:textSize="18sp"
-                    app:backgroundTint="@color/green" />
-
-                <!-- Dashboard Button -->
-                <Button
-                    android:id="@+id/btnDashboard"
-                    android:layout_width="200dp"
-                    android:layout_height="55dp"
-                    android:text="Dashboard"
-                    android:textAllCaps="false"
-                    android:textColor="@color/white"
-                    android:textSize="18sp"
-                    app:backgroundTint="@color/light_orange" />
-
-            </LinearLayout>
-
-        </androidx.constraintlayout.widget.ConstraintLayout>
-    </ScrollView>
+    </androidx.constraintlayout.widget.ConstraintLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>
