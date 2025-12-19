@@ -66,12 +66,6 @@
             android:name=".AllCorrectGrandPrizeActivity"
             android:exported="false" />
         <activity
-            android:name=".MMFeedbackBadActivity"
-            android:exported="false" />
-        <activity
-            android:name=".MMFeedbackGoodActivity"
-            android:exported="false" />
-        <activity
             android:name=".MusicPlayerActivity"
             android:exported="false" />
         <activity
