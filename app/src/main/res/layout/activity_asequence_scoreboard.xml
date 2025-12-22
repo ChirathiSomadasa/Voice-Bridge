@@ -9,78 +9,84 @@
     android:background="@color/white"
     tools:context=".ASequenceScoreboardActivity">
 
-    <!-- Curved COMPLETED!!! Header -->
+    <!-- Stars at the top -->
+    <LinearLayout
+        android:id="@+id/starsContainer"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:orientation="horizontal"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent">
 
-    <!-- Panda Mascot -->
+        <!-- Left Star -->
+        <ImageView
+            android:id="@+id/starLeft"
+            android:layout_width="64dp"
+            android:layout_height="62dp"
+            android:layout_margin="8dp"
+            android:src="@drawable/star_outline" />
+
+        <!-- Middle Star (larger) -->
+        <ImageView
+            android:id="@+id/starMiddle"
+            android:layout_width="79dp"
+            android:layout_height="84dp"
+            android:layout_margin="8dp"
+            android:src="@drawable/star_outline" />
+
+        <!-- Right Star -->
+        <ImageView
+            android:id="@+id/starRight"
+            android:layout_width="79dp"
+            android:layout_height="60dp"
+            android:layout_margin="8dp"
+            android:src="@drawable/star_outline" />
+
+    </LinearLayout>
+
+    <!-- COMPLETED!!! Header -->
     <TextView
         android:id="@+id/completedText"
-        android:layout_width="367dp"
-        android:layout_height="68dp"
-        android:layout_marginTop="8dp"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
         android:gravity="center"
         android:text="COMPLETED!!!"
         android:textColor="@color/black"
         android:textSize="32sp"
         android:textStyle="bold"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.0"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+        app:layout_constraintTop_toBottomOf="@+id/starsContainer" />
 
-    <!-- Horizontal Progress Bar with Star -->
-
-    <!-- Horizontal Progress Bar with Star -->
-
+    <!-- Panda Mascot -->
     <ImageView
         android:id="@+id/pandaMascot"
-        android:layout_width="245dp"
-        android:layout_height="214dp"
-        android:layout_marginTop="24dp"
+        android:layout_width="327dp"
+        android:layout_height="184dp"
+        android:scaleType="fitCenter"
         android:src="@drawable/panda_score"
+        app:layout_constraintBottom_toTopOf="@+id/statsContainer"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.589"
+        app:layout_constraintHeight_percent="0.3"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/progressBarContainer" />
-
-    <FrameLayout
-        android:id="@+id/progressBarContainer"
-        android:layout_width="match_parent"
-        android:layout_height="48dp"
-        android:layout_marginTop="16dp"
         app:layout_constraintTop_toBottomOf="@id/completedText"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent">
-
-        <ProgressBar
-            android:id="@+id/progressBar"
-            style="?android:attr/progressBarStyleHorizontal"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:progress="100"
-            android:max="100"
-            android:progressDrawable="@drawable/progress_drawable" />
-
-        <ImageView
-            android:id="@+id/starOverlay"
-            android:layout_width="48dp"
-            android:layout_height="48dp"
-            android:layout_gravity="end|center_vertical"
-            android:src="@drawable/star_filled_yellow" />
-    </FrameLayout>
+        app:layout_constraintWidth_percent="0.8" />
 
     <!-- Brown Container with Yellow Cards (Vertical stack of horizontal rows) -->
     <LinearLayout
         android:id="@+id/statsContainer"
-        android:layout_width="325dp"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_marginTop="-20dp"
-        android:background="@color/dark_orange"
+        android:background="#5D4037"
         android:gravity="center"
         android:orientation="vertical"
         android:padding="12dp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/pandaMascot">
+        app:layout_constraintTop_toBottomOf="@id/pandaMascot"
+        app:layout_constraintWidth_percent="0.9">
 
         <!-- Attempts Card -->
         <LinearLayout
@@ -103,9 +109,11 @@
 
             <TextView
                 android:id="@+id/attemptsText"
-                android:layout_width="wrap_content"
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="12dp"
+                android:layout_weight="1"
+                android:gravity="end"
                 android:text="1"
                 android:textColor="@color/black"
                 android:textSize="22sp"
@@ -133,9 +141,11 @@
 
             <TextView
                 android:id="@+id/timeText"
-                android:layout_width="wrap_content"
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="12dp"
+                android:layout_weight="1"
+                android:gravity="end"
                 android:text="10s"
                 android:textColor="@color/black"
                 android:textSize="22sp"
@@ -163,9 +173,11 @@
 
             <TextView
                 android:id="@+id/accuracyText"
-                android:layout_width="wrap_content"
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="12dp"
+                android:layout_weight="1"
+                android:gravity="end"
                 android:text="100%"
                 android:textColor="@color/black"
                 android:textSize="22sp"
@@ -173,14 +185,12 @@
         </LinearLayout>
     </LinearLayout>
 
-
-
     <!-- Action Buttons -->
     <LinearLayout
         android:id="@+id/buttonContainer"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_marginTop="40dp"
+        android:layout_marginTop="24dp"
         android:layout_marginBottom="24dp"
         android:gravity="center"
         android:orientation="horizontal"
@@ -191,31 +201,29 @@
         app:layout_constraintWidth_percent="0.9">
 
         <!-- Play Again Button -->
-
-        <!-- Home Button -->
         <Button
             android:id="@+id/btnTryAnother"
             android:layout_width="0dp"
             android:layout_height="56dp"
             android:layout_marginEnd="8dp"
             android:layout_weight="1"
-            android:background="@drawable/rounded_button_background"
+            android:backgroundTint="#4CAF50"
             android:text="Play Again"
             android:textAllCaps="false"
             android:textColor="@color/white"
             android:textSize="18sp" />
 
+        <!-- Home Button -->
         <Button
             android:id="@+id/btnHome"
             android:layout_width="0dp"
             android:layout_height="56dp"
             android:layout_weight="1"
-            android:background="@drawable/rounded_white_shadow"
-            android:text="Home"
+            android:backgroundTint="@color/dark_orange"
+            android:text="Dashboard"
             android:textAllCaps="false"
             android:textColor="@color/white"
             android:textSize="18sp" />
     </LinearLayout>
-
 
 </androidx.constraintlayout.widget.ConstraintLayout>
