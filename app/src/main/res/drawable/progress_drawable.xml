@@ -1,0 +1,38 @@
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!-- Background -->
+    <item android:id="@android:id/background">
+        <shape android:shape="rectangle">
+            <corners android:radius="24dp" />
+            <solid android:color="@color/white" />
+        </shape>
+    </item>
+
+    <!-- Rainbow Progress -->
+    <item android:id="@android:id/progress">
+        <clip>
+            <shape android:shape="rectangle">
+                <corners android:radius="24dp" />
+                <gradient
+                    android:angle="0"
+                    android:centerColor="#FFFF00"
+                    android:endColor="#00FF00"
+                    android:startColor="#FF0000" />
+            </shape>
+        </clip>
+    </item>
+
+    <!-- Optional: Add more rainbow stops -->
+    <item android:id="@android:id/secondaryProgress">
+        <clip>
+            <shape android:shape="rectangle">
+                <corners android:radius="24dp" />
+                <gradient
+                    android:angle="0"
+                    android:centerColor="#0000FF"
+                    android:endColor="#FF00FF"
+                    android:startColor="#00FF00" />
+            </shape>
+        </clip>
+    </item>
+</layer-list>
