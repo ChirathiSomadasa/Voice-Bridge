@@ -82,7 +82,7 @@
                         android:contentDescription="Happy"
                         android:clickable="true"
                         android:focusable="true"
-                        app:srcCompat="@drawable/happy"/>
+                        app:srcCompat="@drawable/happy_emotion"/>
 
                     <TextView
                         android:layout_width="wrap_content"
@@ -110,7 +110,7 @@
                         android:contentDescription="Sad"
                         android:clickable="true"
                         android:focusable="true"
-                        app:srcCompat="@drawable/sad"/>
+                        app:srcCompat="@drawable/sad_emotion"/>
 
                     <TextView
                         android:layout_width="wrap_content"
@@ -138,7 +138,7 @@
                         android:contentDescription="Angry"
                         android:clickable="true"
                         android:focusable="true"
-                        app:srcCompat="@drawable/angry"/>
+                        app:srcCompat="@drawable/angry_emotion"/>
 
                     <TextView
                         android:layout_width="wrap_content"
@@ -166,7 +166,7 @@
                         android:contentDescription="Afraid"
                         android:clickable="true"
                         android:focusable="true"
-                        app:srcCompat="@drawable/afraid"/>
+                        app:srcCompat="@drawable/afraid_emotion"/>
 
                     <TextView
                         android:layout_width="wrap_content"
