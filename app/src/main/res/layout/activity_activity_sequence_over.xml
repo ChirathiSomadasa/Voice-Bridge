@@ -56,8 +56,19 @@
                 android:gravity="center"
                 android:layout_marginBottom="32dp" />
 
-            <!-- Option 1: Eat Breakfast -->
+            <!-- Instruction -->
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Long press and drag to reorder the steps:"
+                android:textSize="16sp"
+                android:textColor="@color/black"
+                android:gravity="center"
+                android:layout_marginBottom="24dp" />
+
+            <!-- Option 1: Wake Up -->
             <androidx.appcompat.widget.LinearLayoutCompat
+                android:id="@+id/option1_layout"
                 android:layout_width="match_parent"
                 android:layout_height="55dp"
                 android:orientation="horizontal"
@@ -66,73 +77,11 @@
                 android:paddingEnd="16dp"
                 android:gravity="center_vertical"
                 android:clickable="true"
-                android:focusable="true">
+                android:focusable="true"
+                android:longClickable="true">
 
                 <TextView
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:text="Eat Breakfast"
-                    android:textSize="18sp"
-                    android:textColor="@color/white"
-                    android:paddingStart="16dp"
-                    android:gravity="center_vertical" />
-
-                <ImageButton
-                    android:layout_width="40dp"
-                    android:layout_height="40dp"
-                    android:src="@drawable/volume"
-                    android:background="?attr/selectableItemBackgroundBorderless"
-                    android:contentDescription="Sound icon"
-                    android:scaleType="centerInside"
-                    android:padding="8dp" />
-            </androidx.appcompat.widget.LinearLayoutCompat>
-
-            <!-- Option 2: Go to School -->
-            <androidx.appcompat.widget.LinearLayoutCompat
-                android:layout_width="match_parent"
-                android:layout_height="55dp"
-                android:orientation="horizontal"
-                android:layout_marginBottom="16dp"
-                android:background="@drawable/rounded_button_background"
-                android:paddingEnd="16dp"
-                android:gravity="center_vertical"
-                android:clickable="true"
-                android:focusable="true">
-
-                <TextView
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:text="Go to School"
-                    android:textSize="18sp"
-                    android:textColor="@color/white"
-                    android:paddingStart="16dp"
-                    android:gravity="center_vertical" />
-
-                <ImageButton
-                    android:layout_width="40dp"
-                    android:layout_height="40dp"
-                    android:src="@drawable/volume"
-                    android:background="?attr/selectableItemBackgroundBorderless"
-                    android:contentDescription="Sound icon"
-                    android:scaleType="centerInside"
-                    android:padding="8dp" />
-            </androidx.appcompat.widget.LinearLayoutCompat>
-
-            <!-- Option 3: Wake Up -->
-            <androidx.appcompat.widget.LinearLayoutCompat
-                android:layout_width="match_parent"
-                android:layout_height="55dp"
-                android:orientation="horizontal"
-                android:layout_marginBottom="16dp"
-                android:background="@drawable/rounded_button_background"
-                android:paddingEnd="16dp"
-                android:gravity="center_vertical"
-                android:clickable="true"
-                android:focusable="true">
-
-                <TextView
+                    android:id="@+id/text_option1"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
@@ -143,6 +92,7 @@
                     android:gravity="center_vertical" />
 
                 <ImageButton
+                    android:id="@+id/sound_option1"
                     android:layout_width="40dp"
                     android:layout_height="40dp"
                     android:src="@drawable/volume"
@@ -152,8 +102,9 @@
                     android:padding="8dp" />
             </androidx.appcompat.widget.LinearLayoutCompat>
 
-            <!-- Option 4: Wash Face -->
+            <!-- Option 2: Brush Teeth -->
             <androidx.appcompat.widget.LinearLayoutCompat
+                android:id="@+id/option2_layout"
                 android:layout_width="match_parent"
                 android:layout_height="55dp"
                 android:orientation="horizontal"
@@ -162,41 +113,11 @@
                 android:paddingEnd="16dp"
                 android:gravity="center_vertical"
                 android:clickable="true"
-                android:focusable="true">
+                android:focusable="true"
+                android:longClickable="true">
 
                 <TextView
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:text="Wash Face"
-                    android:textSize="18sp"
-                    android:textColor="@color/white"
-                    android:paddingStart="16dp"
-                    android:gravity="center_vertical" />
-
-                <ImageButton
-                    android:layout_width="40dp"
-                    android:layout_height="40dp"
-                    android:src="@drawable/volume"
-                    android:background="?attr/selectableItemBackgroundBorderless"
-                    android:contentDescription="Sound icon"
-                    android:scaleType="centerInside"
-                    android:padding="8dp" />
-            </androidx.appcompat.widget.LinearLayoutCompat>
-
-            <!-- Option 5: Brush Teeth -->
-            <androidx.appcompat.widget.LinearLayoutCompat
-                android:layout_width="match_parent"
-                android:layout_height="55dp"
-                android:orientation="horizontal"
-                android:layout_marginBottom="16dp"
-                android:background="@drawable/rounded_button_background"
-                android:paddingEnd="16dp"
-                android:gravity="center_vertical"
-                android:clickable="true"
-                android:focusable="true">
-
-                <TextView
+                    android:id="@+id/text_option2"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
@@ -207,6 +128,7 @@
                     android:gravity="center_vertical" />
 
                 <ImageButton
+                    android:id="@+id/sound_option2"
                     android:layout_width="40dp"
                     android:layout_height="40dp"
                     android:src="@drawable/volume"
@@ -215,6 +137,146 @@
                     android:scaleType="centerInside"
                     android:padding="8dp" />
             </androidx.appcompat.widget.LinearLayoutCompat>
+
+            <!-- Option 3: Wash Face -->
+            <androidx.appcompat.widget.LinearLayoutCompat
+                android:id="@+id/option3_layout"
+                android:layout_width="match_parent"
+                android:layout_height="55dp"
+                android:orientation="horizontal"
+                android:layout_marginBottom="16dp"
+                android:background="@drawable/rounded_button_background"
+                android:paddingEnd="16dp"
+                android:gravity="center_vertical"
+                android:clickable="true"
+                android:focusable="true"
+                android:longClickable="true">
+
+                <TextView
+                    android:id="@+id/text_option3"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="Wash Face"
+                    android:textSize="18sp"
+                    android:textColor="@color/white"
+                    android:paddingStart="16dp"
+                    android:gravity="center_vertical" />
+
+                <ImageButton
+                    android:id="@+id/sound_option3"
+                    android:layout_width="40dp"
+                    android:layout_height="40dp"
+                    android:src="@drawable/volume"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:contentDescription="Sound icon"
+                    android:scaleType="centerInside"
+                    android:padding="8dp" />
+            </androidx.appcompat.widget.LinearLayoutCompat>
+
+            <!-- Option 4: Eat Breakfast -->
+            <androidx.appcompat.widget.LinearLayoutCompat
+                android:id="@+id/option4_layout"
+                android:layout_width="match_parent"
+                android:layout_height="55dp"
+                android:orientation="horizontal"
+                android:layout_marginBottom="16dp"
+                android:background="@drawable/rounded_button_background"
+                android:paddingEnd="16dp"
+                android:gravity="center_vertical"
+                android:clickable="true"
+                android:focusable="true"
+                android:longClickable="true">
+
+                <TextView
+                    android:id="@+id/text_option4"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="Eat Breakfast"
+                    android:textSize="18sp"
+                    android:textColor="@color/white"
+                    android:paddingStart="16dp"
+                    android:gravity="center_vertical" />
+
+                <ImageButton
+                    android:id="@+id/sound_option4"
+                    android:layout_width="40dp"
+                    android:layout_height="40dp"
+                    android:src="@drawable/volume"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:contentDescription="Sound icon"
+                    android:scaleType="centerInside"
+                    android:padding="8dp" />
+            </androidx.appcompat.widget.LinearLayoutCompat>
+
+            <!-- Option 5: Go to School -->
+            <androidx.appcompat.widget.LinearLayoutCompat
+                android:id="@+id/option5_layout"
+                android:layout_width="match_parent"
+                android:layout_height="55dp"
+                android:orientation="horizontal"
+                android:layout_marginBottom="32dp"
+                android:background="@drawable/rounded_button_background"
+                android:paddingEnd="16dp"
+                android:gravity="center_vertical"
+                android:clickable="true"
+                android:focusable="true"
+                android:longClickable="true">
+
+                <TextView
+                    android:id="@+id/text_option5"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="Go to School"
+                    android:textSize="18sp"
+                    android:textColor="@color/white"
+                    android:paddingStart="16dp"
+                    android:gravity="center_vertical" />
+
+                <ImageButton
+                    android:id="@+id/sound_option5"
+                    android:layout_width="40dp"
+                    android:layout_height="40dp"
+                    android:src="@drawable/volume"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:contentDescription="Sound icon"
+                    android:scaleType="centerInside"
+                    android:padding="8dp" />
+            </androidx.appcompat.widget.LinearLayoutCompat>
+
+            <!-- Control Buttons -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center"
+                android:layout_marginTop="16dp">
+
+                <Button
+                    android:id="@+id/btn_check"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Check Order"
+                    android:layout_marginEnd="16dp"
+                    android:background="@drawable/rounded_button_background"
+                    android:textColor="@color/white"
+                    android:paddingStart="32dp"
+                    android:paddingEnd="32dp"
+                    android:minWidth="120dp" />
+
+                <Button
+                    android:id="@+id/btn_reset"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Reset"
+                    android:background="@drawable/rounded_button_background"
+                    android:textColor="@color/white"
+                    android:paddingStart="32dp"
+                    android:paddingEnd="32dp"
+                    android:minWidth="120dp" />
+            </LinearLayout>
 
         </LinearLayout>
 

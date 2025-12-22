@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="ring"
+    android:innerRadius="85dp"
+    android:thickness="10dp"
+    android:useLevel="true">
+    <gradient
+        android:type="sweep"
+        android:centerColor="#FF0000"
+        android:startColor="#FF0000"
+        android:endColor="#FF0000"
+        android:angle="0">
+        <item android:offset="0.00" android:color="#FF0000" /> <!-- Red -->
+        <item android:offset="0.17" android:color="#FF7F00" /> <!-- Orange -->
+        <item android:offset="0.33" android:color="#FFFF00" /> <!-- Yellow -->
+        <item android:offset="0.50" android:color="#00FF00" /> <!-- Green -->
+        <item android:offset="0.67" android:color="#0000FF" /> <!-- Blue -->
+        <item android:offset="0.83" android:color="#4B0082" /> <!-- Indigo -->
+        <item android:offset="1.00" android:color="#8B00FF" /> <!-- Violet -->
+    </gradient>
+</shape>

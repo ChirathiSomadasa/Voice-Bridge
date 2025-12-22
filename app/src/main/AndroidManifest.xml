@@ -69,10 +69,40 @@
             android:name=".Education_therapyActivity"
             android:exported="false" />
         <activity
+            android:name=".RMGuidanceActivity"
+            android:exported="false" />
+        <activity
+            android:name=".RMIntroActivity"
+            android:exported="false" />
+        <activity
+            android:name=".RMScoreboardActivity"
+            android:exported="false" />
+        <activity
+            android:name=".ASequenceScoreboardActivity"
+            android:exported="false" />
+        <activity
+            android:name=".UnlockStickerActivity"
+            android:exported="false" />
+        <activity
+            android:name=".ASGuidanceWrongActivity"
+            android:exported="false" />
+        <activity
+            android:name=".ASGuide_BelowActivity"
+            android:exported="false" />
+        <activity
+            android:name=".MMScoreboardActivity"
+            android:exported="false" />
+        <activity
+            android:name=".AllCorrectGrandPrizeActivity"
+            android:exported="false" />
+        <activity
             android:name=".MusicPlayerActivity"
             android:exported="false" />
         <activity
             android:name=".SongSelectionActivity"
+            android:exported="false" />
+        <activity
+            android:name=".ActivitySequenceOverActivity"
             android:exported="false" />
         <activity
             android:name=".ActivitySequenceUnderActivity"
@@ -82,6 +112,9 @@
             android:exported="false" />
         <activity
             android:name=".MoodMatchSevenUpActivity"
+            android:exported="false" />
+        <activity
+            android:name=".MoodMatchSevenDownActivity"
             android:exported="false" />
         <activity
             android:name=".PandaIntroActivity"
