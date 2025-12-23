@@ -22,7 +22,7 @@ class MoodMatchSevenDownActivity : AppCompatActivity(),
 
     // Define all emotions
     private val emotions = listOf(
-        "happyness", "sadness", "angryness", "scared",
+        "happy", "sad", "angry", "scared",
         "bored", "shy", "proud"
     )
 
