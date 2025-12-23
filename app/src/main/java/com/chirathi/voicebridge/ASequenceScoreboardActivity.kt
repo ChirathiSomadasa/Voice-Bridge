@@ -6,11 +6,9 @@ import android.os.Handler
 import android.os.Looper
 import android.util.Log
 import android.view.animation.Animation
-import android.view.animation.AnimationUtils
 import android.view.animation.ScaleAnimation
 import android.widget.Button
 import android.widget.ImageView
-import android.widget.ProgressBar
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 
@@ -20,8 +18,6 @@ class ASequenceScoreboardActivity : AppCompatActivity() {
     private var completionTime = 0L
     private var accuracy = 100
 
-    private lateinit var progressBar: ProgressBar
-    private lateinit var starOverlay: ImageView
     private lateinit var completedText: TextView
     private lateinit var attemptsText: TextView
     private lateinit var timeText: TextView
@@ -30,6 +26,12 @@ class ASequenceScoreboardActivity : AppCompatActivity() {
 
     companion object {
         private const val TAG = "ScoreboardDebug"
+
+        // Scoring constants (adjust these as needed)
+        private const val MAX_ATTEMPTS_PENALTY = 5  // Maximum attempts before zero accuracy
+        private const val MAX_TIME_PENALTY = 60000L // 60 seconds maximum time
+        private const val IDEAL_TIME = 10000L      // 10 seconds for perfect score
+        private const val IDEAL_ATTEMPTS = 1       // 1 attempt for perfect score
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -39,19 +41,17 @@ class ASequenceScoreboardActivity : AppCompatActivity() {
         Log.d(TAG, "=== onCreate STARTED ===")
 
         // Get data passed from game
-        val correctAnswers = intent.getIntExtra("CORRECT_ANSWERS", 0)
-        val totalQuestions = intent.getIntExtra("TOTAL_QUESTIONS", 1)
         val attemptsFromGame = intent.getIntExtra("ATTEMPTS", 1)
         completionTime = intent.getLongExtra("ELAPSED_TIME", 0L)
 
         attempts = attemptsFromGame
-        accuracy = if (totalQuestions > 0) {
-            (correctAnswers * 100) / totalQuestions
-        } else {
-            100
-        }
 
-        Log.d(TAG, "Accuracy: $accuracy%")
+        // Calculate accuracy based on attempts and time
+        accuracy = calculateAccuracy(attempts, completionTime)
+
+        Log.d(TAG, "Attempts: $attempts")
+        Log.d(TAG, "Time: ${completionTime}ms")
+        Log.d(TAG, "Calculated Accuracy: $accuracy%")
 
         // Initialize all views
         initializeViews()
@@ -59,16 +59,66 @@ class ASequenceScoreboardActivity : AppCompatActivity() {
         // Set stats to views
         setStatsToViews()
 
-        // Start progress animation with delay
-        Handler(Looper.getMainLooper()).postDelayed({
-            animateProgressBar(accuracy)
-        }, 500)
-
         // Animate panda mascot
         animatePandaMascot()
 
         // Button click listeners
         setupButtonListeners()
+    }
+
+    private fun calculateAccuracy(attempts: Int, timeMs: Long): Int {
+        // Calculate accuracy based on two factors:
+        // 1. Attempts efficiency (50% weight)
+        // 2. Time efficiency (50% weight)
+
+        // 1. Attempts Score (0-50 points)
+        val attemptsScore = calculateAttemptsScore(attempts)
+
+        // 2. Time Score (0-50 points)
+        val timeScore = calculateTimeScore(timeMs)
+
+        // Total accuracy (0-100%)
+        val totalScore = attemptsScore + timeScore
+
+        // Ensure it's between 0-100
+        return totalScore.coerceIn(0, 100)
+    }
+
+    private fun calculateAttemptsScore(attempts: Int): Int {
+        // Fewer attempts = higher score
+        // Perfect score (50 points) for 1 attempt
+        // Linear decrease up to MAX_ATTEMPTS_PENALTY attempts (0 points)
+
+        val attemptsPenalty = when {
+            attempts <= IDEAL_ATTEMPTS -> 0
+            attempts >= MAX_ATTEMPTS_PENALTY -> 50
+            else -> {
+                val penaltyPerAttempt = 50.0 / (MAX_ATTEMPTS_PENALTY - IDEAL_ATTEMPTS)
+                ((attempts - IDEAL_ATTEMPTS) * penaltyPerAttempt).toInt()
+            }
+        }
+
+        return 50 - attemptsPenalty
+    }
+
+    private fun calculateTimeScore(timeMs: Long): Int {
+        // Faster time = higher score
+        // Perfect score (50 points) for <= IDEAL_TIME
+        // Linear decrease up to MAX_TIME_PENALTY (0 points)
+
+        val timeSeconds = timeMs / 1000
+        Log.d(TAG, "Time in seconds: $timeSeconds")
+
+        return when {
+            timeMs <= IDEAL_TIME -> 50  // Perfect score for <= 10 seconds
+            timeMs >= MAX_TIME_PENALTY -> 0  // Zero score for >= 60 seconds
+            else -> {
+                val timeOverIdeal = (timeMs - IDEAL_TIME).toDouble()
+                val totalPenaltyRange = (MAX_TIME_PENALTY - IDEAL_TIME).toDouble()
+                val penalty = (timeOverIdeal / totalPenaltyRange) * 50
+                (50 - penalty).toInt()
+            }
+        }
     }
 
     private fun initializeViews() {
@@ -78,75 +128,31 @@ class ASequenceScoreboardActivity : AppCompatActivity() {
         attemptsText = findViewById(R.id.attemptsText)
         timeText = findViewById(R.id.timeText)
         accuracyText = findViewById(R.id.accuracyText)
-        progressBar = findViewById(R.id.progressBar)
-        starOverlay = findViewById(R.id.starOverlay)
         pandaMascot = findViewById(R.id.pandaMascot)
     }
 
     private fun setStatsToViews() {
         Log.d(TAG, "=== setStatsToViews STARTED ===")
 
-        val displayAttempts = if (attempts <= 0) 1 else attempts
-        attemptsText.text = displayAttempts.toString()
+        // Display attempts
+        attemptsText.text = attempts.toString()
 
-        // Format completion time as seconds
-        val seconds = completionTime / 1000
-        timeText.text = "${seconds}s"
+        // Format completion time as seconds with one decimal
+        val seconds = completionTime / 1000.0
+        timeText.text = "%.1fs".format(seconds)
 
-        // Set accuracy
+        // Set accuracy with color coding
         accuracyText.text = "$accuracy%"
 
+        // Optional: Change text color based on accuracy
+        val accuracyColor = when {
+            accuracy >= 80 -> android.R.color.holo_green_dark
+            accuracy >= 60 -> android.R.color.holo_orange_dark
+            else -> android.R.color.holo_red_dark
+        }
+        accuracyText.setTextColor(resources.getColor(accuracyColor, theme))
+
         Log.d(TAG, "=== setStatsToViews COMPLETED ===")
-    }
-
-    private fun animateProgressBar(progress: Int) {
-        Log.d(TAG, "Animating progress bar to: $progress%")
-
-        // Animate the progress bar
-        val animator = android.animation.ValueAnimator.ofInt(0, progress)
-        animator.duration = 1500
-        animator.addUpdateListener { animation ->
-            val currentProgress = animation.animatedValue as Int
-            progressBar.progress = currentProgress
-        }
-        animator.start()
-
-        // Animate the star overlay
-        animateStarOverlay()
-    }
-
-    private fun animateStarOverlay() {
-        // Star bounce animation
-        val bounceAnimation = ScaleAnimation(
-            0.5f, 1.2f, 0.5f, 1.2f,
-            Animation.RELATIVE_TO_SELF, 0.5f,
-            Animation.RELATIVE_TO_SELF, 0.5f
-        ).apply {
-            duration = 800
-            repeatCount = 0
-        }
-
-        starOverlay.startAnimation(bounceAnimation)
-
-        // After bounce, start continuous gentle bounce
-        Handler(Looper.getMainLooper()).postDelayed({
-            startGentleStarBounce()
-        }, 800)
-    }
-
-    private fun startGentleStarBounce() {
-        // Continuous gentle bounce for star
-        val gentleBounce = ScaleAnimation(
-            1f, 1.1f, 1f, 1.1f,
-            Animation.RELATIVE_TO_SELF, 0.5f,
-            Animation.RELATIVE_TO_SELF, 0.5f
-        ).apply {
-            duration = 1000
-            repeatCount = Animation.INFINITE
-            repeatMode = Animation.REVERSE
-        }
-
-        starOverlay.startAnimation(gentleBounce)
     }
 
     private fun animatePandaMascot() {
@@ -191,7 +197,6 @@ class ASequenceScoreboardActivity : AppCompatActivity() {
         super.onDestroy()
         Log.d(TAG, "onDestroy called")
         // Clear animations to prevent memory leaks
-        starOverlay.clearAnimation()
         pandaMascot.clearAnimation()
     }
 }

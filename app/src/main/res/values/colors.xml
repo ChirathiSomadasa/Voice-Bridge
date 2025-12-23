@@ -26,4 +26,6 @@
     <color name="green_light">#C8E6C9</color>
     <color name="red_dark">#D32F2F</color>
     <color name="light_blue">#E3F2FD</color>
+    <color name="light_yellow">#fcfab8</color>
+    <color name="dark_brown">#635101</color>
 </resources>
