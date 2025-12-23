@@ -9,33 +9,83 @@
     android:background="@color/white"
     tools:context=".ASequenceScoreboardActivity">
 
-    <!-- Curved COMPLETED!!! Header -->
+    <!-- COMPLETED!!! Header -->
     <TextView
         android:id="@+id/completedText"
-        android:layout_width="367dp"
-        android:layout_height="68dp"
+        android:layout_width="364dp"
+        android:layout_height="62dp"
+        android:layout_marginTop="-10dp"
         android:gravity="center"
         android:text="COMPLETED!!!"
         android:textColor="@color/green_dark"
         android:textSize="42sp"
         android:textStyle="bold"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.0"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
+
+    <!-- Star Rating -->
+    <LinearLayout
+        android:id="@+id/starContainer"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/completedText">
+
+        <ImageView
+            android:id="@+id/starLeft"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:layout_margin="8dp"
+            android:contentDescription="Star rating"
+            android:src="@drawable/star_outline" />
+
+        <ImageView
+            android:id="@+id/starMiddle"
+            android:layout_width="83dp"
+            android:layout_height="65dp"
+            android:layout_margin="8dp"
+            android:contentDescription="Star rating"
+            android:src="@drawable/star_outline" />
+
+        <ImageView
+            android:id="@+id/starRight"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:layout_margin="8dp"
+            android:contentDescription="Star rating"
+            android:src="@drawable/star_outline" />
+    </LinearLayout>
+
+    <TextView
+        android:id="@+id/performanceText"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginHorizontal="24dp"
+        android:gravity="center"
+        android:text="Performance rating"
+        android:textColor="@color/dark_gray"
+        android:textSize="16sp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/starContainer" />
 
     <!-- Panda Mascot -->
     <ImageView
         android:id="@+id/pandaMascot"
-        android:layout_width="328dp"
-        android:layout_height="272dp"
+        android:layout_width="242dp"
+        android:layout_height="234dp"
+        android:layout_marginTop="5dp"
+        android:layout_marginBottom="-20dp"
         android:src="@drawable/panda_score"
+        app:layout_constraintBottom_toTopOf="@+id/statsContainer"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.589"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/completedText" />
+        app:layout_constraintTop_toBottomOf="@+id/performanceText" />
 
-    <!-- Brown Container with Yellow Cards (Vertical stack of horizontal rows) -->
+    <!-- Brown Container with Yellow Cards -->
     <LinearLayout
         android:id="@+id/statsContainer"
         android:layout_width="325dp"

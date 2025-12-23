@@ -1,11 +1,15 @@
 package com.chirathi.voicebridge
 
+import android.animation.ObjectAnimator
+import android.animation.ValueAnimator
 import android.content.Intent
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
 import android.util.Log
 import android.view.animation.Animation
+import android.view.animation.BounceInterpolator
+import android.view.animation.LinearInterpolator
 import android.view.animation.ScaleAnimation
 import android.widget.Button
 import android.widget.ImageView
@@ -23,6 +27,14 @@ class ASequenceScoreboardActivity : AppCompatActivity() {
     private lateinit var timeText: TextView
     private lateinit var accuracyText: TextView
     private lateinit var pandaMascot: ImageView
+
+    // Star rating views
+    private lateinit var starLeft: ImageView
+    private lateinit var starMiddle: ImageView
+    private lateinit var starRight: ImageView
+
+    // Performance text
+    private lateinit var performanceText: TextView
 
     companion object {
         private const val TAG = "ScoreboardDebug"
@@ -59,8 +71,11 @@ class ASequenceScoreboardActivity : AppCompatActivity() {
         // Set stats to views
         setStatsToViews()
 
-        // Animate panda mascot
-        animatePandaMascot()
+        // Update star rating based on accuracy
+        updateStarRating(accuracy)
+
+        // Start animations
+        startAnimations()
 
         // Button click listeners
         setupButtonListeners()
@@ -129,6 +144,14 @@ class ASequenceScoreboardActivity : AppCompatActivity() {
         timeText = findViewById(R.id.timeText)
         accuracyText = findViewById(R.id.accuracyText)
         pandaMascot = findViewById(R.id.pandaMascot)
+
+        // Initialize star rating views
+        starLeft = findViewById(R.id.starLeft)
+        starMiddle = findViewById(R.id.starMiddle)
+        starRight = findViewById(R.id.starRight)
+
+        // Initialize performance text (you'll need to add this to your XML)
+        performanceText = findViewById(R.id.performanceText)
     }
 
     private fun setStatsToViews() {
@@ -144,15 +167,136 @@ class ASequenceScoreboardActivity : AppCompatActivity() {
         // Set accuracy with color coding
         accuracyText.text = "$accuracy%"
 
-        // Optional: Change text color based on accuracy
-        val accuracyColor = when {
-            accuracy >= 80 -> android.R.color.holo_green_dark
-            accuracy >= 60 -> android.R.color.holo_orange_dark
-            else -> android.R.color.holo_red_dark
-        }
-        accuracyText.setTextColor(resources.getColor(accuracyColor, theme))
+        // Animate accuracy counting
+        animateAccuracyCount(accuracy)
+
+        // Set performance text based on accuracy
+        updatePerformanceText(accuracy)
 
         Log.d(TAG, "=== setStatsToViews COMPLETED ===")
+    }
+
+    private fun updatePerformanceText(accuracy: Int) {
+        when {
+            accuracy >= 90 -> {
+                performanceText.text = "Outstanding! Perfect performance! 🏆"
+                performanceText.setTextColor(resources.getColor(R.color.green_dark, theme))
+            }
+            accuracy >= 70 -> {
+                performanceText.text = "Excellent! Great job! 👍"
+                performanceText.setTextColor(resources.getColor(R.color.green, theme))
+            }
+            accuracy >= 50 -> {
+                performanceText.text = "Good! Keep practicing! 📚"
+                performanceText.setTextColor(resources.getColor(R.color.dark_orange, theme))
+            }
+            accuracy >= 30 -> {
+                performanceText.text = "Nice try! You're getting better! 🌟"
+                performanceText.setTextColor(resources.getColor(R.color.light_blue, theme))
+            }
+            else -> {
+                performanceText.text = "Keep practicing! You'll improve! 💪"
+                performanceText.setTextColor(resources.getColor(R.color.red_dark, theme))
+            }
+        }
+    }
+
+    private fun updateStarRating(accuracy: Int) {
+        // Determine how many stars to light up based on accuracy
+        val starsToLight = when {
+            accuracy >= 70 -> 3  // Three stars for 70-100%
+            accuracy >= 50 -> 2  // Two stars for 50-69%
+            accuracy >= 30 -> 1  // One star for 30-49%
+            else -> 0            // No stars for 0-29%
+        }
+
+        // Light up stars
+        val stars = listOf(starLeft, starMiddle, starRight)
+        for (i in 0 until 3) {
+            val star = stars[i]
+            if (i < starsToLight) {
+                star.setImageResource(R.drawable.star_filled_yellow) // Use your star resource
+                animateStarWithBounce(star, i * 200L) // Stagger the animations
+            } else {
+                star.setImageResource(R.drawable.star_outline) // Use your outline star resource
+            }
+        }
+    }
+
+    private fun animateAccuracyCount(finalAccuracy: Int) {
+        // Animate the accuracy counting from 0 to finalAccuracy
+        val animator = ValueAnimator.ofInt(0, finalAccuracy)
+        animator.duration = 1500
+
+        animator.addUpdateListener { valueAnimator ->
+            val currentValue = valueAnimator.animatedValue as Int
+            accuracyText.text = "$currentValue%"
+        }
+
+        animator.start()
+    }
+
+    private fun animateStarWithBounce(star: ImageView, delay: Long = 0) {
+        Handler(Looper.getMainLooper()).postDelayed({
+            // Bounce animation
+            val bounceAnim = ScaleAnimation(
+                0.5f, 1.2f, 0.5f, 1.2f,
+                ScaleAnimation.RELATIVE_TO_SELF, 0.5f,
+                ScaleAnimation.RELATIVE_TO_SELF, 0.5f
+            ).apply {
+                duration = 800
+                interpolator = BounceInterpolator()
+                repeatCount = 0
+            }
+
+            // Glow effect
+            val glowAnim = ObjectAnimator.ofFloat(star, "alpha", 0.7f, 1f, 0.7f)
+            glowAnim.duration = 1000
+            glowAnim.repeatCount = ValueAnimator.INFINITE
+            glowAnim.repeatMode = ValueAnimator.REVERSE
+
+            star.startAnimation(bounceAnim)
+            glowAnim.start()
+        }, delay)
+    }
+
+    private fun startAnimations() {
+        // Animate completed text
+        animateCompletedText()
+
+        // Animate panda mascot
+        animatePandaMascot()
+
+        // Animate stats cards with delay
+        animateStatsCards()
+    }
+
+    private fun animateCompletedText() {
+        // Bounce animation for completed text
+        val bounceAnim = ScaleAnimation(
+            0.5f, 1.2f, 0.5f, 1.2f,
+            ScaleAnimation.RELATIVE_TO_SELF, 0.5f,
+            ScaleAnimation.RELATIVE_TO_SELF, 0.5f
+        ).apply {
+            duration = 1000
+            interpolator = BounceInterpolator()
+            repeatCount = 0
+        }
+
+        // Pulse animation after bounce
+        val pulseAnim = ObjectAnimator.ofPropertyValuesHolder(
+            completedText,
+            android.animation.PropertyValuesHolder.ofFloat("scaleX", 1f, 1.05f, 1f),
+            android.animation.PropertyValuesHolder.ofFloat("scaleY", 1f, 1.05f, 1f)
+        ).apply {
+            duration = 1500
+            repeatCount = ValueAnimator.INFINITE
+            repeatMode = ValueAnimator.REVERSE
+            startDelay = 1000
+        }
+
+        completedText.startAnimation(bounceAnim)
+        pulseAnim.start()
     }
 
     private fun animatePandaMascot() {
@@ -168,7 +312,33 @@ class ASequenceScoreboardActivity : AppCompatActivity() {
             startOffset = 300
         }
 
+        // Add rotation animation
+        val rotateAnim = ObjectAnimator.ofFloat(pandaMascot, "rotation", -5f, 5f)
+        rotateAnim.duration = 2000
+        rotateAnim.repeatCount = ValueAnimator.INFINITE
+        rotateAnim.repeatMode = ValueAnimator.REVERSE
+        rotateAnim.interpolator = LinearInterpolator()
+
         pandaMascot.startAnimation(floatAnimation)
+        rotateAnim.start()
+    }
+
+    private fun animateStatsCards() {
+        val statsContainer = findViewById<android.widget.LinearLayout>(R.id.statsContainer)
+
+        // Animate each stat card with a slight delay
+        for (i in 0 until statsContainer.childCount) {
+            val card = statsContainer.getChildAt(i)
+            card.alpha = 0f
+            card.translationY = 50f
+
+            card.animate()
+                .alpha(1f)
+                .translationY(0f)
+                .setDuration(600)
+                .setStartDelay((i * 200).toLong())
+                .start()
+        }
     }
 
     private fun setupButtonListeners() {
@@ -176,27 +346,70 @@ class ASequenceScoreboardActivity : AppCompatActivity() {
         val btnTryAnother = findViewById<Button>(R.id.btnTryAnother)
         val btnHome = findViewById<Button>(R.id.btnHome)
 
+        // Add button animations
         btnTryAnother.setOnClickListener {
-            Log.d(TAG, "Play Again button clicked")
-            val intent = Intent(this, ActivitySequenceUnderActivity::class.java)
-            intent.flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
-            startActivity(intent)
-            finish()
+            animateButtonClick(btnTryAnother) {
+                Log.d(TAG, "Play Again button clicked")
+                val intent = Intent(this, ActivitySequenceUnderActivity::class.java)
+                intent.flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
+                startActivity(intent)
+                finish()
+            }
         }
 
         btnHome.setOnClickListener {
-            Log.d(TAG, "Home button clicked")
-            val intent = Intent(this, GameDashboardActivity::class.java)
-            intent.flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
-            startActivity(intent)
-            finish()
+            animateButtonClick(btnHome) {
+                Log.d(TAG, "Home button clicked")
+                val intent = Intent(this, GameDashboardActivity::class.java)
+                intent.flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
+                startActivity(intent)
+                finish()
+            }
         }
+    }
+
+    private fun animateButtonClick(button: Button, action: () -> Unit) {
+        button.animate()
+            .scaleX(0.95f)
+            .scaleY(0.95f)
+            .setDuration(150)
+            .withEndAction {
+                button.animate()
+                    .scaleX(1f)
+                    .scaleY(1f)
+                    .setDuration(150)
+                    .withEndAction {
+                        action()
+                    }
+                    .start()
+            }
+            .start()
+    }
+
+    override fun onResume() {
+        super.onResume()
+        // Restart animations
+        startAnimations()
+    }
+
+    override fun onPause() {
+        super.onPause()
+        // Clear animations
+        clearAnimations()
     }
 
     override fun onDestroy() {
         super.onDestroy()
         Log.d(TAG, "onDestroy called")
-        // Clear animations to prevent memory leaks
+        // Clear all animations
+        clearAnimations()
+    }
+
+    private fun clearAnimations() {
+        completedText.clearAnimation()
         pandaMascot.clearAnimation()
+        starLeft.clearAnimation()
+        starMiddle.clearAnimation()
+        starRight.clearAnimation()
     }
 }
