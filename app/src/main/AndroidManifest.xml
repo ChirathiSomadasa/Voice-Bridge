@@ -54,7 +54,7 @@
             android:name=".UnlockStickerActivity"
             android:exported="false" />
         <activity
-            android:name=".ASGuidanceWrongActivity"
+            android:name=".ASGuidanceAboveActivity"
             android:exported="false" />
         <activity
             android:name=".ASGuide_BelowActivity"
