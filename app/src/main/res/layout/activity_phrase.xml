@@ -17,7 +17,6 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="64dp"
-        android:text="Good Evening !"
         android:textColor="@color/green_dark"
         android:textSize="26sp"
         android:textStyle="bold"
@@ -43,7 +42,8 @@
             android:layout_width="120dp"
             android:layout_height="120dp"
             android:contentDescription="@string/app_name"
-            android:src="@drawable/play" />
+            android:scaleType="fitCenter"
+            android:visibility="visible" />
     </LinearLayout>
 
     <!-- Sentence -->
@@ -53,7 +53,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="36dp"
-        android:text="I want to play"
+
         android:textColor="@color/green_dark"
         android:textSize="28sp"
         android:textStyle="bold"
@@ -92,16 +92,17 @@
             android:layout_height="65dp"
             android:src="@drawable/speaker"
             android:layout_marginTop="10dp"
-            android:contentDescription="Play Phrase"/>
+            android:contentDescription="@string/speaker"
+            />
 
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Play Phrase"
             android:textColor="@color/white"
             android:textStyle="bold"
             android:textSize="16sp"
-            android:layout_marginTop="22dp"/>
+            android:layout_marginTop="22dp"
+            android:text="Speaker"/>
     </LinearLayout>
 
     <!-- Refresh (Try Again) -->
@@ -120,18 +121,18 @@
                 android:id="@+id/ivRefresh"
                 android:layout_width="75dp"
                 android:layout_height="75dp"
-                android:contentDescription="Try Again"
                 android:src="@drawable/refresh"
-                android:layout_marginTop="10dp"/>
+                android:layout_marginTop="10dp"
+                android:contentDescription="@string/refresh"/>
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="16dp"
-                android:text="Try Again"
                 android:textColor="@color/white"
                 android:textSize="16sp"
-                android:textStyle="bold" />
+                android:textStyle="bold"
+                android:text="Try Again"/>
         </LinearLayout>
 
     </LinearLayout>

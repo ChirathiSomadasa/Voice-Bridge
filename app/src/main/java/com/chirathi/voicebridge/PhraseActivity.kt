@@ -6,6 +6,7 @@ import android.speech.tts.TextToSpeech
 import android.speech.tts.Voice
 import android.util.Log
 import android.widget.ImageView
+import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import java.text.SimpleDateFormat
@@ -14,7 +15,7 @@ import java.util.*
 class PhraseActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
 
     private var tts: TextToSpeech? = null
-    private var speakerBtn: ImageView? = null
+    private var speakerBtn: LinearLayout? = null
     private var phraseText: TextView? = null
     private var greetingText: TextView? = null
     private var selectedPhrase: String = "I want to play"
@@ -31,8 +32,8 @@ class PhraseActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
         val quickWordImage = findViewById<ImageView>(R.id.imgQuickWord)
         phraseText = findViewById<TextView>(R.id.tvPhrase)
         greetingText = findViewById<TextView>(R.id.tvGreeting)
-        val refreshBtn = findViewById<ImageView>(R.id.ivRefresh)
-        speakerBtn = findViewById<ImageView>(R.id.ivSpeaker)
+        val refreshBtn = findViewById<LinearLayout>(R.id.refresh)
+        speakerBtn = findViewById(R.id.Speaker)
 
         // Set the icon and phrase based on what was clicked
         quickWordImage.setImageResource(selectedIconDrawable)
