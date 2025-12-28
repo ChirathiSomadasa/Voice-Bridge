@@ -7,8 +7,28 @@
     android:background="@color/white"
     tools:context=".MoodMatchSevenUpActivity">
 
-    <!-- Top Bamboo Background -->
+    <!-- Video Player (Plays on top, but game area is still visible and playable) -->
+    <FrameLayout
+        android:id="@+id/videoContainer"
+        android:layout_width="0dp"
+        android:layout_height="250dp"
+        android:scaleX="1.5"
+        android:scaleY="1.5"
+        android:background="@android:color/transparent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent">
 
+        <VideoView
+            android:id="@+id/videoView"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:scaleType="fitXY"
+            android:background="@android:color/transparent" />
+
+    </FrameLayout>
+
+    <!-- Top Bamboo Background (Initially invisible, becomes visible after video) -->
     <ImageView
         android:id="@+id/topGameImage1"
         android:layout_width="0dp"
@@ -18,106 +38,179 @@
         android:scaleX="1.5"
         android:scaleY="1.5"
         android:src="@drawable/game_bg"
+        android:visibility="invisible"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.0"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
-
-    <!-- Panda Image on Top -->
-    <ImageView
-        android:id="@+id/pandaImage"
-        android:layout_width="180dp"
-        android:layout_height="180dp"
-        android:layout_marginTop="70dp"
-        android:layout_marginEnd="250dp"
-        android:scaleType="fitCenter"
-        android:src="@drawable/panda"
-        app:layout_constraintEnd_toEndOf="parent"
+    <!-- "Guess the emotion?" Text BEFORE the Panda -->
+    <TextView
+        android:id="@+id/guessText"
+        android:layout_width="300dp"
+        android:layout_height="285dp"
+        android:gravity="center"
+        android:shadowColor="#000000"
+        android:shadowDx="2"
+        android:shadowDy="2"
+        android:shadowRadius="4"
+        android:text="Guess the \nemotion?"
+        android:textColor="@color/white"
+        android:textSize="35sp"
+        android:textStyle="bold"
+        android:visibility="invisible"
+        app:layout_constraintBottom_toBottomOf="@id/pandaImage"
+        app:layout_constraintEnd_toStartOf="@id/pandaImage"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
-    <!-- Scrollable Bottom Section -->
-    <ScrollView
-        android:id="@+id/contentScroll"
+    <!-- Panda Image on Top (Initially invisible, becomes visible after video) -->
+    <ImageView
+        android:id="@+id/pandaImage"
+        android:layout_width="260dp"
+        android:layout_height="243dp"
+        android:layout_marginEnd="-50dp"
+        android:scaleType="fitCenter"
+        android:src="@drawable/panda_think"
+        android:visibility="invisible"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <!-- Current Score & Round (Initially invisible, becomes visible after video) -->
+    <TextView
+        android:id="@+id/tvScore"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:text="Score: 0"
+        android:textSize="20sp"
+        android:textColor="@color/white"
+        android:textStyle="bold"
+        android:visibility="invisible"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/pandaImage" />
+
+    <TextView
+        android:id="@+id/tvRound"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:text="Round: 1/5"
+        android:textSize="18sp"
+        android:textColor="@color/white"
+        android:visibility="invisible"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/tvScore" />
+
+    <!-- Game Content Area (Visible from start - THIS IS PLAYABLE IMMEDIATELY) -->
+    <LinearLayout
+        android:id="@+id/gameContent"
         android:layout_width="0dp"
         android:layout_height="0dp"
         android:layout_marginTop="-10dp"
         android:background="@drawable/white_bottom_bg"
-        android:fillViewport="true"
+        android:orientation="vertical"
+        android:gravity="center_horizontal"
+        android:padding="16dp"
+        android:visibility="visible"
         app:layout_constraintTop_toBottomOf="@id/topGameImage1"
-        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintBottom_toTopOf="@id/btnNext"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent">
 
-        <LinearLayout
-            android:id="@+id/layoutContent"
+        <!-- Emotion Image (Smaller to fit) -->
+        <ImageView
+            android:id="@+id/emotionImage"
+            android:layout_width="250dp"
+            android:layout_height="250dp"
+            android:scaleType="fitCenter"
+            android:layout_marginBottom="16dp" />
+
+        <!-- Options Grid -->
+        <GridLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:gravity="center_horizontal"
-            android:padding="20dp">
+            android:columnCount="2"
+            android:rowCount="2"
+            android:alignmentMode="alignBounds"
+            android:columnOrderPreserved="false"
+            android:useDefaultMargins="true">
 
-
-            <!-- Emotion Image -->
-            <ImageView
-                android:id="@+id/emotionImage"
-                android:layout_width="260dp"
-                android:layout_height="260dp"
-                android:src="@drawable/scared_kid"
-                android:scaleType="fitCenter"
-                android:layout_marginBottom="1dp" />
-
-            <!-- Option Buttons -->
+            <!-- Option buttons remain the same -->
             <Button
-                android:id="@+id/btn_angry"
+                android:id="@+id/btnOption1"
                 style="@style/SolidGreenButton"
-                android:layout_width="match_parent"
+                android:layout_width="0dp"
                 android:layout_height="55dp"
+                android:layout_columnWeight="1"
+                android:layout_rowWeight="1"
+                android:layout_margin="4dp"
+                android:text="Happy"
+                android:textSize="16sp"
+                android:textAllCaps="false"
+                app:backgroundTint="@color/green"
+                android:textColor="@color/white" />
+
+            <Button
+                android:id="@+id/btnOption2"
+                style="@style/SolidGreenButton"
+                android:layout_width="0dp"
+                android:layout_height="55dp"
+                android:layout_columnWeight="1"
+                android:layout_rowWeight="1"
+                android:layout_margin="4dp"
+                android:text="Sad"
+                android:textSize="16sp"
+                android:textAllCaps="false"
+                app:backgroundTint="@color/green"
+                android:textColor="@color/white" />
+
+            <Button
+                android:id="@+id/btnOption3"
+                style="@style/SolidGreenButton"
+                android:layout_width="0dp"
+                android:layout_height="55dp"
+                android:layout_columnWeight="1"
+                android:layout_rowWeight="1"
+                android:layout_margin="4dp"
                 android:text="Angry"
-                android:textSize="18sp"
+                android:textSize="16sp"
                 android:textAllCaps="false"
                 app:backgroundTint="@color/green"
-                android:textColor="@color/white"
-                android:layout_marginBottom="12dp" />
+                android:textColor="@color/white" />
 
             <Button
-                android:id="@+id/btn_scared"
+                android:id="@+id/btnOption4"
                 style="@style/SolidGreenButton"
-                android:layout_width="match_parent"
+                android:layout_width="0dp"
                 android:layout_height="55dp"
+                android:layout_columnWeight="1"
+                android:layout_rowWeight="1"
+                android:layout_margin="4dp"
                 android:text="Scared"
-                android:textSize="18sp"
+                android:textSize="16sp"
                 android:textAllCaps="false"
                 app:backgroundTint="@color/green"
-                android:textColor="@color/white"
-                android:layout_marginBottom="12dp" />
+                android:textColor="@color/white" />
 
-            <Button
-                android:id="@+id/btn_calm"
-                style="@style/SolidGreenButton"
-                android:layout_width="match_parent"
-                android:layout_height="55dp"
-                android:text="Calm"
-                android:textSize="18sp"
-                android:textAllCaps="false"
-                app:backgroundTint="@color/green"
-                android:textColor="@color/white"
-                android:layout_marginBottom="12dp" />
+        </GridLayout>
 
-            <Button
-                android:id="@+id/btn_frustrated"
-                style="@style/SolidGreenButton"
-                android:layout_width="match_parent"
-                android:layout_height="55dp"
-                android:text="Frustrated"
-                android:textSize="18sp"
-                android:textAllCaps="false"
-                app:backgroundTint="@color/green"
-                android:textColor="@color/white"
-                android:layout_marginBottom="20dp" />
+    </LinearLayout>
 
-        </LinearLayout>
-    </ScrollView>
+    <!-- Next Button at Bottom (Visible from start) -->
+    <Button
+        android:id="@+id/btnNext"
+        android:layout_width="match_parent"
+        android:layout_height="60dp"
+        android:layout_marginHorizontal="20dp"
+        android:layout_marginBottom="16dp"
+        android:text="Next"
+        android:textSize="18sp"
+        android:visibility="gone"
+        app:backgroundTint="@color/blue"
+        android:textColor="@color/white"
+        app:layout_constraintBottom_toBottomOf="parent" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

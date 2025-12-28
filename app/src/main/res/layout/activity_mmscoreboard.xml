@@ -1,0 +1,225 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/bg_score"
+    tools:context=".MMScoreboardActivity">
+
+    <!-- Remove ScrollView since we want fixed positioning -->
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/main"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:padding="16dp">
+
+        <!-- Stars above "YOU WON" text -->
+
+        <ImageView
+            android:id="@+id/starLeft"
+            android:layout_width="74dp"
+            android:layout_height="68dp"
+            android:layout_marginTop="42dp"
+            android:layout_marginBottom="-5dp"
+            android:src="@drawable/star_outline"
+            app:layout_constraintBottom_toTopOf="@+id/scoreContainer"
+            app:layout_constraintEnd_toStartOf="@+id/starMiddle"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <ImageView
+            android:id="@+id/starMiddle"
+            android:layout_width="125dp"
+            android:layout_height="113dp"
+            android:layout_marginTop="10dp"
+            android:src="@drawable/star_outline"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintHorizontal_bias="0.531"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <ImageView
+            android:id="@+id/starRight"
+            android:layout_width="79dp"
+            android:layout_height="69dp"
+            android:layout_marginTop="42dp"
+            android:layout_marginBottom="-5dp"
+            android:src="@drawable/star_outline"
+            app:layout_constraintBottom_toTopOf="@+id/scoreContainer"
+            app:layout_constraintStart_toEndOf="@+id/starMiddle"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <androidx.cardview.widget.CardView
+            android:id="@+id/scoreContainer"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="140dp"
+            app:cardBackgroundColor="#5D4037"
+            app:cardCornerRadius="20dp"
+            app:cardElevation="8dp"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:strokeColor="#FFD700"
+            app:strokeWidth="4dp">
+
+            <LinearLayout
+                android:layout_width="316dp"
+                android:layout_height="323dp"
+                android:gravity="center_horizontal"
+                android:orientation="vertical"
+                android:padding="24dp">
+
+                <TextView
+                    android:id="@+id/titleWon"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="0dp"
+                    android:text="YOU WON"
+                    android:textColor="#E4D00A"
+                    android:textSize="36sp"
+                    android:textStyle="bold"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintHorizontal_bias="0.497"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toTopOf="parent" />
+
+                <TextView
+                    android:id="@+id/scoreValue"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="12dp"
+                    android:text="Your Score"
+                    android:textColor="@color/light_green"
+                    android:textSize="43sp"
+                    android:textStyle="bold"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toBottomOf="@id/titleWon" />
+
+                <TextView
+                    android:id="@+id/scoreLabel"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp"
+                    android:text="40"
+                    android:textColor="@color/white"
+                    android:textSize="48sp"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toBottomOf="@id/scoreValue" />
+
+                <TextView
+                    android:id="@+id/performanceText"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="12dp"
+                    android:text="Excellent! All stars earned! 🏆"
+                    android:textColor="@color/white"
+                    android:textSize="16sp"
+                    android:gravity="center"
+                    android:layout_gravity="center_horizontal" />
+
+            </LinearLayout>
+
+        </androidx.cardview.widget.CardView>
+
+        <LinearLayout
+            android:id="@+id/buttonsContainer"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="32dp"
+            android:layout_marginTop="32dp"
+            android:layout_marginEnd="32dp"
+            android:gravity="center"
+            android:orientation="vertical"
+            android:spacing="16dp"
+            app:layout_constraintBottom_toTopOf="@+id/btnUnlockGift"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintHorizontal_bias="0.0"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/scoreContainer"
+            app:layout_constraintVertical_bias="0.0"
+            app:layout_constraintVertical_chainStyle="packed">
+
+            <!-- Play Again Button -->
+            <androidx.appcompat.widget.AppCompatButton
+                android:id="@+id/btnPlayAgain"
+                android:layout_width="200dp"
+                android:layout_height="55dp"
+                android:backgroundTint="#4CAF50"
+                android:elevation="6dp"
+                android:padding="0dp"
+                android:text="Play Again"
+                android:textAllCaps="false"
+                android:textColor="#FFFFFF"
+                android:textSize="18sp"
+                android:textStyle="bold" />
+
+            <!-- Home Button -->
+            <androidx.appcompat.widget.AppCompatButton
+                android:id="@+id/btnDashboard"
+                android:layout_width="200dp"
+                android:layout_height="55dp"
+                android:backgroundTint="@color/dark_orange"
+                android:elevation="6dp"
+                android:padding="0dp"
+                android:text="Dashboard"
+                android:textAllCaps="false"
+                android:textColor="#FFFFFF"
+                android:textSize="18sp"
+                android:textStyle="bold" />
+
+        </LinearLayout>
+
+        <androidx.cardview.widget.CardView
+            android:id="@+id/btnUnlockGift"
+            android:layout_width="250dp"
+            android:layout_height="65dp"
+            android:layout_marginTop="20dp"
+            android:layout_marginBottom="20dp"
+            app:cardBackgroundColor="@color/white"
+            app:cardCornerRadius="35dp"
+            app:cardElevation="12dp"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/buttonsContainer">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:paddingHorizontal="20dp">
+
+                <!-- Gift Box Icon -->
+                <ImageView
+                    android:id="@+id/giftBoxIcon"
+                    android:layout_width="40dp"
+                    android:layout_height="40dp"
+                    android:layout_marginEnd="12dp"
+                    android:scaleType="fitCenter"
+                    android:src="@drawable/giftbox" />
+
+                <!-- Gift Text -->
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:gravity="center_vertical"
+                    android:text="Unlock Your Gift"
+                    android:textAllCaps="false"
+                    android:textColor="@color/black"
+                    android:textSize="18sp"
+                    android:textStyle="bold" />
+
+            </LinearLayout>
+
+        </androidx.cardview.widget.CardView>
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+</androidx.constraintlayout.widget.ConstraintLayout>
