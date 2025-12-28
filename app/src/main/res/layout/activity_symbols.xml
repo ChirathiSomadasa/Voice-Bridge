@@ -477,19 +477,19 @@
                     android:padding="8dp">
 
                     <ImageView
-                        android:id="@+id/imgStop"
+                        android:id="@+id/imgSleep"
                         android:layout_width="90dp"
                         android:layout_height="90dp"
                         android:contentDescription="Stop"
                         android:clickable="true"
                         android:focusable="true"
-                        app:srcCompat="@drawable/stop"/>
+                        app:srcCompat="@drawable/sleep"/>
 
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="1dp"
-                        android:text="Stop"
+                        android:text="Sleep"
                         android:textColor="@color/black"
                         android:textSize="16sp"
                         android:textStyle="bold" />
