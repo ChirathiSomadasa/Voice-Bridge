@@ -39,6 +39,9 @@
             android:name=".Education_therapyActivity"
             android:exported="false" />
         <activity
+            android:name=".RhythmSummaryActivity"
+            android:exported="false" />
+        <activity
             android:name=".RMGuidanceActivity"
             android:exported="false" />
         <activity
