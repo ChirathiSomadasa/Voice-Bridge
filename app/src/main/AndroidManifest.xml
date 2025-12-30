@@ -54,19 +54,22 @@
             android:name=".SpeechProgressActivity"
             android:exported="false" />
         <activity
-            android:name=".Education_subjects_Activity"
-            android:exported="false" />
-        <activity
-            android:name=".Education_age6_10_Activity"
-            android:exported="false" />
-        <activity
-            android:name=".Education_age4_6_Activity"
-            android:exported="false" />
-        <activity
             android:name=".TeacherDashboardActivity"
             android:exported="false" />
         <activity
             android:name=".Education_therapyActivity"
+            android:exported="false" />
+        <activity
+            android:name=".Education_subjects_Activity"
+            android:exported="false" />
+        <activity
+            android:name=".Edu_LessonDetailActivity"
+            android:exported="false" />
+        <activity
+            android:name=".Edu_LessonListActivity"
+            android:exported="false" />
+        <activity
+            android:name=".Edu_SubLessonDetailActivity"
             android:exported="false" />
         <activity
             android:name=".RMGuidanceActivity"
