@@ -4,99 +4,187 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#F2F2F2"
+    android:background="#FFF9F0"
     tools:context=".RhythmSummaryActivity">
 
-    <!-- Green Header with Panda and Word -->
-    <LinearLayout
+    <!-- Header with Cloud Background -->
+    <androidx.constraintlayout.widget.ConstraintLayout
         android:id="@+id/headerLayout"
         android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal"
+        android:layout_height="140dp"
+        android:background="@drawable/header_cloud_background"
         android:padding="16dp"
-        android:background="#A9E5BB"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        android:gravity="center_vertical">
+        app:layout_constraintEnd_toEndOf="parent">
 
-        <TextView
-            android:id="@+id/wordTitle"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:text="Boat"
-            android:textSize="26sp"
-            android:textStyle="bold"
-            android:textColor="@android:color/white"
-            android:gravity="center" />
-
+        <!-- Panda Mascot -->
         <ImageView
             android:id="@+id/pandaImage"
             android:layout_width="80dp"
             android:layout_height="80dp"
             android:src="@drawable/panda"
             android:contentDescription="Panda Mascot"
-            android:layout_marginStart="8dp"/>
-    </LinearLayout>
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent" />
 
-    <!-- Car Option -->
-    <ImageButton
-        android:id="@+id/carImage"
+        <!-- Word to Find -->
+        <TextView
+            android:id="@+id/wordTitle"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="16dp"
+            android:layout_marginEnd="16dp"
+            android:text="Find: BOAT"
+            android:textSize="32sp"
+            android:textStyle="bold"
+            android:textColor="#FF6B35"
+            android:gravity="center"
+            app:layout_constraintStart_toEndOf="@id/pandaImage"
+            app:layout_constraintEnd_toStartOf="@+id/scoreLayout"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent" />
+
+        <!-- Score Counter -->
+        <LinearLayout
+            android:id="@+id/scoreLayout"
+            android:layout_width="100dp"
+            android:layout_height="60dp"
+            android:orientation="vertical"
+            android:background="@drawable/score_bubble"
+            android:gravity="center"
+            android:padding="8dp"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="SCORE"
+                android:textSize="12sp"
+                android:textColor="#FFFFFF"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/scoreText"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="0/5"
+                android:textSize="24sp"
+                android:textColor="#FFFFFF"
+                android:textStyle="bold" />
+        </LinearLayout>
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+    <!-- Progress Indicator -->
+    <LinearLayout
+        android:id="@+id/progressContainer"
         android:layout_width="0dp"
-        android:layout_height="150dp"
-        android:layout_marginTop="24dp"
-        android:layout_marginStart="32dp"
-        android:layout_marginEnd="32dp"
-        android:background="@color/white"
-        android:scaleType="fitCenter"
-        android:padding="12dp"
-        android:src="@drawable/car"
-        android:contentDescription="Car"
-        android:clickable="true"
-        android:focusable="true"
+        android:layout_height="20dp"
+        android:layout_marginTop="16dp"
+        android:layout_marginStart="24dp"
+        android:layout_marginEnd="24dp"
+        android:orientation="horizontal"
+        android:gravity="center"
+        android:background="@drawable/progress_background"
+        android:padding="2dp"
         app:layout_constraintTop_toBottomOf="@id/headerLayout"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent" />
+        app:layout_constraintEnd_toEndOf="parent">
 
-    <!-- Plane Option -->
-    <ImageButton
-        android:id="@+id/planeImage"
+
+    </LinearLayout>
+
+    <!-- Instructions -->
+    <TextView
+        android:id="@+id/instructionsText"
         android:layout_width="0dp"
-        android:layout_height="150dp"
-        android:layout_marginTop="24dp"
-        android:layout_marginStart="32dp"
-        android:layout_marginEnd="32dp"
-        android:background="@color/white"
-        android:scaleType="fitCenter"
-        android:padding="12dp"
-        android:src="@drawable/plane"
-        android:contentDescription="Plane"
-        android:clickable="true"
-        android:focusable="true"
-        app:layout_constraintTop_toBottomOf="@id/carImage"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:layout_marginStart="24dp"
+        android:layout_marginEnd="24dp"
+        android:text="Tap the correct image for the word!"
+        android:textSize="18sp"
+        android:textColor="#666666"
+        android:gravity="center"
+        app:layout_constraintTop_toBottomOf="@id/progressContainer"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent" />
 
-    <!-- Boat Option -->
-    <ImageButton
-        android:id="@+id/boatImage"
+    <!-- Options Grid -->
+    <GridLayout
+        android:id="@+id/optionsGrid"
         android:layout_width="0dp"
-        android:layout_height="150dp"
+        android:layout_height="0dp"
         android:layout_marginTop="24dp"
-        android:layout_marginStart="32dp"
-        android:layout_marginEnd="32dp"
+        android:layout_marginStart="24dp"
+        android:layout_marginEnd="24dp"
         android:layout_marginBottom="24dp"
-        android:background="@color/white"
-        android:scaleType="fitCenter"
-        android:padding="12dp"
-        android:src="@drawable/boat"
-        android:contentDescription="Boat"
-        android:clickable="true"
-        android:focusable="true"
-        app:layout_constraintTop_toBottomOf="@id/planeImage"
+        android:columnCount="2"
+        android:rowCount="2"
+        android:alignmentMode="alignMargins"
+        android:columnOrderPreserved="false"
+        android:padding="8dp"
+        app:layout_constraintTop_toBottomOf="@id/instructionsText"
+        app:layout_constraintBottom_toTopOf="@id/feedbackContainer"
         app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent">
+
+        <!-- Options will be added dynamically -->
+
+    </GridLayout>
+
+    <!-- Feedback Container -->
+    <LinearLayout
+        android:id="@+id/feedbackContainer"
+        android:layout_width="0dp"
+        android:layout_height="80dp"
+        android:layout_marginStart="24dp"
+        android:layout_marginEnd="24dp"
+        android:layout_marginBottom="24dp"
+        android:orientation="vertical"
+        android:gravity="center"
+        android:visibility="gone"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent">
+
+        <ImageView
+            android:id="@+id/feedbackIcon"
+            android:layout_width="60dp"
+            android:layout_height="60dp"
+            android:visibility="gone" />
+
+        <TextView
+            android:id="@+id/feedbackText"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textSize="20sp"
+            android:textStyle="bold"
+            android:visibility="gone" />
+
+    </LinearLayout>
+
+    <!-- Next Button -->
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/nextButton"
+        android:layout_width="200dp"
+        android:layout_height="60dp"
+        android:layout_marginBottom="32dp"
+        android:text="NEXT"
+        android:textSize="20sp"
+        android:textStyle="bold"
+        android:visibility="gone"
+        app:cornerRadius="30dp"
+        app:icon="@drawable/right_arrow"
+        app:iconGravity="textEnd"
+        app:iconPadding="8dp"
+        app:backgroundTint="#4CAF50"
+        app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintBottom_toBottomOf="parent" />
+        app:layout_constraintStart_toStartOf="parent" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>
