@@ -92,39 +92,39 @@ class MusicPlayerActivity : AppCompatActivity() {
         when (currentSongTitle) {
             "Row Row Row Your Boat" -> {
                 currentLyrics = listOf(
-                    Lyric("Row, row, row your boat", 10000, 12000),
-                    Lyric("Gently down the stream", 12000, 15000),
-                    Lyric("Merrily, merrily, merrily, merrily", 15000, 18000),
-                    Lyric("Life is but a dream", 18000, 20000),
+                    Lyric("Row, row, row your boat", 9000, 12000),
+                    Lyric("Gently down the stream", 12000, 14000),
+                    Lyric("Merrily, merrily, merrily, merrily", 14000, 17000),
+                    Lyric("Life is but a dream", 17000, 20000),
                     Lyric("Row, row, row your boat", 20000, 22000),
                     Lyric("Gently down the creek", 22000, 25000),
-                    Lyric("And if you see a little mouse,", 25000, 27000),
-                    Lyric("Don' forget to squeak", 27000, 30000),
+                    Lyric("And if you see a little mouse,", 25000, 28000),
+                    Lyric("Don' forget to squeak", 28000, 30000),
                     Lyric("Row, row, row your boat", 30000, 33000),
                     Lyric("Gently down the river", 33000, 35000),
                     Lyric("And if you see a polar bear,", 35000, 38000),
-                    Lyric("Don' forget to shiver", 38000, 40000),
+                    Lyric("Don' forget to shiver", 38000, 41000),
                     Lyric("Row, row, row your boat", 40000, 44000),
                     Lyric("Gently down the stream", 44000, 46000),
-                    Lyric("If you see a crocodile", 46000, 49000),
+                    Lyric("And if you see a crocodile", 46000, 49000),
                     Lyric("Don' forget to scream", 49000, 51000),
                 )
                 currentKeywords = listOf(
                     Keyword("boat", R.drawable.boat_image, 11000, 12000),
-                    Keyword("stream", R.drawable.stream_image, 13000, 15000),
-                    Keyword("dream", R.drawable.dream_image, 18000, 20000),
-                    Keyword("boat", R.drawable.boat_image, 18000, 20000),
-                    Keyword("creek", R.drawable.creek, 18000, 20000),
-                    Keyword("mouse", R.drawable.mouse_image, 18000, 20000),
-                    Keyword("squeak", R.drawable.squeak, 18000, 20000),
-                    Keyword("boat", R.drawable.boat_image, 18000, 20000),
-                    Keyword("river", R.drawable.river_image, 18000, 20000),
-                    Keyword("polar bear", R.drawable.polar_bear_image, 18000, 20000),
-                    Keyword("shiver", R.drawable.dream_image, 18000, 20000),
-                    Keyword("boat", R.drawable.boat_image, 18000, 20000),
-                    Keyword("stream", R.drawable.stream_image, 18000, 20000),
-                    Keyword("crocodile", R.drawable.crocodile, 18000, 20000),
-                    Keyword("scream", R.drawable.scream_image, 18000, 20000),
+                    Keyword("stream", R.drawable.stream_image, 13000, 14000),
+                    Keyword("dream", R.drawable.dream_image, 18000, 19000),
+                    Keyword("boat", R.drawable.boat_image, 21000, 22000),
+                    Keyword("creek", R.drawable.creek, 23000, 24000),
+                    Keyword("mouse", R.drawable.mouse_image, 27000, 28000),
+                    Keyword("squeak", R.drawable.squeak, 29000, 30000),
+                    Keyword("boat", R.drawable.boat_image, 32000, 33000),
+                    Keyword("river", R.drawable.river_image, 33000, 35000),
+                    Keyword("polar bear", R.drawable.polar_bear_image, 37000, 38000),
+                    Keyword("shiver", R.drawable.dream_image, 38000, 39000),
+                    Keyword("boat", R.drawable.boat_image, 43000, 44000),
+                    Keyword("stream", R.drawable.stream_image, 45000, 46000),
+                    Keyword("crocodile", R.drawable.crocodile, 48000, 49000),
+                    Keyword("scream", R.drawable.scream_image, 50000, 51000),
                 )
             }
             "Twinkle Twinkle Little Star" -> {
@@ -201,12 +201,29 @@ class MusicPlayerActivity : AppCompatActivity() {
             stopTimer()
             // Hide flash image when song ends
             flashImage.visibility = View.INVISIBLE
+
+            // Navigate to RMIntroActivity after a short delay
+            Handler(Looper.getMainLooper()).postDelayed({
+                navigateToRMIntroActivity()
+            }, 1000) // 1 second delay before navigation
         }
 
         // Set total time
         val duration = mediaPlayer.duration
         totalTimeText.text = formatTime(duration)
         progressBar.max = duration
+    }
+
+    private fun navigateToRMIntroActivity() {
+        val intent = Intent(this, RMIntroActivity::class.java)
+        intent.putExtra("SONG_TITLE", currentSongTitle)
+
+        // Pass liked songs if needed
+        intent.putExtra("LIKED_SONGS", likedSongs.toTypedArray())
+
+        startActivity(intent)
+        // Don't finish() here if you want users to come back to the music player
+        // finish()
     }
 
     private fun setupClickListeners() {
