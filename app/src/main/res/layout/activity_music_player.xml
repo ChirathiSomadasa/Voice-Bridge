@@ -6,7 +6,7 @@
     android:id="@+id/rootLayout"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/green_light"
+    android:background="@color/gray_light"
     android:padding="16dp"
     tools:context=".MusicPlayerActivity">
 
@@ -68,9 +68,9 @@
     <!-- Flash Image for Keywords -->
     <ImageView
         android:id="@+id/flashImage"
-        android:layout_width="223dp"
-        android:layout_height="218dp"
-        android:layout_marginTop="16dp"
+        android:layout_width="304dp"
+        android:layout_height="318dp"
+        android:layout_marginTop="1dp"
         android:scaleType="fitCenter"
         android:visibility="invisible"
         app:layout_constraintBottom_toTopOf="@id/progressLayout"
@@ -140,7 +140,7 @@
                 android:layout_width="40dp"
                 android:layout_height="40dp"
                 android:src="@drawable/heart"
-                android:background="@drawable/round_button_bg"
+                android:background="@drawable/round_button_fav"
                 android:scaleType="centerInside"
                 android:contentDescription="Like"
                 android:layout_marginStart="8dp" />
