@@ -50,9 +50,12 @@
     <string name="level_2_words">Level 2 - Words</string>
     <string name="now_let_s_make_words_put_letters_n_together_and_practice_saying_whole_n_words">Now let’s make words! Put letters\n together and practice saying whole\n words.</string>
     <string name="let_s_do_education_therapyActivities">Let’s Learn and Have\nFun!</string>
-    <string name="age4_6">Age 4-6</string>
-    <string name="age6_10">Age 6-10</string>
-    <string name="age10_12">Age 10-12</string>
+    <string name="age6">Age 6</string>
+    <string name="age7">Age 7</string>
+    <string name="age8">Age 8</string>
+    <string name="age9">Age 9</string>
+    <string name="age10">Age 10</string>
+    <string name="age11">Age 11</string>
     <string name="instruction_video">Instruction Video</string>
     <string name="level_3">Level 3 - Sentences</string>
     <string name="level_3_sentences">Level 3 - Sentences</string>
