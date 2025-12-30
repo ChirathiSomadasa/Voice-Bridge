@@ -138,7 +138,7 @@
 
                         <!-- Song Info -->
                         <LinearLayout
-                            android:layout_width="0dp"
+                            android:layout_width="36dp"
                             android:layout_height="match_parent"
                             android:layout_weight="2.0"
                             android:gravity="center_vertical"
@@ -197,9 +197,9 @@
                                         android:src="@drawable/clock" />
 
                                     <TextView
-                                        android:layout_width="wrap_content"
+                                        android:layout_width="37dp"
                                         android:layout_height="wrap_content"
-                                        android:text="1:05"
+                                        android:text="0:59"
                                         android:textColor="@color/white"
                                         android:textSize="14sp"
                                         android:textStyle="bold" />
@@ -322,7 +322,7 @@
                                     <TextView
                                         android:layout_width="wrap_content"
                                         android:layout_height="wrap_content"
-                                        android:text="1:05"
+                                        android:text="2:12"
                                         android:textColor="@color/white"
                                         android:textSize="14sp"
                                         android:textStyle="bold" />
@@ -445,7 +445,7 @@
                                     <TextView
                                         android:layout_width="wrap_content"
                                         android:layout_height="wrap_content"
-                                        android:text="1:05"
+                                        android:text="1:27"
                                         android:textColor="@color/white"
                                         android:textSize="14sp"
                                         android:textStyle="bold" />
