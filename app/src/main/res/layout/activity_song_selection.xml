@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
@@ -10,11 +11,10 @@
     <ImageView
         android:id="@+id/topGameImage"
         android:layout_width="match_parent"
-        android:layout_height="300dp"
+        android:layout_height="360dp"
         android:scaleType="fitXY"
         android:src="@drawable/activity_sequence"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.0"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
@@ -28,11 +28,12 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent" />
 
-    <ScrollView
+    <!-- Song Selection Container -->
+    <androidx.core.widget.NestedScrollView
         android:layout_width="0dp"
         android:layout_height="0dp"
-        android:layout_marginTop="-30dp"
-        android:background="@drawable/white_bottom_bg"
+        android:layout_marginTop="-40dp"
+        android:background="@drawable/music_bottom_bg"
         android:fillViewport="true"
         app:layout_constraintBottom_toTopOf="@id/bottom_bg"
         app:layout_constraintEnd_toEndOf="parent"
@@ -40,296 +41,483 @@
         app:layout_constraintTop_toBottomOf="@id/topGameImage">
 
         <LinearLayout
+            android:id="@+id/songsContainer"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:padding="24dp">
+            android:paddingHorizontal="20dp"
+            android:paddingTop="20dp"
+            android:paddingBottom="20dp">
 
-            <!-- Title -->
-            <TextView
+            <!-- Title Section with Music Notes -->
+            <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="Select a Song"
-                android:textSize="30sp"
-                android:textStyle="bold"
-                android:textColor="@color/green_dark"
+                android:orientation="horizontal"
                 android:gravity="center"
-                android:layout_marginBottom="32dp" />
+                android:layout_marginBottom="24dp">
 
-            <!-- Song 1: Twinkle Twinkle Little Star -->
-            <androidx.appcompat.widget.LinearLayoutCompat
-                android:id="@+id/twinkleLayout"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:layout_marginBottom="16dp"
-                android:background="@drawable/rounded_button_background_g"
-                android:padding="16dp"
-                android:gravity="center_vertical"
-                android:clickable="true"
-                android:focusable="true">
-
+                <!-- Left Music Note -->
                 <ImageView
-                    android:layout_width="0dp"
-                    android:layout_height="100dp"
-                    android:layout_weight="1.5"
-                    android:src="@drawable/twinkle"
-                    android:scaleType="centerCrop"
-                    android:layout_marginEnd="16dp"
-                    android:contentDescription="Twinkle Twinkle Little Star" />
+                    android:layout_width="40dp"
+                    android:layout_height="40dp"
+                    android:layout_marginEnd="12dp"
+                    android:src="@drawable/music_note"
+                    android:alpha="0.7"
+                    android:rotation="-10"
+                    android:contentDescription="Music note" />
 
-                <LinearLayout
-                    android:layout_width="0dp"
+                <!-- Title Text -->
+                <TextView
+                    android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:orientation="vertical">
+                    android:text="Pick Your Song!"
+                    android:textSize="28sp"
+                    android:textStyle="bold"
+                    android:textColor="@color/green_dark" />
 
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="Twinkle Twinkle"
-                        android:textSize="20sp"
-                        android:textColor="@color/white"
-                        android:textStyle="bold" />
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="Little Star"
-                        android:textSize="20sp"
-                        android:textColor="@color/white" />
-
-                    <LinearLayout
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:orientation="horizontal"
-                        android:gravity="center_vertical"
-                        android:layout_marginTop="8dp">
-
-                        <ImageView
-                            android:layout_width="20dp"
-                            android:layout_height="20dp"
-                            android:src="@drawable/clock"
-                            android:scaleType="centerInside"
-                            android:layout_marginEnd="8dp"
-                            android:contentDescription="Duration" />
-
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="1.05"
-                            android:textSize="18sp"
-                            android:textColor="@color/white"
-                            android:textStyle="bold" />
-                    </LinearLayout>
-                </LinearLayout>
-
-                <!-- Play button with green circle -->
-                <FrameLayout
-                    android:layout_width="60dp"
-                    android:layout_height="60dp"
-                    android:layout_marginStart="16dp">
-
-                    <ImageView
-                        android:layout_width="match_parent"
-                        android:layout_height="match_parent"
-                        android:src="@drawable/green_circle"
-                        android:scaleType="centerInside"
-                        android:contentDescription="Play song" />
-
-                    <ImageButton
-                        android:layout_width="60dp"
-                        android:layout_height="60dp"
-                        android:src="@drawable/sound"
-                        android:background="?attr/selectableItemBackgroundBorderless"
-                        android:scaleType="centerInside"
-                        android:contentDescription="Play"
-                        android:layout_gravity="center" />
-
-                </FrameLayout>
-            </androidx.appcompat.widget.LinearLayoutCompat>
-
-            <!-- Song 2: Jack Jill -->
-            <androidx.appcompat.widget.LinearLayoutCompat
-                android:id="@+id/jackJillLayout"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:layout_marginBottom="16dp"
-                android:background="@drawable/rounded_button_background_g"
-                android:padding="16dp"
-                android:gravity="center_vertical"
-                android:clickable="true"
-                android:focusable="true">
-
+                <!-- Right Music Note -->
                 <ImageView
-                    android:layout_width="0dp"
-                    android:layout_height="100dp"
-                    android:layout_weight="1.5"
-                    android:src="@drawable/jack"
-                    android:scaleType="centerCrop"
-                    android:layout_marginEnd="16dp"
-                    android:contentDescription="Jack and Jill" />
+                    android:layout_width="40dp"
+                    android:layout_height="40dp"
+                    android:layout_marginStart="12dp"
+                    android:src="@drawable/music_note"
+                    android:alpha="0.7"
+                    android:rotation="10"
+                    android:contentDescription="Music note" />
+            </LinearLayout>
 
-                <LinearLayout
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:orientation="vertical">
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="Jack and Jill"
-                        android:textSize="20sp"
-                        android:textColor="@color/white"
-                        android:textStyle="bold" />
-
-                    <LinearLayout
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:orientation="horizontal"
-                        android:gravity="center_vertical"
-                        android:layout_marginTop="8dp">
-
-                        <ImageView
-                            android:layout_width="20dp"
-                            android:layout_height="20dp"
-                            android:src="@drawable/clock"
-                            android:scaleType="centerInside"
-                            android:layout_marginEnd="8dp"
-                            android:contentDescription="Duration" />
-
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="1.05"
-                            android:textSize="18sp"
-                            android:textColor="@color/white"
-                            android:textStyle="bold" />
-                    </LinearLayout>
-                </LinearLayout>
-
-                <!-- Play button with green circle -->
-                <FrameLayout
-                    android:layout_width="60dp"
-                    android:layout_height="60dp"
-                    android:layout_marginStart="16dp">
-
-                    <ImageView
-                        android:layout_width="match_parent"
-                        android:layout_height="match_parent"
-                        android:src="@drawable/green_circle"
-                        android:scaleType="centerInside"
-                        android:contentDescription="Play song" />
-
-                    <ImageButton
-                        android:layout_width="60dp"
-                        android:layout_height="60dp"
-                        android:src="@drawable/sound"
-                        android:background="?attr/selectableItemBackgroundBorderless"
-                        android:scaleType="centerInside"
-                        android:contentDescription="Play"
-                        android:layout_gravity="center" />
-
-                </FrameLayout>
-            </androidx.appcompat.widget.LinearLayoutCompat>
-
-            <!-- Song 3: Row Row Row Your Boat -->
-            <androidx.appcompat.widget.LinearLayoutCompat
+            <!-- Row Row Row Your Boat Card -->
+            <androidx.cardview.widget.CardView
                 android:id="@+id/rowRowBoatLayout"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:layout_marginBottom="16dp"
-                android:background="@drawable/rounded_button_background_g"
-                android:padding="16dp"
-                android:gravity="center_vertical"
+                android:layout_height="223dp"
+                android:layout_marginBottom="8dp"
                 android:clickable="true"
-                android:focusable="true">
+                android:focusable="true"
+                app:cardBackgroundColor="@color/white"
+                app:cardCornerRadius="20dp"
+                app:cardElevation="6dp"
+                app:cardUseCompatPadding="true">
 
-                <ImageView
-                    android:layout_width="0dp"
-                    android:layout_height="100dp"
-                    android:layout_weight="1.5"
-                    android:src="@drawable/row"
-                    android:scaleType="centerCrop"
-                    android:layout_marginEnd="16dp"
-                    android:contentDescription="Row Row Row Your Boat" />
+                <RelativeLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent">
+
+                    <!-- Heart icon in top-right corner -->
+                    <ImageView
+                        android:id="@+id/heartBoat"
+                        android:layout_width="32dp"
+                        android:layout_height="32dp"
+                        android:layout_alignParentTop="true"
+                        android:layout_alignParentEnd="true"
+                        android:layout_marginTop="-2dp"
+                        android:layout_marginEnd="-2dp"
+                        android:background="?attr/selectableItemBackgroundBorderless"
+                        android:contentDescription="Like song"
+                        android:padding="4dp"
+                        android:src="@drawable/heart_red" />
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal"
+                        android:padding="16dp">
+
+                        <!-- Larger Song Image -->
+                        <ImageView
+                            android:layout_width="150dp"
+                            android:layout_height="match_parent"
+                            android:layout_weight="1.6"
+                            android:adjustViewBounds="true"
+                            android:background="@drawable/rounded_white_shadow"
+                            android:contentDescription="Row Row Row Your Boat"
+                            android:scaleType="centerCrop"
+                            android:src="@drawable/row" />
+
+                        <!-- Song Info -->
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="match_parent"
+                            android:layout_weight="2.0"
+                            android:gravity="center_vertical"
+                            android:orientation="vertical"
+                            android:paddingVertical="8dp"
+                            android:paddingStart="20dp">
+
+                            <!-- Play Button with Duration below it -->
+                            <RelativeLayout
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="16dp">
+
+                                <!-- Play Button -->
+                                <FrameLayout
+                                    android:id="@+id/playButtonContainerBoat"
+                                    android:layout_width="60dp"
+                                    android:layout_height="60dp"
+                                    android:layout_centerHorizontal="true">
+
+                                    <ImageView
+                                        android:layout_width="match_parent"
+                                        android:layout_height="match_parent"
+                                        android:scaleType="fitCenter"
+                                        android:src="@drawable/green_circle" />
+
+                                    <ImageButton
+                                        android:id="@+id/playButtonBoat"
+                                        android:layout_width="40dp"
+                                        android:layout_height="40dp"
+                                        android:layout_gravity="center"
+                                        android:background="?attr/selectableItemBackgroundBorderless"
+                                        android:contentDescription="Play Row Row Your Boat"
+                                        android:scaleType="centerInside"
+                                        android:src="@drawable/sound" />
+                                </FrameLayout>
+
+                                <!-- Duration below Play Button -->
+                                <LinearLayout
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:layout_below="@id/playButtonContainerBoat"
+                                    android:layout_centerHorizontal="true"
+                                    android:layout_marginTop="8dp"
+                                    android:background="@drawable/duration_badge"
+                                    android:gravity="center_vertical"
+                                    android:orientation="horizontal"
+                                    android:paddingHorizontal="12dp"
+                                    android:paddingVertical="4dp">
+
+                                    <ImageView
+                                        android:layout_width="14dp"
+                                        android:layout_height="14dp"
+                                        android:layout_marginEnd="6dp"
+                                        android:contentDescription="Duration"
+                                        android:src="@drawable/clock" />
+
+                                    <TextView
+                                        android:layout_width="wrap_content"
+                                        android:layout_height="wrap_content"
+                                        android:text="1:05"
+                                        android:textColor="@color/white"
+                                        android:textSize="14sp"
+                                        android:textStyle="bold" />
+                                </LinearLayout>
+                            </RelativeLayout>
+                        </LinearLayout>
+                    </LinearLayout>
+                </RelativeLayout>
+            </androidx.cardview.widget.CardView>
+
+            <!-- Twinkle Twinkle Card -->
+            <androidx.cardview.widget.CardView
+                android:id="@+id/twinkleLayout"
+                android:layout_width="match_parent"
+                android:layout_height="223dp"
+                android:layout_marginBottom="5dp"
+                android:clickable="true"
+                android:focusable="true"
+                app:cardBackgroundColor="@color/white"
+                app:cardCornerRadius="20dp"
+                app:cardElevation="6dp"
+                app:cardUseCompatPadding="true">
+
+                <RelativeLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent">
+
+                    <!-- Heart icon in top-right corner -->
+                    <ImageView
+                        android:id="@+id/heartTwinkle"
+                        android:layout_width="32dp"
+                        android:layout_height="32dp"
+                        android:layout_alignParentTop="true"
+                        android:layout_alignParentEnd="true"
+                        android:layout_marginTop="-2dp"
+                        android:layout_marginEnd="-2dp"
+                        android:background="?attr/selectableItemBackgroundBorderless"
+                        android:contentDescription="Like song"
+                        android:padding="4dp"
+                        android:src="@drawable/heart_red" />
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal"
+                        android:padding="16dp">
+
+                        <!-- Larger Song Image -->
+                        <ImageView
+                            android:layout_width="148dp"
+                            android:layout_height="match_parent"
+                            android:layout_weight="1.6"
+                            android:adjustViewBounds="true"
+                            android:background="@drawable/rounded_white_shadow"
+                            android:contentDescription="Twinkle Twinkle Little Star"
+                            android:scaleType="centerCrop"
+                            android:src="@drawable/twinkle" />
+
+                        <!-- Song Info -->
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="match_parent"
+                            android:layout_weight="2.0"
+                            android:gravity="center_vertical"
+                            android:orientation="vertical"
+                            android:paddingVertical="8dp"
+                            android:paddingStart="20dp">
+
+                            <!-- Play Button with Duration below it -->
+                            <RelativeLayout
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="16dp">
+
+                                <!-- Play Button -->
+                                <FrameLayout
+                                    android:id="@+id/playButtonContainerStar"
+                                    android:layout_width="60dp"
+                                    android:layout_height="60dp"
+                                    android:layout_centerHorizontal="true">
+
+                                    <ImageView
+                                        android:layout_width="match_parent"
+                                        android:layout_height="match_parent"
+                                        android:scaleType="fitCenter"
+                                        android:src="@drawable/green_circle" />
+
+                                    <ImageButton
+                                        android:id="@+id/playButtonStar"
+                                        android:layout_width="40dp"
+                                        android:layout_height="40dp"
+                                        android:layout_gravity="center"
+                                        android:background="?attr/selectableItemBackgroundBorderless"
+                                        android:contentDescription="Play Twinkle Twinkle Little Star"
+                                        android:scaleType="centerInside"
+                                        android:src="@drawable/sound" />
+                                </FrameLayout>
+
+                                <!-- Duration below Play Button -->
+                                <LinearLayout
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:layout_below="@id/playButtonContainerStar"
+                                    android:layout_centerHorizontal="true"
+                                    android:layout_marginTop="8dp"
+                                    android:background="@drawable/duration_badge"
+                                    android:gravity="center_vertical"
+                                    android:orientation="horizontal"
+                                    android:paddingHorizontal="12dp"
+                                    android:paddingVertical="4dp">
+
+                                    <ImageView
+                                        android:layout_width="14dp"
+                                        android:layout_height="14dp"
+                                        android:layout_marginEnd="6dp"
+                                        android:contentDescription="Duration"
+                                        android:src="@drawable/clock" />
+
+                                    <TextView
+                                        android:layout_width="wrap_content"
+                                        android:layout_height="wrap_content"
+                                        android:text="1:05"
+                                        android:textColor="@color/white"
+                                        android:textSize="14sp"
+                                        android:textStyle="bold" />
+                                </LinearLayout>
+                            </RelativeLayout>
+                        </LinearLayout>
+                    </LinearLayout>
+                </RelativeLayout>
+            </androidx.cardview.widget.CardView>
+
+            <!-- Jack and Jill Card -->
+            <androidx.cardview.widget.CardView
+                android:id="@+id/jackAndJillLayout"
+                android:layout_width="match_parent"
+                android:layout_height="223dp"
+                android:layout_marginBottom="5dp"
+                android:clickable="true"
+                android:focusable="true"
+                app:cardBackgroundColor="@color/white"
+                app:cardCornerRadius="20dp"
+                app:cardElevation="6dp"
+                app:cardUseCompatPadding="true">
+
+                <RelativeLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent">
+
+                    <!-- Heart icon in top-right corner -->
+                    <ImageView
+                        android:id="@+id/heartJack"
+                        android:layout_width="32dp"
+                        android:layout_height="32dp"
+                        android:layout_alignParentTop="true"
+                        android:layout_alignParentEnd="true"
+                        android:layout_marginTop="-2dp"
+                        android:layout_marginEnd="-2dp"
+                        android:background="?attr/selectableItemBackgroundBorderless"
+                        android:contentDescription="Like song"
+                        android:padding="4dp"
+                        android:src="@drawable/heart_red" />
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal"
+                        android:padding="16dp">
+
+                        <!-- Larger Song Image -->
+                        <ImageView
+                            android:layout_width="141dp"
+                            android:layout_height="130dp"
+                            android:layout_weight="1.6"
+                            android:adjustViewBounds="true"
+                            android:background="@drawable/rounded_white_shadow"
+                            android:contentDescription="Jack and Jill"
+                            android:scaleType="centerCrop"
+                            android:src="@drawable/jack" />
+
+                        <!-- Song Info -->
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="match_parent"
+                            android:layout_weight="2.0"
+                            android:gravity="center_vertical"
+                            android:orientation="vertical"
+                            android:paddingVertical="8dp"
+                            android:paddingStart="20dp">
+
+                            <!-- Play Button with Duration below it -->
+                            <RelativeLayout
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="16dp">
+
+                                <!-- Play Button -->
+                                <FrameLayout
+                                    android:id="@+id/playButtonContainerJack"
+                                    android:layout_width="60dp"
+                                    android:layout_height="60dp"
+                                    android:layout_centerHorizontal="true">
+
+                                    <ImageView
+                                        android:layout_width="match_parent"
+                                        android:layout_height="match_parent"
+                                        android:scaleType="fitCenter"
+                                        android:src="@drawable/green_circle" />
+
+                                    <ImageButton
+                                        android:id="@+id/playButtonJack"
+                                        android:layout_width="40dp"
+                                        android:layout_height="40dp"
+                                        android:layout_gravity="center"
+                                        android:background="?attr/selectableItemBackgroundBorderless"
+                                        android:contentDescription="Play Jack and Jill"
+                                        android:scaleType="centerInside"
+                                        android:src="@drawable/sound" />
+                                </FrameLayout>
+
+                                <!-- Duration below Play Button -->
+                                <LinearLayout
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:layout_below="@id/playButtonContainerJack"
+                                    android:layout_centerHorizontal="true"
+                                    android:layout_marginTop="8dp"
+                                    android:background="@drawable/duration_badge"
+                                    android:gravity="center_vertical"
+                                    android:orientation="horizontal"
+                                    android:paddingHorizontal="12dp"
+                                    android:paddingVertical="4dp">
+
+                                    <ImageView
+                                        android:layout_width="14dp"
+                                        android:layout_height="14dp"
+                                        android:layout_marginEnd="6dp"
+                                        android:contentDescription="Duration"
+                                        android:src="@drawable/clock" />
+
+                                    <TextView
+                                        android:layout_width="wrap_content"
+                                        android:layout_height="wrap_content"
+                                        android:text="1:05"
+                                        android:textColor="@color/white"
+                                        android:textSize="14sp"
+                                        android:textStyle="bold" />
+                                </LinearLayout>
+                            </RelativeLayout>
+                        </LinearLayout>
+                    </LinearLayout>
+                </RelativeLayout>
+            </androidx.cardview.widget.CardView>
+
+            <!-- Future Songs / Load More Section -->
+            <androidx.cardview.widget.CardView
+                android:layout_width="match_parent"
+                android:layout_height="120dp"
+                android:layout_marginTop="8dp"
+                android:clickable="true"
+                android:focusable="true"
+                app:cardBackgroundColor="@color/gray_light"
+                app:cardCornerRadius="20dp"
+                app:cardElevation="4dp"
+                app:cardUseCompatPadding="true">
 
                 <LinearLayout
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:orientation="vertical">
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:gravity="center"
+                    android:orientation="vertical"
+                    android:padding="24dp">
 
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Row Row Row Your"
+                        android:text="More Songs Coming Soon!"
                         android:textSize="20sp"
-                        android:textColor="@color/white"
-                        android:textStyle="bold" />
+                        android:textStyle="bold"
+                        android:textColor="@color/green_dark"
+                        android:gravity="center"
+                        android:layout_marginBottom="8dp" />
 
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Boat"
-                        android:textSize="20sp"
-                        android:textColor="@color/white" />
+                        android:text="Stay tuned for future releases"
+                        android:textSize="16sp"
+                        android:textColor="@color/dark_gray"
+                        android:gravity="center" />
 
+                    <!-- Optional Load More Button -->
                     <LinearLayout
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:orientation="horizontal"
-                        android:gravity="center_vertical"
-                        android:layout_marginTop="8dp">
-
-                        <ImageView
-                            android:layout_width="20dp"
-                            android:layout_height="20dp"
-                            android:src="@drawable/clock"
-                            android:scaleType="centerInside"
-                            android:layout_marginEnd="8dp"
-                            android:contentDescription="Duration" />
+                        android:gravity="center"
+                        android:layout_marginTop="12dp"
+                        android:background="@drawable/button_green"
+                        android:paddingHorizontal="20dp"
+                        android:paddingVertical="10dp"
+                        android:clickable="true"
+                        android:focusable="true">
 
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="1.05"
-                            android:textSize="18sp"
-                            android:textColor="@color/white"
-                            android:textStyle="bold" />
+                            android:text="Notify Me"
+                            android:textSize="16sp"
+                            android:textStyle="bold"
+                            android:textColor="@color/white" />
                     </LinearLayout>
                 </LinearLayout>
-
-                <!-- Play button with green circle -->
-                <FrameLayout
-                    android:layout_width="60dp"
-                    android:layout_height="60dp"
-                    android:layout_marginStart="16dp">
-
-                    <ImageView
-                        android:layout_width="match_parent"
-                        android:layout_height="match_parent"
-                        android:src="@drawable/green_circle"
-                        android:scaleType="centerInside"
-                        android:contentDescription="Play song" />
-
-                    <ImageButton
-                        android:layout_width="60dp"
-                        android:layout_height="60dp"
-                        android:src="@drawable/sound"
-                        android:background="?attr/selectableItemBackgroundBorderless"
-                        android:scaleType="centerInside"
-                        android:contentDescription="Play"
-                        android:layout_gravity="center" />
-
-                </FrameLayout>
-            </androidx.appcompat.widget.LinearLayoutCompat>
+            </androidx.cardview.widget.CardView>
 
         </LinearLayout>
-
-    </ScrollView>
+    </androidx.core.widget.NestedScrollView>
 
 </androidx.constraintlayout.widget.ConstraintLayout>
