@@ -261,7 +261,7 @@
 
                         <!-- Song Info -->
                         <LinearLayout
-                            android:layout_width="0dp"
+                            android:layout_width="36dp"
                             android:layout_height="match_parent"
                             android:layout_weight="2.0"
                             android:gravity="center_vertical"
@@ -384,7 +384,7 @@
 
                         <!-- Song Info -->
                         <LinearLayout
-                            android:layout_width="0dp"
+                            android:layout_width="36dp"
                             android:layout_height="match_parent"
                             android:layout_weight="2.0"
                             android:gravity="center_vertical"
