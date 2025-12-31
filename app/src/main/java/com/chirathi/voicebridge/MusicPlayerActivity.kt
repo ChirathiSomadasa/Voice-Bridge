@@ -120,7 +120,7 @@ class MusicPlayerActivity : AppCompatActivity() {
                     Keyword("boat", R.drawable.boat_image, 32000, 33000),
                     Keyword("river", R.drawable.river_image, 33000, 35000),
                     Keyword("polar bear", R.drawable.polar_bear_image, 37000, 38000),
-                    Keyword("shiver", R.drawable.dream_image, 38000, 39000),
+                    Keyword("shiver", R.drawable.shiver, 38000, 39000),
                     Keyword("boat", R.drawable.boat_image, 43000, 44000),
                     Keyword("stream", R.drawable.stream_image, 45000, 46000),
                     Keyword("crocodile", R.drawable.crocodile, 48000, 49000),
