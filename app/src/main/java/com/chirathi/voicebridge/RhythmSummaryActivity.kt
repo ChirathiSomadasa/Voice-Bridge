@@ -7,6 +7,7 @@ import android.media.MediaPlayer
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
+import android.util.Log
 import android.view.View
 import android.view.animation.OvershootInterpolator
 import android.view.animation.TranslateAnimation
@@ -15,11 +16,11 @@ import android.view.ViewGroup
 import androidx.appcompat.app.AppCompatActivity
 import androidx.cardview.widget.CardView
 import androidx.core.content.ContextCompat
-import com.google.android.material.card.MaterialCardView
 
 class RhythmSummaryActivity : AppCompatActivity() {
 
     private lateinit var currentSongTitle: String
+    private val TAG = "RhythmSummaryActivity"
 
     // UI Components
     private lateinit var pandaImage: ImageView
@@ -27,9 +28,9 @@ class RhythmSummaryActivity : AppCompatActivity() {
     private lateinit var scoreText: TextView
     private lateinit var progressContainer: LinearLayout
     private lateinit var optionsGrid: GridLayout
-    private lateinit var feedbackContainer: LinearLayout
     private lateinit var feedbackIcon: ImageView
     private lateinit var feedbackText: TextView
+    private lateinit var feedbackOverlay: FrameLayout
     private lateinit var nextButton: Button
 
     private var currentRound = 0
@@ -37,6 +38,9 @@ class RhythmSummaryActivity : AppCompatActivity() {
     private var totalRounds = 5
     private var correctAnswerIndex = 0
     private var isAnswerSelected = false
+
+    // Track used keywords to avoid repetition
+    private val usedKeywords = mutableSetOf<String>()
 
     private lateinit var mediaPlayer: MediaPlayer
     private lateinit var correctSound: MediaPlayer
@@ -71,84 +75,149 @@ class RhythmSummaryActivity : AppCompatActivity() {
         "crown" to R.drawable.crown_image
     )
 
-    // Distractor images map
+    // Distractor images map - using other song images as distractors
     private val distractorImages = mapOf(
-        "car" to R.drawable.proud,
-        "plane" to R.drawable.raincoat,
-        "bicycle" to R.drawable.row,
-        "ocean" to R.drawable.shoe,
-        "lake" to R.drawable.sound,
-        "waterfall" to R.drawable.snak,
-        "moon" to R.drawable.speaker,
-        "sun" to R.drawable.sorry,
-        "planet" to R.drawable.spoon,
+        // For "Row Row Row Your Boat" song
+        "car" to R.drawable.car,
+        "plane" to R.drawable.plane,
+        "bicycle" to R.drawable.bicycle_image,
+        "ocean" to R.drawable.boat_image,
+        "lake" to R.drawable.stream_image,
+        "waterfall" to R.drawable.river_image,
+        "mountain" to R.drawable.hill_image,
+        "valley" to R.drawable.dream_image,
+        "forest" to R.drawable.creek,
+
+        // For "Twinkle Twinkle Little Star" song
+        "moon" to R.drawable.moon,
+        "planet" to R.drawable.planet,
+        "sky" to R.drawable.dark_blue_sky,
+        "cloud" to R.drawable.window,
+        "eye" to R.drawable.eyes,
+        "night sky" to R.drawable.star_image,
+
+        // General distractors
         "juice" to R.drawable.sticker,
-        "milk" to R.drawable.stop,
-        "soda" to R.drawable.thanks,
-        "mountain" to R.drawable.tv,
-        "valley" to R.drawable.water,
-        "forest" to R.drawable.zoo,
-        "hat" to R.drawable.shy,
-        "helmet" to R.drawable.greedy,
-        "cap" to R.drawable.proud,
-        "apple" to R.drawable.angry,
-        "ball" to R.drawable.sad,
-        "cat" to R.drawable.happy
+        "helmet" to R.drawable.helmet_image,
+        "apple" to R.drawable.apple_image,
+        "ball" to R.drawable.ball_image,
+        "cat" to R.drawable.cat_image,
+        "hat" to R.drawable.crown_image,
+        "cap" to R.drawable.traveller
     )
 
     data class GameRound(val keyword: String, val correctImageRes: Int, val options: List<Pair<String, Int>>)
 
     private lateinit var currentKeywords: List<Keyword>
+    private lateinit var availableKeywords: MutableList<Keyword>
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_rythm_summary)
-
-        // Initialize UI components
-        initializeViews()
-
-        // Get song title from intent
-        currentSongTitle = intent.getStringExtra("SONG_TITLE") ?: "Row Row Row Your Boat"
+        Log.d(TAG, "onCreate: Starting RhythmSummaryActivity")
 
         try {
-            // Initialize sound effects
-            mediaPlayer = MediaPlayer.create(this, R.raw.button_click)
-            correctSound = MediaPlayer.create(this, R.raw.correct_sound)
-            wrongSound = MediaPlayer.create(this, R.raw.wrong_sound)
+            setContentView(R.layout.activity_rythm_summary)
+            Log.d(TAG, "Layout set successfully: activity_rythm_summary")
+
+            // Initialize UI components
+            initializeViews()
+            Log.d(TAG, "Views initialized successfully")
+
+            // Get song title from intent
+            currentSongTitle = intent.getStringExtra("SONG_TITLE") ?: "Row Row Row Your Boat"
+            Log.d(TAG, "Received song title: $currentSongTitle")
+
+            try {
+                // Initialize sound effects
+                mediaPlayer = MediaPlayer.create(this, R.raw.button_click)
+                correctSound = MediaPlayer.create(this, R.raw.correct_sound)
+                wrongSound = MediaPlayer.create(this, R.raw.wrong_sound)
+                Log.d(TAG, "Sound effects initialized")
+            } catch (e: Exception) {
+                Log.w(TAG, "Sound files not found, using silent players")
+                mediaPlayer = MediaPlayer()
+                correctSound = MediaPlayer()
+                wrongSound = MediaPlayer()
+            }
+
+            // Setup based on song
+            setupSongData()
+            Log.d(TAG, "Song data setup complete")
+
+            setupUI()
+            Log.d(TAG, "UI setup complete")
+
+            startNewRound()
+            Log.d(TAG, "First round started")
+
+            // Set next button click listener
+            nextButton.setOnClickListener {
+                Log.d(TAG, "Next button clicked")
+                onNextButtonClick()
+            }
+
+            Log.d(TAG, "RhythmSummaryActivity initialized successfully")
+
         } catch (e: Exception) {
-            // If sound files don't exist, create silent media players
-            mediaPlayer = MediaPlayer()
-            correctSound = MediaPlayer()
-            wrongSound = MediaPlayer()
-        }
+            Log.e(TAG, "FATAL ERROR in onCreate: ${e.message}", e)
+            e.printStackTrace()
 
-        // Setup based on song
-        setupSongData()
-        setupUI()
-        startNewRound()
+            // Show error to user
+            Toast.makeText(this, "Error loading game: ${e.message}", Toast.LENGTH_LONG).show()
 
-        // Set next button click listener
-        nextButton.setOnClickListener {
-            onNextButtonClick()
+            // Try to go back
+            try {
+                finish()
+            } catch (e2: Exception) {
+                Log.e(TAG, "Error finishing activity: ${e2.message}", e2)
+            }
         }
     }
 
     private fun initializeViews() {
-        pandaImage = findViewById(R.id.pandaImage)
-        wordTitle = findViewById(R.id.wordTitle)
-        scoreText = findViewById(R.id.scoreText)
-        progressContainer = findViewById(R.id.progressContainer)
-        optionsGrid = findViewById(R.id.optionsGrid)
-        feedbackContainer = findViewById(R.id.feedbackContainer)
-        feedbackIcon = findViewById(R.id.feedbackIcon)
-        feedbackText = findViewById(R.id.feedbackText)
-        nextButton = findViewById(R.id.nextButton)
+        Log.d(TAG, "Initializing views...")
+        try {
+            pandaImage = findViewById(R.id.pandaImage)
+            Log.d(TAG, "Found pandaImage: $pandaImage")
+
+            wordTitle = findViewById(R.id.wordTitle)
+            Log.d(TAG, "Found wordTitle: $wordTitle")
+
+            scoreText = findViewById(R.id.scoreText)
+            Log.d(TAG, "Found scoreText: $scoreText")
+
+            progressContainer = findViewById(R.id.progressContainer)
+            Log.d(TAG, "Found progressContainer: $progressContainer")
+
+            optionsGrid = findViewById(R.id.optionsGrid)
+            Log.d(TAG, "Found optionsGrid: $optionsGrid")
+
+            feedbackOverlay = findViewById(R.id.feedbackOverlay)
+            Log.d(TAG, "Found feedbackOverlay: $feedbackOverlay")
+
+            feedbackIcon = findViewById(R.id.feedbackIcon)
+            Log.d(TAG, "Found feedbackIcon: $feedbackIcon")
+
+            feedbackText = findViewById(R.id.feedbackText)
+            Log.d(TAG, "Found feedbackText: $feedbackText")
+
+            nextButton = findViewById(R.id.nextButton)
+            Log.d(TAG, "Found nextButton: $nextButton")
+
+            Log.d(TAG, "All views initialized successfully")
+
+        } catch (e: Exception) {
+            Log.e(TAG, "ERROR initializing views: ${e.message}", e)
+            throw RuntimeException("Failed to initialize views: ${e.message}", e)
+        }
     }
 
     private fun setupSongData() {
+        Log.d(TAG, "Setting up song data for: $currentSongTitle")
         // Get keywords from the song that was played
         currentKeywords = when (currentSongTitle) {
             "Row Row Row Your Boat" -> {
+                Log.d(TAG, "Loading Row Row Row Your Boat keywords")
                 listOf(
                     Keyword("boat", R.drawable.boat_image, 11000, 12000),
                     Keyword("stream", R.drawable.stream_image, 13000, 15000),
@@ -161,6 +230,7 @@ class RhythmSummaryActivity : AppCompatActivity() {
                 )
             }
             "Twinkle Twinkle Little Star" -> {
+                Log.d(TAG, "Loading Twinkle Twinkle Little Star keywords")
                 listOf(
                     Keyword("star", R.drawable.star_image, 8000, 10000),
                     Keyword("world", R.drawable.world, 16000, 18000),
@@ -175,6 +245,7 @@ class RhythmSummaryActivity : AppCompatActivity() {
                 )
             }
             "Jack and Jill" -> {
+                Log.d(TAG, "Loading Jack and Jill keywords")
                 listOf(
                     Keyword("hill", R.drawable.hill_image, 10500, 11000),
                     Keyword("water", R.drawable.water_image, 12500, 14000),
@@ -182,6 +253,7 @@ class RhythmSummaryActivity : AppCompatActivity() {
                 )
             }
             else -> {
+                Log.w(TAG, "Unknown song title, using default keywords")
                 listOf(
                     Keyword("boat", R.drawable.boat_image, 11000, 12000),
                     Keyword("stream", R.drawable.stream_image, 13000, 15000),
@@ -189,109 +261,186 @@ class RhythmSummaryActivity : AppCompatActivity() {
                 )
             }
         }
+
+        // Create a mutable copy for available keywords
+        availableKeywords = currentKeywords.toMutableList()
+        Log.d(TAG, "Available keywords: ${availableKeywords.size}")
     }
 
     private fun setupUI() {
-        // Setup panda animation
-        animatePanda()
+        Log.d(TAG, "Setting up UI")
+        try {
+            // Setup panda animation
+            animatePanda()
+            Log.d(TAG, "Panda animation started")
 
-        // Setup progress dots
-        setupProgressDots()
+            // Setup progress dots
+            setupProgressDots()
+            Log.d(TAG, "Progress dots setup")
 
-        // Update score display
-        updateScore()
+            // Update score display
+            updateScore()
+            Log.d(TAG, "Score display updated")
+
+        } catch (e: Exception) {
+            Log.e(TAG, "Error in setupUI: ${e.message}", e)
+        }
     }
 
     private fun animatePanda() {
-        val bounceAnimator = ObjectAnimator.ofFloat(pandaImage, "translationY", 0f, -20f, 0f)
-        bounceAnimator.duration = 1000
-        bounceAnimator.repeatCount = ObjectAnimator.INFINITE
-        bounceAnimator.repeatMode = ObjectAnimator.REVERSE
-        bounceAnimator.start()
+        try {
+            val bounceAnimator = ObjectAnimator.ofFloat(pandaImage, "translationY", 0f, -20f, 0f)
+            bounceAnimator.duration = 1000
+            bounceAnimator.repeatCount = ObjectAnimator.INFINITE
+            bounceAnimator.repeatMode = ObjectAnimator.REVERSE
+            bounceAnimator.start()
+            Log.d(TAG, "Panda animation started")
+        } catch (e: Exception) {
+            Log.e(TAG, "Error animating panda: ${e.message}", e)
+        }
     }
 
     private fun setupProgressDots() {
-        progressContainer.removeAllViews()
-        for (i in 0 until totalRounds) {
-            val dot = View(this)
-            val size = 16.dpToPx() // Use dpToPx function instead of dimens
-            val params = LinearLayout.LayoutParams(size, size)
-            params.marginEnd = if (i < totalRounds - 1) 8.dpToPx() else 0
-            dot.layoutParams = params
+        try {
+            progressContainer.removeAllViews()
+            Log.d(TAG, "Cleared progress container")
 
-            // Use solid colors instead of drawables for now
-            dot.setBackgroundColor(
-                when {
-                    i == currentRound -> Color.parseColor("#4CAF50") // Green for active
-                    i < currentRound -> Color.parseColor("#FF6B35") // Orange for completed
-                    else -> Color.parseColor("#BDBDBD") // Grey for inactive
-                }
-            )
-            dot.background.setAlpha(200)
-            progressContainer.addView(dot)
+            for (i in 0 until totalRounds) {
+                val dot = View(this)
+                val size = 16.dpToPx()
+                val params = LinearLayout.LayoutParams(size, size)
+                params.marginEnd = if (i < totalRounds - 1) 8.dpToPx() else 0
+                dot.layoutParams = params
+
+                dot.setBackgroundColor(
+                    when {
+                        i == currentRound -> Color.parseColor("#4CAF50")
+                        i < currentRound -> Color.parseColor("#FF6B35")
+                        else -> Color.parseColor("#BDBDBD")
+                    }
+                )
+                dot.background.setAlpha(200)
+                progressContainer.addView(dot)
+            }
+            Log.d(TAG, "Added $totalRounds progress dots")
+        } catch (e: Exception) {
+            Log.e(TAG, "Error setting up progress dots: ${e.message}", e)
         }
     }
 
     private fun Int.dpToPx(): Int = (this * resources.displayMetrics.density).toInt()
 
     private fun startNewRound() {
+        Log.d(TAG, "Starting new round. Current round: $currentRound, Total rounds: $totalRounds")
+
         if (currentRound >= totalRounds) {
+            Log.d(TAG, "Game finished! Score: $score/$totalRounds")
             // Game finished, navigate to scoreboard
             navigateToScoreboard()
             return
         }
 
         isAnswerSelected = false
-        feedbackContainer.visibility = View.GONE
         nextButton.visibility = View.GONE
+        Log.d(TAG, "Reset round state")
 
         // Clear previous options
         optionsGrid.removeAllViews()
+        Log.d(TAG, "Cleared previous options")
 
-        // Get random keyword for this round
-        val keyword = currentKeywords.random()
+        // Get a keyword that hasn't been used yet
+        val keyword = getUniqueKeyword()
         val correctImageRes = keywordImages[keyword.word] ?: R.drawable.ic_placeholder
+        Log.d(TAG, "Selected keyword: ${keyword.word}, image res: $correctImageRes")
 
-        // Generate wrong options
+        // Generate wrong options - use other song images as distractors
         val wrongOptions = generateWrongOptions(keyword.word)
+        Log.d(TAG, "Generated ${wrongOptions.size} wrong options")
 
         // Create game round
         val gameRound = createGameRound(keyword.word, correctImageRes, wrongOptions)
+        Log.d(TAG, "Game round created with ${gameRound.options.size} options")
 
         // Display the word to find
         wordTitle.text = "Find: ${keyword.word.uppercase()}"
+        Log.d(TAG, "Word title set: ${wordTitle.text}")
 
         // Create and display options
         displayOptions(gameRound)
+        Log.d(TAG, "Options displayed")
 
         // Update progress dots
         updateProgressDots()
+        Log.d(TAG, "Progress dots updated")
+    }
+
+    private fun getUniqueKeyword(): Keyword {
+        Log.d(TAG, "Getting unique keyword. Used: ${usedKeywords.size}, Available: ${availableKeywords.size}")
+
+        // If we've used all keywords, reset and start over
+        if (availableKeywords.isEmpty()) {
+            Log.d(TAG, "All keywords used, resetting...")
+            availableKeywords = currentKeywords.toMutableList()
+            usedKeywords.clear()
+        }
+
+        // Get a random keyword that hasn't been used
+        val available = availableKeywords.filter { it.word !in usedKeywords }
+        val keyword = if (available.isNotEmpty()) {
+            available.random()
+        } else {
+            // If all have been used, get any random one
+            availableKeywords.random()
+        }
+
+        // Mark as used
+        usedKeywords.add(keyword.word)
+        availableKeywords.remove(keyword)
+        Log.d(TAG, "Selected keyword: ${keyword.word}")
+
+        return keyword
     }
 
     private fun generateWrongOptions(keyword: String): List<Pair<String, Int>> {
+        Log.d(TAG, "Generating wrong options for: $keyword")
         val wrongOptions = mutableListOf<Pair<String, Int>>()
 
-        // Get distractors - use common distractors for now
-        val distractors = when (keyword) {
-            "boat" -> listOf("car", "plane", "bicycle")
-            "stream" -> listOf("ocean", "lake", "waterfall")
-            "star" -> listOf("moon", "sun", "planet")
-            "water" -> listOf("juice", "milk", "soda")
-            "hill" -> listOf("mountain", "valley", "forest")
-            "crown" -> listOf("hat", "helmet", "cap")
+        // Get other keywords from the same song as distractors
+        val otherKeywords = currentKeywords
+            .filter { it.word != keyword }
+            .map { it.word }
+            .shuffled()
+            .take(2) // Use 2 other keywords from the same song
+
+        Log.d(TAG, "Other keywords from same song: $otherKeywords")
+
+        // Add other song keywords as distractors
+        otherKeywords.forEach { otherKeyword ->
+            val imageRes = keywordImages[otherKeyword] ?: R.drawable.ic_placeholder
+            wrongOptions.add(Pair(otherKeyword, imageRes))
+        }
+
+        // Add 1 unrelated distractor
+        val unrelatedDistractors = when (keyword) {
+            "boat", "stream", "river", "creek" -> listOf("car", "plane", "bicycle")
+            "star", "sun", "moon", "light" -> listOf("flower", "tree", "house")
+            "hill", "mountain" -> listOf("valley", "forest", "desert")
+            "water", "crown" -> listOf("hat", "helmet", "cap")
             else -> listOf("apple", "ball", "cat")
         }
 
-        // Convert distractors to image resources
-        distractors.forEach { distractor ->
-            val imageRes = distractorImages[distractor] ?: R.drawable.ic_placeholder
-            wrongOptions.add(Pair(distractor, imageRes))
-        }
+        val unrelatedDistractor = unrelatedDistractors.random()
+        val unrelatedImage = distractorImages[unrelatedDistractor] ?: R.drawable.ic_placeholder
+        wrongOptions.add(Pair(unrelatedDistractor, unrelatedImage))
+
+        Log.d(TAG, "Unrelated distractor: $unrelatedDistractor")
 
         return wrongOptions
     }
 
     private fun createGameRound(keyword: String, correctImageRes: Int, wrongOptions: List<Pair<String, Int>>): GameRound {
+        Log.d(TAG, "Creating game round for keyword: $keyword")
+
         // Combine correct and wrong options, then shuffle
         val allOptions = mutableListOf(
             Pair(keyword, correctImageRes)
@@ -303,17 +452,21 @@ class RhythmSummaryActivity : AppCompatActivity() {
 
         // Find the index of correct answer after shuffling
         correctAnswerIndex = shuffledOptions.indexOfFirst { it.first == keyword }
+        Log.d(TAG, "Correct answer index: $correctAnswerIndex")
 
         return GameRound(keyword, correctImageRes, shuffledOptions)
     }
 
     private fun displayOptions(gameRound: GameRound) {
+        Log.d(TAG, "Displaying ${gameRound.options.size} options")
         val columnCount = 2
         val rowCount = 2
         val optionSize = resources.displayMetrics.widthPixels / 2 - 48.dpToPx()
+        Log.d(TAG, "Option size: $optionSize")
 
         for (i in gameRound.options.indices) {
             val option = gameRound.options[i]
+            Log.d(TAG, "Creating option $i: ${option.first}")
 
             // Create card view for option
             val card = CardView(this).apply {
@@ -330,22 +483,25 @@ class RhythmSummaryActivity : AppCompatActivity() {
                 tag = i
 
                 setOnClickListener {
+                    Log.d(TAG, "Option $i clicked")
                     if (!isAnswerSelected) {
                         handleOptionClick(this, i)
                     }
                 }
             }
 
-            // Create image view inside card
-
+            // Create image view inside card with FIT_CENTER to show full image
             val imageView = ImageView(this).apply {
                 layoutParams = ViewGroup.LayoutParams(
                     ViewGroup.LayoutParams.MATCH_PARENT,
                     ViewGroup.LayoutParams.MATCH_PARENT
                 )
-                scaleType = ImageView.ScaleType.CENTER_CROP
+                scaleType = ImageView.ScaleType.FIT_CENTER
                 setImageResource(option.second)
                 isClickable = false
+                adjustViewBounds = true
+                // Add padding so image doesn't touch card edges
+                setPadding(8.dpToPx(), 8.dpToPx(), 8.dpToPx(), 8.dpToPx())
             }
 
             // Add image to card and card to grid
@@ -362,15 +518,19 @@ class RhythmSummaryActivity : AppCompatActivity() {
                 .setStartDelay(i * 100L)
                 .start()
         }
+        Log.d(TAG, "All options displayed")
     }
 
+    // Update handleOptionClick method
     private fun handleOptionClick(card: CardView, selectedIndex: Int) {
+        Log.d(TAG, "Handling option click. Selected: $selectedIndex, Correct: $correctAnswerIndex")
         isAnswerSelected = true
 
         try {
             mediaPlayer.start()
+            Log.d(TAG, "Button click sound played")
         } catch (e: Exception) {
-            // Ignore if sound fails
+            Log.w(TAG, "Could not play button sound: ${e.message}")
         }
 
         // Disable all cards
@@ -378,23 +538,28 @@ class RhythmSummaryActivity : AppCompatActivity() {
             val childCard = optionsGrid.getChildAt(i) as CardView
             childCard.isClickable = false
         }
+        Log.d(TAG, "All cards disabled")
 
         if (selectedIndex == correctAnswerIndex) {
+            Log.d(TAG, "Correct answer!")
             // Correct answer
             score++
             showFeedback(true, card)
             try {
                 correctSound.start()
+                Log.d(TAG, "Correct sound played")
             } catch (e: Exception) {
-                // Ignore if sound fails
+                Log.w(TAG, "Could not play correct sound: ${e.message}")
             }
         } else {
+            Log.d(TAG, "Wrong answer!")
             // Wrong answer
             showFeedback(false, card)
             try {
                 wrongSound.start()
+                Log.d(TAG, "Wrong sound played")
             } catch (e: Exception) {
-                // Ignore if sound fails
+                Log.w(TAG, "Could not play wrong sound: ${e.message}")
             }
 
             // Highlight correct answer
@@ -409,26 +574,32 @@ class RhythmSummaryActivity : AppCompatActivity() {
 
         // Update score
         updateScore()
+        Log.d(TAG, "Score updated: $score/$totalRounds")
 
-        // Show next button after delay
+        // Show feedback overlay for 2 seconds, then show next button
         Handler(Looper.getMainLooper()).postDelayed({
-            nextButton.visibility = View.VISIBLE
-            nextButton.alpha = 0f
-            nextButton.translationY = 50f
-            nextButton.animate()
-                .alpha(1f)
-                .translationY(0f)
-                .setDuration(300)
-                .start()
-        }, 1500)
+            Log.d(TAG, "Showing next button after feedback")
+            hideFeedbackAndShowNextButton()
+        }, 2000)
     }
 
+    // Update showFeedback method
     private fun showFeedback(isCorrect: Boolean, selectedCard: CardView) {
+        Log.d(TAG, "Showing feedback. Is correct: $isCorrect")
         if (isCorrect) {
             selectedCard.setCardBackgroundColor(Color.GREEN)
-            feedbackIcon.setImageResource(android.R.drawable.ic_menu_report_image) // Use system icon for now
+
+            // Try to use custom drawable, fallback to system drawable
+            try {
+                feedbackIcon.setImageResource(R.drawable.correct_answer)
+                Log.d(TAG, "Set correct answer icon")
+            } catch (e: android.content.res.Resources.NotFoundException) {
+                Log.w(TAG, "Custom correct icon not found, using system icon")
+                feedbackIcon.setImageResource(android.R.drawable.ic_menu_report_image)
+            }
+
             feedbackText.text = "Excellent!"
-            feedbackText.setTextColor(Color.GREEN)
+            feedbackText.setTextColor(Color.parseColor("#4CAF50"))
 
             // Celebration animation for correct answer
             selectedCard.animate()
@@ -445,9 +616,18 @@ class RhythmSummaryActivity : AppCompatActivity() {
                 .start()
         } else {
             selectedCard.setCardBackgroundColor(Color.RED)
-            feedbackIcon.setImageResource(android.R.drawable.ic_delete) // Use system icon for now
+
+            // Try to use custom drawable, fallback to system drawable
+            try {
+                feedbackIcon.setImageResource(R.drawable.delete)
+                Log.d(TAG, "Set wrong answer icon")
+            } catch (e: android.content.res.Resources.NotFoundException) {
+                Log.w(TAG, "Custom delete icon not found, using system icon")
+                feedbackIcon.setImageResource(android.R.drawable.ic_delete)
+            }
+
             feedbackText.text = "Try Again!"
-            feedbackText.setTextColor(Color.RED)
+            feedbackText.setTextColor(Color.parseColor("#F44336"))
 
             // Shake animation for wrong answer
             val shake = TranslateAnimation(0f, 20f, 0f, 0f)
@@ -457,23 +637,63 @@ class RhythmSummaryActivity : AppCompatActivity() {
             selectedCard.startAnimation(shake)
         }
 
-        // Show feedback with animation
+        // Show feedback overlay with animation
         feedbackIcon.visibility = View.VISIBLE
         feedbackText.visibility = View.VISIBLE
-        feedbackContainer.visibility = View.VISIBLE
+        feedbackOverlay.visibility = View.VISIBLE
+        Log.d(TAG, "Feedback overlay shown")
 
-        feedbackContainer.alpha = 0f
-        feedbackContainer.translationY = 50f
-        feedbackContainer.animate()
+        // Animate the overlay appearance
+        feedbackOverlay.alpha = 0f
+        feedbackOverlay.animate()
             .alpha(1f)
-            .translationY(0f)
+            .setDuration(300)
+            .start()
+
+        // Animate the feedback container
+        val feedbackContainer = feedbackOverlay.getChildAt(0) as LinearLayout
+        feedbackContainer.scaleX = 0.5f
+        feedbackContainer.scaleY = 0.5f
+        feedbackContainer.alpha = 0f
+
+        feedbackContainer.animate()
+            .scaleX(1f)
+            .scaleY(1f)
+            .alpha(1f)
             .setDuration(500)
             .setInterpolator(OvershootInterpolator())
             .start()
     }
 
+    private fun hideFeedbackAndShowNextButton() {
+        Log.d(TAG, "Hiding feedback and showing next button")
+        // Hide feedback overlay with animation
+        feedbackOverlay.animate()
+            .alpha(0f)
+            .setDuration(300)
+            .withEndAction {
+                feedbackOverlay.visibility = View.GONE
+                feedbackIcon.visibility = View.GONE
+                feedbackText.visibility = View.GONE
+                Log.d(TAG, "Feedback overlay hidden")
+            }
+            .start()
+
+        // Show next button
+        nextButton.visibility = View.VISIBLE
+        nextButton.alpha = 0f
+        nextButton.translationY = 50f
+        nextButton.animate()
+            .alpha(1f)
+            .translationY(0f)
+            .setDuration(300)
+            .start()
+        Log.d(TAG, "Next button shown")
+    }
+
     private fun updateScore() {
         scoreText.text = "$score/$totalRounds"
+        Log.d(TAG, "Score text updated: ${scoreText.text}")
 
         // Animate score update
         scoreText.animate()
@@ -491,6 +711,7 @@ class RhythmSummaryActivity : AppCompatActivity() {
     }
 
     private fun updateProgressDots() {
+        Log.d(TAG, "Updating progress dots. Current round: $currentRound")
         for (i in 0 until progressContainer.childCount) {
             val dot = progressContainer.getChildAt(i)
             dot.setBackgroundColor(
@@ -504,24 +725,44 @@ class RhythmSummaryActivity : AppCompatActivity() {
         }
     }
 
+    // Update onNextButtonClick method
     private fun onNextButtonClick() {
+        Log.d(TAG, "Next button clicked, moving to round ${currentRound + 1}")
+        // Hide next button
+        nextButton.visibility = View.GONE
+
         currentRound++
         startNewRound()
     }
 
     private fun navigateToScoreboard() {
-        val intent = Intent(this, RMScoreboardActivity::class.java)
-        intent.putExtra("SCORE", score)
-        intent.putExtra("TOTAL_ROUNDS", totalRounds)
-        intent.putExtra("SONG_TITLE", currentSongTitle)
-        startActivity(intent)
-        finish()
+        Log.d(TAG, "Navigating to scoreboard. Score: $score, Total rounds: $totalRounds")
+        try {
+            val intent = Intent(this, RMScoreboardActivity::class.java)
+            intent.putExtra("SCORE", score)
+            intent.putExtra("TOTAL_ROUNDS", totalRounds)
+            intent.putExtra("SONG_TITLE", currentSongTitle)
+            Log.d(TAG, "Starting RMScoreboardActivity")
+            startActivity(intent)
+            finish()
+            Log.d(TAG, "RhythmSummaryActivity finished")
+        } catch (e: Exception) {
+            Log.e(TAG, "Error navigating to scoreboard: ${e.message}", e)
+            Toast.makeText(this, "Error loading scoreboard: ${e.message}", Toast.LENGTH_LONG).show()
+            finish()
+        }
     }
 
     override fun onDestroy() {
         super.onDestroy()
-        mediaPlayer.release()
-        correctSound.release()
-        wrongSound.release()
+        Log.d(TAG, "onDestroy: Releasing media players")
+        try {
+            mediaPlayer.release()
+            correctSound.release()
+            wrongSound.release()
+            Log.d(TAG, "Media players released")
+        } catch (e: Exception) {
+            Log.e(TAG, "Error releasing media players: ${e.message}", e)
+        }
     }
 }
