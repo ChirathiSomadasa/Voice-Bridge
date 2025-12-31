@@ -30,7 +30,7 @@
         android:id="@+id/starsContainer"
         android:layout_width="372dp"
         android:layout_height="116dp"
-        android:layout_marginTop="-30dp"
+        android:layout_marginTop="-20dp"
         android:gravity="center"
         android:orientation="horizontal"
         app:layout_constraintEnd_toEndOf="parent"
@@ -40,24 +40,24 @@
         <!-- Star 1 -->
         <ImageView
             android:id="@+id/star1"
-            android:layout_width="63dp"
-            android:layout_height="61dp"
+            android:layout_width="80dp"
+            android:layout_height="71dp"
             android:layout_margin="8dp"
             android:src="@drawable/star_empty" />
 
         <!-- Star 2 -->
         <ImageView
             android:id="@+id/star2"
-            android:layout_width="73dp"
-            android:layout_height="66dp"
+            android:layout_width="112dp"
+            android:layout_height="97dp"
             android:layout_margin="8dp"
             android:src="@drawable/star_empty" />
 
         <!-- Star 3 -->
         <ImageView
             android:id="@+id/star3"
-            android:layout_width="71dp"
-            android:layout_height="67dp"
+            android:layout_width="79dp"
+            android:layout_height="73dp"
             android:layout_margin="8dp"
             android:src="@drawable/star_empty" />
 
@@ -68,7 +68,8 @@
         android:id="@+id/ribbonContainer"
         android:layout_width="325dp"
         android:layout_height="149dp"
-        android:layout_marginTop="150dp"
+        android:layout_marginStart="20dp"
+        android:layout_marginTop="200dp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/starsContainer">
@@ -104,9 +105,9 @@
         android:id="@+id/scoreContainer"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="2dp"
-        android:orientation="vertical"
+        android:layout_marginTop="30dp"
         android:gravity="center"
+        android:orientation="vertical"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/ribbonContainer">
@@ -116,11 +117,11 @@
             android:id="@+id/scoreLabel"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:letterSpacing="0.05"
             android:text="Rhythm Score"
             android:textColor="#1E88E5"
             android:textSize="28sp"
-            android:textStyle="bold"
-            android:letterSpacing="0.05" />
+            android:textStyle="bold" />
 
         <!-- Score Number -->
         <TextView
@@ -128,14 +129,14 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="0dp"
-            android:text="2/5"
-            android:textColor="#1E88E5"
-            android:textSize="64sp"
-            android:textStyle="bold"
             android:shadowColor="#80000000"
             android:shadowDx="1"
             android:shadowDy="1"
-            android:shadowRadius="2" />
+            android:shadowRadius="2"
+            android:text="2/5"
+            android:textColor="#1E88E5"
+            android:textSize="64sp"
+            android:textStyle="bold" />
 
     </LinearLayout>
 
@@ -144,14 +145,14 @@
         android:id="@+id/horizontalButtonsContainer"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="2dp"
-        android:layout_marginBottom="32dp"
-        android:orientation="horizontal"
+        android:layout_marginTop="1dp"
+        android:layout_marginBottom="60dp"
         android:gravity="center"
+        android:orientation="horizontal"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/scoreContainer">
+        app:layout_constraintTop_toBottomOf="@+id/sparklesContainer">
 
         <!-- Replay Button -->
         <Button
@@ -159,34 +160,32 @@
             android:layout_width="150dp"
             android:layout_height="55dp"
             android:layout_marginStart="12dp"
-            android:backgroundTint="@color/green"
             android:drawableStart="@drawable/button_green"
             android:drawablePadding="8dp"
-            android:gravity="start|center_vertical"
             android:paddingStart="20dp"
-            android:paddingEnd="40dp"
+            android:paddingEnd="20dp"
             android:text="Replay"
-            android:textColor="#FFFFFF"
-            android:textSize="14sp"
+            android:textColor="@color/white"
+            android:textAlignment="center"
+            android:textSize="24sp"
             android:textStyle="bold" />
-
 
 
         <!-- Dashboard Button -->
         <Button
             android:id="@+id/dashboardButton"
-            android:layout_width="150dp"
+            android:layout_width="wrap_content"
             android:layout_height="55dp"
             android:layout_marginStart="12dp"
             android:backgroundTint="#FF9800"
             android:drawableStart="@drawable/button_green"
             android:drawablePadding="8dp"
-            android:gravity="start|center_vertical"
-            android:paddingStart="20dp"
-            android:paddingEnd="20dp"
+            android:paddingStart="10dp"
+            android:paddingEnd="10dp"
             android:text="Dashboard"
-            android:textColor="#FFFFFF"
-            android:textSize="14sp"
+            android:textAlignment="center"
+            android:textColor="@color/white"
+            android:textSize="20sp"
             android:textStyle="bold" />
 
     </LinearLayout>
