@@ -49,7 +49,7 @@ object LessonRepository {
         onResult: (List<LessonModel>) -> Unit,
         onError: (Exception) -> Unit
     ) {
-        db.collection("lessons")
+        db.collection("lessons03")
             .whereEqualTo("ageGroup", age)
             .whereEqualTo("subject", subject)
             .get()
