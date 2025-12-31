@@ -4,78 +4,120 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#FFF9F0"
+    android:background="#F8FAFF"
     tools:context=".RhythmSummaryActivity">
 
-    <!-- Header with Cloud Background -->
+    <!-- Modern Header with Wave Design -->
     <androidx.constraintlayout.widget.ConstraintLayout
         android:id="@+id/headerLayout"
-        android:layout_width="0dp"
-        android:layout_height="140dp"
+        android:layout_width="413dp"
+        android:layout_height="296dp"
         android:background="@drawable/header_cloud_background"
-        android:padding="16dp"
+        android:paddingTop="40dp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent">
 
-        <!-- Panda Mascot -->
+        <!-- Panda Mascot Positioned Outside (Overlapping the header) -->
+
+        <!-- Word to Find with Modern Typography -->
+
         <ImageView
             android:id="@+id/pandaImage"
-            android:layout_width="80dp"
-            android:layout_height="80dp"
+            android:layout_width="140dp"
+            android:layout_height="171dp"
+            android:layout_marginStart="-18dp"
+            android:layout_marginTop="-15dp"
             android:contentDescription="Panda Mascot"
-            android:src="@drawable/panda"
-            app:layout_constraintBottom_toBottomOf="parent"
+            android:elevation="12dp"
+            android:src="@drawable/panda_confused"
+            app:layout_constraintBottom_toBottomOf="@id/headerLayout"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent" />
+            app:layout_constraintTop_toTopOf="@id/headerLayout"
+            app:layout_constraintVertical_bias="0.0" />
 
-        <!-- Word to Find -->
-        <TextView
-            android:id="@+id/wordTitle"
+        <!-- Modern Score Card -->
+
+        <LinearLayout
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_marginStart="16dp"
-            android:layout_marginEnd="16dp"
-            android:gravity="center"
-            android:text="Find: BOAT"
-            android:textColor="#FF6B35"
-            android:textSize="32sp"
-            android:textStyle="bold"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toStartOf="@+id/scoreLayout"
-            app:layout_constraintStart_toEndOf="@id/pandaImage"
-            app:layout_constraintTop_toTopOf="parent" />
-
-        <!-- Score Counter -->
-        <LinearLayout
-            android:id="@+id/scoreLayout"
-            android:layout_width="100dp"
-            android:layout_height="60dp"
-            android:background="@drawable/score_bubble"
-            android:gravity="center"
+            android:layout_marginTop="-2dp"
+            android:gravity="center_vertical"
             android:orientation="vertical"
-            android:padding="8dp"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toStartOf="@+id/scoreCard"
+            app:layout_constraintHorizontal_bias="0.0"
+            app:layout_constraintStart_toEndOf="@id/pandaImage"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintVertical_bias="0.01">
+
+            <TextView
+                android:id="@+id/wordTitle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:fontFamily="sans-serif-condensed"
+                android:shadowColor="#40000000"
+                android:shadowDx="2"
+                android:shadowDy="2"
+                android:shadowRadius="4"
+                android:text="BOAT"
+                android:textColor="@android:color/white"
+                android:textSize="34sp"
+                android:textStyle="bold" />
+
+        </LinearLayout>
+
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/scoreCard"
+            android:layout_width="100dp"
+            android:layout_height="100dp"
+            android:layout_marginTop="-140dp"
+            android:layout_marginEnd="4dp"
+            android:layout_marginBottom="16dp"
+            app:cardBackgroundColor="@color/light_green"
+            app:cardCornerRadius="20dp"
+            app:cardElevation="16dp"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintTop_toTopOf="parent">
 
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="SCORE"
-                android:textColor="#FFFFFF"
-                android:textSize="12sp"
-                android:textStyle="bold" />
+            <LinearLayout
+                android:layout_width="97dp"
+                android:layout_height="match_parent"
+                android:gravity="center"
+                android:orientation="vertical"
+                android:padding="12dp">
 
-            <TextView
-                android:id="@+id/scoreText"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="0/5"
-                android:textColor="#FFFFFF"
-                android:textSize="24sp"
-                android:textStyle="bold" />
-        </LinearLayout>
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:letterSpacing="0.15"
+                    android:text="SCORE"
+                    android:textAllCaps="true"
+                    android:textColor="@color/green_dark"
+                    android:textSize="18sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:id="@+id/scoreText"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp"
+                    android:text="0/5"
+                    android:textColor="@color/white"
+                    android:textSize="32sp"
+                    android:textStyle="bold" />
+
+                <View
+                    android:layout_width="40dp"
+                    android:layout_height="2dp"
+                    android:layout_marginTop="8dp"
+                    android:alpha="0.5"
+                    android:background="#667EEA" />
+            </LinearLayout>
+
+        </com.google.android.material.card.MaterialCardView>
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 
@@ -85,7 +127,7 @@
         android:layout_width="0dp"
         android:layout_height="20dp"
         android:layout_marginStart="24dp"
-        android:layout_marginTop="16dp"
+        android:layout_marginTop="-96dp"
         android:layout_marginEnd="24dp"
         android:background="@drawable/progress_background"
         android:gravity="center"
@@ -111,6 +153,7 @@
         android:text="Tap the correct image for the word!"
         android:textColor="#666666"
         android:textSize="18sp"
+        android:textStyle="bold"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/progressContainer" />
@@ -118,10 +161,9 @@
     <!-- Options Grid -->
     <GridLayout
         android:id="@+id/optionsGrid"
-        android:layout_width="0dp"
-        android:layout_height="0dp"
+        android:layout_width="369dp"
+        android:layout_height="388dp"
         android:layout_marginStart="24dp"
-        android:layout_marginTop="24dp"
         android:layout_marginEnd="24dp"
         android:alignmentMode="alignMargins"
         android:columnCount="2"

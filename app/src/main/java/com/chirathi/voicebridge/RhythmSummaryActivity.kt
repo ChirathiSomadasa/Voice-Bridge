@@ -626,7 +626,7 @@ class RhythmSummaryActivity : AppCompatActivity() {
                 feedbackIcon.setImageResource(android.R.drawable.ic_delete)
             }
 
-            feedbackText.text = "Try Again!"
+            feedbackText.text = "Wrong!"
             feedbackText.setTextColor(Color.parseColor("#F44336"))
 
             // Shake animation for wrong answer
