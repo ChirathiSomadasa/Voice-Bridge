@@ -405,47 +405,83 @@ class RhythmSummaryActivity : AppCompatActivity() {
         Log.d(TAG, "Generating wrong options for: $keyword")
         val wrongOptions = mutableListOf<Pair<String, Int>>()
 
-        // Get other keywords from the same song as distractors
-        val otherKeywords = currentKeywords
+        // Get all possible distractors from same song
+        val sameSongKeywords = currentKeywords
             .filter { it.word != keyword }
             .map { it.word }
             .shuffled()
-            .take(2) // Use 2 other keywords from the same song
 
-        Log.d(TAG, "Other keywords from same song: $otherKeywords")
+        Log.d(TAG, "Same song keywords available: $sameSongKeywords")
 
-        // Add other song keywords as distractors
-        otherKeywords.forEach { otherKeyword ->
+        // Get the group of water-related keywords that shouldn't appear together
+        val waterKeywords = listOf("stream", "river", "creek")
+
+        // Check if current keyword is a water keyword
+        val isWaterKeyword = waterKeywords.contains(keyword)
+
+        // Filter out other water keywords if current keyword is a water keyword
+        val filteredSameSongKeywords = if (isWaterKeyword) {
+            sameSongKeywords.filter { !waterKeywords.contains(it) }
+        } else {
+            sameSongKeywords
+        }
+
+        Log.d(TAG, "Filtered same song keywords: $filteredSameSongKeywords")
+
+        // Add 2 keywords from filtered same song list if available
+        val sameSongCount = minOf(2, filteredSameSongKeywords.size)
+        for (i in 0 until sameSongCount) {
+            val otherKeyword = filteredSameSongKeywords[i]
             val imageRes = keywordImages[otherKeyword] ?: R.drawable.ic_placeholder
             wrongOptions.add(Pair(otherKeyword, imageRes))
         }
 
-        // Add 1 unrelated distractor
-        val unrelatedDistractors = when (keyword) {
-            "boat", "stream", "river", "creek" -> listOf("car", "plane", "bicycle")
-            "star", "sun", "moon", "light" -> listOf("flower", "tree", "house")
-            "hill", "mountain" -> listOf("valley", "forest", "desert")
-            "water", "crown" -> listOf("hat", "helmet", "cap")
-            else -> listOf("apple", "ball", "cat")
+        // If we still need more options (less than 2 from same song), add from other categories
+        if (wrongOptions.size < 3) {
+            // Get non-water related distractors
+            val unrelatedDistractors = when {
+                keyword == "boat" -> listOf("car", "plane", "bicycle")
+                keyword in listOf("star", "sun", "moon", "light") -> listOf("flower", "tree", "house")
+                keyword in listOf("hill", "mountain") -> listOf("valley", "forest", "desert")
+                keyword in listOf("water", "crown") -> listOf("hat", "helmet", "cap")
+                waterKeywords.contains(keyword) -> listOf("boat", "ocean", "lake", "waterfall") // Water-related but not stream/river/creek
+                else -> listOf("apple", "ball", "cat")
+            }
+
+            // Add as many unrelated distractors as needed to reach 3 wrong options
+            val neededCount = 3 - wrongOptions.size
+            val shuffledUnrelated = unrelatedDistractors.shuffled().take(neededCount)
+
+            shuffledUnrelated.forEach { unrelatedDistractor ->
+                val unrelatedImage = distractorImages[unrelatedDistractor] ?: R.drawable.ic_placeholder
+                wrongOptions.add(Pair(unrelatedDistractor, unrelatedImage))
+            }
         }
 
-        val unrelatedDistractor = unrelatedDistractors.random()
-        val unrelatedImage = distractorImages[unrelatedDistractor] ?: R.drawable.ic_placeholder
-        wrongOptions.add(Pair(unrelatedDistractor, unrelatedImage))
-
-        Log.d(TAG, "Unrelated distractor: $unrelatedDistractor")
-
-        return wrongOptions
+        Log.d(TAG, "Generated wrong options: ${wrongOptions.map { it.first }}")
+        return wrongOptions.take(3) // Ensure we only return 3 wrong options
     }
 
     private fun createGameRound(keyword: String, correctImageRes: Int, wrongOptions: List<Pair<String, Int>>): GameRound {
         Log.d(TAG, "Creating game round for keyword: $keyword")
 
+        // Ensure we have at least 3 wrong options, if not, add some defaults
+        val finalWrongOptions = if (wrongOptions.size < 3) {
+            val defaultOptions = listOf(
+                Pair("apple", distractorImages["apple"] ?: R.drawable.ic_placeholder),
+                Pair("ball", distractorImages["ball"] ?: R.drawable.ic_placeholder),
+                Pair("cat", distractorImages["cat"] ?: R.drawable.ic_placeholder)
+            ).shuffled().take(3)
+            wrongOptions + defaultOptions.take(3 - wrongOptions.size)
+        } else {
+            wrongOptions.take(3)
+        }
+
         // Combine correct and wrong options, then shuffle
         val allOptions = mutableListOf(
             Pair(keyword, correctImageRes)
         )
-        allOptions.addAll(wrongOptions.take(3)) // Take only 3 wrong options
+        allOptions.addAll(finalWrongOptions)
 
         // Shuffle the options
         val shuffledOptions = allOptions.shuffled()
@@ -521,7 +557,6 @@ class RhythmSummaryActivity : AppCompatActivity() {
         Log.d(TAG, "All options displayed")
     }
 
-    // Update handleOptionClick method
     private fun handleOptionClick(card: CardView, selectedIndex: Int) {
         Log.d(TAG, "Handling option click. Selected: $selectedIndex, Correct: $correctAnswerIndex")
         isAnswerSelected = true
@@ -583,7 +618,6 @@ class RhythmSummaryActivity : AppCompatActivity() {
         }, 1000)
     }
 
-    // Update showFeedback method
     private fun showFeedback(isCorrect: Boolean, selectedCard: CardView) {
         Log.d(TAG, "Showing feedback. Is correct: $isCorrect")
         if (isCorrect) {
@@ -725,7 +759,6 @@ class RhythmSummaryActivity : AppCompatActivity() {
         }
     }
 
-    // Update onNextButtonClick method
     private fun onNextButtonClick() {
         Log.d(TAG, "Next button clicked, moving to round ${currentRound + 1}")
         // Hide next button
