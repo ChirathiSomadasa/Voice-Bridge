@@ -90,7 +90,7 @@
         android:id="@+id/statsContainer"
         android:layout_width="325dp"
         android:layout_height="wrap_content"
-        android:background="@color/dark_gray"
+        android:background="@color/dark_orange"
         android:gravity="center"
         android:orientation="vertical"
         android:padding="12dp"
@@ -225,7 +225,7 @@
             android:textAllCaps="false"
             android:textColor="@color/white"
             android:textSize="18sp"
-            app:backgroundTint="@color/dark_orange" />
+            android:backgroundTint="@color/pink" />
     </LinearLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>
