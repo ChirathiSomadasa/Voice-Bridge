@@ -424,7 +424,7 @@ class MoodMatchSevenUpActivity : AppCompatActivity(),
     private fun showFeedbackPopup() {
         // Determine if it's good or bad feedback
         // For 4 options, let's use 3+ correct as good feedback (60%+)
-        val isGoodFeedback = correctAnswersCount >= 3
+        val isGoodFeedback = correctAnswersCount >= 4
 
         Log.d(TAG, "=== SHOWING FEEDBACK ===")
         Log.d(TAG, "Is good feedback: $isGoodFeedback")

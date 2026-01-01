@@ -282,7 +282,7 @@ class MoodMatchSevenDownActivity : AppCompatActivity(),
 
         if (selectedOption == correctOption) {
             // Correct answer
-            score += 10
+            score += 20
             correctAnswersCount++
 
             // Update score display (only if video finished)
