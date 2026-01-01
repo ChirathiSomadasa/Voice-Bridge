@@ -568,7 +568,7 @@ class RhythmSummaryActivity : AppCompatActivity() {
             correctCard.animate()
                 .scaleX(1.1f)
                 .scaleY(1.1f)
-                .setDuration(300)
+                .setDuration(100)
                 .start()
         }
 
@@ -580,7 +580,7 @@ class RhythmSummaryActivity : AppCompatActivity() {
         Handler(Looper.getMainLooper()).postDelayed({
             Log.d(TAG, "Showing next button after feedback")
             hideFeedbackAndShowNextButton()
-        }, 2000)
+        }, 1000)
     }
 
     // Update showFeedback method
@@ -605,12 +605,12 @@ class RhythmSummaryActivity : AppCompatActivity() {
             selectedCard.animate()
                 .scaleX(1.1f)
                 .scaleY(1.1f)
-                .setDuration(300)
+                .setDuration(100)
                 .withEndAction {
                     selectedCard.animate()
                         .scaleX(1f)
                         .scaleY(1f)
-                        .setDuration(300)
+                        .setDuration(100)
                         .start()
                 }
                 .start()

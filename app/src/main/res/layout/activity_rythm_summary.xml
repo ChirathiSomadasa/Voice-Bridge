@@ -63,7 +63,7 @@
                 android:shadowRadius="4"
                 android:text="BOAT"
                 android:textColor="@android:color/white"
-                android:textSize="34sp"
+                android:textSize="30sp"
                 android:textStyle="bold" />
 
         </LinearLayout>
@@ -73,7 +73,7 @@
             android:layout_width="100dp"
             android:layout_height="100dp"
             android:layout_marginTop="-140dp"
-            android:layout_marginEnd="4dp"
+            android:layout_marginEnd="13dp"
             android:layout_marginBottom="16dp"
             app:cardBackgroundColor="@color/light_green"
             app:cardCornerRadius="20dp"
@@ -96,7 +96,7 @@
                     android:text="SCORE"
                     android:textAllCaps="true"
                     android:textColor="@color/green_dark"
-                    android:textSize="18sp"
+                    android:textSize="16sp"
                     android:textStyle="bold" />
 
                 <TextView
@@ -106,7 +106,7 @@
                     android:layout_marginTop="4dp"
                     android:text="0/5"
                     android:textColor="@color/white"
-                    android:textSize="32sp"
+                    android:textSize="28sp"
                     android:textStyle="bold" />
 
                 <View
