@@ -18,6 +18,7 @@ class ASequenceScoreboardActivity : AppCompatActivity() {
     private var attempts = 0
     private var completionTime = 0L
     private var accuracy = 100
+    private var stickerAlreadyShown = false
 
     private lateinit var completedText: TextView
     private lateinit var attemptsText: TextView
@@ -54,18 +55,30 @@ class ASequenceScoreboardActivity : AppCompatActivity() {
 
         Log.d(TAG, "=== onCreate STARTED ===")
 
-        // Get data passed from game
+        // Check if sticker was already shown (passed from UnlockStickerActivity)
+        stickerAlreadyShown = intent.getBooleanExtra("STICKER_ALREADY_SHOWN", false)
+
+        // Clear the flag so it doesn't persist
+        intent.removeExtra("STICKER_ALREADY_SHOWN")
+
+        // Get data passed from game OR from UnlockStickerActivity
         val attemptsFromGame = intent.getIntExtra("ATTEMPTS", 1)
         completionTime = intent.getLongExtra("ELAPSED_TIME", 0L)
 
         attempts = attemptsFromGame
 
         // Calculate accuracy based on attempts and time
-        accuracy = calculateAccuracy(attempts, completionTime)
+        // If accuracy is passed, use it; otherwise calculate it
+        if (intent.hasExtra("ACCURACY")) {
+            accuracy = intent.getIntExtra("ACCURACY", 100)
+        } else {
+            accuracy = calculateAccuracy(attempts, completionTime)
+        }
 
         Log.d(TAG, "Attempts: $attempts")
         Log.d(TAG, "Time: ${completionTime}ms")
-        Log.d(TAG, "Calculated Accuracy: $accuracy%")
+        Log.d(TAG, "Accuracy: $accuracy%")
+        Log.d(TAG, "Sticker already shown: $stickerAlreadyShown")
 
         // Initialize all views
         initializeViews()
@@ -172,7 +185,29 @@ class ASequenceScoreboardActivity : AppCompatActivity() {
         // Set performance text based on accuracy - NO ANIMATION, keep steady
         updatePerformanceText(accuracy)
 
+        // Check for perfect accuracy to trigger sticker unlock ONLY IF NOT ALREADY SHOWN
+        if (accuracy == 100 && !stickerAlreadyShown) {
+            Handler(Looper.getMainLooper()).postDelayed({
+                triggerPerfectAccuracyCelebration()
+            }, 2500) // Wait for accuracy animation to complete
+        }
+
         Log.d(TAG, "=== setStatsToViews COMPLETED ===")
+    }
+
+    private fun triggerPerfectAccuracyCelebration() {
+        Log.d(TAG, "Perfect accuracy detected! Triggering celebration...")
+
+        // Start sticker unlock activity WITH GAME DATA
+        val intent = Intent(this, UnlockStickerActivity::class.java)
+        intent.putExtra("ATTEMPTS", attempts)
+        intent.putExtra("ELAPSED_TIME", completionTime)
+        intent.putExtra("ACCURACY", accuracy)
+        startActivity(intent)
+        overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out)
+
+        // DON'T finish this activity - it will stay in back stack
+        // User will return to it when sticker unlock finishes
     }
 
     private fun updatePerformanceText(accuracy: Int) {
