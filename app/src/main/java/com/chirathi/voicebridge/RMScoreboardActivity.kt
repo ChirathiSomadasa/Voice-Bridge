@@ -71,15 +71,15 @@ class RMScoreboardActivity : AppCompatActivity() {
         when (score) {
             0 -> {
                 resultText.text = "You Lose"
-                resultText.setTextColor(Color.parseColor("#FF5252"))
+                resultText.setTextColor(Color.parseColor("#FFFFFF"))
             }
             1, 2 -> {
                 resultText.text = "Nice Try!"
-                resultText.setTextColor(Color.parseColor("#FF9800"))
+                resultText.setTextColor(Color.parseColor("#FFFFFF"))
             }
             3, 4 -> {
                 resultText.text = "Well Done!"
-                resultText.setTextColor(Color.parseColor("#4CAF50"))
+                resultText.setTextColor(Color.parseColor("#FFFFFF"))
             }
             else -> {
                 resultText.text = "You Win!"
