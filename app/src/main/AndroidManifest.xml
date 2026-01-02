@@ -42,13 +42,13 @@
             android:name=".RhythmSummaryActivity"
             android:exported="false" />
         <activity
+            android:name=".RMScoreboardActivity"
+            android:exported="false" />
+        <activity
             android:name=".RMGuidanceActivity"
             android:exported="false" />
         <activity
             android:name=".RMIntroActivity"
-            android:exported="false" />
-        <activity
-            android:name=".RMScoreboardActivity"
             android:exported="false" />
         <activity
             android:name=".ASequenceScoreboardActivity"
