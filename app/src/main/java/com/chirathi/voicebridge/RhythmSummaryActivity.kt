@@ -112,8 +112,11 @@ class RhythmSummaryActivity : AppCompatActivity() {
     private lateinit var currentKeywords: List<Keyword>
     private lateinit var availableKeywords: MutableList<Keyword>
 
-    // Define the water-related keywords that shouldn't appear together
-    private val waterKeywords = listOf("stream", "river", "creek")
+    // Define ALL water-related keywords that shouldn't appear together
+    private val allWaterTerms = listOf(
+        "stream", "river", "creek", "lake", "ocean", "water", "waterfall",
+        "pond", "sea", "boat", "sail", "ship", "wave", "tide"
+    )
 
     // Validated image caches
     private val validatedKeywordImages = mutableMapOf<String, Int>()
@@ -459,26 +462,27 @@ class RhythmSummaryActivity : AppCompatActivity() {
         val wrongOptions = mutableListOf<Pair<String, Int>>()
         val usedWrongOptions = mutableSetOf<String>()
 
+        // Check if current keyword is a water-related term
+        val isWaterKeyword = allWaterTerms.contains(keyword)
+        Log.d(TAG, "Keyword '$keyword' is water-related: $isWaterKeyword")
+
         // Step 1: Get all possible wrong options from the same song
         val sameSongWrongOptions = mutableListOf<Pair<String, Int>>()
 
         // Filter current keywords for wrong options (excluding the correct keyword)
         for (kw in currentKeywords) {
             if (kw.word != keyword) {
-                // Check if this is a water keyword when we already have one in the set
-                val isWaterKeyword = waterKeywords.contains(kw.word)
-                val currentWaterKeywordsInSet = wrongOptions.filter { waterKeywords.contains(it.first) }
+                // Check if this is a water-related term
+                val isWrongOptionWaterTerm = allWaterTerms.contains(kw.word)
 
-                // If current keyword is a water keyword, only add if we don't already have a water keyword
-                if (isWaterKeyword) {
-                    if (currentWaterKeywordsInSet.isEmpty()) {
-                        val imageRes = validatedKeywordImages[kw.word] ?: android.R.drawable.ic_dialog_info
-                        sameSongWrongOptions.add(Pair(kw.word, imageRes))
-                    }
-                } else {
-                    val imageRes = validatedKeywordImages[kw.word] ?: android.R.drawable.ic_dialog_info
-                    sameSongWrongOptions.add(Pair(kw.word, imageRes))
+                // If current keyword is a water term, don't allow any other water terms
+                if (isWaterKeyword && isWrongOptionWaterTerm) {
+                    Log.d(TAG, "Skipping water term '${kw.word}' because keyword '$keyword' is also water-related")
+                    continue
                 }
+
+                val imageRes = validatedKeywordImages[kw.word] ?: android.R.drawable.ic_dialog_info
+                sameSongWrongOptions.add(Pair(kw.word, imageRes))
             }
         }
 
@@ -497,22 +501,26 @@ class RhythmSummaryActivity : AppCompatActivity() {
 
         Log.d(TAG, "Added $addedCount same-song wrong options")
 
-        // Step 2: If we need more options, add from unrelated categories using validated distractors
+        // Step 2: If we need more options, add from unrelated categories
         if (wrongOptions.size < 3) {
             val neededCount = 3 - wrongOptions.size
 
-            // Get unrelated distractor words from validated distractors
+            // Create a list of unrelated categories based on keyword type
             val unrelatedDistractorWords = when {
-                keyword == "boat" -> listOf("car", "plane", "bicycle", "train", "bus")
-                keyword in listOf("star", "sun", "moon", "light") -> listOf("flower", "tree", "house", "mountain", "cloud")
-                keyword in listOf("hill", "mountain") -> listOf("valley", "forest", "desert", "plain", "cave")
-                keyword in listOf("water", "crown") -> listOf("hat", "helmet", "cap", "shield", "sword")
-                waterKeywords.contains(keyword) -> {
-                    // For water keywords, use other water-related but distinct terms
-                    listOf("boat", "ocean", "lake", "waterfall", "pond", "sea")
+                isWaterKeyword -> {
+                    // If keyword is water-related, use completely unrelated categories
+                    listOf("car", "plane", "house", "tree", "mountain", "sun", "star",
+                        "apple", "ball", "cat", "dog", "bird", "hat", "shoe", "book")
                 }
-                else -> listOf("apple", "ball", "cat", "dog", "bird", "fish")
-            }.filter { it in validatedDistractorImages } // Filter to only validated images
+                keyword == "boat" -> listOf("car", "plane", "bicycle", "train", "bus", "house", "tree")
+                keyword in listOf("star", "sun", "moon", "light") -> listOf("flower", "tree", "house", "mountain", "cloud", "apple", "ball")
+                keyword in listOf("hill", "mountain") -> listOf("valley", "forest", "desert", "plain", "cave", "house", "tree")
+                keyword in listOf("water", "crown") -> listOf("hat", "helmet", "cap", "shield", "sword", "apple", "ball")
+                else -> listOf("apple", "ball", "cat", "dog", "bird", "fish", "house", "tree")
+            }.filter {
+                // Filter to only validated distractors AND ensure they're not water-related if keyword is water-related
+                it in validatedDistractorImages && !(isWaterKeyword && allWaterTerms.contains(it))
+            }
 
             var unrelatedAdded = 0
             for (unrelatedWord in unrelatedDistractorWords.shuffled()) {
@@ -521,7 +529,7 @@ class RhythmSummaryActivity : AppCompatActivity() {
                 // Make sure it's not a duplicate and not the correct keyword
                 if (unrelatedWord != keyword &&
                     unrelatedWord !in usedWrongOptions &&
-                    !(waterKeywords.contains(keyword) && waterKeywords.contains(unrelatedWord))) {
+                    !(isWaterKeyword && allWaterTerms.contains(unrelatedWord))) {
 
                     val imageRes = validatedDistractorImages[unrelatedWord] ?: android.R.drawable.ic_dialog_info
                     wrongOptions.add(Pair(unrelatedWord, imageRes))
@@ -540,7 +548,7 @@ class RhythmSummaryActivity : AppCompatActivity() {
         for (option in wrongOptions) {
             if (option.first != keyword &&
                 option.first !in finalSeen &&
-                !(waterKeywords.contains(keyword) && waterKeywords.contains(option.first))) {
+                !(isWaterKeyword && allWaterTerms.contains(option.first))) {
 
                 // Final validation of the image resource
                 val finalResId = if (isDrawableValid(option.second)) {
@@ -567,19 +575,25 @@ class RhythmSummaryActivity : AppCompatActivity() {
 
             for (default in safeDefaults) {
                 if (validatedOptions.size >= 3) break
-                if (default.first != keyword && default.first !in finalSeen) {
+                if (default.first != keyword &&
+                    default.first !in finalSeen &&
+                    !(isWaterKeyword && allWaterTerms.contains(default.first))) {
                     validatedOptions.add(default)
                     finalSeen.add(default.first)
                 }
             }
         }
 
-        Log.d(TAG, "Final wrong options: ${validatedOptions.map { it.first }} with resources: ${validatedOptions.map { it.second }}")
+        Log.d(TAG, "Final wrong options for keyword '$keyword': ${validatedOptions.map { it.first }}")
         return validatedOptions.take(3)
     }
 
     private fun createGameRound(keyword: String, correctImageRes: Int, wrongOptions: List<Pair<String, Int>>): GameRound {
         Log.d(TAG, "Creating game round for keyword: $keyword")
+
+        // Check if current keyword is a water-related term
+        val isWaterKeyword = allWaterTerms.contains(keyword)
+        Log.d(TAG, "Keyword '$keyword' is water-related: $isWaterKeyword")
         Log.d(TAG, "Correct image resource ID: $correctImageRes (valid: ${isDrawableValid(correctImageRes)})")
 
         // Step 1: Validate and deduplicate wrong options
@@ -587,12 +601,12 @@ class RhythmSummaryActivity : AppCompatActivity() {
         val seenWords = mutableSetOf<String>()
 
         for ((index, option) in wrongOptions.withIndex()) {
-            Log.d(TAG, "Wrong option $index: word='${option.first}', resId=${option.second}, valid=${isDrawableValid(option.second)}")
+            Log.d(TAG, "Processing wrong option $index: word='${option.first}', isWater=${allWaterTerms.contains(option.first)}")
 
             if (option.first != keyword && option.first !in seenWords) {
-                // Additional check for water keywords
-                if (waterKeywords.contains(keyword) && waterKeywords.contains(option.first)) {
-                    Log.d(TAG, "Skipping water keyword ${option.first} as ${keyword} is also a water keyword")
+                // Check if we're trying to add a water-related term when keyword is water-related
+                if (isWaterKeyword && allWaterTerms.contains(option.first)) {
+                    Log.d(TAG, "REJECTED: Skipping water term '${option.first}' because keyword '$keyword' is also water-related")
                     continue
                 }
 
@@ -611,7 +625,7 @@ class RhythmSummaryActivity : AppCompatActivity() {
             }
         }
 
-        Log.d(TAG, "Validated wrong options: ${validatedWrongOptions.map { it.first }}")
+        Log.d(TAG, "Validated wrong options after water check: ${validatedWrongOptions.map { it.first }}")
 
         // Step 2: Ensure we have exactly 3 wrong options
         val finalWrongOptions = if (validatedWrongOptions.size >= 3) {
