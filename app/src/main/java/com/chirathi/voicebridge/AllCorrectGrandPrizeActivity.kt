@@ -185,17 +185,18 @@ class AllCorrectGrandPrizeActivity : AppCompatActivity() {
         title.visibility = View.GONE
         btnOk.visibility = View.GONE
 
-        // Create a spinning/vortex effect in the top-right corner
-        createVortexEffect()
+        // Create a simple fade-out animation for the panda
+        val fadeOutAnim = ObjectAnimator.ofPropertyValuesHolder(
+            feedbackImage,
+            android.animation.PropertyValuesHolder.ofFloat("alpha", 1f, 0f),
+            android.animation.PropertyValuesHolder.ofFloat("scaleX", 1f, 0.5f),
+            android.animation.PropertyValuesHolder.ofFloat("scaleY", 1f, 0.5f)
+        )
+        fadeOutAnim.duration = 800
+        fadeOutAnim.interpolator = AccelerateInterpolator()
 
-        // Animate the panda with a spiral/sucking motion
-        val spiralAnim = createSpiralAnimation()
-
-        spiralAnim.addListener(object : AnimatorListenerAdapter() {
+        fadeOutAnim.addListener(object : AnimatorListenerAdapter() {
             override fun onAnimationEnd(animation: Animator) {
-                // Remove any vortex effects
-                mainLayout.removeView(mainLayout.findViewWithTag("vortex"))
-
                 // Return result and finish
                 val resultIntent = Intent()
                 resultIntent.putExtra("PRIZE_UNLOCKED", true)
@@ -207,7 +208,7 @@ class AllCorrectGrandPrizeActivity : AppCompatActivity() {
             }
         })
 
-        spiralAnim.start()
+        fadeOutAnim.start()
     }
 
     private fun createVortexEffect() {
