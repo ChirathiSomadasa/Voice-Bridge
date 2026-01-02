@@ -4,7 +4,6 @@ import android.animation.Animator
 import android.animation.AnimatorListenerAdapter
 import android.animation.AnimatorSet
 import android.animation.ObjectAnimator
-import android.animation.ValueAnimator
 import android.content.Intent
 import android.graphics.Color
 import android.os.Bundle
@@ -14,7 +13,6 @@ import android.view.View
 import android.view.ViewGroup
 import android.view.animation.AccelerateDecelerateInterpolator
 import android.view.animation.AccelerateInterpolator
-import android.view.animation.AnticipateInterpolator
 import android.view.animation.BounceInterpolator
 import android.view.animation.DecelerateInterpolator
 import android.view.animation.OvershootInterpolator
@@ -23,31 +21,23 @@ import android.widget.FrameLayout
 import android.widget.ImageView
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
-import kotlin.math.cos
-import kotlin.math.sin
-import kotlin.random.Random
 
 class UnlockStickerActivity : AppCompatActivity() {
 
     private lateinit var container: FrameLayout
     private lateinit var giftBox: ImageView
-    private lateinit var stickerReveal: ImageView
+    private lateinit var stickerCard: ImageView  // Blank card
+    private lateinit var stickerReveal: ImageView  // Actual sticker
     private lateinit var collectButton: Button
     private lateinit var titleText: TextView
     private lateinit var unlockedText: TextView
     private lateinit var dimOverlay: View
-    private lateinit var particlesContainer: FrameLayout
+    private lateinit var glowOverlay: ImageView
 
     // Store game data to pass back to scoreboard
     private var attempts = 0
     private var completionTime = 0L
     private var accuracy = 100
-
-    companion object {
-        private val PARTICLE_COLORS = listOf(
-            R.drawable.particle_circle,
-        )
-    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -70,18 +60,21 @@ class UnlockStickerActivity : AppCompatActivity() {
     private fun initViews() {
         container = findViewById(R.id.main)
         giftBox = findViewById(R.id.giftBox)
-        stickerReveal = findViewById(R.id.stickerReveal)
+        stickerCard = findViewById(R.id.stickerCard)  // Blank white/gray card
+        stickerReveal = findViewById(R.id.stickerReveal)  // Actual sticker image
         collectButton = findViewById(R.id.collectButton)
         titleText = findViewById(R.id.title)
         unlockedText = findViewById(R.id.unlockedText)
-        particlesContainer = findViewById(R.id.particlesContainer)
+        glowOverlay = findViewById(R.id.glowOverlay)
 
         // Initially hide elements
         giftBox.visibility = View.VISIBLE
+        stickerCard.visibility = View.INVISIBLE
         stickerReveal.visibility = View.INVISIBLE
         collectButton.visibility = View.INVISIBLE
         titleText.visibility = View.INVISIBLE
         unlockedText.visibility = View.INVISIBLE
+        glowOverlay.visibility = View.INVISIBLE
 
         // Set up collect button listener
         collectButton.setOnClickListener {
@@ -112,7 +105,7 @@ class UnlockStickerActivity : AppCompatActivity() {
     }
 
     private fun startGiftBoxAnimation() {
-        // Step 1: Scale-in animation
+        // 1. Scale-in animation for gift box
         val scaleIn = ObjectAnimator.ofPropertyValuesHolder(
             giftBox,
             android.animation.PropertyValuesHolder.ofFloat("scaleX", 0f, 1.2f, 1f),
@@ -123,15 +116,11 @@ class UnlockStickerActivity : AppCompatActivity() {
             interpolator = OvershootInterpolator()
         }
 
-        // Step 2: Progressive shake animation
-        val shakeAnimator = createProgressiveShakeAnimation()
-
-        // Step 3: Explosion and sticker reveal
         scaleIn.addListener(object : AnimatorListenerAdapter() {
             override fun onAnimationEnd(animation: Animator) {
-                // Start progressive shaking
-                giftBox.postDelayed({
-                    shakeAnimator.start()
+                // Start shaking animation after scale-in
+                Handler(Looper.getMainLooper()).postDelayed({
+                    shakeAndOpenBox()
                 }, 300)
             }
         })
@@ -139,181 +128,176 @@ class UnlockStickerActivity : AppCompatActivity() {
         scaleIn.start()
     }
 
-    private fun createProgressiveShakeAnimation(): AnimatorSet {
-        val shakeSet = AnimatorSet()
-        val shakes = mutableListOf<Animator>()
-
-        // Create progressive shake sequence
-        for (i in 1..5) {
-            val intensity = i * 0.5f
-            val duration = (i * 100L).coerceAtMost(300L)
-
-            val shakeX = ObjectAnimator.ofFloat(
-                giftBox, "translationX",
-                0f, -10f * intensity, 8f * intensity, -6f * intensity, 4f * intensity, 0f
-            ).apply {
-                this.duration = duration
-                interpolator = DecelerateInterpolator()
-            }
-
-            val shakeY = ObjectAnimator.ofFloat(
-                giftBox, "translationY",
-                0f, -5f * intensity, 4f * intensity, -3f * intensity, 2f * intensity, 0f
-            ).apply {
-                this.duration = duration
-                interpolator = DecelerateInterpolator()
-            }
-
-            val scalePulse = ObjectAnimator.ofPropertyValuesHolder(
-                giftBox,
-                android.animation.PropertyValuesHolder.ofFloat("scaleX", 1f, 1f + (0.05f * i), 1f),
-                android.animation.PropertyValuesHolder.ofFloat("scaleY", 1f, 1f + (0.05f * i), 1f)
-            ).apply {
-                this.duration = duration
-            }
-
-            shakes.add(AnimatorSet().apply {
-                playTogether(shakeX, shakeY, scalePulse)
-            })
+    private fun shakeAndOpenBox() {
+        // Simple shake animation (left-right shake)
+        val shakeX = ObjectAnimator.ofFloat(
+            giftBox, "translationX",
+            0f, -15f, 12f, -8f, 5f, 0f
+        ).apply {
+            duration = 600
+            interpolator = DecelerateInterpolator()
         }
 
-        shakeSet.playSequentially(shakes)
+        val shakeY = ObjectAnimator.ofFloat(
+            giftBox, "translationY",
+            0f, -5f, 4f, -3f, 0f
+        ).apply {
+            duration = 600
+            interpolator = DecelerateInterpolator()
+        }
 
-        // After shaking, explode and reveal sticker
-        shakeSet.addListener(object : AnimatorListenerAdapter() {
+        val shakeScale = ObjectAnimator.ofPropertyValuesHolder(
+            giftBox,
+            android.animation.PropertyValuesHolder.ofFloat("scaleX", 1f, 1.05f, 1f),
+            android.animation.PropertyValuesHolder.ofFloat("scaleY", 1f, 1.05f, 1f)
+        ).apply {
+            duration = 600
+        }
+
+        shakeX.addListener(object : AnimatorListenerAdapter() {
             override fun onAnimationEnd(animation: Animator) {
-                createExplosion()
-                revealSticker()
+                // After shaking, hide box and reveal card
+                hideBoxAndRevealCard()
             }
         })
 
-        return shakeSet
-    }
-
-    private fun createExplosion() {
-        val particleCount = 50
-        val particleSize = 20
-
-        for (i in 0 until particleCount) {
-            val particle = ImageView(this)
-            // Set random particle color
-            particle.setBackgroundResource(PARTICLE_COLORS[Random.nextInt(PARTICLE_COLORS.size)])
-            particle.layoutParams = FrameLayout.LayoutParams(particleSize, particleSize)
-
-            particlesContainer.addView(particle)
-
-            // Random starting position around the gift box
-            val startX = giftBox.x + giftBox.width / 2 - particleSize / 2
-            val startY = giftBox.y + giftBox.height / 2 - particleSize / 2
-
-            particle.translationX = startX
-            particle.translationY = startY
-            particle.alpha = 1f
-
-            // Random angle and distance
-            val angle = Random.nextDouble(0.0, 2 * Math.PI)
-            val distance = Random.nextFloat() * 400 + 200
-
-            // Explosion animation
-            val explodeX = ObjectAnimator.ofFloat(
-                particle, "translationX",
-                startX, startX + cos(angle).toFloat() * distance
-            ).apply {
-                duration = 800
-                interpolator = AccelerateInterpolator()
-            }
-
-            val explodeY = ObjectAnimator.ofFloat(
-                particle, "translationY",
-                startY, startY + sin(angle).toFloat() * distance
-            ).apply {
-                duration = 800
-                interpolator = AccelerateInterpolator()
-            }
-
-            val fadeOut = ObjectAnimator.ofFloat(particle, "alpha", 1f, 0f).apply {
-                duration = 800
-            }
-
-            val scaleDown = ObjectAnimator.ofPropertyValuesHolder(
-                particle,
-                android.animation.PropertyValuesHolder.ofFloat("scaleX", 1f, 0f),
-                android.animation.PropertyValuesHolder.ofFloat("scaleY", 1f, 0f)
-            ).apply {
-                duration = 800
-            }
-
-            AnimatorSet().apply {
-                playTogether(explodeX, explodeY, fadeOut, scaleDown)
-                start()
-            }
-        }
-
-        // Hide gift box after explosion
-        ObjectAnimator.ofFloat(giftBox, "alpha", 1f, 0f).apply {
-            duration = 300
+        AnimatorSet().apply {
+            playTogether(shakeX, shakeY, shakeScale)
             start()
         }
     }
 
-    private fun revealSticker() {
-        // Show sticker with initial small size
-        stickerReveal.scaleX = 0.1f
-        stickerReveal.scaleY = 0.1f
-        stickerReveal.alpha = 0f
-        stickerReveal.visibility = View.VISIBLE
-
-        // Store initial position
-        val initialTranslationY = stickerReveal.translationY
-
-        // Get screen height for animation calculation
-        val screenHeight = resources.displayMetrics.heightPixels
-
-        // Swirl and rotate upward animation
-        val swirlUp = ObjectAnimator.ofFloat(
-            stickerReveal, "translationY",
-            initialTranslationY,
-            -screenHeight * 0.3f
-        ).apply {
-            duration = 1200
-            interpolator = DecelerateInterpolator()
+    private fun hideBoxAndRevealCard() {
+        // 1. Hide gift box
+        ObjectAnimator.ofFloat(giftBox, "alpha", 1f, 0f).apply {
+            duration = 300
+            start()
         }
 
-        val rotation = ObjectAnimator.ofFloat(stickerReveal, "rotation", 0f, 1440f).apply {
-            duration = 1200
+        // 2. Show blank sticker card at box position
+        Handler(Looper.getMainLooper()).postDelayed({
+            stickerCard.visibility = View.VISIBLE
+            stickerCard.scaleX = 0.5f
+            stickerCard.scaleY = 0.5f
+            stickerCard.alpha = 0f
+            stickerCard.translationX = giftBox.translationX
+            stickerCard.translationY = giftBox.translationY
+
+            // Make card float upward
+            floatCardUpward()
+        }, 300)
+    }
+
+    private fun floatCardUpward() {
+        // 1. Fade in and scale up card
+        val fadeIn = ObjectAnimator.ofFloat(stickerCard, "alpha", 0f, 1f).apply {
+            duration = 400
         }
 
         val scaleUp = ObjectAnimator.ofPropertyValuesHolder(
-            stickerReveal,
-            android.animation.PropertyValuesHolder.ofFloat("scaleX", 0.1f, 2f),
-            android.animation.PropertyValuesHolder.ofFloat("scaleY", 0.1f, 2f)
+            stickerCard,
+            android.animation.PropertyValuesHolder.ofFloat("scaleX", 0.5f, 0.8f),
+            android.animation.PropertyValuesHolder.ofFloat("scaleY", 0.5f, 0.8f)
+        ).apply {
+            duration = 400
+            interpolator = DecelerateInterpolator()
+        }
+
+        // 2. Float upward
+        val floatUp = ObjectAnimator.ofFloat(
+            stickerCard, "translationY",
+            stickerCard.translationY,
+            stickerCard.translationY - 300f
         ).apply {
             duration = 1200
-            interpolator = OvershootInterpolator()
+            interpolator = AccelerateDecelerateInterpolator()
         }
 
-        val fadeIn = ObjectAnimator.ofFloat(stickerReveal, "alpha", 0f, 1f).apply {
-            duration = 600
-        }
-
-        // After swirling up, expand to full screen
         AnimatorSet().apply {
-            playTogether(swirlUp, rotation, scaleUp, fadeIn)
+            playTogether(fadeIn, scaleUp, floatUp)
             addListener(object : AnimatorListenerAdapter() {
                 override fun onAnimationEnd(animation: Animator) {
-                    expandToFullScreen()
+                    // After floating up, reveal sticker with glow
+                    revealStickerWithGlow()
                 }
             })
             start()
         }
     }
 
-    private fun expandToFullScreen() {
-        // Expand sticker to full screen reveal
-        val expandAnim = ObjectAnimator.ofPropertyValuesHolder(
+    private fun revealStickerWithGlow() {
+        // 1. Show glow effect
+        glowOverlay.visibility = View.VISIBLE
+        glowOverlay.scaleX = 0.5f
+        glowOverlay.scaleY = 0.5f
+        glowOverlay.alpha = 0f
+
+        val glowExpand = ObjectAnimator.ofPropertyValuesHolder(
+            glowOverlay,
+            android.animation.PropertyValuesHolder.ofFloat("scaleX", 0.5f, 2f),
+            android.animation.PropertyValuesHolder.ofFloat("scaleY", 0.5f, 2f)
+        ).apply {
+            duration = 500
+        }
+
+        val glowFade = ObjectAnimator.ofFloat(glowOverlay, "alpha", 0f, 0.7f, 0f).apply {
+            duration = 600
+        }
+
+        // 2. Hide blank card and show actual sticker
+        Handler(Looper.getMainLooper()).postDelayed({
+            stickerReveal.visibility = View.VISIBLE
+            stickerReveal.scaleX = 0.8f
+            stickerReveal.scaleY = 0.8f
+            stickerReveal.alpha = 0f
+            stickerReveal.translationX = stickerCard.translationX
+            stickerReveal.translationY = stickerCard.translationY
+
+            // Hide blank card
+            ObjectAnimator.ofFloat(stickerCard, "alpha", 1f, 0f).apply {
+                duration = 200
+                start()
+            }
+
+            // Show sticker with pop effect
+            val stickerFadeIn = ObjectAnimator.ofFloat(stickerReveal, "alpha", 0f, 1f).apply {
+                duration = 300
+            }
+
+            val stickerPop = ObjectAnimator.ofPropertyValuesHolder(
+                stickerReveal,
+                android.animation.PropertyValuesHolder.ofFloat("scaleX", 0.8f, 1.1f, 1f),
+                android.animation.PropertyValuesHolder.ofFloat("scaleY", 0.8f, 1.1f, 1f)
+            ).apply {
+                duration = 400
+                interpolator = BounceInterpolator()
+            }
+
+            AnimatorSet().apply {
+                playTogether(stickerFadeIn, stickerPop)
+                addListener(object : AnimatorListenerAdapter() {
+                    override fun onAnimationEnd(animation: Animator) {
+                        // After sticker reveal, enlarge it
+                        enlargeSticker()
+                    }
+                })
+                start()
+            }
+        }, 200)
+
+        // Start glow animation
+        AnimatorSet().apply {
+            playTogether(glowExpand, glowFade)
+            start()
+        }
+    }
+
+    private fun enlargeSticker() {
+        // Enlarge sticker to center of screen
+        val enlarge = ObjectAnimator.ofPropertyValuesHolder(
             stickerReveal,
-            android.animation.PropertyValuesHolder.ofFloat("scaleX", 2f, 4f),
-            android.animation.PropertyValuesHolder.ofFloat("scaleY", 2f, 4f)
+            android.animation.PropertyValuesHolder.ofFloat("scaleX", 1f, 3f),
+            android.animation.PropertyValuesHolder.ofFloat("scaleY", 1f, 3f)
         ).apply {
             duration = 800
             interpolator = DecelerateInterpolator()
@@ -324,6 +308,7 @@ class UnlockStickerActivity : AppCompatActivity() {
             stickerReveal.translationX, 0f
         ).apply {
             duration = 800
+            interpolator = DecelerateInterpolator()
         }
 
         val centerY = ObjectAnimator.ofFloat(
@@ -331,52 +316,88 @@ class UnlockStickerActivity : AppCompatActivity() {
             stickerReveal.translationY, 0f
         ).apply {
             duration = 800
+            interpolator = DecelerateInterpolator()
         }
 
         AnimatorSet().apply {
-            playTogether(expandAnim, centerX, centerY)
+            playTogether(enlarge, centerX, centerY)
             addListener(object : AnimatorListenerAdapter() {
                 override fun onAnimationEnd(animation: Animator) {
-                    showCollectButton()
-                    showTextElements()
+                    // Show collect button and text
+                    showCollectButtonAndText()
                 }
             })
             start()
         }
     }
 
-    private fun showCollectButton() {
+    private fun showCollectButtonAndText() {
+        // Show "NEW STICKER UNLOCKED!" text
+        unlockedText.text = "NEW STICKER UNLOCKED!"
+        unlockedText.alpha = 0f
+        unlockedText.visibility = View.VISIBLE
+        unlockedText.translationY = 200f
+
+        val textFadeIn = ObjectAnimator.ofFloat(unlockedText, "alpha", 0f, 1f).apply {
+            duration = 600
+        }
+
+        val textFloatUp = ObjectAnimator.ofFloat(unlockedText, "translationY", 200f, 0f).apply {
+            duration = 600
+            interpolator = DecelerateInterpolator()
+        }
+
+        // Show "Collect 2 More to Unlock New Routine!" text
+        titleText.text = "Collect 2 More to \nUnlock New Routine!"
+        titleText.alpha = 0f
+        titleText.visibility = View.VISIBLE
+        titleText.translationY = 300f
+
+        val titleFadeIn = ObjectAnimator.ofFloat(titleText, "alpha", 0f, 1f).apply {
+            duration = 600
+            startDelay = 200
+        }
+
+        val titleFloatUp = ObjectAnimator.ofFloat(titleText, "translationY", 300f, 100f).apply {
+            duration = 600
+            startDelay = 200
+            interpolator = DecelerateInterpolator()
+        }
+
+        // Show collect button
         collectButton.scaleX = 0f
         collectButton.scaleY = 0f
         collectButton.visibility = View.VISIBLE
+        collectButton.alpha = 0f
 
-        ObjectAnimator.ofPropertyValuesHolder(
+        val buttonFadeIn = ObjectAnimator.ofFloat(collectButton, "alpha", 0f, 1f).apply {
+            duration = 400
+            startDelay = 400
+        }
+
+        val buttonScale = ObjectAnimator.ofPropertyValuesHolder(
             collectButton,
             android.animation.PropertyValuesHolder.ofFloat("scaleX", 0f, 1.2f, 1f),
-            android.animation.PropertyValuesHolder.ofFloat("scaleY", 0f, 1.2f, 1f),
-            android.animation.PropertyValuesHolder.ofFloat("alpha", 0f, 1f)
+            android.animation.PropertyValuesHolder.ofFloat("scaleY", 0f, 1.2f, 1f)
         ).apply {
             duration = 600
-            interpolator = BounceInterpolator()
-            start()
-        }
-    }
-
-    private fun showTextElements() {
-        unlockedText.alpha = 0f
-        titleText.alpha = 0f
-        unlockedText.visibility = View.VISIBLE
-        titleText.visibility = View.VISIBLE
-
-        ObjectAnimator.ofFloat(unlockedText, "alpha", 0f, 1f).apply {
-            duration = 600
-            startDelay = 200
-            start()
-        }
-
-        ObjectAnimator.ofFloat(titleText, "alpha", 0f, 1f).apply {
-            duration = 600
             startDelay = 400
+            interpolator = BounceInterpolator()
+        }
+
+        // Start all text animations
+        AnimatorSet().apply {
+            playTogether(textFadeIn, textFloatUp)
+            start()
+        }
+
+        AnimatorSet().apply {
+            playTogether(titleFadeIn, titleFloatUp)
+            start()
+        }
+
+        AnimatorSet().apply {
+            playTogether(buttonFadeIn, buttonScale)
             start()
         }
     }
@@ -385,58 +406,32 @@ class UnlockStickerActivity : AppCompatActivity() {
         // Disable button to prevent multiple clicks
         collectButton.isEnabled = false
 
-        // Shrink slightly
+        // 1. Shrink sticker slightly
         val shrinkAnim = ObjectAnimator.ofPropertyValuesHolder(
             stickerReveal,
-            android.animation.PropertyValuesHolder.ofFloat("scaleX", 4f, 3.5f),
-            android.animation.PropertyValuesHolder.ofFloat("scaleY", 4f, 3.5f)
+            android.animation.PropertyValuesHolder.ofFloat("scaleX", 3f, 2.5f),
+            android.animation.PropertyValuesHolder.ofFloat("scaleY", 3f, 2.5f)
         ).apply {
             duration = 200
-            interpolator = AnticipateInterpolator()
+            interpolator = DecelerateInterpolator()
         }
 
-        // Jump and exit animation - SIMPLIFIED VERSION
-        val currentTranslationY = stickerReveal.translationY
-
-        // Just move it far down (2000 pixels should be enough to exit screen)
-        val jumpAnim = ObjectAnimator.ofFloat(
+        // 2. Jump down and exit - FIXED: Use screen height instead of view height
+        val screenHeight = resources.displayMetrics.heightPixels
+        val jumpDown = ObjectAnimator.ofFloat(
             stickerReveal, "translationY",
-            currentTranslationY,
-            currentTranslationY + 2000f
+            stickerReveal.translationY,
+            screenHeight.toFloat() + 500f  // Add extra 500px to ensure it goes off screen
         ).apply {
             duration = 800
             interpolator = AccelerateInterpolator()
-        }
-
-        val rotateExit = ObjectAnimator.ofFloat(stickerReveal, "rotation", 0f, 720f).apply {
-            duration = 800
         }
 
         val fadeOut = ObjectAnimator.ofFloat(stickerReveal, "alpha", 1f, 0f).apply {
             duration = 800
         }
 
-        shrinkAnim.addListener(object : AnimatorListenerAdapter() {
-            override fun onAnimationEnd(animation: Animator) {
-                AnimatorSet().apply {
-                    playTogether(jumpAnim, rotateExit, fadeOut)
-                    addListener(object : AnimatorListenerAdapter() {
-                        override fun onAnimationEnd(animation: Animator) {
-                            // Restore brightness and interaction
-                            restoreScreen()
-                        }
-                    })
-                    start()
-                }
-            }
-        })
-
-        // Hide other elements
-        ObjectAnimator.ofFloat(collectButton, "alpha", 1f, 0f).apply {
-            duration = 300
-            start()
-        }
-
+        // 3. Hide text elements
         ObjectAnimator.ofFloat(unlockedText, "alpha", 1f, 0f).apply {
             duration = 300
             start()
@@ -446,6 +441,25 @@ class UnlockStickerActivity : AppCompatActivity() {
             duration = 300
             start()
         }
+
+        ObjectAnimator.ofFloat(collectButton, "alpha", 1f, 0f).apply {
+            duration = 300
+            start()
+        }
+
+        shrinkAnim.addListener(object : AnimatorListenerAdapter() {
+            override fun onAnimationEnd(animation: Animator) {
+                AnimatorSet().apply {
+                    playTogether(jumpDown, fadeOut)
+                    addListener(object : AnimatorListenerAdapter() {
+                        override fun onAnimationEnd(animation: Animator) {
+                            restoreScreen()
+                        }
+                    })
+                    start()
+                }
+            }
+        })
 
         shrinkAnim.start()
     }
@@ -459,7 +473,7 @@ class UnlockStickerActivity : AppCompatActivity() {
                     // Remove dim overlay
                     (container as ViewGroup).removeView(dimOverlay)
 
-                    // Return to scoreboard instead of dashboard
+                    // Return to scoreboard
                     Handler(Looper.getMainLooper()).postDelayed({
                         returnToScoreboard()
                     }, 300)
@@ -470,17 +484,13 @@ class UnlockStickerActivity : AppCompatActivity() {
     }
 
     private fun returnToScoreboard() {
-        // Create intent to return to scoreboard with the game data
         val intent = Intent(this, ASequenceScoreboardActivity::class.java)
         intent.putExtra("ATTEMPTS", attempts)
         intent.putExtra("ELAPSED_TIME", completionTime)
         intent.putExtra("ACCURACY", accuracy)
-        intent.putExtra("STICKER_ALREADY_SHOWN", true) // ADD THIS FLAG to prevent re-showing
+        intent.putExtra("STICKER_ALREADY_SHOWN", true)
 
-        // Clear the back stack so user can't go back to the sticker unlock
         intent.flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
-
-        // Add a subtle animation
         overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out)
 
         startActivity(intent)
@@ -489,7 +499,6 @@ class UnlockStickerActivity : AppCompatActivity() {
 
     override fun onDestroy() {
         super.onDestroy()
-        // Clean up animations
         container.clearAnimation()
         giftBox.clearAnimation()
         stickerReveal.clearAnimation()

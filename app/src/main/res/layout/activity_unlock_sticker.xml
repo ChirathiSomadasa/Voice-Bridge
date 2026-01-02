@@ -8,12 +8,15 @@
     android:background="@android:color/transparent"
     tools:context=".UnlockStickerActivity">
 
-    <!-- Particles Container -->
-    <FrameLayout
-        android:id="@+id/particlesContainer"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:visibility="visible" />
+    <!-- Glow Overlay -->
+    <ImageView
+        android:id="@+id/glowOverlay"
+        android:layout_width="300dp"
+        android:layout_height="300dp"
+        android:layout_gravity="center"
+        android:src="@drawable/glow_circle"
+        android:visibility="invisible"
+        android:elevation="5dp" />
 
     <!-- Gift Box -->
     <ImageView
@@ -21,9 +24,19 @@
         android:layout_width="200dp"
         android:layout_height="200dp"
         android:layout_gravity="center"
-        android:elevation="10dp"
         android:src="@drawable/gift_box"
-        android:visibility="invisible" />
+        android:visibility="visible"
+        android:elevation="10dp" />
+
+    <!-- Blank Sticker Card -->
+    <ImageView
+        android:id="@+id/stickerCard"
+        android:layout_width="150dp"
+        android:layout_height="150dp"
+        android:layout_gravity="center"
+        android:src="@drawable/sticker_card_blank"
+        android:visibility="invisible"
+        android:elevation="15dp" />
 
     <!-- Sticker Reveal -->
     <ImageView
@@ -31,9 +44,9 @@
         android:layout_width="150dp"
         android:layout_height="150dp"
         android:layout_gravity="center"
-        android:elevation="20dp"
         android:src="@drawable/sticker"
-        android:visibility="invisible" />
+        android:visibility="invisible"
+        android:elevation="20dp" />
 
     <!-- Unlocked Text -->
     <TextView
@@ -42,17 +55,17 @@
         android:layout_height="wrap_content"
         android:layout_gravity="center_horizontal"
         android:layout_marginTop="100dp"
-        android:elevation="15dp"
-        android:gravity="center"
-        android:shadowColor="@android:color/black"
-        android:shadowDx="2"
-        android:shadowDy="2"
-        android:shadowRadius="4"
         android:text="NEW STICKER UNLOCKED!"
-        android:textColor="@color/gold"
         android:textSize="28sp"
         android:textStyle="bold"
-        android:visibility="invisible" />
+        android:textColor="@color/gold"
+        android:gravity="center"
+        android:visibility="invisible"
+        android:elevation="15dp"
+        android:shadowColor="@android:color/black"
+        android:shadowRadius="4"
+        android:shadowDx="2"
+        android:shadowDy="2" />
 
     <!-- Collect Button -->
     <Button
@@ -60,14 +73,14 @@
         android:layout_width="200dp"
         android:layout_height="60dp"
         android:layout_gravity="center_horizontal|bottom"
-        android:layout_marginBottom="100dp"
-        android:background="@drawable/button_collect_gradient"
-        android:elevation="10dp"
+        android:layout_marginBottom="80dp"
         android:text="COLLECT"
-        android:textAllCaps="true"
-        android:textColor="@color/white"
         android:textSize="20sp"
         android:textStyle="bold"
+        android:textAllCaps="true"
+        android:textColor="@color/white"
+        android:background="@drawable/button_collect_gradient"
+        android:elevation="10dp"
         android:visibility="invisible" />
 
     <!-- Title Text -->
@@ -76,17 +89,17 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="center_horizontal"
-        android:layout_marginTop="500dp"
-        android:elevation="15dp"
-        android:gravity="center"
-        android:shadowColor="@android:color/black"
-        android:shadowDx="2"
-        android:shadowDy="2"
-        android:shadowRadius="4"
+        android:layout_marginTop="400dp"
         android:text="Collect 2 More to \nUnlock New Routine!"
-        android:textColor="@color/white"
         android:textSize="20sp"
         android:textStyle="bold"
-        android:visibility="invisible" />
+        android:textColor="@color/white"
+        android:gravity="center"
+        android:visibility="invisible"
+        android:elevation="15dp"
+        android:shadowColor="@android:color/black"
+        android:shadowRadius="4"
+        android:shadowDx="2"
+        android:shadowDy="2" />
 
 </FrameLayout>
