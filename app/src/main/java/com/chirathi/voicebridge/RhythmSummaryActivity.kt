@@ -2,6 +2,7 @@ package com.chirathi.voicebridge
 
 import android.animation.ObjectAnimator
 import android.content.Intent
+import android.content.res.Resources
 import android.graphics.Color
 import android.media.MediaPlayer
 import android.os.Bundle
@@ -111,6 +112,13 @@ class RhythmSummaryActivity : AppCompatActivity() {
     private lateinit var currentKeywords: List<Keyword>
     private lateinit var availableKeywords: MutableList<Keyword>
 
+    // Define the water-related keywords that shouldn't appear together
+    private val waterKeywords = listOf("stream", "river", "creek")
+
+    // Validated image caches
+    private val validatedKeywordImages = mutableMapOf<String, Int>()
+    private val validatedDistractorImages = mutableMapOf<String, Int>()
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         Log.d(TAG, "onCreate: Starting RhythmSummaryActivity")
@@ -139,6 +147,10 @@ class RhythmSummaryActivity : AppCompatActivity() {
                 correctSound = MediaPlayer()
                 wrongSound = MediaPlayer()
             }
+
+            // Validate and cache all images
+            validateAllImages()
+            Log.d(TAG, "Image validation complete")
 
             // Setup based on song
             setupSongData()
@@ -171,6 +183,47 @@ class RhythmSummaryActivity : AppCompatActivity() {
             } catch (e2: Exception) {
                 Log.e(TAG, "Error finishing activity: ${e2.message}", e2)
             }
+        }
+    }
+
+    private fun validateAllImages() {
+        Log.d(TAG, "Validating all images...")
+
+        // Validate keyword images
+        keywordImages.forEach { (word, resId) ->
+            if (isDrawableValid(resId)) {
+                validatedKeywordImages[word] = resId
+                Log.d(TAG, "✓ Valid keyword image: $word ($resId)")
+            } else {
+                Log.w(TAG, "✗ Invalid keyword image: $word ($resId)")
+                // Fallback to system drawable
+                validatedKeywordImages[word] = android.R.drawable.ic_dialog_info
+            }
+        }
+
+        // Validate distractor images
+        distractorImages.forEach { (word, resId) ->
+            if (isDrawableValid(resId)) {
+                validatedDistractorImages[word] = resId
+                Log.d(TAG, "✓ Valid distractor image: $word ($resId)")
+            } else {
+                Log.w(TAG, "✗ Invalid distractor image: $word ($resId)")
+                // Fallback to system drawable
+                validatedDistractorImages[word] = android.R.drawable.ic_dialog_info
+            }
+        }
+
+        Log.d(TAG, "Image validation complete. Keywords: ${validatedKeywordImages.size}, Distractors: ${validatedDistractorImages.size}")
+    }
+
+    private fun isDrawableValid(resId: Int): Boolean {
+        return try {
+            val drawable = ContextCompat.getDrawable(this, resId)
+            drawable != null
+        } catch (e: Resources.NotFoundException) {
+            false
+        } catch (e: Exception) {
+            false
         }
     }
 
@@ -350,8 +403,8 @@ class RhythmSummaryActivity : AppCompatActivity() {
 
         // Get a keyword that hasn't been used yet
         val keyword = getUniqueKeyword()
-        val correctImageRes = keywordImages[keyword.word] ?: R.drawable.ic_placeholder
-        Log.d(TAG, "Selected keyword: ${keyword.word}, image res: $correctImageRes")
+        val correctImageRes = validatedKeywordImages[keyword.word] ?: android.R.drawable.ic_dialog_info
+        Log.d(TAG, "Selected keyword: ${keyword.word}, validated image res: $correctImageRes")
 
         // Generate wrong options - use other song images as distractors
         val wrongOptions = generateWrongOptions(keyword.word)
@@ -404,93 +457,230 @@ class RhythmSummaryActivity : AppCompatActivity() {
     private fun generateWrongOptions(keyword: String): List<Pair<String, Int>> {
         Log.d(TAG, "Generating wrong options for: $keyword")
         val wrongOptions = mutableListOf<Pair<String, Int>>()
+        val usedWrongOptions = mutableSetOf<String>()
 
-        // Get all possible distractors from same song
-        val sameSongKeywords = currentKeywords
-            .filter { it.word != keyword }
-            .map { it.word }
-            .shuffled()
+        // Step 1: Get all possible wrong options from the same song
+        val sameSongWrongOptions = mutableListOf<Pair<String, Int>>()
 
-        Log.d(TAG, "Same song keywords available: $sameSongKeywords")
+        // Filter current keywords for wrong options (excluding the correct keyword)
+        for (kw in currentKeywords) {
+            if (kw.word != keyword) {
+                // Check if this is a water keyword when we already have one in the set
+                val isWaterKeyword = waterKeywords.contains(kw.word)
+                val currentWaterKeywordsInSet = wrongOptions.filter { waterKeywords.contains(it.first) }
 
-        // Get the group of water-related keywords that shouldn't appear together
-        val waterKeywords = listOf("stream", "river", "creek")
-
-        // Check if current keyword is a water keyword
-        val isWaterKeyword = waterKeywords.contains(keyword)
-
-        // Filter out other water keywords if current keyword is a water keyword
-        val filteredSameSongKeywords = if (isWaterKeyword) {
-            sameSongKeywords.filter { !waterKeywords.contains(it) }
-        } else {
-            sameSongKeywords
+                // If current keyword is a water keyword, only add if we don't already have a water keyword
+                if (isWaterKeyword) {
+                    if (currentWaterKeywordsInSet.isEmpty()) {
+                        val imageRes = validatedKeywordImages[kw.word] ?: android.R.drawable.ic_dialog_info
+                        sameSongWrongOptions.add(Pair(kw.word, imageRes))
+                    }
+                } else {
+                    val imageRes = validatedKeywordImages[kw.word] ?: android.R.drawable.ic_dialog_info
+                    sameSongWrongOptions.add(Pair(kw.word, imageRes))
+                }
+            }
         }
 
-        Log.d(TAG, "Filtered same song keywords: $filteredSameSongKeywords")
+        // Shuffle and add up to 2 same-song wrong options (ensuring no duplicates)
+        val shuffledSameSong = sameSongWrongOptions.shuffled()
+        var addedCount = 0
 
-        // Add 2 keywords from filtered same song list if available
-        val sameSongCount = minOf(2, filteredSameSongKeywords.size)
-        for (i in 0 until sameSongCount) {
-            val otherKeyword = filteredSameSongKeywords[i]
-            val imageRes = keywordImages[otherKeyword] ?: R.drawable.ic_placeholder
-            wrongOptions.add(Pair(otherKeyword, imageRes))
+        for (option in shuffledSameSong) {
+            if (addedCount >= 2) break
+            if (option.first !in usedWrongOptions) {
+                wrongOptions.add(option)
+                usedWrongOptions.add(option.first)
+                addedCount++
+            }
         }
 
-        // If we still need more options (less than 2 from same song), add from other categories
+        Log.d(TAG, "Added $addedCount same-song wrong options")
+
+        // Step 2: If we need more options, add from unrelated categories using validated distractors
         if (wrongOptions.size < 3) {
-            // Get non-water related distractors
-            val unrelatedDistractors = when {
-                keyword == "boat" -> listOf("car", "plane", "bicycle")
-                keyword in listOf("star", "sun", "moon", "light") -> listOf("flower", "tree", "house")
-                keyword in listOf("hill", "mountain") -> listOf("valley", "forest", "desert")
-                keyword in listOf("water", "crown") -> listOf("hat", "helmet", "cap")
-                waterKeywords.contains(keyword) -> listOf("boat", "ocean", "lake", "waterfall") // Water-related but not stream/river/creek
-                else -> listOf("apple", "ball", "cat")
+            val neededCount = 3 - wrongOptions.size
+
+            // Get unrelated distractor words from validated distractors
+            val unrelatedDistractorWords = when {
+                keyword == "boat" -> listOf("car", "plane", "bicycle", "train", "bus")
+                keyword in listOf("star", "sun", "moon", "light") -> listOf("flower", "tree", "house", "mountain", "cloud")
+                keyword in listOf("hill", "mountain") -> listOf("valley", "forest", "desert", "plain", "cave")
+                keyword in listOf("water", "crown") -> listOf("hat", "helmet", "cap", "shield", "sword")
+                waterKeywords.contains(keyword) -> {
+                    // For water keywords, use other water-related but distinct terms
+                    listOf("boat", "ocean", "lake", "waterfall", "pond", "sea")
+                }
+                else -> listOf("apple", "ball", "cat", "dog", "bird", "fish")
+            }.filter { it in validatedDistractorImages } // Filter to only validated images
+
+            var unrelatedAdded = 0
+            for (unrelatedWord in unrelatedDistractorWords.shuffled()) {
+                if (unrelatedAdded >= neededCount) break
+
+                // Make sure it's not a duplicate and not the correct keyword
+                if (unrelatedWord != keyword &&
+                    unrelatedWord !in usedWrongOptions &&
+                    !(waterKeywords.contains(keyword) && waterKeywords.contains(unrelatedWord))) {
+
+                    val imageRes = validatedDistractorImages[unrelatedWord] ?: android.R.drawable.ic_dialog_info
+                    wrongOptions.add(Pair(unrelatedWord, imageRes))
+                    usedWrongOptions.add(unrelatedWord)
+                    unrelatedAdded++
+                }
             }
 
-            // Add as many unrelated distractors as needed to reach 3 wrong options
-            val neededCount = 3 - wrongOptions.size
-            val shuffledUnrelated = unrelatedDistractors.shuffled().take(neededCount)
+            Log.d(TAG, "Added $unrelatedAdded unrelated wrong options")
+        }
 
-            shuffledUnrelated.forEach { unrelatedDistractor ->
-                val unrelatedImage = distractorImages[unrelatedDistractor] ?: R.drawable.ic_placeholder
-                wrongOptions.add(Pair(unrelatedDistractor, unrelatedImage))
+        // Step 3: Final validation - ensure we have exactly 3 unique wrong options
+        val validatedOptions = mutableListOf<Pair<String, Int>>()
+        val finalSeen = mutableSetOf<String>()
+
+        for (option in wrongOptions) {
+            if (option.first != keyword &&
+                option.first !in finalSeen &&
+                !(waterKeywords.contains(keyword) && waterKeywords.contains(option.first))) {
+
+                // Final validation of the image resource
+                val finalResId = if (isDrawableValid(option.second)) {
+                    option.second
+                } else {
+                    Log.w(TAG, "Image resource ${option.second} for '${option.first}' is invalid, using fallback")
+                    android.R.drawable.ic_dialog_info
+                }
+
+                validatedOptions.add(Pair(option.first, finalResId))
+                finalSeen.add(option.first)
+
+                if (validatedOptions.size >= 3) break
             }
         }
 
-        Log.d(TAG, "Generated wrong options: ${wrongOptions.map { it.first }}")
-        return wrongOptions.take(3) // Ensure we only return 3 wrong options
+        // Step 4: If we still don't have 3 options, add safe defaults
+        while (validatedOptions.size < 3) {
+            val safeDefaults = listOf(
+                Pair("apple", android.R.drawable.ic_menu_help),
+                Pair("ball", android.R.drawable.ic_menu_help),
+                Pair("cat", android.R.drawable.ic_menu_help)
+            )
+
+            for (default in safeDefaults) {
+                if (validatedOptions.size >= 3) break
+                if (default.first != keyword && default.first !in finalSeen) {
+                    validatedOptions.add(default)
+                    finalSeen.add(default.first)
+                }
+            }
+        }
+
+        Log.d(TAG, "Final wrong options: ${validatedOptions.map { it.first }} with resources: ${validatedOptions.map { it.second }}")
+        return validatedOptions.take(3)
     }
 
     private fun createGameRound(keyword: String, correctImageRes: Int, wrongOptions: List<Pair<String, Int>>): GameRound {
         Log.d(TAG, "Creating game round for keyword: $keyword")
+        Log.d(TAG, "Correct image resource ID: $correctImageRes (valid: ${isDrawableValid(correctImageRes)})")
 
-        // Ensure we have at least 3 wrong options, if not, add some defaults
-        val finalWrongOptions = if (wrongOptions.size < 3) {
-            val defaultOptions = listOf(
-                Pair("apple", distractorImages["apple"] ?: R.drawable.ic_placeholder),
-                Pair("ball", distractorImages["ball"] ?: R.drawable.ic_placeholder),
-                Pair("cat", distractorImages["cat"] ?: R.drawable.ic_placeholder)
-            ).shuffled().take(3)
-            wrongOptions + defaultOptions.take(3 - wrongOptions.size)
-        } else {
-            wrongOptions.take(3)
+        // Step 1: Validate and deduplicate wrong options
+        val validatedWrongOptions = mutableListOf<Pair<String, Int>>()
+        val seenWords = mutableSetOf<String>()
+
+        for ((index, option) in wrongOptions.withIndex()) {
+            Log.d(TAG, "Wrong option $index: word='${option.first}', resId=${option.second}, valid=${isDrawableValid(option.second)}")
+
+            if (option.first != keyword && option.first !in seenWords) {
+                // Additional check for water keywords
+                if (waterKeywords.contains(keyword) && waterKeywords.contains(option.first)) {
+                    Log.d(TAG, "Skipping water keyword ${option.first} as ${keyword} is also a water keyword")
+                    continue
+                }
+
+                // Validate the image resource
+                val validResId = if (isDrawableValid(option.second)) {
+                    option.second
+                } else {
+                    Log.w(TAG, "Invalid resource for '${option.first}', using fallback")
+                    android.R.drawable.ic_menu_help
+                }
+
+                validatedWrongOptions.add(Pair(option.first, validResId))
+                seenWords.add(option.first)
+
+                if (validatedWrongOptions.size >= 3) break
+            }
         }
 
-        // Combine correct and wrong options, then shuffle
+        Log.d(TAG, "Validated wrong options: ${validatedWrongOptions.map { it.first }}")
+
+        // Step 2: Ensure we have exactly 3 wrong options
+        val finalWrongOptions = if (validatedWrongOptions.size >= 3) {
+            validatedWrongOptions.take(3)
+        } else {
+            // Add safe defaults if needed
+            val defaultOptions = listOf(
+                Pair("apple", android.R.drawable.ic_menu_help),
+                Pair("ball", android.R.drawable.ic_menu_help),
+                Pair("cat", android.R.drawable.ic_menu_help)
+            )
+
+            val finalOptions = validatedWrongOptions.toMutableList()
+            for (default in defaultOptions) {
+                if (finalOptions.size >= 3) break
+                if (default.first != keyword && default.first !in seenWords) {
+                    finalOptions.add(default)
+                    seenWords.add(default.first)
+                }
+            }
+            finalOptions.take(3)
+        }
+
+        Log.d(TAG, "Final wrong options count: ${finalWrongOptions.size}")
+
+        // Step 3: Validate correct image resource
+        val validatedCorrectImageRes = if (isDrawableValid(correctImageRes)) {
+            correctImageRes
+        } else {
+            Log.w(TAG, "Correct image resource $correctImageRes is invalid, using fallback")
+            android.R.drawable.ic_dialog_info
+        }
+
+        // Step 4: Combine correct and wrong options, then shuffle
         val allOptions = mutableListOf(
-            Pair(keyword, correctImageRes)
+            Pair(keyword, validatedCorrectImageRes)
         )
         allOptions.addAll(finalWrongOptions)
 
         // Shuffle the options
         val shuffledOptions = allOptions.shuffled()
 
-        // Find the index of correct answer after shuffling
+        // Step 5: Find the index of correct answer after shuffling
         correctAnswerIndex = shuffledOptions.indexOfFirst { it.first == keyword }
-        Log.d(TAG, "Correct answer index: $correctAnswerIndex")
 
-        return GameRound(keyword, correctImageRes, shuffledOptions)
+        // Step 6: Final validation - ensure no duplicates in shuffled options
+        val finalOptions = mutableListOf<Pair<String, Int>>()
+        val finalSeen = mutableSetOf<String>()
+
+        for (option in shuffledOptions) {
+            if (option.first !in finalSeen) {
+                // Final validation of each image
+                val finalResId = if (isDrawableValid(option.second)) {
+                    option.second
+                } else {
+                    android.R.drawable.ic_menu_help
+                }
+                finalOptions.add(Pair(option.first, finalResId))
+                finalSeen.add(option.first)
+            }
+        }
+
+        // Re-find correct answer index after deduplication
+        correctAnswerIndex = finalOptions.indexOfFirst { it.first == keyword }
+
+        Log.d(TAG, "Correct answer index: $correctAnswerIndex")
+        Log.d(TAG, "Final options: ${finalOptions.map { "${it.first}(${it.second})" }}")
+
+        return GameRound(keyword, validatedCorrectImageRes, finalOptions)
     }
 
     private fun displayOptions(gameRound: GameRound) {
@@ -502,59 +692,115 @@ class RhythmSummaryActivity : AppCompatActivity() {
 
         for (i in gameRound.options.indices) {
             val option = gameRound.options[i]
-            Log.d(TAG, "Creating option $i: ${option.first}")
+            Log.d(TAG, "Creating option $i: ${option.first} with resource ${option.second}")
 
-            // Create card view for option
-            val card = CardView(this).apply {
-                layoutParams = GridLayout.LayoutParams().apply {
-                    width = optionSize
-                    height = optionSize
-                    columnSpec = GridLayout.spec(i % columnCount, 1f)
-                    rowSpec = GridLayout.spec(i / columnCount, 1f)
-                    setMargins(8.dpToPx(), 8.dpToPx(), 8.dpToPx(), 8.dpToPx())
-                }
-                radius = 16.dpToPx().toFloat()
-                cardElevation = 4.dpToPx().toFloat()
-                isClickable = true
-                tag = i
-
-                setOnClickListener {
-                    Log.d(TAG, "Option $i clicked")
-                    if (!isAnswerSelected) {
-                        handleOptionClick(this, i)
-                    }
-                }
-            }
-
-            // Create image view inside card with FIT_CENTER to show full image
-            val imageView = ImageView(this).apply {
-                layoutParams = ViewGroup.LayoutParams(
-                    ViewGroup.LayoutParams.MATCH_PARENT,
-                    ViewGroup.LayoutParams.MATCH_PARENT
-                )
-                scaleType = ImageView.ScaleType.FIT_CENTER
-                setImageResource(option.second)
-                isClickable = false
-                adjustViewBounds = true
-                // Add padding so image doesn't touch card edges
-                setPadding(8.dpToPx(), 8.dpToPx(), 8.dpToPx(), 8.dpToPx())
-            }
-
-            // Add image to card and card to grid
-            card.addView(imageView)
-            optionsGrid.addView(card)
-
-            // Add entrance animation
-            card.alpha = 0f
-            card.translationY = 100f
-            card.animate()
-                .alpha(1f)
-                .translationY(0f)
-                .setDuration(500)
-                .setStartDelay(i * 100L)
-                .start()
+            createOptionCard(i, option.first, option.second, optionSize, gameRound.keyword)
         }
         Log.d(TAG, "All options displayed")
+    }
+
+    private fun createOptionCard(index: Int, word: String, imageResId: Int, size: Int, correctKeyword: String) {
+        // Create card view for option
+        val card = CardView(this).apply {
+            layoutParams = GridLayout.LayoutParams().apply {
+                width = size
+                height = size
+                columnSpec = GridLayout.spec(index % 2, 1f)
+                rowSpec = GridLayout.spec(index / 2, 1f)
+                setMargins(8.dpToPx(), 8.dpToPx(), 8.dpToPx(), 8.dpToPx())
+            }
+            radius = 16.dpToPx().toFloat()
+            cardElevation = 4.dpToPx().toFloat()
+            isClickable = true
+            tag = index
+
+            // Set background color
+            setCardBackgroundColor(Color.WHITE)
+
+            setOnClickListener {
+                Log.d(TAG, "Option $index clicked: $word")
+                if (!isAnswerSelected) {
+                    handleOptionClick(this, index)
+                }
+            }
+        }
+
+        // Create image view
+        val imageView = ImageView(this).apply {
+            layoutParams = ViewGroup.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.MATCH_PARENT
+            )
+            scaleType = ImageView.ScaleType.FIT_CENTER
+
+            // Set image with error handling
+            try {
+                val drawable = ContextCompat.getDrawable(this@RhythmSummaryActivity, imageResId)
+                if (drawable != null) {
+                    setImageResource(imageResId)
+                    Log.d(TAG, "Successfully loaded image for $word: $imageResId")
+                } else {
+                    Log.e(TAG, "Drawable is null for resource: $imageResId")
+                    setImageResource(android.R.drawable.ic_menu_help)
+                }
+            } catch (e: Resources.NotFoundException) {
+                Log.e(TAG, "Resource not found for $word: $imageResId", e)
+                setImageResource(android.R.drawable.ic_menu_help)
+            } catch (e: Exception) {
+                Log.e(TAG, "Error loading image for $word: $imageResId", e)
+                setImageResource(android.R.drawable.ic_menu_help)
+            }
+
+            isClickable = false
+            adjustViewBounds = true
+            setPadding(8.dpToPx(), 8.dpToPx(), 8.dpToPx(), 8.dpToPx())
+
+            // Post check to verify image loaded
+            post {
+                if (drawable == null) {
+                    Log.e(TAG, "Image failed to load for: $word, resId: $imageResId")
+                    // Try to load a different image
+                    setImageResource(android.R.drawable.ic_dialog_alert)
+                }
+            }
+        }
+
+        // Add text label below image for debugging
+        val textView = TextView(this).apply {
+            layoutParams = ViewGroup.LayoutParams(
+                ViewGroup.LayoutParams.WRAP_CONTENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT
+            )
+            text = word
+            textSize = 12f
+            setTextColor(Color.BLACK)
+            gravity = android.view.Gravity.CENTER
+            visibility = View.GONE // Hide in production, use for debugging
+        }
+
+        val container = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            gravity = android.view.Gravity.CENTER
+            layoutParams = ViewGroup.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.MATCH_PARENT
+            )
+            addView(imageView, ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT)
+            addView(textView)
+        }
+
+        card.addView(container)
+        optionsGrid.addView(card)
+
+        // Add entrance animation
+        card.alpha = 0f
+        card.translationY = 100f
+        card.animate()
+            .alpha(1f)
+            .translationY(0f)
+            .setDuration(500)
+            .setStartDelay(index * 100L)
+            .start()
     }
 
     private fun handleOptionClick(card: CardView, selectedIndex: Int) {

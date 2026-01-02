@@ -83,7 +83,7 @@ class RMScoreboardActivity : AppCompatActivity() {
             }
             else -> {
                 resultText.text = "You Win!"
-                resultText.setTextColor(Color.parseColor("#2196F3"))
+                resultText.setTextColor(Color.parseColor("#FFFFFF"))
             }
         }
     }
