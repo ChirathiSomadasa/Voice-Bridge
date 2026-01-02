@@ -1,57 +1,105 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/main"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@drawable/rounded_white_shadow"
-    android:padding="24dp"
+    android:background="@android:color/transparent"
     tools:context=".UnlockStickerActivity">
 
-    <!-- Unlocked Text - Above Panda -->
+    <!-- Glow Overlay -->
+    <ImageView
+        android:id="@+id/glowOverlay"
+        android:layout_width="300dp"
+        android:layout_height="300dp"
+        android:layout_gravity="center"
+        android:src="@drawable/glow_circle"
+        android:visibility="invisible"
+        android:elevation="5dp" />
+
+    <!-- Gift Box -->
+    <ImageView
+        android:id="@+id/giftBox"
+        android:layout_width="200dp"
+        android:layout_height="200dp"
+        android:layout_gravity="center"
+        android:src="@drawable/gift_box"
+        android:visibility="visible"
+        android:elevation="10dp" />
+
+    <!-- Blank Sticker Card -->
+    <ImageView
+        android:id="@+id/stickerCard"
+        android:layout_width="150dp"
+        android:layout_height="150dp"
+        android:layout_gravity="center"
+        android:src="@drawable/sticker_card_blank"
+        android:visibility="invisible"
+        android:elevation="15dp" />
+
+    <!-- Sticker Reveal -->
+    <ImageView
+        android:id="@+id/stickerReveal"
+        android:layout_width="150dp"
+        android:layout_height="150dp"
+        android:layout_gravity="center"
+        android:src="@drawable/sticker"
+        android:visibility="invisible"
+        android:elevation="20dp" />
+
+    <!-- Unlocked Text -->
     <TextView
         android:id="@+id/unlockedText"
-        android:layout_width="0dp"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="You earned a new \n sticker"
-        android:textSize="24sp"
+        android:layout_gravity="center_horizontal"
+        android:layout_marginTop="100dp"
+        android:text="NEW STICKER UNLOCKED!"
+        android:textSize="28sp"
         android:textStyle="bold"
-        android:textColor="@color/green_dark"
+        android:textColor="@color/gold"
         android:gravity="center"
-        android:layout_marginBottom="16dp"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintBottom_toTopOf="@+id/feedbackImage"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent" />
+        android:visibility="invisible"
+        android:elevation="15dp"
+        android:shadowColor="@android:color/black"
+        android:shadowRadius="4"
+        android:shadowDx="2"
+        android:shadowDy="2" />
 
+    <!-- Collect Button -->
+    <Button
+        android:id="@+id/collectButton"
+        android:layout_width="200dp"
+        android:layout_height="60dp"
+        android:layout_gravity="center_horizontal|bottom"
+        android:layout_marginBottom="80dp"
+        android:text="COLLECT"
+        android:textSize="20sp"
+        android:textStyle="bold"
+        android:textAllCaps="true"
+        android:textColor="@color/white"
+        android:background="@drawable/button_collect_gradient"
+        android:elevation="10dp"
+        android:visibility="invisible" />
 
-    <ImageView
-        android:id="@+id/feedbackImage"
-        android:layout_width="400dp"
-        android:layout_height="400dp"
-        android:src="@drawable/sticker"
-        android:scaleType="fitCenter"
-        app:layout_constraintTop_toBottomOf="@+id/unlockedText"
-        app:layout_constraintBottom_toTopOf="@+id/title"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintVertical_chainStyle="packed" />
-
-    <!-- Title - Below Panda, Above Button -->
+    <!-- Title Text -->
     <TextView
         android:id="@+id/title"
-        android:layout_width="0dp"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Collect 2 More to \n Unlock New Routine!"
-        android:textSize="24sp"
+        android:layout_gravity="center_horizontal"
+        android:layout_marginTop="400dp"
+        android:text="Collect 2 More to \nUnlock New Routine!"
+        android:textSize="20sp"
         android:textStyle="bold"
-        android:textColor="@color/black"
+        android:textColor="@color/white"
         android:gravity="center"
-        android:layout_marginTop="16dp"
-        android:layout_marginBottom="32dp"
-        app:layout_constraintTop_toBottomOf="@+id/feedbackImage"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent" />
+        android:visibility="invisible"
+        android:elevation="15dp"
+        android:shadowColor="@android:color/black"
+        android:shadowRadius="4"
+        android:shadowDx="2"
+        android:shadowDy="2" />
 
-</androidx.constraintlayout.widget.ConstraintLayout>
+</FrameLayout>

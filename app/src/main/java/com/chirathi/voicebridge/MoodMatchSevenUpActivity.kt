@@ -18,7 +18,7 @@ class MoodMatchSevenUpActivity : AppCompatActivity(),
 
     // Define all emotions for Seven Up (more emotions)
     private val emotions = listOf(
-        "happyness", "sadness", "angryness", "scared", "shy", "bored",
+        "happy", "sad", "angry", "scared", "shy", "bored",
         "proud", "surprise", "curious", "tired", "anxious", "greedy",
         "jealous", "cheerful", "sleepy", "disgusted"
     )
@@ -424,7 +424,7 @@ class MoodMatchSevenUpActivity : AppCompatActivity(),
     private fun showFeedbackPopup() {
         // Determine if it's good or bad feedback
         // For 4 options, let's use 3+ correct as good feedback (60%+)
-        val isGoodFeedback = correctAnswersCount >= 3
+        val isGoodFeedback = correctAnswersCount >= 4
 
         Log.d(TAG, "=== SHOWING FEEDBACK ===")
         Log.d(TAG, "Is good feedback: $isGoodFeedback")
