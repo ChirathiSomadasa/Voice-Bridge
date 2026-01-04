@@ -6,7 +6,6 @@
     android:layout_height="match_parent"
     tools:context=".Edu_LessonDetailActivity">
 
-    <!-- Top hero image -->
     <ImageView
         android:id="@+id/topImage"
         android:layout_width="0dp"
@@ -17,7 +16,6 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
-    <!-- Back button -->
     <ImageView
         android:id="@+id/back"
         android:layout_width="45dp"
@@ -31,7 +29,6 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
-    <!-- Main scrollable content -->
     <ScrollView
         android:id="@+id/scrollView"
         android:layout_width="0dp"
@@ -54,13 +51,13 @@
             android:paddingEnd="20dp"
             android:paddingBottom="24dp">
 
-            <ImageView
-                android:id="@+id/ivLessonIcon"
-                android:layout_width="90dp"
-                android:layout_height="90dp"
-                android:layout_gravity="center_horizontal"
-                android:src="@drawable/lesson_icon"
-                android:contentDescription="@string/app_name" />
+            <!--            <ImageView-->
+            <!--                android:id="@+id/ivLessonIcon"-->
+            <!--                android:layout_width="90dp"-->
+            <!--                android:layout_height="90dp"-->
+            <!--                android:layout_gravity="center_horizontal"-->
+            <!--                android:src="@drawable/lesson_icon"-->
+            <!--                android:contentDescription="@string/app_name" />-->
 
             <TextView
                 android:id="@+id/tvLessonTitle"
@@ -82,7 +79,6 @@
                 android:textColor="@android:color/black"
                 tools:text="Lesson content goes here." />
 
-            <!-- Question -->
             <TextView
                 android:id="@+id/tvQuestionLabel"
                 android:layout_width="wrap_content"
@@ -101,6 +97,55 @@
                 android:textSize="18sp"
                 android:textColor="@android:color/black"
                 tools:text="What is 1 + 1?" />
+
+            <!-- MCQ options -->
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/rvOptions"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:visibility="gone"
+                tools:listitem="@layout/item_lesson_option" />
+
+            <!-- Drawing pad -->
+            <com.chirathi.voicebridge.DrawingCanvasView
+                android:id="@+id/drawingCanvas"
+                android:layout_width="match_parent"
+                android:layout_height="240dp"
+                android:layout_marginTop="16dp"
+                android:background="@android:color/white"
+                android:visibility="gone" />
+
+            <Button
+                android:id="@+id/btnClearDrawing"
+                style="@style/SolidGreenButton"
+                android:layout_width="match_parent"
+                android:layout_height="48dp"
+                android:layout_marginTop="8dp"
+                android:text="Clear Drawing"
+                android:textAllCaps="false"
+                android:textColor="@color/white"
+                android:textSize="18sp"
+                android:visibility="gone" />
+
+            <!-- Matching pairs -->
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/rvMatchPairs"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:visibility="gone"
+                tools:listitem="@layout/item_lesson_match_pair" />
+
+            <TextView
+                android:id="@+id/tvMatchStatus"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:textSize="16sp"
+                android:textColor="@android:color/black"
+                android:visibility="gone"
+                tools:text="Select left then right to make a pair." />
 
             <!-- Row 1: Hear + Show Answer -->
             <LinearLayout
@@ -156,7 +201,6 @@
                     android:textStyle="bold"/>
             </LinearLayout>
 
-            <!-- Answer (hidden until show) -->
             <TextView
                 android:id="@+id/tvAnswer"
                 android:layout_width="match_parent"
@@ -168,7 +212,6 @@
                 android:visibility="gone"
                 tools:text="The answer is 2" />
 
-            <!-- How to answer hints (hidden until btnHowTo) -->
             <TextView
                 android:id="@+id/tvHowTo"
                 android:layout_width="match_parent"

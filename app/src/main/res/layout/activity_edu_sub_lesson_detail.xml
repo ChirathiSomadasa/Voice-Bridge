@@ -1,95 +1,219 @@
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
-    android:orientation="vertical"
-    android:padding="16dp"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     tools:context=".Edu_SubLessonDetailActivity">
 
-    <!-- Lesson Icon -->
     <ImageView
-        android:id="@+id/ivSubLessonIcon"
-        android:layout_width="80dp"
-        android:layout_height="80dp"
-        android:layout_gravity="center"
-        android:src="@drawable/ic_launcher_foreground" />
+        android:id="@+id/topImage"
+        android:layout_width="0dp"
+        android:layout_height="220dp"
+        android:scaleType="fitXY"
+        android:src="@drawable/speech_dashboard"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
 
-    <!-- Lesson Title -->
-    <TextView
-        android:id="@+id/tvSubLessonTitle"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
+    <ImageView
+        android:id="@+id/back"
+        android:layout_width="45dp"
+        android:layout_height="45dp"
+        android:layout_marginStart="16dp"
         android:layout_marginTop="16dp"
-        android:text="Lesson Title"
-        android:textSize="24sp"
-        android:textColor="@android:color/black"
-        android:textStyle="bold"
-        android:layout_gravity="center" />
+        android:clickable="true"
+        android:focusable="true"
+        android:contentDescription="@string/back_button"
+        app:srcCompat="@drawable/back"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
 
-    <!-- Lesson Content -->
-    <TextView
-        android:id="@+id/tvSubLessonContent"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"
-        android:text="Lesson Content"
-        android:textSize="18sp"
-        android:textColor="@android:color/black" />
+    <ScrollView
+        android:id="@+id/scrollView"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:layout_marginTop="-24dp"
+        android:background="@drawable/white_bottom_bg"
+        android:fillViewport="true"
+        app:layout_constraintTop_toBottomOf="@id/topImage"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent">
 
-    <!-- Question -->
-    <TextView
-        android:id="@+id/tvSubQuestion"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="12dp"
-        android:text="Question"
-        android:textSize="18sp"
-        android:textColor="@android:color/black" />
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:gravity="center_horizontal"
+            android:paddingStart="20dp"
+            android:paddingTop="24dp"
+            android:paddingEnd="20dp"
+            android:paddingBottom="24dp">
 
-    <!-- Answer Button -->
-    <Button
-        android:id="@+id/btnSubShowAnswer"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="16dp"
-        android:text="Show Answer" />
+<!--            <ImageView-->
+<!--                android:id="@+id/ivSubLessonIcon"-->
+<!--                android:layout_width="90dp"-->
+<!--                android:layout_height="90dp"-->
+<!--                android:layout_gravity="center_horizontal"-->
+<!--                android:src="@drawable/lesson_icon"-->
+<!--                android:contentDescription="@string/app_name" />-->
 
-    <!-- Answer -->
-    <TextView
-        android:id="@+id/tvSubAnswer"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"
-        android:text="Answer"
-        android:textSize="16sp"
-        android:textColor="@android:color/black"
-        android:visibility="gone" />
+            <TextView
+                android:id="@+id/tvSubLessonTitle"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:textSize="22sp"
+                android:textStyle="bold"
+                android:textColor="@color/green_dark"
+                android:textAlignment="center"
+                tools:text="Sub-Lesson Title" />
 
-    <!-- How-To Button -->
-    <Button
-        android:id="@+id/btnSubHowTo"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="16dp"
-        android:text="How to Answer" />
+            <TextView
+                android:id="@+id/tvSubLessonContent"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:textSize="16sp"
+                android:textColor="@android:color/black"
+                tools:text="Sub-lesson content goes here." />
 
-    <!-- How-To Hint -->
-    <TextView
-        android:id="@+id/tvSubHowTo"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"
-        android:text="How-To Hint"
-        android:textSize="16sp"
-        android:textColor="@android:color/black"
-        android:visibility="gone" />
+            <TextView
+                android:id="@+id/tvSubQuestion"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="14dp"
+                android:textSize="18sp"
+                android:textStyle="bold"
+                android:textColor="@android:color/black"
+                tools:text="What is the answer?" />
 
-    <!-- Next Lesson Button -->
-    <Button
-        android:id="@+id/btnNextSubLesson"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="16dp"
-        android:text="Next Lesson" />
+            <!-- MCQ options -->
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/rvSubOptions"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:visibility="gone"
+                tools:listitem="@layout/item_lesson_option" />
 
-</LinearLayout>
+            <!-- Drawing pad -->
+            <com.chirathi.voicebridge.DrawingCanvasView
+                android:id="@+id/subDrawingCanvas"
+                android:layout_width="match_parent"
+                android:layout_height="240dp"
+                android:layout_marginTop="16dp"
+                android:background="@android:color/white"
+                android:visibility="gone" />
+
+            <Button
+                android:id="@+id/btnSubClearDrawing"
+                style="@style/SolidGreenButton"
+                android:layout_width="match_parent"
+                android:layout_height="48dp"
+                android:layout_marginTop="8dp"
+                android:text="Clear Drawing"
+                android:textAllCaps="false"
+                android:textColor="@color/white"
+                android:textSize="18sp"
+                android:visibility="gone" />
+
+            <!-- Matching pairs -->
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/rvSubMatchPairs"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:visibility="gone"
+                tools:listitem="@layout/item_lesson_match_pair" />
+
+            <TextView
+                android:id="@+id/tvSubMatchStatus"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:textSize="16sp"
+                android:textColor="@android:color/black"
+                android:visibility="gone"
+                tools:text="Select left then right to make a pair." />
+
+            <!-- Row 1: Show Answer + Next -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginTop="20dp"
+                android:weightSum="2">
+
+                <Button
+                    android:id="@+id/btnSubShowAnswer"
+                    style="@style/SolidGreenButton"
+                    android:layout_width="0dp"
+                    android:layout_height="48dp"
+                    android:layout_weight="1"
+                    android:text="Show Answer"
+                    android:textAllCaps="false"
+                    android:textColor="@color/white"
+                    android:textSize="20sp"
+                    android:textStyle="bold"/>
+
+                <Button
+                    android:id="@+id/btnNextSubLesson"
+                    style="@style/SolidGreenButton"
+                    android:layout_width="0dp"
+                    android:layout_height="48dp"
+                    android:layout_marginStart="8dp"
+                    android:layout_weight="1"
+                    android:text="Next"
+                    android:textAllCaps="false"
+                    android:textColor="@color/white"
+                    android:textSize="20sp"
+                    android:textStyle="bold"/>
+            </LinearLayout>
+
+            <!-- Row 2: How to Answer -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginTop="12dp"
+                android:weightSum="1">
+
+                <Button
+                    android:id="@+id/btnSubHowTo"
+                    style="@style/SolidGreenButton"
+                    android:layout_width="match_parent"
+                    android:layout_height="48dp"
+                    android:text="How to"
+                    android:textAllCaps="false"
+                    android:textColor="@color/white"
+                    android:textSize="20sp"
+                    android:textStyle="bold"/>
+            </LinearLayout>
+
+            <TextView
+                android:id="@+id/tvSubAnswer"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:textSize="20sp"
+                android:textStyle="bold"
+                android:textColor="@color/green"
+                android:visibility="gone"
+                tools:text="Answer goes here" />
+
+            <TextView
+                android:id="@+id/tvSubHowTo"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:textSize="16sp"
+                android:textColor="@android:color/black"
+                android:visibility="gone"
+                tools:text="How to answer:\n1. Listen\n2. Think\n3. Answer aloud." />
+
+        </LinearLayout>
+    </ScrollView>
+
+</androidx.constraintlayout.widget.ConstraintLayout>
