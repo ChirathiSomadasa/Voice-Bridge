@@ -34,9 +34,11 @@ class GameDashboardActivity : AppCompatActivity() {
             startActivity(intent)
         }
 
-        // My Day button click - check age and navigate accordingly
+        // My Day button click - navigate to RoutineSelectionActivity
         myDayBtn.setOnClickListener {
-            checkAgeAndNavigate()
+            val intent = Intent(this, RoutineSelectionActivity::class.java)
+            startActivity(intent)
+            overridePendingTransition(R.drawable.slide_in_right, R.drawable.slide_out_left)
         }
 
         singTimeBtn.setOnClickListener {

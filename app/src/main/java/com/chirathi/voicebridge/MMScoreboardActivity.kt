@@ -17,6 +17,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.cardview.widget.CardView
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.isVisible
 
 class MMScoreboardActivity : AppCompatActivity() {
 
@@ -37,6 +38,10 @@ class MMScoreboardActivity : AppCompatActivity() {
 
     // Game mode variable
     private var gameMode = "seven_down" // Default to seven_down
+    private var correctAnswers = 0
+    private var totalRounds = 5
+    private var score = 0
+    private var isPerfectScore = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -44,9 +49,12 @@ class MMScoreboardActivity : AppCompatActivity() {
         setContentView(R.layout.activity_mmscoreboard)
 
         // Get the data passed from the game activity
-        val correctAnswers = intent.getIntExtra("CORRECT_ANSWERS", 0)
-        val totalRounds = intent.getIntExtra("TOTAL_ROUNDS", 5)
-        val score = intent.getIntExtra("SCORE", 0)
+        correctAnswers = intent.getIntExtra("CORRECT_ANSWERS", 0)
+        totalRounds = intent.getIntExtra("TOTAL_ROUNDS", 5)
+
+        // Calculate score based on new system (20 points per correct answer)
+        score = correctAnswers * 20
+        isPerfectScore = score == 100
 
         // Get game mode
         gameMode = intent.getStringExtra("GAME_MODE") ?: "seven_down"
@@ -70,6 +78,11 @@ class MMScoreboardActivity : AppCompatActivity() {
         scoreValue.text = "Your Score"
         scoreLabel.text = "$score"
 
+        // Hide gift button if not perfect score
+        if (!isPerfectScore) {
+            btnUnlockGift.isVisible = false
+        }
+
         // Animate score counting
         animateScoreCount(score)
 
@@ -78,7 +91,9 @@ class MMScoreboardActivity : AppCompatActivity() {
 
         // Start animations
         startTitleAnimation()
-        startGiftBoxAnimation()
+        if (isPerfectScore) {
+            startGiftBoxAnimation()
+        }
 
         // Play Again button
         btnPlayAgain.setOnClickListener {
@@ -99,9 +114,11 @@ class MMScoreboardActivity : AppCompatActivity() {
             finish()
         }
 
-        // Unlock Gift button
+        // Unlock Gift button - Only visible for perfect score (100)
         btnUnlockGift.setOnClickListener {
-            // Handle unlock gift action
+            // Start the gift unboxing activity
+            val intent = Intent(this, AllCorrectGrandPrizeActivity::class.java)
+            startActivityForResult(intent, 100)
         }
 
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main)) { v, insets ->
@@ -111,25 +128,33 @@ class MMScoreboardActivity : AppCompatActivity() {
         }
     }
 
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+        if (requestCode == 100 && resultCode == RESULT_OK) {
+            // Hide the gift button after unboxing
+            btnUnlockGift.isVisible = false
+        }
+    }
+
     private fun updateResults(correctAnswers: Int) {
         // Determine performance based on correct answers
         when (correctAnswers) {
             0, 1, 2 -> {
-                // Score 0-2: You Tried
+                // Score 0-40: You Tried
                 titleWon.text = "YOU TRIED"
                 titleWon.setTextColor(resources.getColor(R.color.light_blue, theme))
                 performanceText.text = "Keep practicing! You'll get better! 📚"
                 updateStarRating(1) // 1 star for 0-2 correct answers
             }
             3, 4 -> {
-                // Score 3-4: Great Job
+                // Score 60-80: Great Job
                 titleWon.text = "GREAT JOB"
                 titleWon.setTextColor(resources.getColor(R.color.light_green, theme))
                 performanceText.text = "Almost perfect! Keep going! 👍"
                 updateStarRating(2) // 2 stars for 3-4 correct answers
             }
             5 -> {
-                // Score 5: Victory
+                // Score 100: Victory
                 titleWon.text = "VICTORY"
                 titleWon.setTextColor(resources.getColor(R.color.gold, theme))
                 performanceText.text = "Excellent! Perfect score! 🏆"
@@ -263,7 +288,9 @@ class MMScoreboardActivity : AppCompatActivity() {
         super.onResume()
         // Restart animations
         startTitleAnimation()
-        startGiftBoxAnimation()
+        if (isPerfectScore) {
+            startGiftBoxAnimation()
+        }
     }
 
     override fun onPause() {
