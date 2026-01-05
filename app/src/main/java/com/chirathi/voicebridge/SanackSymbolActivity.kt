@@ -23,15 +23,15 @@ class SanackSymbolActivity : AppCompatActivity() {
     private fun setupIconClickListeners() {
         // Map of image view IDs to drawable resources and phrases
         val iconData = mapOf(
-            R.id.imgIceCream to Pair(R.drawable.ice_cream, "Yes"),
-            R.id.imgChocolate to Pair(R.drawable.chocolate, "Ok"),
-            R.id.imgCrsips to Pair(R.drawable.crisps, "No"),
-            R.id.imgBiscuit to Pair(R.drawable.biscuit, "Thank you"),
-            R.id.imgPeaNuts to Pair(R.drawable.nuts, "Hello"),
-            R.id.imgPop to Pair(R.drawable.pop, "Good Bye"),
-            R.id.imgYogurt to Pair(R.drawable.yogurt, "I need to use washroom"),
-            R.id.imgCake to Pair(R.drawable.cake, "I'm hungry"),
-            R.id.imgToffee to Pair(R.drawable.toffee, "I am thirsty")
+            R.id.imgIceCream to Pair(R.drawable.ice_cream, "I want ice cream"),
+            R.id.imgChocolate to Pair(R.drawable.chocolate, "I want chocolate"),
+            R.id.imgCrsips to Pair(R.drawable.crisps, " "),
+            R.id.imgBiscuit to Pair(R.drawable.biscuit, " "),
+            R.id.imgPeaNuts to Pair(R.drawable.nuts, " "),
+            R.id.imgPop to Pair(R.drawable.pop, ""),
+            R.id.imgYogurt to Pair(R.drawable.yogurt, ""),
+            R.id.imgCake to Pair(R.drawable.cake, ""),
+            R.id.imgToffee to Pair(R.drawable.toffee, "")
         )
 
         // Set click listeners for all icons

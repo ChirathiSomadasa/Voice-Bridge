@@ -24,16 +24,16 @@ class DrinkSymbolActivity : AppCompatActivity() {
         // Map of image view IDs to drawable resources and phrases
         val iconData = mapOf(
             R.id.imgWater to Pair(R.drawable.water, "I want to drink water"),
-            R.id.imgCoffee to Pair(R.drawable.coffee, "Ok"),
-            R.id.imgTea to Pair(R.drawable.tea, "No"),
-            R.id.imgOrangeJuice to Pair(R.drawable.orange_juice, "Thank you"),
-            R.id.imgAppleJuice to Pair(R.drawable.apple_juice, "Hello"),
-            R.id.imgGrapeJuice to Pair(R.drawable.grape_juice, "Good Bye"),
-            R.id.imgPineapple to Pair(R.drawable.pineapple_juice, "I need to use washroom"),
-            R.id.imgLemonade to Pair(R.drawable.lemonade, "I'm hungry"),
-            R.id.imgMilkshake to Pair(R.drawable.milkshake, "I am thirsty"),
-            R.id.imgChocolateShake to Pair(R.drawable.chocolate_milkshake, "I want to play"),
-            R.id.imgMilk to Pair(R.drawable.milk, "Please")
+            R.id.imgCoffee to Pair(R.drawable.coffee, "I want to drink coffee"),
+            R.id.imgTea to Pair(R.drawable.tea, " "),
+            R.id.imgOrangeJuice to Pair(R.drawable.orange_juice, " "),
+            R.id.imgAppleJuice to Pair(R.drawable.apple_juice, " "),
+            R.id.imgGrapeJuice to Pair(R.drawable.grape_juice, ""),
+            R.id.imgPineapple to Pair(R.drawable.pineapple_juice, ""),
+            R.id.imgLemonade to Pair(R.drawable.lemonade, ""),
+            R.id.imgMilkshake to Pair(R.drawable.milkshake, " "),
+            R.id.imgChocolateShake to Pair(R.drawable.chocolate_milkshake, ""),
+            R.id.imgMilk to Pair(R.drawable.milk, "")
         )
 
         // Set click listeners for all icons

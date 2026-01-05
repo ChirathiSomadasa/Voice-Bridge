@@ -24,15 +24,15 @@ class SanitationSymbolsActivity : AppCompatActivity() {
     private fun setupIconClickListeners() {
         // Map of image view IDs to drawable resources and phrases
         val iconData = mapOf(
-            R.id.imgToothbrush to Pair(R.drawable.toothbrush, "Yes"),
-            R.id.imgToothpaste to Pair(R.drawable.toothpaste, "Ok"),
-            R.id.imgSoap to Pair(R.drawable.soap, "No"),
-            R.id.imgTowel to Pair(R.drawable.towel, "Thank you"),
-            R.id.imgComb to Pair(R.drawable.comb, "Hello"),
-            R.id.imgTissues to Pair(R.drawable.tissues, "Good Bye"),
-            R.id.imgShampoo to Pair(R.drawable.shampoo, "I need to use washroom"),
-            R.id.imgConditioner to Pair(R.drawable.hair_conditioner, "I'm hungry"),
-            R.id.imgNailClippers to Pair(R.drawable.nail_clippers, "I am thirsty")
+            R.id.imgToothbrush to Pair(R.drawable.toothbrush, " "),
+            R.id.imgToothpaste to Pair(R.drawable.toothpaste, " "),
+            R.id.imgSoap to Pair(R.drawable.soap, " "),
+            R.id.imgTowel to Pair(R.drawable.towel, " "),
+            R.id.imgComb to Pair(R.drawable.comb, " "),
+            R.id.imgTissues to Pair(R.drawable.tissues, " "),
+            R.id.imgShampoo to Pair(R.drawable.shampoo, " "),
+            R.id.imgConditioner to Pair(R.drawable.hair_conditioner, " "),
+            R.id.imgNailClippers to Pair(R.drawable.nail_clippers, " ")
         )
 
         // Set click listeners for all icons

@@ -25,10 +25,10 @@ class EmotionSymbolsActivity : AppCompatActivity() {
     private fun setupIconClickListeners() {
         // Map of image view IDs to drawable resources and phrases
         val iconData = mapOf(
-            R.id.imgHappy to Pair(R.drawable.happy_emotion, "I want to drink water"),
-            R.id.imgSad to Pair(R.drawable.sad_emotion, "Ok"),
-            R.id.imgAngry to Pair(R.drawable.angry_emotion, "No"),
-            R.id.imgAfraid to Pair(R.drawable.afraid_emotion, "Thank you")
+            R.id.imgHappy to Pair(R.drawable.happy_emotion, "I am in happy"),
+            R.id.imgSad to Pair(R.drawable.sad_emotion, "I am in sad"),
+            R.id.imgAngry to Pair(R.drawable.angry_emotion, "I am in angry"),
+            R.id.imgAfraid to Pair(R.drawable.afraid_emotion, "I am in afraid")
         )
 
         // Set click listeners for all icons
