@@ -1,12 +1,14 @@
 package com.chirathi.voicebridge
 
-import android.os.Bundle
+import android.Manifest
+import android.content.Intent
+import android.content.pm.PackageManager
+import android.os.*
 import android.speech.tts.TextToSpeech
-import android.widget.Button
-import android.widget.ImageView
-import android.widget.LinearLayout
-import android.widget.TextView
+import android.widget.*
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
 import java.util.*
 
 class SpeechLevel3TaskActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
@@ -26,14 +28,23 @@ class SpeechLevel3TaskActivity : AppCompatActivity(), TextToSpeech.OnInitListene
         SentenceItem("John rides a race car really fast", R.drawable.car_level3)
     )
 
-    private var currentSentenceIndex = 0
+    private var currentIndex = 0
+
+    private val sentenceScores = IntArray(sentenceList.size) { 0 }
 
     private lateinit var tvSentence: TextView
     private lateinit var ivSentenceImage: ImageView
     private lateinit var llPlaySound: LinearLayout
+    private lateinit var llSpeakSound: LinearLayout
+    private lateinit var btnNext: Button
+
+    private lateinit var listeningDialog: ListeningDialog
+    private lateinit var processingDialog: ProcessingDialog
 
     private var tts: TextToSpeech? = null
     private var isTtsReady = false
+
+    private val azureSpeechHelper = AzureSpeechHelper()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -41,50 +52,137 @@ class SpeechLevel3TaskActivity : AppCompatActivity(), TextToSpeech.OnInitListene
 
         tvSentence = findViewById(R.id.tvSentence)
         ivSentenceImage = findViewById(R.id.ivSentenceImage)
-        val btnNext: Button = findViewById(R.id.btnNext)
         llPlaySound = findViewById(R.id.llPlaySound)
+        llSpeakSound = findViewById(R.id.llSpeakSound)
+        btnNext = findViewById(R.id.btnNext)
 
-        // Initialize TTS
+        checkPermissions()
         tts = TextToSpeech(this, this)
 
+        btnNext.isEnabled = false
         displayCurrentSentence()
 
-        btnNext.setOnClickListener { moveToNextSentence() }
-
         llPlaySound.setOnClickListener {
-            if (isTtsReady) {
-                speakSentence(tvSentence.text.toString())
+            if (isTtsReady) speakSentence(tvSentence.text.toString())
+        }
+
+        llSpeakSound.setOnClickListener {
+            if (ContextCompat.checkSelfPermission(
+                    this, Manifest.permission.RECORD_AUDIO
+                ) == PackageManager.PERMISSION_GRANTED
+            ) {
+                assessSentencePronunciation()
+            } else {
+                checkPermissions()
             }
+        }
+
+        btnNext.setOnClickListener {
+            moveToNextSentence()
+        }
+    }
+
+    private fun checkPermissions() {
+        if (ContextCompat.checkSelfPermission(
+                this, Manifest.permission.RECORD_AUDIO
+            ) != PackageManager.PERMISSION_GRANTED
+        ) {
+            ActivityCompat.requestPermissions(
+                this, arrayOf(Manifest.permission.RECORD_AUDIO), 100
+            )
         }
     }
 
     override fun onInit(status: Int) {
         if (status == TextToSpeech.SUCCESS) {
             tts?.language = Locale.US
-            tts?.setSpeechRate(0.7f)  // slow for kids
-            tts?.setPitch(1.1f)       // friendly tone
+            tts?.setSpeechRate(0.7f)
+            tts?.setPitch(1.1f)
             isTtsReady = true
         }
     }
 
-
     private fun speakSentence(sentence: String) {
-        tts?.speak(sentence, TextToSpeech.QUEUE_FLUSH, null, "sentenceID")
+        tts?.speak(sentence, TextToSpeech.QUEUE_FLUSH, null, "sentenceTTS")
+    }
+
+    private fun assessSentencePronunciation() {
+        val referenceSentence = sentenceList[currentIndex].sentence
+
+        listeningDialog = ListeningDialog(this)
+        listeningDialog.show()
+
+        azureSpeechHelper.assess(
+            referenceText = referenceSentence,
+            onResult = { result ->
+                runOnUiThread {
+                    listeningDialog.dismiss()
+                    processingDialog = ProcessingDialog(this)
+                    processingDialog.show()
+                }
+
+                Handler(Looper.getMainLooper()).postDelayed({
+
+                    val score = result.accuracyScore.toInt()
+                    sentenceScores[currentIndex] = score
+
+                    val type = when {
+                        score >= 75 -> "GOOD_PRONUNCIATION"
+                        score >= 50 -> "MODERATE_PRONUNCIATION"
+                        else -> "POOR_PRONUNCIATION"
+                    }
+
+                    processingDialog.dismiss()
+
+                    FeedbackDialog(this).show(
+                        score = score,
+                        level = 3,
+                        word = referenceSentence,
+                        pronunciationType = type
+                    )
+
+                    btnNext.isEnabled = true
+
+                }, 1000)
+            },
+            onError = {
+                runOnUiThread {
+                    listeningDialog.dismiss()
+                    Toast.makeText(this, it, Toast.LENGTH_LONG).show()
+                }
+            }
+        )
     }
 
     private fun displayCurrentSentence() {
-        val currentItem = sentenceList[currentSentenceIndex]
-        tvSentence.text = currentItem.sentence
-        ivSentenceImage.setImageResource(currentItem.imageResourceId)
+        val item = sentenceList[currentIndex]
+        tvSentence.text = item.sentence
+        ivSentenceImage.setImageResource(item.imageResourceId)
     }
 
     private fun moveToNextSentence() {
-        currentSentenceIndex = (currentSentenceIndex + 1) % sentenceList.size
-        displayCurrentSentence()
+        if (currentIndex < sentenceList.size - 1) {
+            currentIndex++
+            displayCurrentSentence()
+            btnNext.isEnabled = false
+        } else {
+            finishLevel()
+        }
+    }
+
+    private fun calculateProgress(): Int {
+        return sentenceScores.sum() / sentenceScores.size
+    }
+
+    private fun finishLevel() {
+        val progress = calculateProgress()
+        val intent = Intent(this, SentencesProgressActivity::class.java)
+        intent.putExtra("PROGRESS_SCORE", progress)
+        startActivity(intent)
+        finish()
     }
 
     override fun onDestroy() {
-        tts?.stop()
         tts?.shutdown()
         super.onDestroy()
     }
