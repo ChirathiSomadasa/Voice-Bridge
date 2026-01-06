@@ -44,7 +44,7 @@ class SpeechLevel3TaskActivity : AppCompatActivity(), TextToSpeech.OnInitListene
     private var tts: TextToSpeech? = null
     private var isTtsReady = false
 
-    private val azureSpeechHelper = AzureSpeechHelper()
+    private val pronunciationAssesment = PronunciationAssesment()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -112,7 +112,7 @@ class SpeechLevel3TaskActivity : AppCompatActivity(), TextToSpeech.OnInitListene
         listeningDialog = ListeningDialog(this)
         listeningDialog.show()
 
-        azureSpeechHelper.assess(
+        pronunciationAssesment.assess(
             referenceText = referenceSentence,
             onResult = { result ->
                 runOnUiThread {

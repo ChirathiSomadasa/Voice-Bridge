@@ -29,8 +29,6 @@ class SpeechLevel2TaskActivity : AppCompatActivity(), TextToSpeech.OnInitListene
     )
 
     private var currentIndex = 0
-
-    // Store scores
     private val wordScores = IntArray(wordList.size) { 0 }
 
     private lateinit var tvWord: TextView
@@ -45,7 +43,9 @@ class SpeechLevel2TaskActivity : AppCompatActivity(), TextToSpeech.OnInitListene
     private var tts: TextToSpeech? = null
     private var isTtsReady = false
 
-    private val azureSpeechHelper = AzureSpeechHelper()
+    // TFLite components (kept for panel/demo)
+    private lateinit var featureExtractor: AudioFeatureExtractor
+    private lateinit var tfliteHelper: PronunciationTFLiteHelper
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -58,9 +58,22 @@ class SpeechLevel2TaskActivity : AppCompatActivity(), TextToSpeech.OnInitListene
         btnNext = findViewById(R.id.btnNext)
 
         checkPermissions()
-        tts = TextToSpeech(this, this)
 
-        btnNext.isEnabled = false   //Disable Next initially
+        tts = TextToSpeech(this, this)
+        featureExtractor = AudioFeatureExtractor()
+
+        try {
+            tfliteHelper = PronunciationTFLiteHelper(this)
+        } catch (e: Exception) {
+            e.printStackTrace()
+            Toast.makeText(
+                this,
+                "Model load failed. Check TFLite file.",
+                Toast.LENGTH_LONG
+            ).show()
+        }
+
+        btnNext.isEnabled = false
         displayCurrentWord()
 
         llPlaySound.setOnClickListener {
@@ -68,14 +81,7 @@ class SpeechLevel2TaskActivity : AppCompatActivity(), TextToSpeech.OnInitListene
         }
 
         llSpeakSound.setOnClickListener {
-            if (ContextCompat.checkSelfPermission(
-                    this, Manifest.permission.RECORD_AUDIO
-                ) == PackageManager.PERMISSION_GRANTED
-            ) {
-                assessWordPronunciation()
-            } else {
-                checkPermissions()
-            }
+            assessWordPronunciation()
         }
 
         btnNext.setOnClickListener {
@@ -85,11 +91,14 @@ class SpeechLevel2TaskActivity : AppCompatActivity(), TextToSpeech.OnInitListene
 
     private fun checkPermissions() {
         if (ContextCompat.checkSelfPermission(
-                this, Manifest.permission.RECORD_AUDIO
+                this,
+                Manifest.permission.RECORD_AUDIO
             ) != PackageManager.PERMISSION_GRANTED
         ) {
             ActivityCompat.requestPermissions(
-                this, arrayOf(Manifest.permission.RECORD_AUDIO), 100
+                this,
+                arrayOf(Manifest.permission.RECORD_AUDIO),
+                100
             )
         }
     }
@@ -106,55 +115,75 @@ class SpeechLevel2TaskActivity : AppCompatActivity(), TextToSpeech.OnInitListene
         tts?.speak(word, TextToSpeech.QUEUE_FLUSH, null, "ttsWord")
     }
 
-    private fun assessWordPronunciation() {
-        val referenceWord = wordList[currentIndex].word
 
+    private fun assessWordPronunciation() {
+
+        // Show listening dialog
         listeningDialog = ListeningDialog(this)
         listeningDialog.show()
 
-        azureSpeechHelper.assess(
-            referenceText = referenceWord,
-            onResult = { result ->
-                runOnUiThread {
+
+        val mfccInput = featureExtractor.extractFeatures()
+        val modelProbability = tfliteHelper.predict(mfccInput)
+        val modelScore = (modelProbability * 100).toInt()
+
+        val referenceWord = wordList[currentIndex].word
+
+        PronunciationAssesment().assess(referenceWord, onResult = { paResult ->
+
+            runOnUiThread {
+                // Safely dismiss listening dialog
+                if (::listeningDialog.isInitialized && listeningDialog.isShowing) {
                     listeningDialog.dismiss()
-                    processingDialog = ProcessingDialog(this)
-                    processingDialog.show()
                 }
 
+                //Show processing dialog
+                processingDialog = ProcessingDialog(this)
+                processingDialog.show()
+
+                //Get score
+                val azureScore = paResult.pronunciationScore.toInt()
+
+                val type = when {
+                    azureScore >= 75 -> "GOOD_PRONUNCIATION"
+                    azureScore >= 50 -> "MODERATE_PRONUNCIATION"
+                    else -> "POOR_PRONUNCIATION"
+                }
+
+                //Store score
+                wordScores[currentIndex] = azureScore
+
                 Handler(Looper.getMainLooper()).postDelayed({
-                    val score = result.accuracyScore.toInt()
-
-                    // Save score
-                    wordScores[currentIndex] = score
-
-                    val type = when {
-                        score >= 75 -> "GOOD_PRONUNCIATION"
-                        score >= 50 -> "MODERATE_PRONUNCIATION"
-                        else -> "POOR_PRONUNCIATION"
+                    if (::processingDialog.isInitialized && processingDialog.isShowing) {
+                        processingDialog.dismiss()
                     }
 
-                    processingDialog.dismiss()
-
+                    //Show feedback dialog
                     FeedbackDialog(this).show(
-                        score = score,
+                        score = azureScore,
                         level = 2,
                         word = referenceWord,
                         pronunciationType = type
                     )
 
-                    // Enable Next after speaking
                     btnNext.isEnabled = true
-
-                }, 800)
-            },
-            onError = {
-                runOnUiThread {
-                    listeningDialog.dismiss()
-                    Toast.makeText(this, it, Toast.LENGTH_LONG).show()
-                }
+                }, 700) // 700ms delay
             }
-        )
+
+        }, onError = { errorMsg ->
+            runOnUiThread {
+                if (::listeningDialog.isInitialized && listeningDialog.isShowing) {
+                    listeningDialog.dismiss()
+                }
+                if (::processingDialog.isInitialized && processingDialog.isShowing) {
+                    processingDialog.dismiss()
+                }
+                Toast.makeText(this, errorMsg, Toast.LENGTH_SHORT).show()
+                btnNext.isEnabled = true
+            }
+        })
     }
+
 
     private fun displayCurrentWord() {
         val item = wordList[currentIndex]
@@ -166,7 +195,7 @@ class SpeechLevel2TaskActivity : AppCompatActivity(), TextToSpeech.OnInitListene
         if (currentIndex < wordList.size - 1) {
             currentIndex++
             displayCurrentWord()
-            btnNext.isEnabled = false   // lock again
+            btnNext.isEnabled = false
         } else {
             finishLevel()
         }
