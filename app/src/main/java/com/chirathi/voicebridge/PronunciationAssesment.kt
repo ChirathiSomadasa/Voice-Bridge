@@ -3,7 +3,7 @@ package com.chirathi.voicebridge
 import com.microsoft.cognitiveservices.speech.*
 import com.microsoft.cognitiveservices.speech.audio.AudioConfig
 
-class AzureSpeechHelper {
+class PronunciationAssesment {
 
     companion object {
         const val SPEECH_KEY = ""
@@ -51,7 +51,7 @@ class AzureSpeechHelper {
                 recognizer.close()
 
             } catch (e: Exception) {
-                onError(e.message ?: "Azure Speech error")
+                onError(e.message ?: "Speech error")
             }
         }.start()
     }

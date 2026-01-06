@@ -34,8 +34,9 @@ android {
     kotlinOptions {
         jvmTarget="1.8"
     }
-    buildFeatures {
-        mlModelBinding = true
+
+    aaptOptions {
+        noCompress += "tflite"
     }
 
 }
@@ -52,6 +53,10 @@ dependencies {
     implementation("com.google.firebase:firebase-firestore:26.0.2")
     implementation ("com.microsoft.cognitiveservices.speech:client-sdk:1.38.0")
     implementation("com.github.LottieFiles:dotlottie-android:0.5.0")
+    // TensorFlow Lite
+    implementation("org.tensorflow:tensorflow-lite:2.14.0")
+    implementation("org.tensorflow:tensorflow-lite-support:0.4.4")
+    implementation("org.tensorflow:tensorflow-lite-select-tf-ops:2.14.0")
     testImplementation("junit:junit:4.13.2")
     androidTestImplementation("androidx.test.ext:junit:1.3.0")
     androidTestImplementation("androidx.test.espresso:espresso-core:3.7.0")
