@@ -1,0 +1,193 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/main"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/rm_bg"
+    android:padding="24dp"
+    tools:context=".RMScoreboardActivity">
+
+    <!-- Sparkles Container -->
+    <FrameLayout
+        android:id="@+id/sparklesContainer"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_margin="-24dp">
+
+        <!-- Music Notes Container -->
+        <FrameLayout
+            android:id="@+id/musicNotesContainer"
+            android:layout_width="343dp"
+            android:layout_height="631dp"
+            android:layout_margin="-24dp" />
+
+    </FrameLayout>
+
+    <!-- Stars at TOP of layout -->
+    <LinearLayout
+        android:id="@+id/starsContainer"
+        android:layout_width="372dp"
+        android:layout_height="116dp"
+        android:layout_marginTop="-10dp"
+        android:gravity="center"
+        android:orientation="horizontal"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent">
+
+        <!-- Star 1 -->
+        <ImageView
+            android:id="@+id/star1"
+            android:layout_width="80dp"
+            android:layout_height="71dp"
+            android:layout_margin="8dp"
+            android:src="@drawable/star_empty" />
+
+        <!-- Star 2 -->
+        <ImageView
+            android:id="@+id/star2"
+            android:layout_width="112dp"
+            android:layout_height="97dp"
+            android:layout_margin="8dp"
+            android:src="@drawable/star_empty" />
+
+        <!-- Star 3 -->
+        <ImageView
+            android:id="@+id/star3"
+            android:layout_width="79dp"
+            android:layout_height="73dp"
+            android:layout_margin="8dp"
+            android:src="@drawable/star_empty" />
+
+    </LinearLayout>
+
+    <!-- Ribbon Container -->
+    <FrameLayout
+        android:id="@+id/ribbonContainer"
+        android:layout_width="325dp"
+        android:layout_height="149dp"
+        android:layout_marginStart="20dp"
+        android:layout_marginTop="250dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/starsContainer">
+
+        <!-- Ribbon Image -->
+        <ImageView
+            android:id="@+id/ribbonImage"
+            android:layout_width="320dp"
+            android:layout_height="200dp"
+            android:scaleType="fitCenter"
+            android:src="@drawable/ribbon_rm" />
+
+        <!-- "You Win" Text ON the ribbon -->
+        <TextView
+            android:id="@+id/youWinText"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:layout_marginTop="30dp"
+            android:shadowColor="#80000000"
+            android:shadowDx="2"
+            android:shadowDy="2"
+            android:shadowRadius="4"
+            android:text="You Win"
+            android:textColor="#FFFFFF"
+            android:textSize="36sp"
+            android:textStyle="bold" />
+
+    </FrameLayout>
+
+    <!-- Score Container BELOW the ribbon -->
+    <LinearLayout
+        android:id="@+id/scoreContainer"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="30dp"
+        android:gravity="center"
+        android:orientation="vertical"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/ribbonContainer">
+
+        <!-- Rhythm Score Text -->
+        <TextView
+            android:id="@+id/scoreLabel"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:letterSpacing="0.05"
+            android:text="Rhythm Score"
+            android:textColor="#1E88E5"
+            android:textSize="28sp"
+            android:textStyle="bold" />
+
+        <!-- Score Number -->
+        <TextView
+            android:id="@+id/scoreValue"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="0dp"
+            android:shadowColor="#80000000"
+            android:shadowDx="1"
+            android:shadowDy="1"
+            android:shadowRadius="2"
+            android:text="2/5"
+            android:textColor="#1E88E5"
+            android:textSize="64sp"
+            android:textStyle="bold" />
+
+    </LinearLayout>
+
+
+    <LinearLayout
+        android:id="@+id/horizontalButtonsContainer"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="1dp"
+        android:layout_marginBottom="60dp"
+        android:gravity="center"
+        android:orientation="horizontal"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/sparklesContainer">
+
+        <!-- Replay Button -->
+        <Button
+            android:id="@+id/replayButton"
+            android:layout_width="150dp"
+            android:layout_height="55dp"
+            android:layout_marginStart="12dp"
+            android:drawableStart="@drawable/button_green"
+            android:drawablePadding="8dp"
+            android:paddingStart="20dp"
+            android:paddingEnd="20dp"
+            android:text="Replay"
+            android:textColor="@color/white"
+            android:textAlignment="center"
+            android:textSize="24sp"
+            android:textStyle="bold" />
+
+
+        <!-- Dashboard Button -->
+        <Button
+            android:id="@+id/dashboardButton"
+            android:layout_width="wrap_content"
+            android:layout_height="55dp"
+            android:layout_marginStart="12dp"
+            android:backgroundTint="#FF9800"
+            android:drawableStart="@drawable/button_green"
+            android:drawablePadding="8dp"
+            android:paddingStart="10dp"
+            android:paddingEnd="10dp"
+            android:text="Dashboard"
+            android:textAlignment="center"
+            android:textColor="@color/white"
+            android:textSize="20sp"
+            android:textStyle="bold" />
+
+    </LinearLayout>
+
+</androidx.constraintlayout.widget.ConstraintLayout>

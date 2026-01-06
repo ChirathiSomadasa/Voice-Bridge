@@ -1,0 +1,192 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/main"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".EmotionSymbolsActivity">
+
+    <ImageView
+        android:id="@+id/back"
+        android:layout_width="45dp"
+        android:layout_height="45dp"
+        android:layout_marginStart="16dp"
+        android:layout_marginTop="16dp"
+        android:clickable="true"
+        android:focusable="true"
+        android:contentDescription="@string/back_button"
+        app:srcCompat="@drawable/back"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <ScrollView
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:background="@drawable/white_bottom_bg"
+        android:fillViewport="true"
+        app:layout_constraintTop_toBottomOf="@+id/back"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent">
+
+        <LinearLayout
+            android:id="@+id/layoutContent"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center_horizontal"
+            android:orientation="vertical"
+            android:paddingStart="15dp"
+            android:paddingTop="20dp"
+            android:paddingEnd="20dp"
+            android:paddingBottom="20dp">
+
+            <TextView
+                android:id="@+id/tvTitle"
+                android:layout_width="281dp"
+                android:layout_height="40dp"
+                android:lineSpacingExtra="4dp"
+                android:text="Emotions"
+                android:textAlignment="center"
+                android:textColor="@color/green"
+                android:textSize="28sp"
+                android:layout_marginBottom="10dp"
+                android:textStyle="bold" />
+
+            <!-- Grid Layout for Buttons -->
+            <GridLayout
+                android:id="@+id/gridLayout"
+                android:layout_width="match_parent"
+                android:layout_height="800dp"
+                android:alignmentMode="alignMargins"
+                android:columnCount="2"
+                android:rowCount="5"
+                android:rowOrderPreserved="false"
+                android:useDefaultMargins="true">
+
+                <LinearLayout
+                    android:layout_width="8dp"
+                    android:layout_height="160dp"
+                    android:layout_row="0"
+                    android:layout_column="0"
+                    android:layout_columnWeight="1"
+                    android:background="@drawable/rounded_green_border"
+                    android:gravity="center"
+                    android:orientation="vertical"
+                    android:padding="8dp">
+
+                    <ImageView
+                        android:id="@+id/imgHappy"
+                        android:layout_width="100dp"
+                        android:layout_height="100dp"
+                        android:contentDescription="Happy"
+                        android:clickable="true"
+                        android:focusable="true"
+                        app:srcCompat="@drawable/happy_emotion"/>
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        android:text="Happy"
+                        android:textColor="@color/black"
+                        android:textSize="16sp"
+                        android:textStyle="bold" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="8dp"
+                    android:layout_height="160dp"
+                    android:layout_columnWeight="1"
+                    android:background="@drawable/rounded_green_border"
+                    android:gravity="center"
+                    android:orientation="vertical"
+                    android:padding="8dp">
+
+                    <ImageView
+                        android:id="@+id/imgSad"
+                        android:layout_width="100dp"
+                        android:layout_height="100dp"
+                        android:contentDescription="Sad"
+                        android:clickable="true"
+                        android:focusable="true"
+                        app:srcCompat="@drawable/sad_emotion"/>
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        android:text="Sad"
+                        android:textColor="@color/black"
+                        android:textSize="16sp"
+                        android:textStyle="bold" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="8dp"
+                    android:layout_height="160dp"
+                    android:layout_columnWeight="1"
+                    android:background="@drawable/rounded_green_border"
+                    android:gravity="center"
+                    android:orientation="vertical"
+                    android:padding="8dp">
+
+                    <ImageView
+                        android:id="@+id/imgAngry"
+                        android:layout_width="100dp"
+                        android:layout_height="100dp"
+                        android:contentDescription="Angry"
+                        android:clickable="true"
+                        android:focusable="true"
+                        app:srcCompat="@drawable/angry_emotion"/>
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        android:text="Angry"
+                        android:textColor="@color/black"
+                        android:textSize="16sp"
+                        android:textStyle="bold" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="8dp"
+                    android:layout_height="160dp"
+                    android:layout_columnWeight="1"
+                    android:background="@drawable/rounded_green_border"
+                    android:gravity="center"
+                    android:orientation="vertical"
+                    android:padding="8dp">
+
+                    <ImageView
+                        android:id="@+id/imgAfraid"
+                        android:layout_width="100dp"
+                        android:layout_height="100dp"
+                        android:contentDescription="Afraid"
+                        android:clickable="true"
+                        android:focusable="true"
+                        app:srcCompat="@drawable/afraid_emotion"/>
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        android:text="Afraid"
+                        android:textColor="@color/black"
+                        android:textSize="16sp"
+                        android:textStyle="bold" />
+                </LinearLayout>
+
+
+
+
+
+            </GridLayout>
+
+
+        </LinearLayout>
+    </ScrollView>
+
+
+</androidx.constraintlayout.widget.ConstraintLayout>

@@ -13,10 +13,21 @@
     <color name="gray">#808080</color>
     <color name="dark_gray">#666666</color>
     <color name="white_50">#80FFFFFF</color>
+    <color name="light_orange_51">#FCEBD1</color>
     <color name="score_red">#FF3B30</color>
     <color name="score_orange">#F69C1D</color>
     <color name="score_green">#4CAF50</color>
     <color name="bg_gray_track">#F0F0F0</color>
     <color name="progress_gray">#E6E6E6</color>
     <color name="dialog_blue">#03A9F4</color>
+    <color name="blue">#2196F3</color>
+    <color name="gold">#FFD700</color>
+    <color name="silver">#C0C0C0</color>
+    <color name="bronze">#CD7F32</color>
+    <color name="blue_dark">#1976D2</color>
+    <color name="green_light">#C8E6C9</color>
+    <color name="red_dark">#D32F2F</color>
+    <color name="light_blue">#E3F2FD</color>
+    <color name="light_yellow">#fcfab8</color>
+    <color name="dark_brown">#635101</color>
 </resources>

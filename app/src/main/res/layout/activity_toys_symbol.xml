@@ -1,0 +1,417 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/main"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".ToysSymbolActivity">
+
+    <ImageView
+        android:id="@+id/back"
+        android:layout_width="45dp"
+        android:layout_height="45dp"
+        android:layout_marginStart="16dp"
+        android:layout_marginTop="16dp"
+        android:clickable="true"
+        android:focusable="true"
+        android:contentDescription="@string/back_button"
+        app:srcCompat="@drawable/back"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <ScrollView
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:background="@drawable/white_bottom_bg"
+        android:fillViewport="true"
+        app:layout_constraintTop_toBottomOf="@+id/back"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent">
+
+        <LinearLayout
+            android:id="@+id/layoutContent"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center_horizontal"
+            android:orientation="vertical"
+            android:paddingStart="15dp"
+            android:paddingTop="20dp"
+            android:paddingEnd="20dp"
+            android:paddingBottom="20dp">
+
+            <TextView
+                android:id="@+id/toysTitle"
+                android:layout_width="281dp"
+                android:layout_height="40dp"
+                android:lineSpacingExtra="4dp"
+                android:text="Toys"
+                android:textAlignment="center"
+                android:textColor="@color/green"
+                android:textSize="28sp"
+                android:layout_marginBottom="3dp"
+                android:textStyle="bold" />
+
+            <!-- Grid Layout for Buttons -->
+            <GridLayout
+                android:id="@+id/gridLayout"
+                android:layout_width="match_parent"
+                android:layout_height="800dp"
+                android:alignmentMode="alignMargins"
+                android:columnCount="3"
+                android:rowCount="5"
+                android:rowOrderPreserved="false"
+                android:useDefaultMargins="true">
+
+                <LinearLayout
+                    android:layout_width="8dp"
+                    android:layout_height="127dp"
+                    android:layout_row="0"
+                    android:layout_column="0"
+                    android:layout_columnWeight="1"
+                    android:background="@drawable/rounded_green_border"
+                    android:gravity="center"
+                    android:orientation="vertical"
+                    android:padding="8dp">
+
+                    <ImageView
+                        android:id="@+id/imgDoll"
+                        android:layout_width="90dp"
+                        android:layout_height="90dp"
+                        android:contentDescription="Doll"
+                        android:clickable="true"
+                        android:focusable="true"
+                        app:srcCompat="@drawable/doll"/>
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="1dp"
+                        android:text="Doll"
+                        android:textColor="@color/black"
+                        android:textSize="16sp"
+                        android:textStyle="bold" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="8dp"
+                    android:layout_height="127dp"
+                    android:layout_columnWeight="1"
+                    android:background="@drawable/rounded_green_border"
+                    android:gravity="center"
+                    android:orientation="vertical"
+                    android:padding="8dp">
+
+                    <ImageView
+                        android:id="@+id/imgTeddyBear"
+                        android:layout_width="90dp"
+                        android:layout_height="90dp"
+                        android:contentDescription="TeddyBear"
+                        android:clickable="true"
+                        android:focusable="true"
+                        app:srcCompat="@drawable/teddy_bear"/>
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="1dp"
+                        android:text="Teddy Bear"
+                        android:textColor="@color/black"
+                        android:textSize="16sp"
+                        android:textStyle="bold" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="8dp"
+                    android:layout_height="127dp"
+                    android:layout_columnWeight="1"
+                    android:background="@drawable/rounded_green_border"
+                    android:gravity="center"
+                    android:orientation="vertical"
+                    android:padding="8dp">
+
+                    <ImageView
+                        android:id="@+id/imgPhone"
+                        android:layout_width="90dp"
+                        android:layout_height="90dp"
+                        android:contentDescription="Phone"
+                        android:clickable="true"
+                        android:focusable="true"
+                        app:srcCompat="@drawable/toy_telephone"/>
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="1dp"
+                        android:text="Telephone"
+                        android:textColor="@color/black"
+                        android:textSize="16sp"
+                        android:textStyle="bold" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="8dp"
+                    android:layout_height="127dp"
+                    android:layout_row="1"
+                    android:layout_column="0"
+                    android:layout_columnWeight="1"
+                    android:background="@drawable/rounded_green_border"
+                    android:gravity="center"
+                    android:orientation="vertical"
+                    android:padding="8dp">
+
+                    <ImageView
+                        android:id="@+id/imgToyBox"
+                        android:layout_width="90dp"
+                        android:layout_height="90dp"
+                        android:contentDescription="ToyBox"
+                        android:clickable="true"
+                        android:focusable="true"
+                        app:srcCompat="@drawable/toy_box"/>
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="1dp"
+                        android:text="Toy Box"
+                        android:textColor="@color/black"
+                        android:textSize="16sp"
+                        android:textStyle="bold" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="8dp"
+                    android:layout_height="127dp"
+                    android:layout_columnWeight="1"
+                    android:background="@drawable/rounded_green_border"
+                    android:gravity="center"
+                    android:orientation="vertical"
+                    android:padding="8dp">
+
+                    <ImageView
+                        android:id="@+id/imgPullCar"
+                        android:layout_width="90dp"
+                        android:layout_height="90dp"
+                        android:contentDescription="PullCar"
+                        android:clickable="true"
+                        android:focusable="true"
+                        app:srcCompat="@drawable/pull_along_toy"/>
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="1dp"
+                        android:text="Pull Car"
+                        android:textColor="@color/black"
+                        android:textSize="16sp"
+                        android:textStyle="bold" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="8dp"
+                    android:layout_height="127dp"
+                    android:layout_columnWeight="1"
+                    android:background="@drawable/rounded_green_border"
+                    android:gravity="center"
+                    android:orientation="vertical"
+                    android:padding="8dp">
+
+                    <ImageView
+                        android:id="@+id/imgSoldier"
+                        android:layout_width="90dp"
+                        android:layout_height="90dp"
+                        android:contentDescription="Soldier"
+                        android:clickable="true"
+                        android:focusable="true"
+                        app:srcCompat="@drawable/toy_soldier"/>
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="1dp"
+                        android:text="Soldier"
+                        android:textColor="@color/black"
+                        android:textSize="16sp"
+                        android:textStyle="bold" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="8dp"
+                    android:layout_height="127dp"
+                    android:layout_row="2"
+                    android:layout_column="0"
+                    android:layout_columnWeight="1"
+                    android:background="@drawable/rounded_green_border"
+                    android:gravity="center"
+                    android:orientation="vertical"
+                    android:padding="8dp">
+
+                    <ImageView
+                        android:id="@+id/imgToyCar"
+                        android:layout_width="90dp"
+                        android:layout_height="90dp"
+                        android:contentDescription="ToyCar"
+                        android:clickable="true"
+                        android:focusable="true"
+                        app:srcCompat="@drawable/toy_car"/>
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="1dp"
+                        android:text="Toy Car"
+                        android:textColor="@color/black"
+                        android:textSize="16sp"
+                        android:textStyle="bold" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="8dp"
+                    android:layout_height="127dp"
+                    android:layout_columnWeight="1"
+                    android:background="@drawable/rounded_green_border"
+                    android:gravity="center"
+                    android:orientation="vertical"
+                    android:padding="8dp">
+
+                    <ImageView
+                        android:id="@+id/imgColourBook"
+                        android:layout_width="90dp"
+                        android:layout_height="90dp"
+                        android:contentDescription="ColourBook"
+                        android:clickable="true"
+                        android:focusable="true"
+                        app:srcCompat="@drawable/colouring_book"/>
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="1dp"
+                        android:text="Colour Book"
+                        android:textColor="@color/black"
+                        android:textSize="16sp"
+                        android:textStyle="bold" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="8dp"
+                    android:layout_height="127dp"
+                    android:layout_columnWeight="1"
+                    android:background="@drawable/rounded_green_border"
+                    android:gravity="center"
+                    android:orientation="vertical"
+                    android:padding="8dp">
+
+                    <ImageView
+                        android:id="@+id/imgBall"
+                        android:layout_width="90dp"
+                        android:layout_height="90dp"
+                        android:contentDescription="Ball"
+                        android:clickable="true"
+                        android:focusable="true"
+                        app:srcCompat="@drawable/toy_ball"/>
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="1dp"
+                        android:text="Ball"
+                        android:textColor="@color/black"
+                        android:textSize="16sp"
+                        android:textStyle="bold" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="8dp"
+                    android:layout_height="127dp"
+                    android:layout_row="3"
+                    android:layout_column="0"
+                    android:layout_columnWeight="1"
+                    android:background="@drawable/rounded_green_border"
+                    android:gravity="center"
+                    android:orientation="vertical"
+                    android:padding="8dp">
+
+                    <ImageView
+                        android:id="@+id/imgKite"
+                        android:layout_width="90dp"
+                        android:layout_height="90dp"
+                        android:contentDescription="Kite"
+                        android:clickable="true"
+                        android:focusable="true"
+                        app:srcCompat="@drawable/kite"/>
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="1dp"
+                        android:text="Kite"
+                        android:textColor="@color/black"
+                        android:textSize="16sp"
+                        android:textStyle="bold" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="8dp"
+                    android:layout_height="127dp"
+                    android:layout_columnWeight="1"
+                    android:background="@drawable/rounded_green_border"
+                    android:gravity="center"
+                    android:orientation="vertical"
+                    android:padding="8dp">
+
+                    <ImageView
+                        android:id="@+id/imgBubbles"
+                        android:layout_width="90dp"
+                        android:layout_height="90dp"
+                        android:contentDescription="Bubbles"
+                        android:clickable="true"
+                        android:focusable="true"
+                        app:srcCompat="@drawable/bubbles"/>
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="1dp"
+                        android:text="Bubbles"
+                        android:textColor="@color/black"
+                        android:textSize="16sp"
+                        android:textStyle="bold" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="8dp"
+                    android:layout_height="127dp"
+                    android:layout_columnWeight="1"
+                    android:background="@drawable/rounded_green_border"
+                    android:gravity="center"
+                    android:orientation="vertical"
+                    android:padding="8dp">
+
+                    <ImageView
+                        android:id="@+id/imgBlocks"
+                        android:layout_width="90dp"
+                        android:layout_height="90dp"
+                        android:contentDescription="Blocks"
+                        android:clickable="true"
+                        android:focusable="true"
+                        app:srcCompat="@drawable/blocks"/>
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="1dp"
+                        android:text="Blocks"
+                        android:textColor="@color/black"
+                        android:textSize="16sp"
+                        android:textStyle="bold" />
+                </LinearLayout>
+
+            </GridLayout>
+
+
+        </LinearLayout>
+    </ScrollView>
+
+</androidx.constraintlayout.widget.ConstraintLayout>

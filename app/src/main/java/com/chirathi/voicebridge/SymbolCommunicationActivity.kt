@@ -13,7 +13,8 @@ class SymbolCommunicationActivity : AppCompatActivity() {
 
         val backBtn = findViewById<ImageView>(R.id.back)
         backBtn.setOnClickListener {
-            finish()
+            val intent = Intent(this, HomeActivity::class.java)
+            startActivity(intent)
         }
 
         // Quick Words button functionality

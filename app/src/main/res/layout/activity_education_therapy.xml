@@ -5,7 +5,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@color/white"
-    tools:context=".SpeechPracticeActivity">
+    tools:context=".Education_therapyActivity">
 
     <ImageView
         android:id="@+id/topImage"
@@ -77,12 +77,25 @@
                 android:textStyle="bold" />
 
             <Button
-                android:id="@+id/btn_level1"
+                android:id="@+id/btn_recommend"
                 style="@style/SolidGreenButton"
                 android:layout_width="match_parent"
                 android:layout_height="55dp"
                 android:layout_marginTop="40dp"
-                android:text="@string/age4_6"
+                android:text="Recommend for you"
+                android:textAllCaps="false"
+                android:textColor="@color/white"
+                android:textSize="20sp"
+                android:textStyle="bold"
+                app:backgroundTint="@color/bronze" />
+
+            <Button
+                android:id="@+id/btn_age1"
+                style="@style/SolidGreenButton"
+                android:layout_width="match_parent"
+                android:layout_height="55dp"
+                android:layout_marginTop="40dp"
+                android:text="@string/age6"
                 android:textAllCaps="false"
                 android:textColor="@color/white"
                 android:textSize="20sp"
@@ -90,12 +103,12 @@
                 app:backgroundTint="@color/green" />
 
             <Button
-                android:id="@+id/btn_level2"
+                android:id="@+id/btn_age2"
                 style="@style/SolidPinkButton"
                 android:layout_width="match_parent"
                 android:layout_height="55dp"
                 android:layout_marginTop="20dp"
-                android:text="@string/age6_10"
+                android:text="@string/age7"
                 android:textAllCaps="false"
                 android:textColor="@color/white"
                 android:textSize="20sp"
@@ -103,12 +116,12 @@
                 app:backgroundTint="@color/pink" />
 
             <Button
-                android:id="@+id/btn_level3"
+                android:id="@+id/btn_age3"
                 style="@style/SolidGreenButton"
                 android:layout_width="match_parent"
                 android:layout_height="55dp"
                 android:layout_marginTop="20dp"
-                android:text="@string/age10_12"
+                android:text="@string/age8"
                 android:textAllCaps="false"
                 android:textColor="@color/white"
                 android:textSize="20sp"
@@ -116,18 +129,30 @@
                 app:backgroundTint="@color/dark_orange" />
 
             <Button
-                android:id="@+id/btn_level4"
+                android:id="@+id/btn_age4"
                 style="@style/SolidPinkButton"
                 android:layout_width="match_parent"
                 android:layout_height="55dp"
                 android:layout_marginTop="20dp"
-                android:text="Level 4"
+                android:text="@string/age9"
                 android:textAllCaps="false"
                 android:textColor="@color/white"
                 android:textSize="20sp"
                 android:textStyle="bold"
                 app:backgroundTint="@color/green" />
 
+            <Button
+                android:id="@+id/btn_age5"
+                style="@style/SolidPinkButton"
+                android:layout_width="match_parent"
+                android:layout_height="55dp"
+                android:layout_marginTop="20dp"
+                android:text="@string/age10"
+                android:textAllCaps="false"
+                android:textColor="@color/white"
+                android:textSize="20sp"
+                android:textStyle="bold"
+                app:backgroundTint="@color/pink" />
 
             <Button
                 android:id="@+id/check_progress"
