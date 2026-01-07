@@ -3,6 +3,7 @@
     xmlns:tools="http://schemas.android.com/tools">
 
     <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.RECORD_AUDIO" />
 
     <application
         android:allowBackup="true"
@@ -15,6 +16,15 @@
         android:theme="@style/Theme.VoiceBridge"
         tools:targetApi="31">
         <activity
+            android:name=".SentencesProgressActivity"
+            android:exported="false" />
+        <activity
+            android:name=".WordProgressActivity"
+            android:exported="false" />
+        <activity
+            android:name=".LetterProgressActivity"
+            android:exported="false" />
+         <activity
             android:name=".PainSymbolsActivity"
             android:exported="false" />
         <activity
@@ -54,19 +64,29 @@
             android:name=".SpeechProgressActivity"
             android:exported="false" />
         <activity
-            android:name=".Education_subjects_Activity"
-            android:exported="false" />
-        <activity
-            android:name=".Education_age6_10_Activity"
-            android:exported="false" />
-        <activity
-            android:name=".Education_age4_6_Activity"
-            android:exported="false" />
-        <activity
             android:name=".TeacherDashboardActivity"
             android:exported="false" />
         <activity
             android:name=".Education_therapyActivity"
+            android:exported="false" />
+        <activity
+            android:name=".Education_subjects_Activity"
+            android:exported="false" />
+        <activity
+            android:name=".Edu_LessonDetailActivity"
+            android:exported="false" />
+        <activity
+            android:name=".Edu_LessonListActivity"
+            android:exported="false" />
+        <activity
+            android:name=".Edu_SubLessonDetailActivity"
+            android:exported="false" />
+        <activity
+            android:name=".RhythmSummaryActivity"
+            android:exported="false" />
+        
+        <activity
+            android:name=".RMScoreboardActivity"
             android:exported="false" />
         <activity
             android:name=".RMGuidanceActivity"
@@ -75,16 +95,13 @@
             android:name=".RMIntroActivity"
             android:exported="false" />
         <activity
-            android:name=".RMScoreboardActivity"
-            android:exported="false" />
-        <activity
             android:name=".ASequenceScoreboardActivity"
             android:exported="false" />
         <activity
             android:name=".UnlockStickerActivity"
             android:exported="false" />
         <activity
-            android:name=".ASGuidanceWrongActivity"
+            android:name=".ASGuidanceAboveActivity"
             android:exported="false" />
         <activity
             android:name=".ASGuide_BelowActivity"

@@ -19,6 +19,7 @@
     <color name="score_green">#4CAF50</color>
     <color name="bg_gray_track">#F0F0F0</color>
     <color name="progress_gray">#E6E6E6</color>
+    <color name="dialog_blue">#03A9F4</color>
     <color name="blue">#2196F3</color>
     <color name="gold">#FFD700</color>
     <color name="silver">#C0C0C0</color>
@@ -27,4 +28,6 @@
     <color name="green_light">#C8E6C9</color>
     <color name="red_dark">#D32F2F</color>
     <color name="light_blue">#E3F2FD</color>
+    <color name="light_yellow">#fcfab8</color>
+    <color name="dark_brown">#635101</color>
 </resources>

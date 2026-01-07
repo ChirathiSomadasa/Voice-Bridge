@@ -150,7 +150,7 @@
                 android:text="Happy"
                 android:textSize="16sp"
                 android:textAllCaps="false"
-                app:backgroundTint="@color/green"
+                app:backgroundTint="@color/dark_orange"
                 android:textColor="@color/white" />
 
             <Button
@@ -164,7 +164,7 @@
                 android:text="Sad"
                 android:textSize="16sp"
                 android:textAllCaps="false"
-                app:backgroundTint="@color/green"
+                app:backgroundTint="@color/dark_orange"
                 android:textColor="@color/white" />
 
             <Button
@@ -178,7 +178,7 @@
                 android:text="Angry"
                 android:textSize="16sp"
                 android:textAllCaps="false"
-                app:backgroundTint="@color/green"
+                app:backgroundTint="@color/dark_orange"
                 android:textColor="@color/white" />
 
             <Button
@@ -192,14 +192,12 @@
                 android:text="Scared"
                 android:textSize="16sp"
                 android:textAllCaps="false"
-                app:backgroundTint="@color/green"
+                app:backgroundTint="@color/dark_orange"
                 android:textColor="@color/white" />
 
         </GridLayout>
 
     </LinearLayout>
-
-    <!-- Next Button at Bottom (Visible from start) -->
     <Button
         android:id="@+id/btnNext"
         android:layout_width="match_parent"
@@ -209,7 +207,7 @@
         android:text="Next"
         android:textSize="18sp"
         android:visibility="gone"
-        app:backgroundTint="@color/blue"
+        app:backgroundColor="@drawable/button_green"
         android:textColor="@color/white"
         app:layout_constraintBottom_toBottomOf="parent" />
 

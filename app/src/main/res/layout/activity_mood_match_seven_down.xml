@@ -144,8 +144,9 @@
                     android:layout_height="75dp"
                     android:text="Happy"
                     android:textSize="24sp"
+                    android:textStyle="bold"
                     android:textAllCaps="false"
-                    app:backgroundTint="@color/green"
+                    app:backgroundTint="@color/dark_orange"
                     android:textColor="@color/white"
                     android:layout_marginEnd="8dp" />
 
@@ -154,7 +155,7 @@
                     android:layout_width="75dp"
                     android:layout_height="75dp"
                     android:layout_marginStart="8dp"
-                    android:background="@color/light_orange"
+                    android:background="@color/pink"
                     android:clickable="true"
                     android:elevation="4dp"
                     android:focusable="true"
@@ -163,8 +164,8 @@
                     android:padding="4dp">
 
                     <ImageView
-                        android:layout_width="32dp"
-                        android:layout_height="32dp"
+                        android:layout_width="40dp"
+                        android:layout_height="43dp"
                         android:src="@drawable/volume"
                         app:tint="@android:color/white" />
 
@@ -174,7 +175,7 @@
                         android:layout_marginTop="2dp"
                         android:text="Play Sound"
                         android:textColor="@android:color/white"
-                        android:textSize="9sp"
+                        android:textSize="10sp"
                         android:textStyle="bold" />
 
                 </LinearLayout>
@@ -194,8 +195,9 @@
                     android:layout_height="75dp"
                     android:text="Sad"
                     android:textSize="24sp"
+                    android:textStyle="bold"
                     android:textAllCaps="false"
-                    app:backgroundTint="@color/green"
+                    app:backgroundTint="@color/dark_orange"
                     android:textColor="@color/white"
                     android:layout_marginEnd="8dp" />
 
@@ -204,7 +206,7 @@
                     android:layout_width="75dp"
                     android:layout_height="75dp"
                     android:layout_marginStart="8dp"
-                    android:background="@color/light_orange"
+                    android:background="@color/pink"
                     android:clickable="true"
                     android:elevation="4dp"
                     android:focusable="true"
@@ -213,8 +215,8 @@
                     android:padding="4dp">
 
                     <ImageView
-                        android:layout_width="32dp"
-                        android:layout_height="32dp"
+                        android:layout_width="44dp"
+                        android:layout_height="41dp"
                         android:src="@drawable/volume"
                         app:tint="@android:color/white" />
 
@@ -224,7 +226,7 @@
                         android:layout_marginTop="2dp"
                         android:text="Play Sound"
                         android:textColor="@android:color/white"
-                        android:textSize="9sp"
+                        android:textSize="10sp"
                         android:textStyle="bold" />
 
                 </LinearLayout>
@@ -239,7 +241,7 @@
                 android:text="Next"
                 android:textSize="20sp"
                 android:visibility="gone"
-                app:backgroundTint="@color/dark_gray"
+                app:backgroundColor="@drawable/button_green"
                 android:textColor="@color/white" />
 
         </LinearLayout>

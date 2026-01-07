@@ -30,7 +30,7 @@
         android:id="@+id/feedbackImage"
         android:layout_width="400dp"
         android:layout_height="400dp"
-        android:src="@drawable/imaginaryfriend"
+        android:src="@drawable/imagineryfriend"
         android:scaleType="fitCenter"
         app:layout_constraintTop_toBottomOf="@+id/unlockedText"
         app:layout_constraintBottom_toTopOf="@+id/title"
@@ -59,15 +59,15 @@
     <Button
         android:id="@+id/btn_ok"
         style="@style/SolidGreenButton"
-        android:layout_width="match_parent"
+        android:layout_width="245dp"
         android:layout_height="55dp"
+        android:src="@drawable/button_green"
         android:text="OK"
-        android:textSize="18sp"
         android:textAllCaps="false"
-        app:backgroundTint="@color/green"
         android:textColor="@color/white"
+        android:textSize="18sp"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent" />
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

@@ -93,7 +93,7 @@ class FeedbackDialogFragment : DialogFragment() {
 
         // Set title based on feedback type
         if (isGoodFeedback) {
-            titleText.text = "Wow! You got them all!"
+            titleText.text = "Wow! You got them!"
         } else {
             titleText.text = "You're learning – let's play more!"
         }
