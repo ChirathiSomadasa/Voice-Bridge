@@ -1,6 +1,7 @@
 package com.chirathi.voicebridge
 
 import android.Manifest
+import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Bundle
@@ -21,10 +22,9 @@ class SpeechLevel1TaskActivity : AppCompatActivity(), TextToSpeech.OnInitListene
         "L", "R", "P", "F", "C",  // Batch 1
         "H", "N", "D", "G", "K",  // Batch 2
         "W", "Y", "J", "V", "Z",  // Batch 3
-        "Q", "X", "E", "I", "O", "U" // Batch 4 (6 letters)
+        "Q", "X", "E", "I", "O", "U" // Batch 4
     )
 
-    // Expanded Pronunciation Map for all 26 letters
     private val pronunciationMap = mapOf(
         "A" to "a", "B" to "bee", "C" to "see", "D" to "dee", "E" to "ee",
         "F" to "eff", "G" to "gee", "H" to "aitch", "I" to "eye", "J" to "jay",
@@ -57,9 +57,18 @@ class SpeechLevel1TaskActivity : AppCompatActivity(), TextToSpeech.OnInitListene
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_speech_level1_task)
 
-        // 2. GET CURRENT BATCH INDEX (Defaults to 0)
-        currentBatchIndex = intent.getIntExtra("BATCH_INDEX", 0)
+        // ---------------- SAVED PROGRESS LOGIC ----------------
+        // Check if a specific batch was passed via Intent (e.g. from Retry or Next)
+        if (intent.hasExtra("BATCH_INDEX")) {
+            currentBatchIndex = intent.getIntExtra("BATCH_INDEX", 0)
+        } else {
+            // If opening fresh, check SharedPreferences for saved progress
+            val prefs = getSharedPreferences("VoiceBridgePrefs", Context.MODE_PRIVATE)
+            currentBatchIndex = prefs.getInt("SAVED_BATCH_LEVEL_1", 0)
+        }
+
         setupCurrentBatch()
+        // ------------------------------------------------------
 
         tvLetter = findViewById(R.id.tvLetter)
         llPlaySound = findViewById(R.id.llPlaySound)
@@ -90,19 +99,19 @@ class SpeechLevel1TaskActivity : AppCompatActivity(), TextToSpeech.OnInitListene
         }
     }
 
-    // Logic to slice the full list into batches of 5
     private fun setupCurrentBatch() {
         val startIndex = currentBatchIndex * 5
         var endIndex = startIndex + 5
 
-        // Handle end of list (last batch might have remaining letters)
         if (endIndex > fullGraphemeList.size) {
             endIndex = fullGraphemeList.size
         }
 
-        // Safety check if batch is out of bounds
+        // Safety check: if user finished everything, maybe reset or show final screen
         if (startIndex >= fullGraphemeList.size) {
-            finish() // Should not happen if logic is correct
+            // For now, let's just loop back to 0 or handle complete
+            currentBatchIndex = 0
+            setupCurrentBatch()
             return
         }
 
@@ -199,17 +208,27 @@ class SpeechLevel1TaskActivity : AppCompatActivity(), TextToSpeech.OnInitListene
     private fun finishLevel() {
         val progressScore = calculateProgress()
 
-        // Check if there are more letters after this batch
+        // Check if there are more letters
         val nextBatchStartIndex = (currentBatchIndex + 1) * 5
         val hasMoreLetters = nextBatchStartIndex < fullGraphemeList.size
 
         if (progressScore >= 75) {
+            // ---------------- SAVE PROGRESS ----------------
+            // If they passed, save the NEXT batch index to SharedPreferences
+            // So if they login again, they start at the new letters
+            if (hasMoreLetters) {
+                val prefs = getSharedPreferences("VoiceBridgePrefs", Context.MODE_PRIVATE)
+                prefs.edit().putInt("SAVED_BATCH_LEVEL_1", currentBatchIndex + 1).apply()
+            }
+            // -----------------------------------------------
+
             successDialog = SuccessDialog(this)
             successDialog.show()
             successDialog.setOnDismissListener {
                 goToProgress(progressScore, hasMoreLetters)
             }
         } else {
+            // Failed: Don't save new progress (they must retry this batch)
             goToProgress(progressScore, hasMoreLetters)
         }
     }
@@ -218,7 +237,7 @@ class SpeechLevel1TaskActivity : AppCompatActivity(), TextToSpeech.OnInitListene
         val intent = Intent(this, LetterProgressActivity::class.java)
         intent.putExtra("PROGRESS_SCORE", score)
         intent.putExtra("BATCH_INDEX", currentBatchIndex)
-        intent.putExtra("CAN_CONTINUE", canContinue) // Pass flag to show/hide Continue button
+        intent.putExtra("CAN_CONTINUE", canContinue)
         startActivity(intent)
         finish()
     }

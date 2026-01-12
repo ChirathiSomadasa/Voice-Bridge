@@ -16,6 +16,9 @@
         android:theme="@style/Theme.VoiceBridge"
         tools:targetApi="31">
         <activity
+            android:name=".LevelTransitionActivity"
+            android:exported="false" />
+        <activity
             android:name=".SentencesProgressActivity"
             android:exported="false" />
         <activity
