@@ -18,7 +18,6 @@ import android.widget.ProgressBar
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
-import kotlin.math.min
 
 class LetterProgressActivity : AppCompatActivity() {
 
@@ -48,12 +47,9 @@ class LetterProgressActivity : AppCompatActivity() {
             else -> R.color.score_red
         }
         val color = ContextCompat.getColor(this, colorResId)
-
-        // Set Text Color
         tvScore.setTextColor(color)
 
-        // 4. SETUP CUSTOM DRAWABLE
-        // create the drawable programmatically to get the rounded caps
+        // 4. CUSTOM DRAWABLE
         customDrawable = RoundedCircularProgressDrawable(
             context = this,
             progressColor = color,
@@ -73,7 +69,7 @@ class LetterProgressActivity : AppCompatActivity() {
         }
         animator.start()
 
-        // 6. BUTTON LAYOUT
+        // 6. BUTTON VISIBILITY
         val retryParams = llTryAgain.layoutParams as LinearLayout.LayoutParams
         val homeParams = llHome.layoutParams as LinearLayout.LayoutParams
         val continueParams = llContinue.layoutParams as LinearLayout.LayoutParams
@@ -91,6 +87,8 @@ class LetterProgressActivity : AppCompatActivity() {
         }
 
         // 7. BUTTON ACTIONS
+
+        // Retry -> Restarts CURRENT batch
         llTryAgain.setOnClickListener {
             val intent = Intent(this, SpeechLevel1TaskActivity::class.java)
             intent.putExtra("BATCH_INDEX", batchIndex)
@@ -104,25 +102,23 @@ class LetterProgressActivity : AppCompatActivity() {
             finish()
         }
 
+        // Continue -> Goes to LEVEL TRANSITION
         llContinue.setOnClickListener {
-            val intent = Intent(this, SpeechLevel1TaskActivity::class.java)
-            intent.putExtra("BATCH_INDEX", batchIndex + 1)
+            val intent = Intent(this, LevelTransitionActivity::class.java)
+            // We pass the NEXT batch index (current + 1)
+            intent.putExtra("NEXT_BATCH_INDEX", batchIndex + 1)
             startActivity(intent)
             finish()
         }
     }
 
-    /**
-     * CUSTOM DRAWABLE CLASS
-     * This draws the ring manually so we can set Paint.Cap.ROUND
-     */
     private class RoundedCircularProgressDrawable(
         context: Context,
         private var progressColor: Int,
         private val backgroundColor: Int,
         strokeWidthDp: Float
     ) : Drawable() {
-
+        // ... (Existing Drawable Code) ...
         private val strokeWidth: Float = strokeWidthDp * context.resources.displayMetrics.density
         private val backgroundPaint = Paint(Paint.ANTI_ALIAS_FLAG)
         private val progressPaint = Paint(Paint.ANTI_ALIAS_FLAG)
@@ -130,54 +126,31 @@ class LetterProgressActivity : AppCompatActivity() {
         private var currentLevel = 0
 
         init {
-            // Setup Background Paint (Gray Ring)
             backgroundPaint.color = backgroundColor
             backgroundPaint.style = Paint.Style.STROKE
             backgroundPaint.strokeWidth = strokeWidth
 
-            // Setup Progress Paint (Colored Arc)
             progressPaint.color = progressColor
             progressPaint.style = Paint.Style.STROKE
             progressPaint.strokeWidth = strokeWidth
             progressPaint.strokeCap = Paint.Cap.ROUND
         }
 
-        // ProgressBar calls this to set progress (0 to 10000)
         override fun onLevelChange(level: Int): Boolean {
             currentLevel = level
-            invalidateSelf() // Redraw when progress changes
+            invalidateSelf()
             return true
         }
 
         override fun draw(canvas: Canvas) {
-            // Calculate bounds to fit inside the View, accounting for stroke thickness
             val halfStroke = strokeWidth / 2f
-            rectF.set(
-                bounds.left + halfStroke,
-                bounds.top + halfStroke,
-                bounds.right - halfStroke,
-                bounds.bottom - halfStroke
-            )
-
-            // 1. Draw Full Background Ring
+            rectF.set(bounds.left + halfStroke, bounds.top + halfStroke, bounds.right - halfStroke, bounds.bottom - halfStroke)
             canvas.drawOval(rectF, backgroundPaint)
-
-            // 2. Draw Progress Arc
-            // 10000 is the max level for ProgressBar
             val sweepAngle = (currentLevel / 10000f) * 360f
-
-            // startAngle -90
             canvas.drawArc(rectF, -90f, sweepAngle, false, progressPaint)
         }
-
-        override fun setAlpha(alpha: Int) {
-            progressPaint.alpha = alpha
-        }
-
-        override fun setColorFilter(colorFilter: ColorFilter?) {
-            progressPaint.colorFilter = colorFilter
-        }
-
+        override fun setAlpha(alpha: Int) { progressPaint.alpha = alpha }
+        override fun setColorFilter(colorFilter: ColorFilter?) { progressPaint.colorFilter = colorFilter }
         override fun getOpacity(): Int = PixelFormat.TRANSLUCENT
     }
 }
