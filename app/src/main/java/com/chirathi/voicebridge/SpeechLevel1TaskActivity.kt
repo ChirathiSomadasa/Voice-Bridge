@@ -12,6 +12,7 @@ import android.widget.*
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import com.google.firebase.auth.FirebaseAuth
 import java.util.*
 
 class SpeechLevel1TaskActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
@@ -53,22 +54,35 @@ class SpeechLevel1TaskActivity : AppCompatActivity(), TextToSpeech.OnInitListene
     private var isTtsReady = false
     private val pronunciationAssesment = PronunciationAssesment()
 
+    // Auth
+    private lateinit var auth: FirebaseAuth
+    private var currentUserId: String = ""
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_speech_level1_task)
 
-        // ---------------- SAVED PROGRESS LOGIC ----------------
-        // Check if a specific batch was passed via Intent (e.g. from Retry or Next)
+        // Initialize Auth & Get User ID
+        auth = FirebaseAuth.getInstance()
+        currentUserId = auth.currentUser?.uid ?: ""
+
+        // ---------------- SAVED PROGRESS LOGIC (USER SPECIFIC) ----------------
+        // 1. Check if intent has a batch (e.g. continuing from next level)
         if (intent.hasExtra("BATCH_INDEX")) {
             currentBatchIndex = intent.getIntExtra("BATCH_INDEX", 0)
         } else {
-            // If opening fresh, check SharedPreferences for saved progress
-            val prefs = getSharedPreferences("VoiceBridgePrefs", Context.MODE_PRIVATE)
-            currentBatchIndex = prefs.getInt("SAVED_BATCH_LEVEL_1", 0)
+            // 2. If opening fresh, load from SharedPreferences using USER ID
+            if (currentUserId.isNotEmpty()) {
+                val prefs = getSharedPreferences("VoiceBridgePrefs", Context.MODE_PRIVATE)
+                // Key is now specific to this user
+                currentBatchIndex = prefs.getInt("SAVED_BATCH_LEVEL_1_$currentUserId", 0)
+            } else {
+                currentBatchIndex = 0 // Default if no user logged in
+            }
         }
 
         setupCurrentBatch()
-        // ------------------------------------------------------
+        // ----------------------------------------------------------------------
 
         tvLetter = findViewById(R.id.tvLetter)
         llPlaySound = findViewById(R.id.llPlaySound)
@@ -107,9 +121,8 @@ class SpeechLevel1TaskActivity : AppCompatActivity(), TextToSpeech.OnInitListene
             endIndex = fullGraphemeList.size
         }
 
-        // Safety check: if user finished everything, maybe reset or show final screen
         if (startIndex >= fullGraphemeList.size) {
-            // For now, let's just loop back to 0 or handle complete
+            // If user finished all batches, maybe reset or stay at last batch
             currentBatchIndex = 0
             setupCurrentBatch()
             return
@@ -208,19 +221,17 @@ class SpeechLevel1TaskActivity : AppCompatActivity(), TextToSpeech.OnInitListene
     private fun finishLevel() {
         val progressScore = calculateProgress()
 
-        // Check if there are more letters
         val nextBatchStartIndex = (currentBatchIndex + 1) * 5
         val hasMoreLetters = nextBatchStartIndex < fullGraphemeList.size
 
         if (progressScore >= 75) {
-            // ---------------- SAVE PROGRESS ----------------
-            // If they passed, save the NEXT batch index to SharedPreferences
-            // So if they login again, they start at the new letters
-            if (hasMoreLetters) {
+            // ---------------- SAVE PROGRESS (USER SPECIFIC) ----------------
+            if (hasMoreLetters && currentUserId.isNotEmpty()) {
                 val prefs = getSharedPreferences("VoiceBridgePrefs", Context.MODE_PRIVATE)
-                prefs.edit().putInt("SAVED_BATCH_LEVEL_1", currentBatchIndex + 1).apply()
+                // We use the same User ID specific key to save
+                prefs.edit().putInt("SAVED_BATCH_LEVEL_1_$currentUserId", currentBatchIndex + 1).apply()
             }
-            // -----------------------------------------------
+
 
             successDialog = SuccessDialog(this)
             successDialog.show()
@@ -228,7 +239,6 @@ class SpeechLevel1TaskActivity : AppCompatActivity(), TextToSpeech.OnInitListene
                 goToProgress(progressScore, hasMoreLetters)
             }
         } else {
-            // Failed: Don't save new progress (they must retry this batch)
             goToProgress(progressScore, hasMoreLetters)
         }
     }
