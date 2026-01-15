@@ -33,7 +33,7 @@ class LevelTransitionActivity : AppCompatActivity() {
             val targetActivity = when (levelType) {
                 1 -> SpeechLevel1TaskActivity::class.java
                 2 -> SpeechLevel2TaskActivity::class.java
-                // 3 -> SpeechLevel3TaskActivity::class.java 
+                // 3 -> SpeechLevel3TaskActivity::class.java
                 else -> SpeechLevel1TaskActivity::class.java
             }
 
