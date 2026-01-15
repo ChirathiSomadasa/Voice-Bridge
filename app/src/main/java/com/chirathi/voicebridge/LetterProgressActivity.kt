@@ -45,8 +45,8 @@ class LetterProgressActivity : AppCompatActivity() {
         val canContinue = intent.getBooleanExtra("CAN_CONTINUE", false)
         val isPassed = score >= 75
 
-        // 2. SAVE & CALCULATE OVERALL PROGRESS (Only if Passed)
-        if (isPassed && currentUser != null) {
+        // 2. SAVE & CALCULATE OVERALL PROGRESS
+        if (currentUser != null) {
             saveAndCalculateProgress(currentUser.uid, batchIndex, score)
         }
 
@@ -86,7 +86,8 @@ class LetterProgressActivity : AppCompatActivity() {
         }
         animator.start()
 
-        // 7. BUTTON VISIBILITY
+        // 7. BUTTON VISIBILITY (Navigation Logic)
+        // Only show "Continue" if they PASSED (>= 75%)
         val retryParams = llTryAgain.layoutParams as LinearLayout.LayoutParams
         val homeParams = llHome.layoutParams as LinearLayout.LayoutParams
         val continueParams = llContinue.layoutParams as LinearLayout.LayoutParams
@@ -98,6 +99,7 @@ class LetterProgressActivity : AppCompatActivity() {
             continueParams.weight = 1f
             llContinue.layoutParams = continueParams
         } else {
+            // If Failed Hide Continue button so they must Retry
             llContinue.visibility = View.GONE
             retryParams.weight = 1.5f
             homeParams.weight = 1.5f
@@ -105,6 +107,7 @@ class LetterProgressActivity : AppCompatActivity() {
 
         // 8. BUTTON ACTIONS
         llTryAgain.setOnClickListener {
+            // RETRY: Restarts the SAME batch
             val intent = Intent(this, SpeechLevel1TaskActivity::class.java)
             intent.putExtra("BATCH_INDEX", batchIndex)
             startActivity(intent)
@@ -118,8 +121,10 @@ class LetterProgressActivity : AppCompatActivity() {
         }
 
         llContinue.setOnClickListener {
+            // CONTINUE: Goes to Next Batch (LevelTransition)
             val intent = Intent(this, LevelTransitionActivity::class.java)
             intent.putExtra("NEXT_BATCH_INDEX", batchIndex + 1)
+            intent.putExtra("LEVEL_TYPE", 1) // 1 = Letters
             startActivity(intent)
             finish()
         }
@@ -131,12 +136,12 @@ class LetterProgressActivity : AppCompatActivity() {
         val batchData = hashMapOf(batchKey to score)
 
         // Reference to the document that stores ALL batch scores for Level 1
-        val scoresRef = db.collection("student_progress")
+        val scoresRef = db.collection("student_speech_progress")
             .document(userId)
             .collection("level_1_letters")
             .document("batch_scores")
 
-        // Step 1: Save the current batch score
+        // Step 1: Save the current batch score (overwrites old score for this batch if retry)
         scoresRef.set(batchData, SetOptions.merge())
             .addOnSuccessListener {
                 // Step 2: Read back all scores to calculate average
@@ -162,10 +167,10 @@ class LetterProgressActivity : AppCompatActivity() {
                             val summaryData = hashMapOf("overall_letter_progress" to overallAverage)
 
                             db.collection("student_speech_progress")
-                                .document(userId)
+                                .document(userId) // Using the same ID as above
                                 .set(summaryData, SetOptions.merge())
                                 .addOnSuccessListener {
-                                    // Optional: Log success (e.g. "Overall Progress Updated: $overallAverage%")
+                                    // Optional: Log success
                                 }
                         }
                     }
