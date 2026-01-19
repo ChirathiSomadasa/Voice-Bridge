@@ -2,6 +2,7 @@ package com.chirathi.voicebridge
 
 import android.content.Intent
 import android.os.Bundle
+import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.cardview.widget.CardView
 import androidx.constraintlayout.widget.ConstraintLayout
@@ -14,13 +15,23 @@ class LevelTransitionActivity : AppCompatActivity() {
 
         // 1. Get Data
         val nextBatchIndex = intent.getIntExtra("NEXT_BATCH_INDEX", 0)
-        // New: Check which level called this (1 = Letters, 2 = Words, 3 = Sentences)
-        val levelType = intent.getIntExtra("LEVEL_TYPE", 1)
+        val levelType = intent.getIntExtra("LEVEL_TYPE", 1) // 1=Letters, 2=Words, 3=Sentences
 
         val rootLayout = findViewById<ConstraintLayout>(R.id.rootLayout)
         val btnLetsGo = findViewById<CardView>(R.id.btnLetsGo)
 
-        // 2. RANDOM Background Logic
+        // --- DYNAMIC TEXT LOGIC ---
+        val tvSubtitle = findViewById<TextView>(R.id.tvSubtitle)
+
+        val subtitleText = when (levelType) {
+            1 -> "Get ready for new letters!"
+            2 -> "Get ready for new words!"
+            3 -> "Get ready for new sentences!"
+            else -> "Get ready for the next challenge!"
+        }
+        tvSubtitle.text = subtitleText
+
+        // 2. RANDOM Background
         val backgroundList = listOf(
             R.drawable.win_green_bg,
             R.drawable.win_orange_bg,
@@ -28,12 +39,12 @@ class LevelTransitionActivity : AppCompatActivity() {
         )
         rootLayout.setBackgroundResource(backgroundList.random())
 
-        // 3. Determine which activity to open based on LEVEL_TYPE
+        // 3. Determine target activity
         btnLetsGo.setOnClickListener {
             val targetActivity = when (levelType) {
                 1 -> SpeechLevel1TaskActivity::class.java
                 2 -> SpeechLevel2TaskActivity::class.java
-                // 3 -> SpeechLevel3TaskActivity::class.java
+                3 -> SpeechLevel3TaskActivity::class.java
                 else -> SpeechLevel1TaskActivity::class.java
             }
 
