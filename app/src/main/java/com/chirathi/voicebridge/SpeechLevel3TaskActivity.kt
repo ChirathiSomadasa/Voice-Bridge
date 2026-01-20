@@ -66,7 +66,7 @@ class SpeechLevel3TaskActivity : AppCompatActivity(), TextToSpeech.OnInitListene
 
         // 10: Car
         SentenceItem("John rides a race car really fast", R.drawable.car1_level3),
-        SentenceItem("The car is red and shiny", R.drawable.car2_level3),
+        SentenceItem("He overtakes the leading car", R.drawable.car2_level3),
         SentenceItem("John wins the big race today", R.drawable.car3_level3)
     )
 
