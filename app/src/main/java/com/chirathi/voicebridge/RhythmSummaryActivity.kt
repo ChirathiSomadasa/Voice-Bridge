@@ -51,26 +51,26 @@ class RhythmSummaryActivity : AppCompatActivity() {
     data class Keyword(val word: String, val imageRes: Int, val startTime: Int, val endTime: Int)
 
     private val keywordImages = mapOf(
-        "boat" to R.drawable.boat_image,
-        "stream" to R.drawable.stream_image,
-        "dream" to R.drawable.dream_image,
-        "creek" to R.drawable.creek,
-        "mouse" to R.drawable.mouse_image,
+        "boat" to R.drawable.rhy_song0_boat,
+        "stream" to R.drawable.rhy_song0_stream,
+        "dream" to R.drawable.rhy_song0_dream,
+        "creek" to R.drawable.rhy_song0_creek,
+        "mouse" to R.drawable.rhy_song0_mouse,
         "squeak" to R.drawable.squeak,
-        "river" to R.drawable.river_image,
-        "polar bear" to R.drawable.polar_bear_image,
-        "crocodile" to R.drawable.crocodile,
+        "river" to R.drawable.rhy_song0_river,
+        "polar bear" to R.drawable.rhy_song0_polar_bear,
+        "crocodile" to R.drawable.rhy_song0_crocodile,
         "scream" to R.drawable.scream_image,
-        "star" to R.drawable.star_image,
-        "world" to R.drawable.world,
-        "diamond" to R.drawable.diamond_image,
-        "sun" to R.drawable.sun,
-        "light" to R.drawable.light,
-        "night" to R.drawable.moon,
-        "traveller" to R.drawable.traveller,
-        "dark blue sky" to R.drawable.dark_blue_sky,
-        "window" to R.drawable.window,
-        "eyes" to R.drawable.eyes,
+        "star" to R.drawable.rhy_song1_star,
+        "world" to R.drawable.rhy_song1_world,
+        "diamond" to R.drawable.rhy_song1_diamond,
+        "sun" to R.drawable.rhy_song1_sun,
+        "light" to R.drawable.rhy_song1_light,
+        "night" to R.drawable.rhy_song1_moon,
+        "traveller" to R.drawable.rhy_song1_traveller,
+        "dark blue sky" to R.drawable.rhy_song1_dark_blue_sky,
+        "window" to R.drawable.rhy_song1_window,
+        "eyes" to R.drawable.rhy_song1_eyes,
         "hill" to R.drawable.hill_image,
         "water" to R.drawable.water_image,
         "crown" to R.drawable.crown_image
@@ -82,20 +82,20 @@ class RhythmSummaryActivity : AppCompatActivity() {
         "car" to R.drawable.car,
         "plane" to R.drawable.plane,
         "bicycle" to R.drawable.bicycle_image,
-        "ocean" to R.drawable.boat_image,
-        "lake" to R.drawable.stream_image,
-        "waterfall" to R.drawable.river_image,
+        "ocean" to R.drawable.rhy_song0_boat,
+        "lake" to R.drawable.rhy_song0_stream,
+        "waterfall" to R.drawable.rhy_song0_river,
         "mountain" to R.drawable.hill_image,
-        "valley" to R.drawable.dream_image,
-        "forest" to R.drawable.creek,
+        "valley" to R.drawable.rhy_song0_dream,
+        "forest" to R.drawable.rhy_song0_creek,
 
         // For "Twinkle Twinkle Little Star" song
-        "moon" to R.drawable.moon,
+        "moon" to R.drawable.rhy_song1_moon,
         "planet" to R.drawable.planet,
-        "sky" to R.drawable.dark_blue_sky,
-        "cloud" to R.drawable.window,
-        "eye" to R.drawable.eyes,
-        "night sky" to R.drawable.star_image,
+        "sky" to R.drawable.rhy_song1_dark_blue_sky,
+        "cloud" to R.drawable.rhy_song1_window,
+        "eye" to R.drawable.rhy_song1_eyes,
+        "night sky" to R.drawable.rhy_song1_star,
 
         // General distractors
         "juice" to R.drawable.sticker,
@@ -104,7 +104,7 @@ class RhythmSummaryActivity : AppCompatActivity() {
         "ball" to R.drawable.ball_image,
         "cat" to R.drawable.cat_image,
         "hat" to R.drawable.crown_image,
-        "cap" to R.drawable.traveller
+        "cap" to R.drawable.rhy_song1_traveller
     )
 
     data class GameRound(val keyword: String, val correctImageRes: Int, val options: List<Pair<String, Int>>)
@@ -275,29 +275,29 @@ class RhythmSummaryActivity : AppCompatActivity() {
             "Row Row Row Your Boat" -> {
                 Log.d(TAG, "Loading Row Row Row Your Boat keywords")
                 listOf(
-                    Keyword("boat", R.drawable.boat_image, 11000, 12000),
-                    Keyword("stream", R.drawable.stream_image, 13000, 15000),
-                    Keyword("dream", R.drawable.dream_image, 18000, 20000),
-                    Keyword("creek", R.drawable.creek, 22000, 25000),
-                    Keyword("mouse", R.drawable.mouse_image, 25000, 27000),
-                    Keyword("river", R.drawable.river_image, 33000, 35000),
-                    Keyword("polar bear", R.drawable.polar_bear_image, 35000, 38000),
-                    Keyword("crocodile", R.drawable.crocodile, 46000, 49000)
+                    Keyword("boat", R.drawable.rhy_song0_boat, 11000, 12000),
+                    Keyword("stream", R.drawable.rhy_song0_stream, 13000, 15000),
+                    Keyword("dream", R.drawable.rhy_song0_dream, 18000, 20000),
+                    Keyword("creek", R.drawable.rhy_song0_creek, 22000, 25000),
+                    Keyword("mouse", R.drawable.rhy_song0_mouse, 25000, 27000),
+                    Keyword("river", R.drawable.rhy_song0_river, 33000, 35000),
+                    Keyword("polar bear", R.drawable.rhy_song0_polar_bear, 35000, 38000),
+                    Keyword("crocodile", R.drawable.rhy_song0_crocodile, 46000, 49000)
                 )
             }
             "Twinkle Twinkle Little Star" -> {
                 Log.d(TAG, "Loading Twinkle Twinkle Little Star keywords")
                 listOf(
-                    Keyword("star", R.drawable.star_image, 8000, 10000),
-                    Keyword("world", R.drawable.world, 16000, 18000),
-                    Keyword("diamond", R.drawable.diamond_image, 19000, 20000),
-                    Keyword("sun", R.drawable.sun, 40000, 42000),
-                    Keyword("light", R.drawable.light, 48000, 50000),
-                    Keyword("night", R.drawable.moon, 53000, 55000),
-                    Keyword("traveller", R.drawable.traveller, 67000, 69000),
-                    Keyword("dark blue sky", R.drawable.dark_blue_sky, 100000, 102000),
-                    Keyword("window", R.drawable.window, 104000, 106000),
-                    Keyword("eyes", R.drawable.eyes, 109000, 111000)
+                    Keyword("star", R.drawable.rhy_song1_star, 8000, 10000),
+                    Keyword("world", R.drawable.rhy_song1_world, 16000, 18000),
+                    Keyword("diamond", R.drawable.rhy_song1_diamond, 19000, 20000),
+                    Keyword("sun", R.drawable.rhy_song1_sun, 40000, 42000),
+                    Keyword("light", R.drawable.rhy_song1_light, 48000, 50000),
+                    Keyword("night", R.drawable.rhy_song1_moon, 53000, 55000),
+                    Keyword("traveller", R.drawable.rhy_song1_traveller, 67000, 69000),
+                    Keyword("dark blue sky", R.drawable.rhy_song1_dark_blue_sky, 100000, 102000),
+                    Keyword("window", R.drawable.rhy_song1_window, 104000, 106000),
+                    Keyword("eyes", R.drawable.rhy_song1_eyes, 109000, 111000)
                 )
             }
             "Jack and Jill" -> {
@@ -311,9 +311,9 @@ class RhythmSummaryActivity : AppCompatActivity() {
             else -> {
                 Log.w(TAG, "Unknown song title, using default keywords")
                 listOf(
-                    Keyword("boat", R.drawable.boat_image, 11000, 12000),
-                    Keyword("stream", R.drawable.stream_image, 13000, 15000),
-                    Keyword("dream", R.drawable.dream_image, 18000, 20000)
+                    Keyword("boat", R.drawable.rhy_song0_boat, 11000, 12000),
+                    Keyword("stream", R.drawable.rhy_song0_stream, 13000, 15000),
+                    Keyword("dream", R.drawable.rhy_song0_dream, 18000, 20000)
                 )
             }
         }

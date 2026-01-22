@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <array name="mood_age6_lvl0_correct">
+        <item>@drawable/mood_lvl0_shared_happy</item>
+        <item>@drawable/mood_lvl0_shared_sad</item>
+        <item>@drawable/mood_lvl0_shared_angry</item>
+        <item>@drawable/mood_lvl0_shared_bored</item>
+        <item>@drawable/mood_lvl0_shared_shy</item>
+    </array>
+
+    <array name="mood_age6_lvl0_distractors">
+        <item>@drawable/mood_lvl0_shared_sad</item>
+        <item>@drawable/mood_lvl0_shared_happy</item>
+        <item>@drawable/mood_lvl0_shared_happy</item>
+        <item>@drawable/mood_lvl0_shared_happy</item>
+        <item>@drawable/mood_lvl0_shared_angry</item>
+    </array>
+
+    <array name="mood_age6_lvl1_correct">
+        <item>@drawable/mood_lvl1_shared_scared</item>
+        <item>@drawable/mood_lvl1_shared_proud</item>
+        <item>@drawable/mood_lvl1_shared_sleepy</item>
+    </array>
+
+    <array name="mood_age6_lvl2_scenarios">
+        <item>@drawable/mood_lvl2_age6_birthday</item>
+        <item>@drawable/mood_lvl2_age6_dropped_icecream</item>
+        <item>@drawable/mood_lvl2_age6_broken_robot</item>
+        <item>@drawable/mood_lvl2_age6_dog_barking</item>
+        <item>@drawable/mood_lvl2_age6_bored</item>
+    </array>
+
+    <array name="mood_age6_lvl2_answers">
+        <item>@drawable/mood_lvl0_shared_happy</item>
+        <item>@drawable/mood_lvl0_shared_sad</item>
+        <item>@drawable/mood_lvl0_shared_angry</item>
+        <item>@drawable/mood_lvl1_shared_scared</item>
+        <item>@drawable/mood_lvl0_shared_bored</item>
+    </array>
+
+
+    <array name="mood_age8_lvl0_correct">
+        <item>@drawable/mood_lvl0_shared_happy</item>
+        <item>@drawable/mood_lvl0_age8_cheerful</item>
+        <item>@drawable/mood_lvl0_shared_bored</item>
+        <item>@drawable/mood_lvl0_age8_surprise</item>
+        <item>@drawable/mood_lvl0_age8_tired</item>
+    </array>
+
+    <array name="mood_age8_lvl1_correct">
+        <item>@drawable/mood_lvl1_age8_anxious</item>
+        <item>@drawable/mood_lvl1_age8_greedy</item>
+        <item>@drawable/mood_lvl1_age8_jealous</item>
+        <item>@drawable/mood_lvl1_age8_curious</item>
+        <item>@drawable/mood_lvl1_age8_disgusted</item>
+    </array>
+
+    <array name="mood_age8_lvl2_scenarios">
+        <item>@drawable/mood_lvl2_age8_proud</item>
+        <item>@drawable/mood_lvl2_age8_jealous</item>
+        <item>@drawable/mood_lvl2_age8_anxious</item>
+        <item>@drawable/mood_lvl2_age8_greedy</item>
+        <item>@drawable/mood_lvl2_age8_rotten_apple</item>
+    </array>
+
+    <array name="mood_age8_lvl2_answers">
+        <item>@drawable/mood_lvl1_shared_proud</item>
+        <item>@drawable/mood_lvl1_age8_jealous</item>
+        <item>@drawable/mood_lvl1_age8_anxious</item>
+        <item>@drawable/mood_lvl1_age8_greedy</item>
+        <item>@drawable/mood_lvl1_age8_disgusted</item>
+    </array>
+
+    <array name="seq_routine0_morning_steps">
+        <item>@drawable/seq_rtn0_1_wake_up</item>
+        <item>@drawable/seq_rtn0_2_brush_teeth</item>
+        <item>@drawable/seq_rtn0_3_wash_face</item>
+        <item>@drawable/seq_rtn0_4_eat_breakfast</item>
+    </array>
+
+<!--    <array name="seq_routine1_school_steps">-->
+<!--        <item>@drawable/seq_rtn1_1_wear_uniform</item>-->
+<!--        <item>@drawable/seq_rtn1_2_wear_shoes</item>-->
+<!--        <item>@drawable/seq_rtn1_3_take_bag</item>-->
+<!--        <item>@drawable/seq_rtn1_4_school_bus</item>-->
+<!--    </array>-->
+
+<!--    <array name="seq_global_shoes">-->
+<!--        <item>@drawable/seq_global_shoes_1_socks</item>-->
+<!--        <item>@drawable/seq_global_shoes_2_shoes_on</item>-->
+<!--        <item>@drawable/seq_global_shoes_3_tie_laces</item>-->
+<!--    </array>-->
+
+
+<!--    <array name="rhy_song1_flashcards">-->
+<!--        <item>@drawable/rhy_song1_star</item>-->
+<!--        <item>@drawable/rhy_song1_diamond</item>-->
+<!--        <item>@drawable/rhy_song1_sky</item>-->
+<!--    </array>-->
+
+<!--    <array name="rhy_song2_flashcards">-->
+<!--        <item>@drawable/rhy_song2_boat</item>-->
+<!--        <item>@drawable/rhy_song2_stream</item>-->
+<!--        <item>@drawable/rhy_song2_dream</item>-->
+<!--        <item>@drawable/rhy_song2_crocodile</item>-->
+<!--    </array>-->
+
+</resources>

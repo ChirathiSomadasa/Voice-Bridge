@@ -66,7 +66,7 @@
                     android:id="@+id/img_get_up"
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
-                    android:src="@drawable/img_get_up"/>
+                    android:src="@drawable/seq_rtn0_1_wake_up"/>
             </FrameLayout>
 
             <!-- Image 2: Brush Teeth -->
@@ -80,7 +80,7 @@
                     android:id="@+id/img_brush_teeth"
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
-                    android:src="@drawable/img_brush_teeth"/>
+                    android:src="@drawable/seq_rtn0_2_brush_teeth"/>
             </FrameLayout>
 
             <!-- Image 3: Wash Face -->
@@ -94,7 +94,7 @@
                     android:id="@+id/img_wash_face"
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
-                    android:src="@drawable/img_wash_face"/>
+                    android:src="@drawable/seq_rtn0_3_wash_face"/>
             </FrameLayout>
         </LinearLayout>
 

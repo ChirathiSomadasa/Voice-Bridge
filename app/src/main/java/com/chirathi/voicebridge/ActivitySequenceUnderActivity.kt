@@ -56,9 +56,9 @@ class ActivitySequenceUnderActivity : AppCompatActivity() {
 
     // Image resources
     private val imageResources = mapOf(
-        "get_up" to R.drawable.img_get_up,
-        "brush_teeth" to R.drawable.img_brush_teeth,
-        "wash_face" to R.drawable.img_wash_face
+        "get_up" to R.drawable.seq_rtn0_1_wake_up,
+        "brush_teeth" to R.drawable.seq_rtn0_2_brush_teeth,
+        "wash_face" to R.drawable.seq_rtn0_3_wash_face
     )
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -223,7 +223,7 @@ class ActivitySequenceUnderActivity : AppCompatActivity() {
                     FrameLayout.LayoutParams.MATCH_PARENT,
                     FrameLayout.LayoutParams.MATCH_PARENT
                 )
-                setImageResource(imageResources[imageType] ?: R.drawable.img_get_up)
+                setImageResource(imageResources[imageType] ?: R.drawable.seq_rtn0_1_wake_up)
                 tag = imageType
                 isClickable = true
 
