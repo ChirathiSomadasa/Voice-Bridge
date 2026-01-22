@@ -1,0 +1,499 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/main"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".FoodSymbolsActivity">
+
+    <ImageView
+        android:id="@+id/back"
+        android:layout_width="45dp"
+        android:layout_height="45dp"
+        android:layout_marginStart="16dp"
+        android:layout_marginTop="16dp"
+        android:clickable="true"
+        android:focusable="true"
+        android:contentDescription="@string/back_button"
+        app:srcCompat="@drawable/back"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <ScrollView
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:background="@drawable/white_bottom_bg"
+        android:fillViewport="true"
+        app:layout_constraintTop_toBottomOf="@+id/back"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent">
+
+        <LinearLayout
+            android:id="@+id/layoutContent"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center_horizontal"
+            android:orientation="vertical"
+            android:paddingStart="15dp"
+            android:paddingTop="20dp"
+            android:paddingEnd="20dp"
+            android:paddingBottom="20dp">
+
+            <TextView
+                android:id="@+id/foodTitle"
+                android:layout_width="281dp"
+                android:layout_height="40dp"
+                android:lineSpacingExtra="4dp"
+                android:text="Foods"
+                android:textAlignment="center"
+                android:textColor="@color/green"
+                android:textSize="28sp"
+                android:layout_marginBottom="3dp"
+                android:textStyle="bold" />
+
+            <!-- Grid Layout for Buttons -->
+            <GridLayout
+                android:id="@+id/gridLayout"
+                android:layout_width="match_parent"
+                android:layout_height="800dp"
+                android:alignmentMode="alignMargins"
+                android:columnCount="3"
+                android:rowCount="5"
+                android:rowOrderPreserved="false"
+                android:useDefaultMargins="true">
+
+                <LinearLayout
+                    android:layout_width="8dp"
+                    android:layout_height="127dp"
+                    android:layout_row="0"
+                    android:layout_column="0"
+                    android:layout_columnWeight="1"
+                    android:background="@drawable/rounded_green_border"
+                    android:gravity="center"
+                    android:orientation="vertical"
+                    android:padding="8dp">
+
+                    <ImageView
+                        android:id="@+id/imgHotDog"
+                        android:layout_width="90dp"
+                        android:layout_height="90dp"
+                        android:contentDescription="HotDog"
+                        android:clickable="true"
+                        android:focusable="true"
+                        app:srcCompat="@drawable/hot_dog"/>
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="1dp"
+                        android:text="Hot Dog"
+                        android:textColor="@color/black"
+                        android:textSize="16sp"
+                        android:textStyle="bold" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="8dp"
+                    android:layout_height="127dp"
+                    android:layout_columnWeight="1"
+                    android:background="@drawable/rounded_green_border"
+                    android:gravity="center"
+                    android:orientation="vertical"
+                    android:padding="8dp">
+
+                    <ImageView
+                        android:id="@+id/imgBurger"
+                        android:layout_width="90dp"
+                        android:layout_height="90dp"
+                        android:contentDescription="Burger"
+                        android:clickable="true"
+                        android:focusable="true"
+                        app:srcCompat="@drawable/burger"/>
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="1dp"
+                        android:text="Burger"
+                        android:textColor="@color/black"
+                        android:textSize="16sp"
+                        android:textStyle="bold" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="8dp"
+                    android:layout_height="127dp"
+                    android:layout_row="0"
+                    android:layout_column="2"
+                    android:layout_columnWeight="1"
+                    android:background="@drawable/rounded_green_border"
+                    android:gravity="center"
+                    android:orientation="vertical"
+                    android:padding="8dp">
+
+                    <ImageView
+                        android:id="@+id/imgPizza"
+                        android:layout_width="90dp"
+                        android:layout_height="90dp"
+                        android:contentDescription="Pizza"
+                        android:clickable="true"
+                        android:focusable="true"
+                        app:srcCompat="@drawable/pizza"/>
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="1dp"
+                        android:text="Pizza"
+                        android:textColor="@color/black"
+                        android:textSize="16sp"
+                        android:textStyle="bold" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="8dp"
+                    android:layout_height="127dp"
+                    android:layout_columnWeight="1"
+                    android:background="@drawable/rounded_green_border"
+                    android:gravity="center"
+                    android:orientation="vertical"
+                    android:padding="8dp">
+
+                    <ImageView
+                        android:id="@+id/imgCupCake"
+                        android:layout_width="90dp"
+                        android:layout_height="90dp"
+                        android:contentDescription="CupCake"
+                        android:clickable="true"
+                        android:focusable="true"
+                        app:srcCompat="@drawable/cup_cake"/>
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="1dp"
+                        android:text="Cup Cake"
+                        android:textColor="@color/black"
+                        android:textSize="16sp"
+                        android:textStyle="bold" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="8dp"
+                    android:layout_height="127dp"
+                    android:layout_columnWeight="1"
+                    android:background="@drawable/rounded_green_border"
+                    android:gravity="center"
+                    android:orientation="vertical"
+                    android:padding="8dp">
+
+                    <ImageView
+                        android:id="@+id/imgFishBurger"
+                        android:layout_width="90dp"
+                        android:layout_height="90dp"
+                        android:contentDescription="FishBurger"
+                        android:clickable="true"
+                        android:focusable="true"
+                        app:srcCompat="@drawable/fish_burger"/>
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="1dp"
+                        android:text="Fish Burger"
+                        android:textColor="@color/black"
+                        android:textSize="16sp"
+                        android:textStyle="bold" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="8dp"
+                    android:layout_height="127dp"
+                    android:layout_columnWeight="1"
+                    android:background="@drawable/rounded_green_border"
+                    android:gravity="center"
+                    android:orientation="vertical"
+                    android:padding="8dp">
+
+                    <ImageView
+                        android:id="@+id/imgToast"
+                        android:layout_width="90dp"
+                        android:layout_height="90dp"
+                        android:contentDescription="Toast"
+                        android:clickable="true"
+                        android:focusable="true"
+                        app:srcCompat="@drawable/toast"/>
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="1dp"
+                        android:text="Toast Bread"
+                        android:textColor="@color/black"
+                        android:textSize="16sp"
+                        android:textStyle="bold" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="8dp"
+                    android:layout_height="127dp"
+                    android:layout_columnWeight="1"
+                    android:background="@drawable/rounded_green_border"
+                    android:gravity="center"
+                    android:orientation="vertical"
+                    android:padding="8dp">
+
+                    <ImageView
+                        android:id="@+id/imgPancake"
+                        android:layout_width="90dp"
+                        android:layout_height="90dp"
+                        android:contentDescription="Pancake"
+                        android:clickable="true"
+                        android:focusable="true"
+                        app:srcCompat="@drawable/pancake"/>
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="1dp"
+                        android:text="Pan Cake"
+                        android:textColor="@color/black"
+                        android:textSize="16sp"
+                        android:textStyle="bold" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="8dp"
+                    android:layout_height="127dp"
+                    android:layout_columnWeight="1"
+                    android:background="@drawable/rounded_green_border"
+                    android:gravity="center"
+                    android:orientation="vertical"
+                    android:padding="8dp">
+
+                    <ImageView
+                        android:id="@+id/imgSandwich"
+                        android:layout_width="90dp"
+                        android:layout_height="90dp"
+                        android:contentDescription="Sandwich"
+                        android:clickable="true"
+                        android:focusable="true"
+                        app:srcCompat="@drawable/toasted_sandwich"/>
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="1dp"
+                        android:text="Sandwich"
+                        android:textColor="@color/black"
+                        android:textSize="16sp"
+                        android:textStyle="bold" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="8dp"
+                    android:layout_height="127dp"
+                    android:layout_columnWeight="1"
+                    android:background="@drawable/rounded_green_border"
+                    android:gravity="center"
+                    android:orientation="vertical"
+                    android:padding="8dp">
+
+                    <ImageView
+                        android:id="@+id/imgScrambledEggs"
+                        android:layout_width="90dp"
+                        android:layout_height="90dp"
+                        android:contentDescription="ScrambledEggs"
+                        android:clickable="true"
+                        android:focusable="true"
+                        app:srcCompat="@drawable/scrambled_eggs"/>
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="1dp"
+                        android:text="Scrambled"
+                        android:textColor="@color/black"
+                        android:textSize="16sp"
+                        android:textStyle="bold" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="8dp"
+                    android:layout_height="127dp"
+                    android:layout_columnWeight="1"
+                    android:background="@drawable/rounded_green_border"
+                    android:gravity="center"
+                    android:orientation="vertical"
+                    android:padding="8dp">
+
+                    <ImageView
+                        android:id="@+id/imgFriedEgg"
+                        android:layout_width="90dp"
+                        android:layout_height="90dp"
+                        android:contentDescription="FriedEgg"
+                        android:clickable="true"
+                        android:focusable="true"
+                        app:srcCompat="@drawable/fried_egg"/>
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="1dp"
+                        android:text="Fried Egg"
+                        android:textColor="@color/black"
+                        android:textSize="16sp"
+                        android:textStyle="bold" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="8dp"
+                    android:layout_height="127dp"
+                    android:layout_columnWeight="1"
+                    android:background="@drawable/rounded_green_border"
+                    android:gravity="center"
+                    android:orientation="vertical"
+                    android:padding="8dp">
+
+                    <ImageView
+                        android:id="@+id/imgCorn"
+                        android:layout_width="90dp"
+                        android:layout_height="90dp"
+                        android:contentDescription="Corn"
+                        android:clickable="true"
+                        android:focusable="true"
+                        app:srcCompat="@drawable/sweetcorn"/>
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="1dp"
+                        android:text="Corn"
+                        android:textColor="@color/black"
+                        android:textSize="16sp"
+                        android:textStyle="bold" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="8dp"
+                    android:layout_height="127dp"
+                    android:layout_columnWeight="1"
+                    android:background="@drawable/rounded_green_border"
+                    android:gravity="center"
+                    android:orientation="vertical"
+                    android:padding="8dp">
+
+                    <ImageView
+                        android:id="@+id/imgPasta"
+                        android:layout_width="90dp"
+                        android:layout_height="90dp"
+                        android:contentDescription="Pasta"
+                        android:clickable="true"
+                        android:focusable="true"
+                        app:srcCompat="@drawable/pasta"/>
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="1dp"
+                        android:text="Pasta"
+                        android:textColor="@color/black"
+                        android:textSize="16sp"
+                        android:textStyle="bold" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="8dp"
+                    android:layout_height="127dp"
+                    android:layout_columnWeight="1"
+                    android:background="@drawable/rounded_green_border"
+                    android:gravity="center"
+                    android:orientation="vertical"
+                    android:padding="8dp">
+
+                    <ImageView
+                        android:id="@+id/imgNoodles"
+                        android:layout_width="90dp"
+                        android:layout_height="90dp"
+                        android:contentDescription="Noodles"
+                        android:clickable="true"
+                        android:focusable="true"
+                        app:srcCompat="@drawable/noodles"/>
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="1dp"
+                        android:text="Noodles"
+                        android:textColor="@color/black"
+                        android:textSize="16sp"
+                        android:textStyle="bold" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="8dp"
+                    android:layout_height="127dp"
+                    android:layout_columnWeight="1"
+                    android:background="@drawable/rounded_green_border"
+                    android:gravity="center"
+                    android:orientation="vertical"
+                    android:padding="8dp">
+
+                    <ImageView
+                        android:id="@+id/imgCereal"
+                        android:layout_width="90dp"
+                        android:layout_height="90dp"
+                        android:contentDescription="Cereal"
+                        android:clickable="true"
+                        android:focusable="true"
+                        app:srcCompat="@drawable/cereal"/>
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="1dp"
+                        android:text="Cereal"
+                        android:textColor="@color/black"
+                        android:textSize="16sp"
+                        android:textStyle="bold" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="8dp"
+                    android:layout_height="127dp"
+                    android:layout_columnWeight="1"
+                    android:background="@drawable/rounded_green_border"
+                    android:gravity="center"
+                    android:orientation="vertical"
+                    android:padding="8dp">
+
+                    <ImageView
+                        android:id="@+id/imgCheese"
+                        android:layout_width="90dp"
+                        android:layout_height="90dp"
+                        android:contentDescription="Cheese"
+                        android:clickable="true"
+                        android:focusable="true"
+                        app:srcCompat="@drawable/cheese"/>
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="1dp"
+                        android:text="Cheese"
+                        android:textColor="@color/black"
+                        android:textSize="16sp"
+                        android:textStyle="bold" />
+                </LinearLayout>
+
+
+
+            </GridLayout>
+
+
+        </LinearLayout>
+    </ScrollView>
+
+</androidx.constraintlayout.widget.ConstraintLayout>

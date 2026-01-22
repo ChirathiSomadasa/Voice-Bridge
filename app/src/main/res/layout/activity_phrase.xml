@@ -17,20 +17,19 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="64dp"
-        android:text="Good Evening !"
         android:textColor="@color/green_dark"
-        android:textSize="22sp"
+        android:textSize="26sp"
         android:textStyle="bold"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.295"
+        app:layout_constraintHorizontal_bias="0.212"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
     <LinearLayout
         android:id="@+id/imageContainer"
-        android:layout_width="130dp"
-        android:layout_height="130dp"
-        android:layout_marginTop="65dp"
+        android:layout_width="160dp"
+        android:layout_height="160dp"
+        android:layout_marginTop="60dp"
         android:background="@drawable/rounded_white_shadow"
         android:gravity="center"
 
@@ -40,10 +39,11 @@
 
         <ImageView
             android:id="@+id/imgQuickWord"
-            android:layout_width="98dp"
-            android:layout_height="85dp"
+            android:layout_width="120dp"
+            android:layout_height="120dp"
             android:contentDescription="@string/app_name"
-            android:src="@drawable/play" />
+            android:scaleType="fitCenter"
+            android:visibility="visible" />
     </LinearLayout>
 
     <!-- Sentence -->
@@ -53,9 +53,9 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="36dp"
-        android:text="I want to play"
+
         android:textColor="@color/green_dark"
-        android:textSize="20sp"
+        android:textSize="28sp"
         android:textStyle="bold"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.516"
@@ -75,6 +75,7 @@
         app:layout_constraintEnd_toEndOf="parent">
 
     <LinearLayout
+        android:id="@+id/Speaker"
         android:layout_width="150dp"
         android:layout_height="150dp"
         android:layout_marginEnd="10dp"
@@ -91,20 +92,22 @@
             android:layout_height="65dp"
             android:src="@drawable/speaker"
             android:layout_marginTop="10dp"
-            android:contentDescription="Play Phrase"/>
+            android:contentDescription="@string/speaker"
+            />
 
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Play Phrase"
             android:textColor="@color/white"
             android:textStyle="bold"
             android:textSize="16sp"
-            android:layout_marginTop="22dp"/>
+            android:layout_marginTop="22dp"
+            android:text="Speaker"/>
     </LinearLayout>
 
     <!-- Refresh (Try Again) -->
         <LinearLayout
+            android:id="@+id/refresh"
             android:layout_width="150dp"
             android:layout_height="150dp"
             android:background="@drawable/rounded_corner_orange_bg"
@@ -118,18 +121,18 @@
                 android:id="@+id/ivRefresh"
                 android:layout_width="75dp"
                 android:layout_height="75dp"
-                android:contentDescription="Try Again"
                 android:src="@drawable/refresh"
-                android:layout_marginTop="10dp"/>
+                android:layout_marginTop="10dp"
+                android:contentDescription="@string/refresh"/>
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="16dp"
-                android:text="Try Again"
                 android:textColor="@color/white"
                 android:textSize="16sp"
-                android:textStyle="bold" />
+                android:textStyle="bold"
+                android:text="Try Again"/>
         </LinearLayout>
 
     </LinearLayout>
