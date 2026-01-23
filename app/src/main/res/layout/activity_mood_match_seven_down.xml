@@ -130,25 +130,37 @@
                 android:scaleType="fitCenter"
                 android:layout_marginBottom="20dp" />
 
-            <!-- Option 1 -->
+            <!-- Option 1 - Larger container with centered button -->
             <LinearLayout
-                android:layout_width="wrap_content"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="horizontal"
-                android:layout_marginBottom="12dp">
+                android:layout_marginBottom="20dp"
+                android:gravity="center"
+                android:paddingHorizontal="16dp">
 
-                <Button
-                    android:id="@+id/btnOption1"
-                    style="@style/SolidGreenButton"
+                <!-- Button Container with fixed width and centered button -->
+                <FrameLayout
                     android:layout_width="200dp"
                     android:layout_height="75dp"
-                    android:text="Happy"
-                    android:textSize="24sp"
-                    android:textStyle="bold"
-                    android:textAllCaps="false"
-                    app:backgroundTint="@color/dark_orange"
-                    android:textColor="@color/white"
-                    android:layout_marginEnd="8dp" />
+                    android:layout_marginEnd="8dp">
+
+                    <Button
+                        android:id="@+id/btnOption1"
+                        style="@style/SolidGreenButton"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:minWidth="180dp"
+                        android:minHeight="65dp"
+                        android:text="Happy"
+                        android:textSize="24sp"
+                        android:textStyle="bold"
+                        android:textAllCaps="false"
+                        app:backgroundTint="@color/dark_orange"
+                        android:textColor="@color/white"
+                        android:layout_gravity="center" />
+
+                </FrameLayout>
 
                 <LinearLayout
                     android:id="@+id/soundOption1"
@@ -181,25 +193,37 @@
                 </LinearLayout>
             </LinearLayout>
 
-            <!-- Option 2 -->
+            <!-- Option 2 - Larger container with centered button -->
             <LinearLayout
-                android:layout_width="wrap_content"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="horizontal"
-                android:layout_marginBottom="12dp">
+                android:layout_marginBottom="20dp"
+                android:gravity="center"
+                android:paddingHorizontal="16dp">
 
-                <Button
-                    android:id="@+id/btnOption2"
-                    style="@style/SolidGreenButton"
+                <!-- Button Container with fixed width and centered button -->
+                <FrameLayout
                     android:layout_width="200dp"
                     android:layout_height="75dp"
-                    android:text="Sad"
-                    android:textSize="24sp"
-                    android:textStyle="bold"
-                    android:textAllCaps="false"
-                    app:backgroundTint="@color/dark_orange"
-                    android:textColor="@color/white"
-                    android:layout_marginEnd="8dp" />
+                    android:layout_marginEnd="8dp">
+
+                    <Button
+                        android:id="@+id/btnOption2"
+                        style="@style/SolidGreenButton"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:minWidth="180dp"
+                        android:minHeight="65dp"
+                        android:text="Sad"
+                        android:textSize="24sp"
+                        android:textStyle="bold"
+                        android:textAllCaps="false"
+                        app:backgroundTint="@color/dark_orange"
+                        android:textColor="@color/white"
+                        android:layout_gravity="center" />
+
+                </FrameLayout>
 
                 <LinearLayout
                     android:id="@+id/soundOption2"
