@@ -72,11 +72,20 @@
         <item>@drawable/mood_lvl1_age8_disgusted</item>
     </array>
 
-    <array name="seq_routine0_morning_steps">
-        <item>@drawable/seq_rtn0_1_wake_up</item>
-        <item>@drawable/seq_rtn0_2_brush_teeth</item>
-        <item>@drawable/seq_rtn0_3_wash_face</item>
-        <item>@drawable/seq_rtn0_4_eat_breakfast</item>
+    <array name="seq_rtn0_sub1">
+        <item>@drawable/seq_rtn0_sub1_1_wakeup</item>
+        <item>@drawable/seq_rtn0_sub1_2_bed</item>
+        <item>@drawable/seq_rtn0_sub1_3_drink</item>
+    </array>
+    <array name="seq_rtn0_sub2">
+        <item>@drawable/seq_rtn0_sub2_1_brush</item>
+        <item>@drawable/seq_rtn0_sub2_2_wash</item>
+        <item>@drawable/seq_rtn0_sub2_3_dry</item>
+    </array>
+    <array name="seq_rtn0_sub3">
+        <item>@drawable/seq_rtn0_sub3_1_change</item>
+        <item>@drawable/seq_rtn0_sub3_2_cream</item>
+        <item>@drawable/seq_rtn0_sub3_3_wash</item>
     </array>
 
 <!--    <array name="seq_routine1_school_steps">-->
