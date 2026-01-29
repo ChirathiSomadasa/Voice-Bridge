@@ -3,170 +3,345 @@
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/rootContainer"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@color/white"
     tools:context=".ActivitySequenceUnderActivity">
 
-    <ImageView
-        android:id="@+id/topGameImage"
-        android:layout_width="match_parent"
-        android:layout_height="250dp"
-        android:scaleType="fitXY"
-        android:src="@drawable/activity_sequence"
-        app:layout_constraintTop_toTopOf="parent" />
-
-
-    <!-- Main content container -->
+    <!-- Bubble Progress Bar (Top floating bubbles) -->
     <LinearLayout
-        android:id="@+id/main_content_container"
+        android:id="@+id/bubbleContainer"
         android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:orientation="vertical"
-        android:padding="24dp"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/topGameImage">
+        android:layout_height="60dp"
+        android:orientation="horizontal"
+        android:gravity="center"
+        android:padding="8dp"
+        android:background="@drawable/bubble_container_bg"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent">
 
-        <!-- Game title -->
+        <!-- Bubbles will be added programmatically -->
+    </LinearLayout>
+
+    <!-- Top Game Image with overlay -->
+    <FrameLayout
+        android:id="@+id/topGameContainer"
+        android:layout_width="match_parent"
+        android:layout_height="200dp"
+        app:layout_constraintTop_toBottomOf="@id/bubbleContainer"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent">
+
+        <ImageView
+            android:id="@+id/topGameImage"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:scaleType="fitXY"
+            android:src="@drawable/activity_sequence"
+            android:alpha="0.9" />
+
+        <!-- Therapeutic hint indicator -->
+        <ImageView
+            android:id="@+id/hintIndicator"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:src="@drawable/ic_no_hint"
+            android:layout_margin="16dp"
+            android:visibility="gone"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintEnd_toEndOf="parent" />
+
+        <!-- Game title overlay -->
         <TextView
             android:id="@+id/game_title"
-            android:layout_width="match_parent"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Arrange Morning Routine"
-            android:textSize="20sp"
+            android:text="Therapeutic Sequencing"
+            android:textSize="22sp"
             android:textStyle="bold"
-            android:gravity="center"
-            android:layout_marginBottom="24dp"/>
-
-        <TextView
-            android:id="@+id/timerTextView"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="00:00"
-            android:textSize="20sp"
-            android:textStyle="bold" />
-
-        <!-- Horizontal images (initial state) -->
-        <LinearLayout
-            android:id="@+id/horizontal_images_container"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:gravity="center"
-            android:layout_marginBottom="24dp">
-
-            <!-- Image 1: Get Up -->
-            <FrameLayout
-                android:id="@+id/frame_get_up"
-                android:layout_width="100dp"
-                android:layout_height="100dp"
-                android:layout_margin="8dp">
-
-                <ImageView
-                    android:id="@+id/img_get_up"
-                    android:layout_width="match_parent"
-                    android:layout_height="match_parent"
-                    android:src="@drawable/seq_rtn0_1_wake_up"/>
-            </FrameLayout>
-
-            <!-- Image 2: Brush Teeth -->
-            <FrameLayout
-                android:id="@+id/frame_brush_teeth"
-                android:layout_width="100dp"
-                android:layout_height="100dp"
-                android:layout_margin="8dp">
-
-                <ImageView
-                    android:id="@+id/img_brush_teeth"
-                    android:layout_width="match_parent"
-                    android:layout_height="match_parent"
-                    android:src="@drawable/seq_rtn0_2_brush_teeth"/>
-            </FrameLayout>
-
-            <!-- Image 3: Wash Face -->
-            <FrameLayout
-                android:id="@+id/frame_wash_face"
-                android:layout_width="100dp"
-                android:layout_height="100dp"
-                android:layout_margin="8dp">
-
-                <ImageView
-                    android:id="@+id/img_wash_face"
-                    android:layout_width="match_parent"
-                    android:layout_height="match_parent"
-                    android:src="@drawable/seq_rtn0_3_wash_face"/>
-            </FrameLayout>
-        </LinearLayout>
-
-        <!-- START BUTTON -->
-        <Button
-            android:id="@+id/btn_start"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Start Game"
-            android:layout_gravity="center"
-            android:background="@drawable/rounded_button_background_g"
             android:textColor="@color/white"
-            android:paddingStart="32dp"
-            android:paddingEnd="32dp"
-            android:layout_marginBottom="24dp"/>
+            android:background="@drawable/title_background"
+            android:padding="12dp"
+            android:layout_gravity="center"
+            android:layout_marginTop="16dp" />
+    </FrameLayout>
 
-        <!-- Vertical images container (hidden initially) -->
+    <!-- Timer display -->
+    <TextView
+        android:id="@+id/timerTextView"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="00:00"
+        android:textSize="18sp"
+        android:textStyle="bold"
+        android:textColor="@color/green"
+        android:background="@drawable/timer_background"
+        android:padding="8dp"
+        android:visibility="gone"
+        app:layout_constraintTop_toBottomOf="@id/topGameContainer"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:layout_marginTop="16dp"
+        android:layout_marginEnd="16dp" />
+
+    <!-- Visual hint overlay (circular glow) -->
+    <View
+        android:id="@+id/visualHintOverlay"
+        android:layout_width="240dp"
+        android:layout_height="240dp"
+        android:background="@drawable/glowing_circle"
+        android:visibility="gone"
+        android:elevation="10dp"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
+
+    <!-- Main content scrollable container -->
+    <androidx.core.widget.NestedScrollView
+        android:id="@+id/mainScrollView"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:fillViewport="true"
+        app:layout_constraintTop_toBottomOf="@id/timerTextView"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:layout_marginTop="8dp">
+
         <LinearLayout
-            android:id="@+id/vertical_images_container"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:gravity="center"
-            android:layout_marginBottom="24dp"
-            android:visibility="gone">
+            android:padding="20dp">
 
-            <!-- Note: Vertical images will be added programmatically -->
+            <!-- Instruction text -->
+            <TextView
+                android:id="@+id/tv_instruction"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Tap the images in correct order"
+                android:textSize="18sp"
+                android:textColor="@color/green"
+                android:gravity="center"
+                android:padding="16dp"
+                android:background="@drawable/instruction_background"
+                android:layout_marginBottom="24dp" />
+
+            <!-- Horizontal images (initial learning state) -->
+            <LinearLayout
+                android:id="@+id/horizontal_images_container"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center"
+                android:layout_marginBottom="24dp">
+
+                <!-- Images will be populated dynamically based on routine -->
+                <!-- Placeholder structure -->
+                <FrameLayout
+                    android:id="@+id/horizontal_frame_1"
+                    android:layout_width="100dp"
+                    android:layout_height="100dp"
+                    android:layout_margin="8dp"
+                    android:background="@drawable/image_container_bg">
+
+                    <ImageView
+                        android:id="@+id/horizontal_img_1"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:scaleType="fitCenter"
+                        android:padding="8dp" />
+                </FrameLayout>
+
+                <FrameLayout
+                    android:id="@+id/horizontal_frame_2"
+                    android:layout_width="100dp"
+                    android:layout_height="100dp"
+                    android:layout_margin="8dp"
+                    android:background="@drawable/image_container_bg">
+
+                    <ImageView
+                        android:id="@+id/horizontal_img_2"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:scaleType="fitCenter"
+                        android:padding="8dp" />
+                </FrameLayout>
+
+                <FrameLayout
+                    android:id="@+id/horizontal_frame_3"
+                    android:layout_width="100dp"
+                    android:layout_height="100dp"
+                    android:layout_margin="8dp"
+                    android:background="@drawable/image_container_bg">
+
+                    <ImageView
+                        android:id="@+id/horizontal_img_3"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:scaleType="fitCenter"
+                        android:padding="8dp" />
+                </FrameLayout>
+            </LinearLayout>
+
+            <!-- START BUTTON -->
+            <Button
+                android:id="@+id/btn_start"
+                android:layout_width="wrap_content"
+                android:layout_height="56dp"
+                android:text="START"
+                android:layout_gravity="center"
+                android:background="@drawable/rounded_button_therapeutic"
+                android:textColor="@color/white"
+                android:textSize="18sp"
+                android:paddingStart="40dp"
+                android:paddingEnd="40dp"
+                android:layout_marginBottom="32dp"
+                android:elevation="4dp" />
+
+            <!-- Vertical images container (gameplay state) -->
+            <LinearLayout
+                android:id="@+id/vertical_images_container"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:gravity="center"
+                android:layout_marginBottom="32dp"
+                android:visibility="gone">
+
+                <!-- Vertical images will be added programmatically here -->
+                <!-- Each will be a FrameLayout containing ImageView and badge TextView -->
+            </LinearLayout>
+
+            <!-- Order display (showing selected sequence) -->
+            <LinearLayout
+                android:id="@+id/order_display_container"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:background="@drawable/order_display_bg"
+                android:padding="20dp"
+                android:layout_marginBottom="24dp"
+                android:visibility="gone"
+                android:elevation="2dp">
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Your Sequence:"
+                    android:textSize="16sp"
+                    android:textStyle="bold"
+                    android:textColor="@color/dark_orange"
+                    android:layout_marginBottom="12dp" />
+
+                <TextView
+                    android:id="@+id/tv_order_1"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="1. "
+                    android:textSize="18sp"
+                    android:textColor="@color/green"
+                    android:paddingVertical="4dp" />
+
+                <View
+                    android:layout_width="match_parent"
+                    android:layout_height="1dp"
+                    android:background="#E0E0E0"
+                    android:layout_marginVertical="4dp" />
+
+                <TextView
+                    android:id="@+id/tv_order_2"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="2. "
+                    android:textSize="18sp"
+                    android:textColor="@color/green"
+                    android:paddingVertical="4dp" />
+
+                <View
+                    android:layout_width="match_parent"
+                    android:layout_height="1dp"
+                    android:background="#E0E0E0"
+                    android:layout_marginVertical="4dp" />
+
+                <TextView
+                    android:id="@+id/tv_order_3"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="3. "
+                    android:textSize="18sp"
+                    android:textColor="@color/green"
+                    android:paddingVertical="4dp" />
+            </LinearLayout>
+
+            <!-- Therapeutic tips section -->
+            <LinearLayout
+                android:id="@+id/therapeuticTipsContainer"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:background="@drawable/tips_background"
+                android:padding="16dp"
+                android:visibility="gone"
+                android:layout_marginBottom="24dp">
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Therapeutic Tip"
+                    android:textSize="16sp"
+                    android:textStyle="bold"
+                    android:textColor="@color/green"
+                    android:drawableStart="@drawable/ic_tip"
+                    android:drawablePadding="8dp"
+                    android:layout_marginBottom="8dp" />
+
+                <TextView
+                    android:id="@+id/therapeuticTipText"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Take your time and focus on one step at a time."
+                    android:textSize="14sp"
+                    android:textColor="@color/dark_orange"
+                    android:lineSpacingExtra="4dp" />
+            </LinearLayout>
+
+            <!-- Space for dynamic content -->
+            <Space
+                android:layout_width="match_parent"
+                android:layout_height="40dp" />
+
         </LinearLayout>
+    </androidx.core.widget.NestedScrollView>
 
-        <!-- Order display (hidden initially) -->
-        <LinearLayout
-            android:id="@+id/order_display_container"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:padding="16dp"
-            android:layout_marginBottom="16dp"
-            android:visibility="gone">
+    <!-- Floating action button for hint (when enabled) -->
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
+        android:id="@+id/fabHint"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:src="@drawable/ic_help"
+        android:visibility="gone"
+        app:backgroundTint="@color/green"
+        app:elevation="8dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:layout_margin="24dp" />
 
-            <TextView
-                android:id="@+id/tv_order_1"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="1. "
-                android:textSize="16sp"/>
+    <!-- Therapeutic overlay for celebrations -->
+    <FrameLayout
+        android:id="@+id/celebrationOverlay"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:visibility="gone"
+        android:background="#80000000"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent">
 
-            <TextView
-                android:id="@+id/tv_order_2"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="2. "
-                android:textSize="16sp"/>
-
-            <TextView
-                android:id="@+id/tv_order_3"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="3. "
-                android:textSize="16sp"/>
-        </LinearLayout>
-
-        <!-- Instruction text (hidden initially) -->
-        <TextView
-            android:id="@+id/tv_instruction"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Tap the images in correct order"
-            android:textSize="16sp"
-            android:gravity="center"
-            android:visibility="gone"
-            android:layout_marginBottom="16dp"/>
-
-    </LinearLayout>
+        <!-- Celebration content added programmatically -->
+    </FrameLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>
