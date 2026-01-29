@@ -174,7 +174,7 @@ class MMScoreboardActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
             alpha > 8.0f -> Pair("Outstanding! ⭐⭐⭐", R.color.gold)
             alpha > 5.0f -> Pair("Great Job! ⭐⭐", R.color.light_green)
             alpha > 2.0f -> Pair("Good Effort! ⭐", R.color.light_blue)
-            else -> Pair("Keep Practicing! 💪", R.color.dark_orange)
+            else -> Pair("Keep Practicing!", R.color.dark_orange)
         }
     }
 
@@ -207,9 +207,9 @@ class MMScoreboardActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
 
         // Alpha feedback (achievement index)
         feedback.append(when {
-            alpha > 8.0f -> "Amazing focus! "
-            alpha > 5.0f -> "Good thinking! "
-            alpha > 2.0f -> "You're learning! "
+            alpha > 8.0f -> "You are a Super Star!"
+            alpha > 5.0f -> "You did it! Hooray! "
+            alpha > 2.0f -> "You are doing great! "
             else -> "Nice try! "
         })
 
@@ -222,7 +222,7 @@ class MMScoreboardActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
 
         // Tap frustration feedback
         feedback.append(when {
-            taps <= 2 -> "Very calm hands!"
+            taps <= 2 -> "Perfect control!"
             taps <= 4 -> "Staying focused!"
             else -> "Try gentle taps next time!"
         })
@@ -283,7 +283,21 @@ class MMScoreboardActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
             startActivity(intent)
             finish() // Close scoreboard
         }
-        btnDashboard.setOnClickListener { finish() }
+        btnDashboard.setOnClickListener {
+            try {
+                val intent = Intent(this, GameDashboardActivity::class.java)
+                // Clear all activities and start fresh at dashboard
+                intent.flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or
+                        Intent.FLAG_ACTIVITY_NEW_TASK or
+                        Intent.FLAG_ACTIVITY_CLEAR_TASK
+                startActivity(intent)
+                finish()
+            } catch (e: Exception) {
+                Log.e("MMScoreboard", "Error navigating to GameDashboardActivity: ${e.message}")
+                // Fallback: Just close the app gracefully
+                finishAffinity()
+            }
+        }
         btnUnlockGift.setOnClickListener {
             val intent = Intent(this, AllCorrectGrandPrizeActivity::class.java)
             startActivityForResult(intent, 100)
