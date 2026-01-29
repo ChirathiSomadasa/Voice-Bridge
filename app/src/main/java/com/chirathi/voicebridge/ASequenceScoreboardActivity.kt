@@ -1,419 +1,543 @@
 package com.chirathi.voicebridge
 
+import android.animation.AnimatorSet
 import android.animation.ObjectAnimator
 import android.animation.ValueAnimator
 import android.content.Intent
+import android.graphics.Color
+import android.media.MediaPlayer
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
 import android.util.Log
+import android.view.View
 import android.view.animation.*
 import android.widget.Button
 import android.widget.ImageView
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
+import androidx.constraintlayout.widget.ConstraintLayout
+import androidx.core.content.ContextCompat
 
 class ASequenceScoreboardActivity : AppCompatActivity() {
 
-    private var attempts = 0
-    private var completionTime = 0L
-    private var accuracy = 100
-    private var stickerAlreadyShown = false
+    private var finalAlpha: Float = 0f
+    private var poppedBubbles: Int = 0
+    private var totalBubbles: Int = 5
+    private var correctCount: Int = 0
+    private var errorCount: Int = 0
+    private var completedSubroutines: Int = 0
 
-    private lateinit var completedText: TextView
-    private lateinit var attemptsText: TextView
-    private lateinit var timeText: TextView
-    private lateinit var accuracyText: TextView
-    private lateinit var pandaMascot: ImageView
+    // Staircase configuration
+    private val totalSteps = 5
+    private var starFinalStep = 0
+    private lateinit var starCharacter: ImageView
+    private val stepBlocks = mutableListOf<ImageView>()
+    private val stepLabels = mutableListOf<TextView>()
+    private val stepMessages = listOf(
+        "Step by step!",
+        "Going up!",
+        "Moving along!",
+        "So close!",
+        "We did it!"
+    )
 
-    // Star rating views
-    private lateinit var starLeft: ImageView
-    private lateinit var starMiddle: ImageView
-    private lateinit var starRight: ImageView
+    // Therapeutic colors
+    private val blockColors = listOf(
+        Color.parseColor("#FF6B8B"), // Pink
+        Color.parseColor("#4CAF50"), // Green
+        Color.parseColor("#FF9800"), // Orange
+        Color.parseColor("#FF6B8B"), // Pink
+        Color.parseColor("#4CAF50")  // Green
+    )
 
-    // Performance text
-    private lateinit var performanceText: TextView
+    // UI Elements
+    private lateinit var staircaseContainer: ConstraintLayout
+    private lateinit var therapeuticMessage: TextView
+    private lateinit var alphaDisplay: TextView
+    private lateinit var progressDescription: TextView
+    private lateinit var btnContinue: Button
+    private lateinit var btnHome: Button
 
-    // Animation objects
-    private lateinit var pandaHeartbeatAnimator: ObjectAnimator
-    private lateinit var completedTextPulseAnimator: ObjectAnimator
-    private lateinit var completedTextColorAnimator: ObjectAnimator
+    // Animations
+    private var starGlowAnimator: ObjectAnimator? = null
+    private var starBounceAnimator: ObjectAnimator? = null
+    private lateinit var blockDropAnimators: MutableList<AnimatorSet>
+
+    // Sound effects
+    private lateinit var blockDropSound: MediaPlayer
+    private lateinit var starBounceSound: MediaPlayer
+    private lateinit var completionSound: MediaPlayer
 
     companion object {
-        private const val TAG = "ScoreboardDebug"
-
-        // Scoring constants (adjust these as needed)
-        private const val MAX_ATTEMPTS_PENALTY = 5  // Maximum attempts before zero accuracy
-        private const val MAX_TIME_PENALTY = 60000L // 60 seconds maximum time
-        private const val IDEAL_TIME = 10000L      // 10 seconds for perfect score
-        private const val IDEAL_ATTEMPTS = 1       // 1 attempt for perfect score
+        private const val TAG = "StarStaircase"
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_asequence_scoreboard)
 
-        Log.d(TAG, "=== onCreate STARTED ===")
+        // Get therapeutic data
+        finalAlpha = intent.getFloatExtra("FINAL_ALPHA", 0f)
+        poppedBubbles = intent.getIntExtra("POPPED_BUBBLES", 0)
+        totalBubbles = intent.getIntExtra("TOTAL_BUBBLES", 5)
+        correctCount = intent.getIntExtra("CORRECT_COUNT", 0)
+        errorCount = intent.getIntExtra("ERROR_COUNT", 0)
+        completedSubroutines = intent.getIntExtra("COMPLETED_SUBROUTINES", 0)
 
-        // Check if sticker was already shown (passed from UnlockStickerActivity)
-        stickerAlreadyShown = intent.getBooleanExtra("STICKER_ALREADY_SHOWN", false)
+        Log.d(TAG, "Therapeutic Summary: Alpha=$finalAlpha, Bubbles=$poppedBubbles/$totalBubbles")
 
-        // Clear the flag so it doesn't persist
-        intent.removeExtra("STICKER_ALREADY_SHOWN")
+        // Initialize sound effects
+        initializeSounds()
 
-        // Get data passed from game OR from UnlockStickerActivity
-        val attemptsFromGame = intent.getIntExtra("ATTEMPTS", 1)
-        completionTime = intent.getLongExtra("ELAPSED_TIME", 0L)
-
-        attempts = attemptsFromGame
-
-        // Calculate accuracy based on attempts and time
-        // If accuracy is passed, use it; otherwise calculate it
-        if (intent.hasExtra("ACCURACY")) {
-            accuracy = intent.getIntExtra("ACCURACY", 100)
-        } else {
-            accuracy = calculateAccuracy(attempts, completionTime)
-        }
-
-        Log.d(TAG, "Attempts: $attempts")
-        Log.d(TAG, "Time: ${completionTime}ms")
-        Log.d(TAG, "Accuracy: $accuracy%")
-        Log.d(TAG, "Sticker already shown: $stickerAlreadyShown")
-
-        // Initialize all views
+        // Initialize views
         initializeViews()
 
-        // Set stats to views
-        setStatsToViews()
+        // Calculate star's final position based on alpha
+        calculateStarProgress()
 
-        // Update star rating based on accuracy
-        updateStarRating(accuracy)
+        // Build therapeutic staircase
+        buildStaircase()
 
-        // Start animations
-        startAnimations()
+        // Start therapeutic animation sequence
+        startTherapeuticAnimationSequence()
 
-        // Button click listeners
+        // Setup button listeners
         setupButtonListeners()
     }
 
-    private fun calculateAccuracy(attempts: Int, timeMs: Long): Int {
-        // Calculate accuracy based on two factors:
-        // 1. Attempts efficiency (50% weight)
-        // 2. Time efficiency (50% weight)
+    private fun initializeSounds() {
+        blockDropSound = MediaPlayer.create(this, R.raw.block_drop)
+        starBounceSound = MediaPlayer.create(this, R.raw.star_bounce)
+        completionSound = MediaPlayer.create(this, R.raw.completion_sound)
 
-        // 1. Attempts Score (0-50 points)
-        val attemptsScore = calculateAttemptsScore(attempts)
-
-        // 2. Time Score (0-50 points)
-        val timeScore = calculateTimeScore(timeMs)
-
-        // Total accuracy (0-100%)
-        val totalScore = attemptsScore + timeScore
-
-        // Ensure it's between 0-100
-        return totalScore.coerceIn(0, 100)
-    }
-
-    private fun calculateAttemptsScore(attempts: Int): Int {
-        // Fewer attempts = higher score
-        // Perfect score (50 points) for 1 attempt
-        // Linear decrease up to MAX_ATTEMPTS_PENALTY attempts (0 points)
-
-        val attemptsPenalty = when {
-            attempts <= IDEAL_ATTEMPTS -> 0
-            attempts >= MAX_ATTEMPTS_PENALTY -> 50
-            else -> {
-                val penaltyPerAttempt = 50.0 / (MAX_ATTEMPTS_PENALTY - IDEAL_ATTEMPTS)
-                ((attempts - IDEAL_ATTEMPTS) * penaltyPerAttempt).toInt()
-            }
-        }
-
-        return 50 - attemptsPenalty
-    }
-
-    private fun calculateTimeScore(timeMs: Long): Int {
-        // Faster time = higher score
-        // Perfect score (50 points) for <= IDEAL_TIME
-        // Linear decrease up to MAX_TIME_PENALTY (0 points)
-
-        val timeSeconds = timeMs / 1000
-        Log.d(TAG, "Time in seconds: $timeSeconds")
-
-        return when {
-            timeMs <= IDEAL_TIME -> 50  // Perfect score for <= 10 seconds
-            timeMs >= MAX_TIME_PENALTY -> 0  // Zero score for >= 60 seconds
-            else -> {
-                val timeOverIdeal = (timeMs - IDEAL_TIME).toDouble()
-                val totalPenaltyRange = (MAX_TIME_PENALTY - IDEAL_TIME).toDouble()
-                val penalty = (timeOverIdeal / totalPenaltyRange) * 50
-                (50 - penalty).toInt()
-            }
-        }
+        // Adjust volumes for therapeutic experience
+        blockDropSound.setVolume(0.3f, 0.3f)
+        starBounceSound.setVolume(0.5f, 0.5f)
+        completionSound.setVolume(0.7f, 0.7f)
     }
 
     private fun initializeViews() {
-        Log.d(TAG, "Initializing views...")
+        staircaseContainer = findViewById(R.id.staircaseContainer)
+        therapeuticMessage = findViewById(R.id.therapeuticMessage)
+        alphaDisplay = findViewById(R.id.alphaDisplay)
+        progressDescription = findViewById(R.id.progressDescription)
+        btnContinue = findViewById(R.id.btnContinue)
+        btnHome = findViewById(R.id.btnHome)
+        starCharacter = findViewById(R.id.starCharacter)
 
-        completedText = findViewById(R.id.completedText)
-        attemptsText = findViewById(R.id.attemptsText)
-        timeText = findViewById(R.id.timeText)
-        accuracyText = findViewById(R.id.accuracyText)
-        pandaMascot = findViewById(R.id.pandaMascot)
+        // Initialize step blocks
+        stepBlocks.add(findViewById(R.id.stepBlock1))
+        stepBlocks.add(findViewById(R.id.stepBlock2))
+        stepBlocks.add(findViewById(R.id.stepBlock3))
+        stepBlocks.add(findViewById(R.id.stepBlock4))
+        stepBlocks.add(findViewById(R.id.stepBlock5))
 
-        // Initialize star rating views
-        starLeft = findViewById(R.id.starLeft)
-        starMiddle = findViewById(R.id.starMiddle)
-        starRight = findViewById(R.id.starRight)
-
-        // Initialize performance text
-        performanceText = findViewById(R.id.performanceText)
+        // Initialize step labels
+        stepLabels.add(findViewById(R.id.stepLabel1))
+        stepLabels.add(findViewById(R.id.stepLabel2))
+        stepLabels.add(findViewById(R.id.stepLabel3))
+        stepLabels.add(findViewById(R.id.stepLabel4))
+        stepLabels.add(findViewById(R.id.stepLabel5))
     }
 
-    private fun setStatsToViews() {
-        Log.d(TAG, "=== setStatsToViews STARTED ===")
+    private fun calculateStarProgress() {
+        // MODEL-DRIVEN STAR PROGRESS CALCULATION
 
-        // Display attempts - NO ANIMATION, keep steady
-        attemptsText.text = attempts.toString()
+        // Therapeutic progress considers multiple factors:
+        // 1. Alpha score (primary) - 60% weight
+        // 2. Bubble completion - 20% weight
+        // 3. Correct/error ratio - 20% weight
 
-        // Format completion time as seconds with one decimal - NO ANIMATION, keep steady
-        val seconds = completionTime / 1000.0
-        timeText.text = "%.1fs".format(seconds)
+        val alphaFactor = (finalAlpha / 10f) * 0.6f
+        val bubbleFactor = (poppedBubbles.toFloat() / totalBubbles) * 0.2f
+        val accuracyFactor = if ((correctCount + errorCount) > 0) {
+            (correctCount.toFloat() / (correctCount + errorCount)) * 0.2f
+        } else 0f
 
-        // Set accuracy with counting animation only
-        animateAccuracyCount(accuracy)
+        val therapeuticProgress = (alphaFactor + bubbleFactor + accuracyFactor)
 
-        // Set performance text based on accuracy - NO ANIMATION, keep steady
-        updatePerformanceText(accuracy)
+        // Map to staircase steps (0-4)
+        starFinalStep = (therapeuticProgress * totalSteps).toInt().coerceIn(0, totalSteps - 1)
 
-        // Check for perfect accuracy to trigger sticker unlock ONLY IF NOT ALREADY SHOWN
-        if (accuracy == 100 && !stickerAlreadyShown) {
-            Handler(Looper.getMainLooper()).postDelayed({
-                triggerPerfectAccuracyCelebration()
-            }, 2500) // Wait for accuracy animation to complete
+        Log.d(TAG, "Progress Factors: Alpha=$alphaFactor, Bubbles=$bubbleFactor, Accuracy=$accuracyFactor")
+        Log.d(TAG, "Therapeutic Progress: $therapeuticProgress, Star Step: $starFinalStep")
+
+        // Set therapeutic message based on progress
+        updateTherapeuticMessage(therapeuticProgress)
+    }
+
+    private fun updateTherapeuticMessage(progress: Float) {
+        val message = when {
+            progress >= 0.8 -> "Therapeutic breakthrough! 🌟\nYou're showing excellent progress!"
+            progress >= 0.6 -> "Great therapeutic session! 🎯\nSolid skills demonstrated!"
+            progress >= 0.4 -> "Good therapeutic effort! 📚\nLearning and growing!"
+            progress >= 0.2 -> "Therapeutic journey continues! 🌈\nEvery step matters!"
+            else -> "Therapeutic exploration! 🎪\nStarting the adventure!"
         }
 
-        Log.d(TAG, "=== setStatsToViews COMPLETED ===")
-    }
+        therapeuticMessage.text = message
 
-    private fun triggerPerfectAccuracyCelebration() {
-        Log.d(TAG, "Perfect accuracy detected! Triggering celebration...")
-
-        // Start sticker unlock activity WITH GAME DATA
-        val intent = Intent(this, UnlockStickerActivity::class.java)
-        intent.putExtra("ATTEMPTS", attempts)
-        intent.putExtra("ELAPSED_TIME", completionTime)
-        intent.putExtra("ACCURACY", accuracy)
-        startActivity(intent)
-        overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out)
-
-        // DON'T finish this activity - it will stay in back stack
-        // User will return to it when sticker unlock finishes
-    }
-
-    private fun updatePerformanceText(accuracy: Int) {
-        val (text, colorRes) = when {
-            accuracy >= 90 -> {
-                Pair("Outstanding! Perfect performance! 🏆", R.color.green_dark)
-            }
-            accuracy >= 70 -> {
-                Pair("Excellent! Great job! 👍", R.color.green)
-            }
-            accuracy >= 50 -> {
-                Pair("Good! Keep practicing! 📚", R.color.dark_orange)
-            }
-            accuracy >= 30 -> {
-                Pair("Nice try! You're getting better! 🌟", R.color.light_blue)
-            }
-            else -> {
-                Pair("Keep practicing! You'll improve! 💪", R.color.red_dark)
-            }
+        // Update alpha display with therapeutic interpretation
+        val alphaText = when {
+            finalAlpha >= 8.0 -> "Excellent Therapeutic Score: ${"%.1f".format(finalAlpha)}/10"
+            finalAlpha >= 6.0 -> "Good Therapeutic Score: ${"%.1f".format(finalAlpha)}/10"
+            finalAlpha >= 4.0 -> "Developing Therapeutic Score: ${"%.1f".format(finalAlpha)}/10"
+            else -> "Beginning Therapeutic Score: ${"%.1f".format(finalAlpha)}/10"
         }
 
-        performanceText.text = text
-        performanceText.setTextColor(resources.getColor(colorRes, theme))
-    }
+        alphaDisplay.text = alphaText
 
-    private fun updateStarRating(accuracy: Int) {
-        // Determine how many stars to light up based on accuracy
-        val starsToLight = when {
-            accuracy >= 70 -> 3  // Three stars for 70-100%
-            accuracy >= 50 -> 2  // Two stars for 50-69%
-            accuracy >= 30 -> 1  // One star for 30-49%
-            else -> 0            // No stars for 0-29%
-        }
-
-        // Light up stars - Simple bounce animation only, then steady
-        val stars = listOf(starLeft, starMiddle, starRight)
-        for (i in 0 until 3) {
-            val star = stars[i]
-            if (i < starsToLight) {
-                star.setImageResource(R.drawable.star_filled_yellow)
-                // Simple bounce entrance animation
-                val bounceAnim = ScaleAnimation(
-                    0f, 1.1f, 0f, 1.1f,
-                    Animation.RELATIVE_TO_SELF, 0.5f,
-                    Animation.RELATIVE_TO_SELF, 0.5f
-                ).apply {
-                    duration = 600
-                    interpolator = BounceInterpolator()
-                    repeatCount = 0
-                    startOffset = (i * 300).toLong()
-                }
-                star.startAnimation(bounceAnim)
-            } else {
-                star.setImageResource(R.drawable.star_outline)
-            }
+        // Progress description
+        progressDescription.text = buildString {
+            append("Completed $completedSubroutines activities\n")
+            append("Popped $poppedBubbles/$totalBubbles bubbles\n")
+            append("${correctCount} correct, ${errorCount} learning moments")
         }
     }
 
-    private fun animateAccuracyCount(finalAccuracy: Int) {
-        val animator = ValueAnimator.ofInt(0, finalAccuracy)
-        animator.duration = 2000
-        animator.interpolator = AccelerateDecelerateInterpolator()
+    private fun buildStaircase() {
+        // Set up each step block with therapeutic colors and labels
+        for (i in 0 until totalSteps) {
+            val block = stepBlocks[i]
+            val label = stepLabels[i]
 
-        animator.addUpdateListener { valueAnimator ->
-            val currentValue = valueAnimator.animatedValue as Int
-            accuracyText.text = "$currentValue%"
+            // Set block color
+            block.setColorFilter(blockColors[i])
 
-            // Change color based on value
-            val colorRes = when {
-                currentValue >= 80 -> R.color.green_dark
-                currentValue >= 60 -> R.color.green
-                currentValue >= 40 -> R.color.dark_orange
-                currentValue >= 20 -> R.color.light_blue
-                else -> R.color.red_dark
-            }
-            accuracyText.setTextColor(resources.getColor(colorRes, theme))
+            // Set step message
+            label.text = stepMessages[i]
+
+            // Initial hidden state for animation
+            block.alpha = 0f
+            block.translationY = -500f
+            label.alpha = 0f
+
+            // Set therapeutic tag
+            block.tag = "step_${i + 1}"
+            label.tag = "label_${i + 1}"
         }
 
-        animator.start()
+        // Position star at bottom initially
+        starCharacter.alpha = 0f
+        starCharacter.translationY = 100f
     }
 
-    private fun startAnimations() {
-        // Animate the "COMPLETED!!!" text with continuous effects
-        animateCompletedText()
+    private fun startTherapeuticAnimationSequence() {
+        // Therapeutic animation sequence:
+        // 1. Drop blocks one by one
+        // 2. Introduce star
+        // 3. Star climbs staircase
+        // 4. Star settles and glows
 
-        // Panda mascot heartbeat animation (continuous)
-        animatePandaHeartbeat()
-    }
-
-    private fun animateCompletedText() {
-        // 1. Initial bounce animation
-        val bounceAnim = ScaleAnimation(
-            0.5f, 1.2f, 0.5f, 1.2f,
-            Animation.RELATIVE_TO_SELF, 0.5f,
-            Animation.RELATIVE_TO_SELF, 0.5f
-        ).apply {
-            duration = 800
-            interpolator = BounceInterpolator()
-            repeatCount = 0
-        }
-
-        // 2. Continuous pulse animation
-        completedTextPulseAnimator = ObjectAnimator.ofPropertyValuesHolder(
-            completedText,
-            android.animation.PropertyValuesHolder.ofFloat("scaleX", 1f, 1.08f, 1f),
-            android.animation.PropertyValuesHolder.ofFloat("scaleY", 1f, 1.08f, 1f)
-        ).apply {
-            duration = 1800
-            repeatCount = ValueAnimator.INFINITE
-            repeatMode = ValueAnimator.RESTART
-            startDelay = 800
-            interpolator = AccelerateDecelerateInterpolator()
-        }
-
-        // 3. Color cycling animation (green -> gold -> green)
-        completedTextColorAnimator = ObjectAnimator.ofInt(
-            completedText,
-            "textColor",
-            resources.getColor(R.color.green_dark, theme),
-            resources.getColor(R.color.gold, theme),
-            resources.getColor(R.color.green_dark, theme)
-        )
-        completedTextColorAnimator.duration = 3000
-        completedTextColorAnimator.repeatCount = ValueAnimator.INFINITE
-        completedTextColorAnimator.repeatMode = ValueAnimator.RESTART
-        completedTextColorAnimator.setEvaluator(android.animation.ArgbEvaluator())
-        completedTextColorAnimator.startDelay = 800
-
-        // Start animations
-        completedText.startAnimation(bounceAnim)
         Handler(Looper.getMainLooper()).postDelayed({
-            completedTextPulseAnimator.start()
-            completedTextColorAnimator.start()
-        }, 800)
+            dropBlocksSequence()
+        }, 500)
     }
 
-    private fun animatePandaHeartbeat() {
-        // Create a heartbeat-like animation: quick zoom in, hold, slow zoom out
-        pandaHeartbeatAnimator = ObjectAnimator.ofPropertyValuesHolder(
-            pandaMascot,
-            android.animation.PropertyValuesHolder.ofFloat("scaleX", 1f, 1.15f, 1.1f, 1f),
-            android.animation.PropertyValuesHolder.ofFloat("scaleY", 1f, 1.15f, 1.1f, 1f)
-        ).apply {
-            duration = 1200  // Heartbeat duration
-            repeatCount = ValueAnimator.INFINITE
-            repeatMode = ValueAnimator.RESTART
-            interpolator = AccelerateDecelerateInterpolator()
+    private fun dropBlocksSequence() {
+        blockDropAnimators = mutableListOf()
+
+        for (i in 0 until totalSteps) {
+            Handler().postDelayed({
+                animateBlockDrop(i)
+            }, i * 600L) // Therapeutic pacing
         }
 
-        // Add gentle floating animation
-        val floatAnim = ObjectAnimator.ofFloat(
-            pandaMascot,
+        // After blocks drop, introduce star
+        Handler().postDelayed({
+            introduceStar()
+        }, (totalSteps * 600L) + 500)
+    }
+
+    private fun animateBlockDrop(stepIndex: Int) {
+        val block = stepBlocks[stepIndex]
+        val label = stepLabels[stepIndex]
+
+        val dropAnim = ObjectAnimator.ofFloat(block, "translationY", 0f)
+        dropAnim.duration = 800
+        dropAnim.interpolator = BounceInterpolator()
+
+        val fadeInAnim = ObjectAnimator.ofFloat(block, "alpha", 1f)
+        fadeInAnim.duration = 400
+
+        val labelFadeAnim = ObjectAnimator.ofFloat(label, "alpha", 1f)
+        labelFadeAnim.duration = 600
+        labelFadeAnim.startDelay = 300
+
+        val animSet = AnimatorSet()
+        animSet.playTogether(dropAnim, fadeInAnim)
+        animSet.play(labelFadeAnim).after(dropAnim)
+
+        animSet.addListener(object : android.animation.AnimatorListenerAdapter() {
+            override fun onAnimationStart(animation: android.animation.Animator) {
+                // Play block drop sound
+                blockDropSound.seekTo(0)
+                blockDropSound.start()
+            }
+
+            override fun onAnimationEnd(animation: android.animation.Animator) {
+                // Gentle wiggle after landing
+                block.animate()
+                    .rotationBy(5f)
+                    .setDuration(200)
+                    .withEndAction {
+                        block.animate()
+                            .rotationBy(-5f)
+                            .setDuration(200)
+                            .start()
+                    }
+                    .start()
+            }
+        })
+
+        animSet.start()
+        blockDropAnimators.add(animSet)
+    }
+
+    private fun introduceStar() {
+        // Star entrance animation
+        starCharacter.animate()
+            .alpha(1f)
+            .translationY(0f)
+            .scaleX(1.5f)
+            .scaleY(1.5f)
+            .setDuration(800)
+            .withEndAction {
+                starCharacter.animate()
+                    .scaleX(1f)
+                    .scaleY(1f)
+                    .setDuration(400)
+                    .withEndAction {
+                        // Start star climb after introduction
+                        Handler().postDelayed({
+                            climbStaircase()
+                        }, 800)
+                    }
+                    .start()
+            }
+            .start()
+
+        // Play star entrance sound
+        starBounceSound.seekTo(0)
+        starBounceSound.start()
+    }
+
+    private fun climbStaircase() {
+        // Therapeutic climb: star bounces up each step
+
+        var currentStep = 0
+
+        fun climbNextStep() {
+            if (currentStep <= starFinalStep) {
+                // Calculate target position (above the block)
+                val block = stepBlocks[currentStep]
+                val targetY = block.y - 200f // Position above block
+
+                // Bounce animation to next step
+                val bounceUp = ObjectAnimator.ofFloat(starCharacter, "y", targetY)
+                bounceUp.duration = 600
+                bounceUp.interpolator = AccelerateDecelerateInterpolator()
+
+                // Gentle rotation during bounce
+                val rotateAnim = ObjectAnimator.ofFloat(starCharacter, "rotation", 0f, 360f)
+                rotateAnim.duration = 600
+
+                val stepAnimSet = AnimatorSet()
+                stepAnimSet.playTogether(bounceUp, rotateAnim)
+
+                stepAnimSet.addListener(object : android.animation.AnimatorListenerAdapter() {
+                    override fun onAnimationStart(animation: android.animation.Animator) {
+                        // Highlight current step
+                        stepBlocks[currentStep].animate()
+                            .scaleX(1.1f)
+                            .scaleY(1.1f)
+                            .setDuration(300)
+                            .start()
+
+                        stepLabels[currentStep].animate()
+                            .scaleX(1.2f)
+                            .scaleY(1.2f)
+                            .setDuration(300)
+                            .start()
+                    }
+
+                    override fun onAnimationEnd(animation: android.animation.Animator) {
+                        // Play bounce sound
+                        starBounceSound.seekTo(0)
+                        starBounceSound.start()
+
+                        // Return step to normal
+                        stepBlocks[currentStep].animate()
+                            .scaleX(1f)
+                            .scaleY(1f)
+                            .setDuration(300)
+                            .start()
+
+                        stepLabels[currentStep].animate()
+                            .scaleX(1f)
+                            .scaleY(1f)
+                            .setDuration(300)
+                            .start()
+
+                        currentStep++
+
+                        // Continue to next step or settle
+                        if (currentStep <= starFinalStep) {
+                            Handler().postDelayed({
+                                climbNextStep()
+                            }, 400)
+                        } else {
+                            Handler().postDelayed({
+                                settleStar()
+                            }, 600)
+                        }
+                    }
+                })
+
+                stepAnimSet.start()
+            }
+        }
+
+        // Start climbing
+        climbNextStep()
+    }
+
+    private fun settleStar() {
+        // Star settles into therapeutic resting pose
+
+        // Final gentle landing
+        val settleY = stepBlocks[starFinalStep].y - 150f // Slightly above the block
+        starCharacter.animate()
+            .y(settleY)
+            .setDuration(500)
+            .interpolator = OvershootInterpolator(0.5f)
+
+        // Start therapeutic glowing
+        startStarGlow()
+
+        // Play completion sound
+        completionSound.seekTo(0)
+        completionSound.start()
+
+        // Show final therapeutic message
+        showFinalMessage()
+
+        // Enable buttons
+        enableNavigationButtons()
+    }
+
+    private fun startStarGlow() {
+        // Therapeutic glowing animation
+        starGlowAnimator = ObjectAnimator.ofPropertyValuesHolder(
+            starCharacter,
+            android.animation.PropertyValuesHolder.ofFloat("scaleX", 1f, 1.15f, 1f),
+            android.animation.PropertyValuesHolder.ofFloat("scaleY", 1f, 1.15f, 1f),
+            android.animation.PropertyValuesHolder.ofFloat("alpha", 1f, 0.9f, 1f)
+        ).apply {
+            duration = 2000
+            repeatCount = ValueAnimator.INFINITE
+            repeatMode = ValueAnimator.REVERSE
+            interpolator = AccelerateDecelerateInterpolator()
+            start()
+        }
+
+        // Add gentle floating
+        starBounceAnimator = ObjectAnimator.ofFloat(
+            starCharacter,
             "translationY",
-            0f,
-            -15f,
-            0f,
-            5f,
-            0f
+            0f, -20f, 0f, 10f, 0f
         ).apply {
             duration = 4000
             repeatCount = ValueAnimator.INFINITE
             repeatMode = ValueAnimator.RESTART
             interpolator = LinearInterpolator()
+            start()
+        }
+    }
+
+    private fun showFinalMessage() {
+        val finalMessage = when (starFinalStep) {
+            4 -> "Therapeutic achievement unlocked! 🎉\nYou reached the top!"
+            3 -> "Great therapeutic progress! 🌟\nAlmost at the top!"
+            2 -> "Good therapeutic session! 📚\nHalfway up the staircase!"
+            1 -> "Therapeutic effort noted! 🌈\nSecond step reached!"
+            else -> "Therapeutic journey begins! 🎪\nFirst step accomplished!"
         }
 
-        // Add gentle sway (rotation)
-        val swayAnim = ObjectAnimator.ofFloat(
-            pandaMascot,
-            "rotation",
-            -2f, 2f, -2f
-        ).apply {
-            duration = 6000
-            repeatCount = ValueAnimator.INFINITE
-            repeatMode = ValueAnimator.RESTART
-            interpolator = LinearInterpolator()
-        }
+        therapeuticMessage.text = finalMessage
 
-        // Start all animations with delay
-        Handler(Looper.getMainLooper()).postDelayed({
-            pandaHeartbeatAnimator.start()
-            floatAnim.start()
-            swayAnim.start()
-        }, 500)
+        // Add sparkle effect to reached steps
+        for (i in 0..starFinalStep) {
+            Handler().postDelayed({
+                stepBlocks[i].animate()
+                    .scaleX(1.2f)
+                    .scaleY(1.2f)
+                    .setDuration(300)
+                    .withEndAction {
+                        stepBlocks[i].animate()
+                            .scaleX(1f)
+                            .scaleY(1f)
+                            .setDuration(300)
+                            .start()
+                    }
+                    .start()
+            }, i * 200L)
+        }
+    }
+
+    private fun enableNavigationButtons() {
+        btnContinue.alpha = 1f
+        btnHome.alpha = 1f
+        btnContinue.isEnabled = true
+        btnHome.isEnabled = true
+
+        // Therapeutic button animations
+        btnContinue.animate()
+            .scaleX(1f)
+            .scaleY(1f)
+            .setDuration(500)
+            .start()
+
+        btnHome.animate()
+            .scaleX(1f)
+            .scaleY(1f)
+            .setDuration(500)
+            .start()
     }
 
     private fun setupButtonListeners() {
-        Log.d(TAG, "Setting up button listeners...")
-        val btnTryAnother = findViewById<Button>(R.id.btnTryAnother)
-        val btnHome = findViewById<Button>(R.id.btnHome)
+        // Initial disabled state
+        btnContinue.alpha = 0.5f
+        btnHome.alpha = 0.5f
+        btnContinue.isEnabled = false
+        btnHome.isEnabled = false
 
-        // Add simple click animations (one-time only)
-        btnTryAnother.setOnClickListener {
-            // Simple scale animation on click
-            btnTryAnother.animate()
+        btnContinue.setOnClickListener {
+            btnContinue.animate()
                 .scaleX(0.95f)
                 .scaleY(0.95f)
                 .setDuration(100)
                 .withEndAction {
-                    btnTryAnother.animate()
+                    btnContinue.animate()
                         .scaleX(1f)
                         .scaleY(1f)
                         .setDuration(100)
                         .withEndAction {
-                            Log.d(TAG, "Play Again button clicked")
+                            // Continue to next therapeutic session
                             val intent = Intent(this, ActivitySequenceUnderActivity::class.java)
-                            intent.flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
+
+                            // Pass therapeutic progress to next session
+                            // The model will decide whether to repeat or progress
+                            intent.putExtra("PREVIOUS_ALPHA", finalAlpha)
+                            intent.putExtra("PREVIOUS_CORRECT", correctCount)
+                            intent.putExtra("PREVIOUS_ERROR", if (errorCount > 0) "positional" else "none")
+                            intent.putExtra("CONTINUE_THERAPY", true)
+
+                            // Keep the same user-selected routine
+                            intent.putExtra("SELECTED_ROUTINE_ID", 0) // Or pass from intent
+                            intent.putExtra("USER_AGE", 6) // Or pass from intent
+
                             startActivity(intent)
                             finish()
                         }
@@ -423,7 +547,6 @@ class ASequenceScoreboardActivity : AppCompatActivity() {
         }
 
         btnHome.setOnClickListener {
-            // Simple scale animation on click
             btnHome.animate()
                 .scaleX(0.95f)
                 .scaleY(0.95f)
@@ -434,9 +557,15 @@ class ASequenceScoreboardActivity : AppCompatActivity() {
                         .scaleY(1f)
                         .setDuration(100)
                         .withEndAction {
-                            Log.d(TAG, "Home button clicked")
+                            // Return to therapeutic dashboard
                             val intent = Intent(this, GameDashboardActivity::class.java)
-                            intent.flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
+
+                            // Pass therapeutic summary
+                            intent.putExtra("THERAPEUTIC_SUMMARY", true)
+                            intent.putExtra("SESSION_ALPHA", finalAlpha)
+                            intent.putExtra("STAR_STEP", starFinalStep)
+                            intent.putExtra("BUBBLES_POPPED", poppedBubbles)
+
                             startActivity(intent)
                             finish()
                         }
@@ -446,62 +575,35 @@ class ASequenceScoreboardActivity : AppCompatActivity() {
         }
     }
 
-    override fun onResume() {
-        super.onResume()
-        // Restart animations for panda and completed text
-        if (::pandaHeartbeatAnimator.isInitialized) {
-            pandaHeartbeatAnimator.start()
-        }
-        if (::completedTextPulseAnimator.isInitialized) {
-            completedTextPulseAnimator.start()
-        }
-        if (::completedTextColorAnimator.isInitialized) {
-            completedTextColorAnimator.start()
-        }
-    }
-
     override fun onPause() {
         super.onPause()
-        // Pause animations
-        if (::pandaHeartbeatAnimator.isInitialized) {
-            pandaHeartbeatAnimator.pause()
-        }
-        if (::completedTextPulseAnimator.isInitialized) {
-            completedTextPulseAnimator.pause()
-        }
-        if (::completedTextColorAnimator.isInitialized) {
-            completedTextColorAnimator.pause()
-        }
+        // Pause animations safely
+        starGlowAnimator?.pause()
+        starBounceAnimator?.pause()
+
+        // Pause sounds
+        blockDropSound.pause()
+        starBounceSound.pause()
+        completionSound.pause()
+    }
+
+    override fun onResume() {
+        super.onResume()
+        // Resume animations safely
+        starGlowAnimator?.resume()
+        starBounceAnimator?.resume()
     }
 
     override fun onDestroy() {
         super.onDestroy()
-        Log.d(TAG, "onDestroy called")
-        // Clear all animations
-        clearAnimations()
-    }
+        // Clean up animations safely
+        starGlowAnimator?.cancel()
+        starBounceAnimator?.cancel()
+        blockDropAnimators?.forEach { it.cancel() }
 
-    private fun clearAnimations() {
-        // Clear all view animations
-        completedText.clearAnimation()
-        pandaMascot.clearAnimation()
-        starLeft.clearAnimation()
-        starMiddle.clearAnimation()
-        starRight.clearAnimation()
-
-        // Cancel animators
-        if (::pandaHeartbeatAnimator.isInitialized) {
-            pandaHeartbeatAnimator.cancel()
-        }
-        if (::completedTextPulseAnimator.isInitialized) {
-            completedTextPulseAnimator.cancel()
-        }
-        if (::completedTextColorAnimator.isInitialized) {
-            completedTextColorAnimator.cancel()
-        }
-
-        // Clear button animations
-        findViewById<Button>(R.id.btnTryAnother).clearAnimation()
-        findViewById<Button>(R.id.btnHome).clearAnimation()
+        // Release sounds
+        blockDropSound.release()
+        starBounceSound.release()
+        completionSound.release()
     }
 }
