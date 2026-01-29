@@ -2,230 +2,249 @@
 <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
-    android:id="@+id/main"
+    android:id="@+id/rootContainer"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:background="@drawable/gradient_therapeutic_background"
     android:padding="16dp"
-    android:background="@color/white"
     tools:context=".ASequenceScoreboardActivity">
 
-    <!-- COMPLETED!!! Header -->
+    <!-- Therapeutic Title -->
     <TextView
-        android:id="@+id/completedText"
-        android:layout_width="364dp"
-        android:layout_height="62dp"
-        android:layout_marginTop="-10dp"
+        android:id="@+id/therapeuticMessage"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="24dp"
+        android:layout_marginHorizontal="24dp"
         android:gravity="center"
-        android:text="COMPLETED!!!"
-        android:textColor="@color/green_dark"
-        android:textSize="42sp"
+        android:text="Therapeutic Journey!"
+        android:textColor="@color/white"
+        android:textSize="28sp"
         android:textStyle="bold"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
-    <!-- Star Rating -->
-    <LinearLayout
-        android:id="@+id/starContainer"
+    <!-- Alpha Score Display -->
+    <TextView
+        android:id="@+id/alphaDisplay"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:orientation="horizontal"
+        android:layout_marginTop="12dp"
+        android:background="@drawable/therapeutic_badge"
+        android:gravity="center"
+        android:paddingHorizontal="24dp"
+        android:paddingVertical="8dp"
+        android:text="Alpha: 0.0"
+        android:textColor="@color/white"
+        android:textSize="20sp"
+        android:textStyle="bold"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/completedText">
+        app:layout_constraintTop_toBottomOf="@id/therapeuticMessage" />
 
+    <!-- Star Character -->
+    <ImageView
+        android:id="@+id/starCharacter"
+        android:layout_width="120dp"
+        android:layout_height="120dp"
+        android:layout_marginTop="32dp"
+        android:src="@drawable/star_filled_glow"
+        android:visibility="visible"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/alphaDisplay" />
+
+    <!-- Staircase Container -->
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/staircaseContainer"
+        android:layout_width="0dp"
+        android:layout_height="300dp"
+        android:layout_marginTop="32dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/starCharacter">
+
+        <!-- Step 5 (Top) -->
         <ImageView
-            android:id="@+id/starLeft"
-            android:layout_width="48dp"
-            android:layout_height="48dp"
-            android:layout_margin="8dp"
-            android:contentDescription="Star rating"
-            android:src="@drawable/star_outline" />
+            android:id="@+id/stepBlock5"
+            android:layout_width="120dp"
+            android:layout_height="40dp"
+            android:layout_marginTop="0dp"
+            android:src="@drawable/staircase_block"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
 
+        <TextView
+            android:id="@+id/stepLabel5"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="8dp"
+            android:gravity="center"
+            android:text="We did it!"
+            android:textColor="@color/white"
+            android:textSize="14sp"
+            android:textStyle="bold"
+            app:layout_constraintBottom_toTopOf="@id/stepBlock5"
+            app:layout_constraintEnd_toEndOf="@id/stepBlock5"
+            app:layout_constraintStart_toStartOf="@id/stepBlock5" />
+
+        <!-- Step 4 -->
         <ImageView
-            android:id="@+id/starMiddle"
-            android:layout_width="83dp"
-            android:layout_height="65dp"
-            android:layout_margin="8dp"
-            android:contentDescription="Star rating"
-            android:src="@drawable/star_outline" />
+            android:id="@+id/stepBlock4"
+            android:layout_width="140dp"
+            android:layout_height="40dp"
+            android:layout_marginTop="60dp"
+            android:src="@drawable/staircase_block"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
 
+        <TextView
+            android:id="@+id/stepLabel4"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="8dp"
+            android:gravity="center"
+            android:text="So close!"
+            android:textColor="@color/white"
+            android:textSize="14sp"
+            android:textStyle="bold"
+            app:layout_constraintBottom_toTopOf="@id/stepBlock4"
+            app:layout_constraintEnd_toEndOf="@id/stepBlock4"
+            app:layout_constraintStart_toStartOf="@id/stepBlock4" />
+
+        <!-- Step 3 -->
         <ImageView
-            android:id="@+id/starRight"
-            android:layout_width="48dp"
-            android:layout_height="48dp"
-            android:layout_margin="8dp"
-            android:contentDescription="Star rating"
-            android:src="@drawable/star_outline" />
-    </LinearLayout>
+            android:id="@+id/stepBlock3"
+            android:layout_width="160dp"
+            android:layout_height="40dp"
+            android:layout_marginTop="120dp"
+            android:src="@drawable/staircase_block"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
 
+        <TextView
+            android:id="@+id/stepLabel3"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="8dp"
+            android:gravity="center"
+            android:text="Moving along!"
+            android:textColor="@color/white"
+            android:textSize="14sp"
+            android:textStyle="bold"
+            app:layout_constraintBottom_toTopOf="@id/stepBlock3"
+            app:layout_constraintEnd_toEndOf="@id/stepBlock3"
+            app:layout_constraintStart_toStartOf="@id/stepBlock3" />
+
+        <!-- Step 2 -->
+        <ImageView
+            android:id="@+id/stepBlock2"
+            android:layout_width="180dp"
+            android:layout_height="40dp"
+            android:layout_marginTop="180dp"
+            android:src="@drawable/staircase_block"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <TextView
+            android:id="@+id/stepLabel2"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="8dp"
+            android:gravity="center"
+            android:text="Going up!"
+            android:textColor="@color/white"
+            android:textSize="14sp"
+            android:textStyle="bold"
+            app:layout_constraintBottom_toTopOf="@id/stepBlock2"
+            app:layout_constraintEnd_toEndOf="@id/stepBlock2"
+            app:layout_constraintStart_toStartOf="@id/stepBlock2" />
+
+        <!-- Step 1 (Bottom) -->
+        <ImageView
+            android:id="@+id/stepBlock1"
+            android:layout_width="200dp"
+            android:layout_height="40dp"
+            android:layout_marginTop="240dp"
+            android:src="@drawable/staircase_block"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <TextView
+            android:id="@+id/stepLabel1"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="8dp"
+            android:gravity="center"
+            android:text="Step by step!"
+            android:textColor="@color/white"
+            android:textSize="14sp"
+            android:textStyle="bold"
+            app:layout_constraintBottom_toTopOf="@id/stepBlock1"
+            app:layout_constraintEnd_toEndOf="@id/stepBlock1"
+            app:layout_constraintStart_toStartOf="@id/stepBlock1" />
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+    <!-- Progress Description -->
     <TextView
-        android:id="@+id/performanceText"
+        android:id="@+id/progressDescription"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
         android:layout_marginHorizontal="24dp"
         android:gravity="center"
-        android:text="Performance rating"
-        android:textColor="@color/dark_gray"
+        android:text="Progress details will appear here"
+        android:textColor="@color/white"
         android:textSize="16sp"
+        android:lineSpacingExtra="4dp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/starContainer" />
-
-    <!-- Panda Mascot -->
-    <ImageView
-        android:id="@+id/pandaMascot"
-        android:layout_width="242dp"
-        android:layout_height="234dp"
-        android:layout_marginTop="5dp"
-        android:layout_marginBottom="-20dp"
-        android:src="@drawable/panda_score"
-        app:layout_constraintBottom_toTopOf="@+id/statsContainer"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/performanceText" />
-
-    <!-- Brown Container with Yellow Cards -->
-    <LinearLayout
-        android:id="@+id/statsContainer"
-        android:layout_width="325dp"
-        android:layout_height="wrap_content"
-        android:background="@color/dark_orange"
-        android:gravity="center"
-        android:orientation="vertical"
-        android:padding="12dp"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/pandaMascot">
-
-        <!-- Attempts Card -->
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_margin="8dp"
-            android:background="@color/light_yellow"
-            android:elevation="4dp"
-            android:gravity="center_vertical"
-            android:orientation="horizontal"
-            android:padding="12dp">
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="ATTEMPTS"
-                android:textColor="@color/dark_brown"
-                android:textSize="20sp"
-                android:textStyle="bold" />
-
-            <TextView
-                android:id="@+id/attemptsText"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="12dp"
-                android:text="1"
-                android:textColor="@color/black"
-                android:textSize="22sp"
-                android:textStyle="bold" />
-        </LinearLayout>
-
-        <!-- Completion Time Card -->
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_margin="8dp"
-            android:background="@color/light_yellow"
-            android:elevation="4dp"
-            android:gravity="center_vertical"
-            android:orientation="horizontal"
-            android:padding="12dp">
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="TIME"
-                android:textColor="@color/dark_brown"
-                android:textSize="20sp"
-                android:textStyle="bold" />
-
-            <TextView
-                android:id="@+id/timeText"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="12dp"
-                android:text="10s"
-                android:textColor="@color/black"
-                android:textSize="22sp"
-                android:textStyle="bold" />
-        </LinearLayout>
-
-        <!-- Accuracy Card -->
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_margin="8dp"
-            android:background="@color/light_yellow"
-            android:elevation="4dp"
-            android:gravity="center_vertical"
-            android:orientation="horizontal"
-            android:padding="12dp">
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="ACCURACY"
-                android:textColor="@color/dark_brown"
-                android:textSize="20sp"
-                android:textStyle="bold" />
-
-            <TextView
-                android:id="@+id/accuracyText"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="12dp"
-                android:text="100%"
-                android:textColor="@color/black"
-                android:textSize="22sp"
-                android:textStyle="bold" />
-        </LinearLayout>
-    </LinearLayout>
+        app:layout_constraintTop_toBottomOf="@id/staircaseContainer" />
 
     <!-- Action Buttons -->
     <LinearLayout
         android:id="@+id/buttonContainer"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_marginTop="40dp"
-        android:layout_marginBottom="24dp"
+        android:layout_marginTop="24dp"
+        android:layout_marginBottom="32dp"
         android:gravity="center"
         android:orientation="horizontal"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/statsContainer"
+        app:layout_constraintTop_toBottomOf="@id/progressDescription"
         app:layout_constraintWidth_percent="0.9">
 
         <Button
-            android:id="@+id/btnTryAnother"
+            android:id="@+id/btnContinue"
             android:layout_width="0dp"
             android:layout_height="56dp"
             android:layout_marginEnd="8dp"
             android:layout_weight="1"
+            android:background="@drawable/rounded_button_background_g"
             android:text="Play Again"
             android:textAllCaps="false"
             android:textColor="@color/white"
-            android:textSize="18sp"
-            app:backgroundTint="@color/green" />
+            android:textSize="18sp" />
 
         <Button
             android:id="@+id/btnHome"
             android:layout_width="0dp"
             android:layout_height="56dp"
             android:layout_weight="1"
+            android:background="@drawable/rounded_button_background"
             android:text="Dashboard"
             android:textAllCaps="false"
             android:textColor="@color/white"
-            android:textSize="18sp"
-            android:backgroundTint="@color/pink" />
+            android:textSize="18sp" />
     </LinearLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>
