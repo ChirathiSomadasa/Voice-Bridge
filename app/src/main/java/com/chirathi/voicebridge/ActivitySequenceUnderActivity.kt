@@ -2,6 +2,7 @@ package com.chirathi.voicebridge
 
 import android.content.Context
 import android.content.Intent
+import android.graphics.Typeface
 import android.media.MediaPlayer
 import android.os.Bundle
 import android.os.Handler
@@ -20,6 +21,7 @@ import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import java.util.Locale
+import kotlin.math.roundToInt
 
 class ActivitySequenceUnderActivity : AppCompatActivity() {
 
@@ -103,38 +105,6 @@ class ActivitySequenceUnderActivity : AppCompatActivity() {
     private lateinit var tvOrder2: TextView
     private lateinit var tvOrder3: TextView
 
-    // Add this mapping at the class level:
-    private val imageNameToStepName = mapOf(
-        // Morning Routine Sub1
-        "seq_rtn0_sub1_1_wakeup" to "Wake Up",
-        "seq_rtn0_sub1_2_bed" to "Make Bed",
-        "seq_rtn0_sub1_3_drink" to "Drink Water",
-
-        // Morning Routine Sub2
-        "seq_rtn0_sub2_1_brush" to "Brush Teeth",
-        "seq_rtn0_sub2_2_wash" to "Wash Face",
-        "seq_rtn0_sub2_3_dry" to "Dry with Towel",
-
-        // Morning Routine Sub3
-        "seq_rtn0_sub3_1_change" to "Get Dressed",
-        "seq_rtn0_sub3_2_cream" to "Apply Powder",
-        "seq_rtn0_sub3_3_wash" to "Put Pajamas Away"
-    )
-
-    private val imageResourceToStepId = mapOf(
-        R.drawable.seq_rtn0_sub1_1_wakeup to "wake_up",
-        R.drawable.seq_rtn0_sub1_2_bed to "make_bed",
-        R.drawable.seq_rtn0_sub1_3_drink to "drink_water",
-
-        R.drawable.seq_rtn0_sub2_1_brush to "brush_teeth",
-        R.drawable.seq_rtn0_sub2_2_wash to "wash_face",
-        R.drawable.seq_rtn0_sub2_3_dry to "dry_towel",
-
-        R.drawable.seq_rtn0_sub3_1_change to "get_dressed",
-        R.drawable.seq_rtn0_sub3_2_cream to "apply_powder",
-        R.drawable.seq_rtn0_sub3_3_wash to "put_pajamas"
-    )
-
     // Store vertical image views
     private val verticalImages = mutableListOf<ImageView>()
 
@@ -155,24 +125,6 @@ class ActivitySequenceUnderActivity : AppCompatActivity() {
             1 to Triple(listOf("breakfast", "lunchbox", "water_bottle"), 4, "Meal packing"),
             2 to Triple(listOf("bus", "class", "playground"), 5, "Going out")
         )
-    )
-
-    // Image resources mapping - ONLY morning routine for now
-    private val imageResources = mapOf(
-        // Morning Routine Sub1 (wake up sequence)
-        "wake_up" to R.drawable.seq_rtn0_sub1_1_wakeup,
-        "make_bed" to R.drawable.seq_rtn0_sub1_2_bed,
-        "drink_water" to R.drawable.seq_rtn0_sub1_3_drink,
-
-        // Morning Routine Sub2 (hygiene sequence)
-        "brush_teeth" to R.drawable.seq_rtn0_sub2_1_brush,
-        "wash_face" to R.drawable.seq_rtn0_sub2_2_wash,
-        "dry_towel" to R.drawable.seq_rtn0_sub2_3_dry,
-
-        // Morning Routine Sub3 (getting dressed)
-        "get_dressed" to R.drawable.seq_rtn0_sub3_1_change,
-        "apply_powder" to R.drawable.seq_rtn0_sub3_2_cream,
-        "put_pajamas" to R.drawable.seq_rtn0_sub3_3_wash,
     )
 
     // Array resources for easier access
@@ -282,10 +234,6 @@ class ActivitySequenceUnderActivity : AppCompatActivity() {
             // Check for sticker unlock
             Log.d(TAG, "Sub-routine completed! Checking for sticker...")
             checkStickerUnlock()
-
-            // IMPORTANT: DON'T schedule onSessionComplete here anymore
-            // The sticker activity will handle navigation, OR checkStickerUnlock()
-            // will schedule it if no sticker is unlocked
         }
     }
 
@@ -295,6 +243,12 @@ class ActivitySequenceUnderActivity : AppCompatActivity() {
 
         // Calculate final therapeutic metrics
         val finalAlpha = calculateFinalAlpha()
+        val avgResponseTime = calculateAverageResponseTime()
+        val totalAttempts = sessionMetrics.correctCount + sessionMetrics.errorCount
+        val accuracy = if (totalAttempts > 0) {
+            sessionMetrics.correctCount.toFloat() / totalAttempts
+        } else 0f
+
         sessionMetrics.sessionAlpha = finalAlpha
 
         Log.d(TAG, "Final Alpha: $finalAlpha")
@@ -312,11 +266,19 @@ class ActivitySequenceUnderActivity : AppCompatActivity() {
         intent.putExtra("COMPLETED_SUBROUTINES", sessionMetrics.completedSubRoutines.size)
         intent.putExtra("ROUTINE_COMPLETED", currentRoutineId)
 
+        // Pass performance data for tier determination
+        intent.putExtra("AVG_RESPONSE_TIME", avgResponseTime)
+        intent.putExtra("ACCURACY", accuracy)
+        intent.putExtra("ATTEMPTS_COUNT", attemptsCount)
+        intent.putExtra("TOTAL_ATTEMPTS", totalAttempts)
+
         // Pass performance data for model decision in next session
         intent.putExtra("PREVIOUS_ALPHA", finalAlpha)
         intent.putExtra("PREVIOUS_CORRECT", sessionMetrics.correctCount)
         intent.putExtra("PREVIOUS_SUBROUTINE", currentSubRoutineId)
         intent.putExtra("PREVIOUS_ERROR", if (sessionMetrics.errorCount > 0) "positional" else "none")
+        intent.putExtra("USER_SELECTED_ROUTINE", userSelectedRoutineId)
+        intent.putExtra("USER_AGE", userAge)
 
         startActivity(intent)
         finish()
@@ -388,42 +350,53 @@ class ActivitySequenceUnderActivity : AppCompatActivity() {
     private fun selectSubRoutineBasedOnPerformance(decision: ModelDecision) {
         Log.d(TAG, "selectSubRoutineBasedOnPerformance called")
 
+        // Get previous performance data
         val previousAlpha = intent.getFloatExtra("PREVIOUS_ALPHA", 0f)
-        val previousPerformance = intent.getIntExtra("PREVIOUS_CORRECT", 0)
+        val previousCorrect = intent.getIntExtra("PREVIOUS_CORRECT", 0)
         val previousSubRoutine = intent.getIntExtra("PREVIOUS_SUBROUTINE", -1)
         val previousError = intent.getStringExtra("PREVIOUS_ERROR")
 
-        Log.d(TAG, "Previous: Alpha=$previousAlpha, Correct=$previousPerformance, " +
-                "SubRoutine=$previousSubRoutine, Error=$previousError")
+        // Calculate performance metrics
+        val totalAttempts = sessionMetrics.correctCount + sessionMetrics.errorCount
+        val accuracy = if (totalAttempts > 0) {
+            sessionMetrics.correctCount.toFloat() / totalAttempts
+        } else 1f
 
-        // Use the model's sub-routine recommendation
-        currentSubRoutineId = when (decision.subRoutineRecommendation) {
-            0 -> { // Repeat same sub-routine
-                if (previousSubRoutine != -1) {
-                    Log.d(TAG, "Model recommends: Repeat sub-routine $previousSubRoutine")
-                    previousSubRoutine
+        // Determine next sub-routine based on performance
+        currentSubRoutineId = when {
+            // EXCELLENT performance (high accuracy, few errors) → Progress to next
+            accuracy >= 0.8f && sessionMetrics.errorCount <= 1 -> {
+                val nextSub = if (previousSubRoutine != -1) {
+                    minOf(previousSubRoutine + 1, 2) // Max sub-routine is 2
+                } else 1 // Start with sub1 if no previous
+                Log.d(TAG, "Excellent performance → Progress to sub-routine $nextSub")
+                nextSub
+            }
+
+            // GOOD performance → Stay at current level
+            accuracy >= 0.6f && sessionMetrics.errorCount <= 2 -> {
+                val currentSub = if (previousSubRoutine != -1) previousSubRoutine else 0
+                Log.d(TAG, "Good performance → Stay at sub-routine $currentSub")
+                currentSub
+            }
+
+            // POOR performance → Repeat same or go back
+            else -> {
+                if (previousSubRoutine > 0) {
+                    val repeatSub = maxOf(previousSubRoutine - 1, 0) // Go back one level
+                    Log.d(TAG, "Poor performance → Repeat sub-routine $repeatSub")
+                    repeatSub
                 } else {
-                    Log.d(TAG, "No previous sub-routine, defaulting to 0")
+                    Log.d(TAG, "Poor performance → Repeat sub-routine 0")
                     0
                 }
             }
-            1 -> { // Stay at current (if progressing, stay at next)
-                val currentOrNext = if (previousSubRoutine != -1) previousSubRoutine else 0
-                Log.d(TAG, "Model recommends: Stay at sub-routine $currentOrNext")
-                currentOrNext
-            }
-            2 -> { // Progress to next sub-routine
-                val nextSub = if (previousSubRoutine != -1) ((previousSubRoutine + 1) % 3) else 0
-                Log.d(TAG, "Model recommends: Progress to sub-routine $nextSub")
-                nextSub
-            }
-            else -> {
-                Log.w(TAG, "Unknown recommendation, defaulting to 0")
-                0
-            }
-        }.coerceIn(0, 2)
+        }
 
         Log.d(TAG, "Selected sub-routine: $currentSubRoutineId")
+
+        // Store this for next session
+        sessionMetrics.completedSubRoutines.add(Pair(currentRoutineId, currentSubRoutineId))
     }
 
     private fun prepareBehavioralFeatures(
@@ -496,28 +469,61 @@ class ActivitySequenceUnderActivity : AppCompatActivity() {
     }
 
     private fun calculateFinalAlpha(): Float {
-        val totalTasks = attemptsCount
+        val totalTasks = sessionMetrics.correctCount + sessionMetrics.errorCount
         val correctRate = if (totalTasks > 0) {
             sessionMetrics.correctCount.toFloat() / totalTasks * 100
         } else 0f
 
+        // Calculate response time metrics
         val avgResponseTime = if (sessionMetrics.tapTimes.size >= 2) {
-            val totalTime = sessionMetrics.tapTimes.last() - sessionMetrics.tapTimes.first()
-            totalTime / sessionMetrics.tapTimes.size
-        } else 0L
+            val intervals = mutableListOf<Long>()
+            for (i in 1 until sessionMetrics.tapTimes.size) {
+                intervals.add(sessionMetrics.tapTimes[i] - sessionMetrics.tapTimes[i-1])
+            }
+            intervals.average().toLong()
+        } else 1000L
 
-        val finalAlpha = calculateAlpha(
-            accuracy = correctRate,
-            responseTime = avgResponseTime,
-            age = userAge,
-            errorCount = sessionMetrics.errorCount,
-            difficulty = currentDifficultyLevel
-        )
+        // Calculate jitter
+        val jitter = calculateJitter()
 
-        Log.d(TAG, "Final Alpha calculation: CorrectRate=$correctRate, " +
-                "AvgResponse=$avgResponseTime, Errors=${sessionMetrics.errorCount}, Alpha=$finalAlpha")
+        // Calculate comprehensive alpha
+        val baseAlpha = correctRate / 10f // Convert percentage to 0-10 scale
+
+        // Adjust based on response time (faster = better)
+        val timeFactor = when {
+            avgResponseTime < 2000 -> 1.2f  // Bonus for fast responses
+            avgResponseTime < 5000 -> 1.0f  // Normal
+            else -> 0.8f  // Penalty for slow responses
+        }
+
+        // Adjust based on jitter (consistent tapping = better)
+        val jitterFactor = when {
+            jitter < 50 -> 1.1f  // Bonus for low jitter
+            jitter < 100 -> 1.0f  // Normal
+            else -> 0.9f  // Penalty for high jitter
+        }
+
+        // Adjust based on errors
+        val errorFactor = when (sessionMetrics.errorCount) {
+            0 -> 1.2f  // Bonus for no errors
+            1 -> 1.0f  // Normal
+            else -> maxOf(0.8f, 1.0f - (sessionMetrics.errorCount * 0.1f))
+        }
+
+        // REMOVE THE .coerceIn(0f, 10f) - Let alpha go above 10 for excellent performance!
+        val finalAlpha = (baseAlpha * timeFactor * jitterFactor * errorFactor).roundTo(1)
+
+        Log.d(TAG, "Final Alpha: $finalAlpha (Base: $baseAlpha, " +
+                "TimeFactor: $timeFactor, JitterFactor: $jitterFactor, ErrorFactor: $errorFactor)")
 
         return finalAlpha
+    }
+
+    // Helper extension for rounding
+    fun Float.roundTo(decimals: Int): Float {
+        var multiplier = 1f
+        repeat(decimals) { multiplier *= 10f }
+        return (this * multiplier).roundToInt() / multiplier
     }
 
     private fun updateInstructionBasedOnModel(decision: ModelDecision) {
@@ -661,7 +667,7 @@ class ActivitySequenceUnderActivity : AppCompatActivity() {
     }
 
     private fun showInitialCorrectOrder() {
-        Log.d(TAG, "showInitialCorrectOrder called")
+        Log.d(TAG, "showInitialCorrectOrder called - Routine: $currentRoutineId, Sub: $currentSubRoutineId")
 
         runOnUiThread {
             try {
@@ -676,7 +682,7 @@ class ActivitySequenceUnderActivity : AppCompatActivity() {
                     return@runOnUiThread
                 }
 
-                Log.d(TAG, "Showing initial correct order: $currentCorrectOrder")
+                Log.d(TAG, "Showing initial correct order: $currentCorrectOrder for sub-routine $currentSubRoutineId")
 
                 // Use the existing placeholder ImageViews instead of creating new ones
                 val imageViews = listOf(
@@ -692,18 +698,45 @@ class ActivitySequenceUnderActivity : AppCompatActivity() {
                     findViewById<FrameLayout>(R.id.horizontal_frame_3)
                 )
 
+                // Create a mapping of step IDs to drawable resources based on current sub-routine
+                val stepToDrawableMap = when (currentSubRoutineId) {
+                    0 -> mapOf(
+                        "wake_up" to R.drawable.seq_rtn0_sub1_1_wakeup,
+                        "make_bed" to R.drawable.seq_rtn0_sub1_2_bed,
+                        "drink_water" to R.drawable.seq_rtn0_sub1_3_drink
+                    )
+                    1 -> mapOf(
+                        "brush_teeth" to R.drawable.seq_rtn0_sub2_1_brush,
+                        "wash_face" to R.drawable.seq_rtn0_sub2_2_wash,
+                        "dry_towel" to R.drawable.seq_rtn0_sub2_3_dry
+                    )
+                    2 -> mapOf(
+                        "get_dressed" to R.drawable.seq_rtn0_sub3_1_change,
+                        "apply_powder" to R.drawable.seq_rtn0_sub3_2_cream,
+                        "put_pajamas" to R.drawable.seq_rtn0_sub3_3_wash
+                    )
+                    else -> mapOf(
+                        "wake_up" to R.drawable.seq_rtn0_sub1_1_wakeup,
+                        "make_bed" to R.drawable.seq_rtn0_sub1_2_bed,
+                        "drink_water" to R.drawable.seq_rtn0_sub1_3_drink
+                    )
+                }
+
                 for ((index, stepId) in currentCorrectOrder.withIndex()) {
                     if (index < imageViews.size) {
                         try {
-                            val drawableRes = when (stepId) {
-                                "wake_up" -> R.drawable.seq_rtn0_sub1_1_wakeup
-                                "make_bed" -> R.drawable.seq_rtn0_sub1_2_bed
-                                "drink_water" -> R.drawable.seq_rtn0_sub1_3_drink
-                                else -> R.drawable.seq_rtn0_sub1_1_wakeup
-                            }
+                            val drawableRes = stepToDrawableMap[stepId] ?: 0
 
-                            imageViews[index].setImageResource(drawableRes)
-                            imageViews[index].tag = stepId
+                            if (drawableRes != 0) {
+                                imageViews[index].setImageResource(drawableRes)
+                                imageViews[index].tag = stepId
+                                Log.d(TAG, "Set image $index for step: $stepId, drawable: $drawableRes")
+                            } else {
+                                Log.e(TAG, "No drawable resource found for stepId: $stepId in sub-routine $currentSubRoutineId")
+                                // Fallback to default image
+                                imageViews[index].setImageResource(R.drawable.seq_rtn0_sub1_1_wakeup)
+                                imageViews[index].tag = stepId
+                            }
 
                             // Add badge to frame layout
                             val frameLayout = frameLayouts[index]
@@ -717,25 +750,33 @@ class ActivitySequenceUnderActivity : AppCompatActivity() {
                                 }
                             }
 
+                            // Create badge
                             val badgeTextView = TextView(this@ActivitySequenceUnderActivity).apply {
                                 text = badgeNumber.toString()
-                                textSize = 14f
+                                textSize = 20f
                                 setTextColor(ContextCompat.getColor(this@ActivitySequenceUnderActivity, android.R.color.white))
                                 setBackgroundResource(R.drawable.circle_badge)
                                 gravity = Gravity.CENTER
                                 tag = "badge"
+                                includeFontPadding = false
+                                setPadding(0, 0, 0, 0)
 
-                                val params = FrameLayout.LayoutParams(40, 40).apply {
+                                val params = FrameLayout.LayoutParams(65, 65).apply {
                                     gravity = Gravity.TOP or Gravity.END
-                                    topMargin = 5
-                                    rightMargin = 5
+                                    topMargin = 8
+                                    rightMargin = 8
                                 }
                                 layoutParams = params
+
+                                typeface = Typeface.DEFAULT_BOLD
                             }
 
                             frameLayout.addView(badgeTextView)
 
-                            Log.d(TAG, "Set image $badgeNumber for step: $stepId")
+                            // Debug: Check badge dimensions after layout
+                            badgeTextView.post {
+                                Log.d(TAG, "Badge $badgeNumber dimensions - Width: ${badgeTextView.width}, Height: ${badgeTextView.height}")
+                            }
 
                         } catch (e: Exception) {
                             Log.e(TAG, "Error setting image for step $index: ${e.message}")
@@ -743,10 +784,11 @@ class ActivitySequenceUnderActivity : AppCompatActivity() {
                     }
                 }
 
-                Log.d(TAG, "Images displayed using existing placeholders")
+                Log.d(TAG, "Images displayed successfully for sub-routine $currentSubRoutineId")
 
             } catch (e: Exception) {
                 Log.e(TAG, "Error in showInitialCorrectOrder: ${e.message}")
+                e.printStackTrace()
             }
         }
     }
@@ -1120,6 +1162,7 @@ class ActivitySequenceUnderActivity : AppCompatActivity() {
 
             val parent = imageView.parent as? FrameLayout
             parent?.let {
+                // Remove existing badges
                 for (i in it.childCount - 1 downTo 0) {
                     val child = it.getChildAt(i)
                     if (child is TextView && child.tag == "badge") {
@@ -1127,24 +1170,46 @@ class ActivitySequenceUnderActivity : AppCompatActivity() {
                     }
                 }
 
+                // UPDATED BADGE CREATION - Optimized for vertical layout
                 val badge = TextView(this).apply {
                     text = orderNumber
                     tag = "badge"
-                    textSize = 20f
+                    textSize = 24f // Larger for vertical layout
                     setTextColor(ContextCompat.getColor(this@ActivitySequenceUnderActivity, android.R.color.white))
-
                     setBackgroundResource(R.drawable.circle_badge)
-
                     gravity = Gravity.CENTER
-                    val params = FrameLayout.LayoutParams(50, 50).apply {
+
+                    // Critical for proper text rendering inside circle
+                    includeFontPadding = false
+                    setPadding(0, 0, 0, 0)
+
+                    // Use even larger size for vertical layout
+                    val params = FrameLayout.LayoutParams(70, 70).apply {
                         gravity = Gravity.TOP or Gravity.END
                         topMargin = 10
                         rightMargin = 10
                     }
                     layoutParams = params
+
+                    // Make text bold for better visibility
+                    typeface = Typeface.DEFAULT_BOLD
+
+                    // Optional: Add a subtle shadow for better contrast
+                    setShadowLayer(2f, 1f, 1f, ContextCompat.getColor(this@ActivitySequenceUnderActivity, R.color.pink))
                 }
 
                 it.addView(badge)
+
+                // Debug: Verify badge placement
+                badge.post {
+                    Log.d(TAG, "Vertical badge $orderNumber added to ${imageView.tag}")
+                    Log.d(TAG, "Badge position: (${badge.left}, ${badge.top})")
+                    Log.d(TAG, "Badge visible: ${badge.visibility == View.VISIBLE}")
+                }
+
+                Log.d(TAG, "Added badge $orderNumber to image ${imageView.tag}")
+            } ?: run {
+                Log.e(TAG, "Parent FrameLayout not found for image ${imageView.tag}")
             }
         }
     }
@@ -1236,55 +1301,60 @@ class ActivitySequenceUnderActivity : AppCompatActivity() {
     }
 
     private fun checkStickerUnlock() {
-        // Calculate local alpha
         val localAlpha = calculateFinalAlpha()
-        Log.d(TAG, "Checking sticker unlock with localAlpha: $localAlpha")
+        val avgResponseTime = calculateAverageResponseTime()
 
+        Log.d(TAG, "Checking rewards - Alpha: $localAlpha, Avg Response Time: ${avgResponseTime}ms")
+
+        val totalAttempts = sessionMetrics.correctCount + sessionMetrics.errorCount
+        val accuracy = if (totalAttempts > 0) {
+            sessionMetrics.correctCount.toFloat() / totalAttempts
+        } else 0f
+
+        // Prepare features for model decision (needed for sticker type)
         val features = prepareBehavioralFeatures(
-            currentAccuracy = (sessionMetrics.correctCount.toFloat() / attemptsCount * 100),
-            avgResponseTime = calculateAverageResponseTime(),
+            currentAccuracy = accuracy * 100,
+            avgResponseTime = avgResponseTime,
             jitter = calculateJitter()
         )
 
         val decision = gameMaster.predict(features)
 
-        // MORE RESTRICTIVE STICKER UNLOCK CRITERIA
-        val shouldUnlockSticker = when {
-            // 1. Excellent performance: Alpha >= 9.0 AND first attempt correct AND no errors
-            localAlpha >= 9.0f && attemptsCount == 1 && sessionMetrics.errorCount == 0 -> {
-                Log.d(TAG, "Excellent performance - Unlocking sticker")
-                true
+        // UPDATED CRITERIA - More realistic for children
+        when {
+            // TIER 1: STICKER - Excellent performance (high alpha AND fast)
+            localAlpha >= 9.0f && avgResponseTime < 6000 && attemptsCount == 1 && sessionMetrics.errorCount == 0 -> {
+                Log.d(TAG, "TIER 1: Sticker - Excellent! Alpha: $localAlpha, Time: ${avgResponseTime}ms")
+                Handler().postDelayed({
+                    goToStickerUnlock(decision, localAlpha)
+                }, 1000)
             }
-            // 2. Good performance: Alpha >= 8.0 AND errorCount <= 1 AND completed multiple sub-routines
-            localAlpha >= 8.0f && sessionMetrics.errorCount <= 1 && sessionMetrics.completedSubRoutines.size >= 2 -> {
-                Log.d(TAG, "Good performance with multiple routines - Unlocking sticker")
-                true
+
+            // TIER 2: 5 STEPS - Very good performance
+            localAlpha >= 7.0f || (localAlpha >= 5.0f && avgResponseTime < 8000) -> {
+                Log.d(TAG, "TIER 2: 5 steps - Very good! Alpha: $localAlpha, Time: ${avgResponseTime}ms")
+                Handler().postDelayed({
+                    onSessionComplete()
+                }, 1000)
             }
-            // 3. Milestone: Completed 5 sub-routines with good performance
-            sessionMetrics.completedSubRoutines.size >= 5 && sessionMetrics.errorCount <= 2 -> {
-                Log.d(TAG, "Milestone reached - Unlocking sticker")
-                true
+
+            // TIER 3: 3 STEPS - Good performance
+            localAlpha >= 4.0f || avgResponseTime < 15000 -> {
+                Log.d(TAG, "TIER 3: 3 steps - Good! Alpha: $localAlpha, Time: ${avgResponseTime}ms")
+                Handler().postDelayed({
+                    onSessionComplete()
+                }, 1000)
             }
+
+            // TIER 4: 1 STEP - Basic participation
             else -> {
-                Log.d(TAG, "No sticker unlock this time")
-                false
+                Log.d(TAG, "TIER 4: 1 step - Participated! Alpha: $localAlpha, Time: ${avgResponseTime}ms")
+                Handler().postDelayed({
+                    onSessionComplete()
+                }, 1000)
             }
         }
-
-        if (shouldUnlockSticker) {
-            // Navigate to sticker unlock activity
-            goToStickerUnlock(decision, localAlpha)
-        } else {
-            // No sticker, go directly to scoreboard after a delay
-            Log.d(TAG, "No sticker unlocked, going to scoreboard")
-            Handler().postDelayed({
-                onSessionComplete()
-            }, 1000) // Shorter delay since no sticker animation
-        }
-        Log.d(TAG, "Should show sticker: $shouldUnlockSticker, Attempts: $attemptsCount, Alpha: $localAlpha, Errors: ${sessionMetrics.errorCount}")
     }
-
-
 
     private fun goToStickerUnlock(decision: ModelDecision, alpha: Float) {
         // Prevent duplicate navigation
@@ -1294,25 +1364,27 @@ class ActivitySequenceUnderActivity : AppCompatActivity() {
         }
 
         isNavigatingToSticker = true
-        Log.d(TAG, "goToStickerUnlock called")
+        Log.d(TAG, "Direct sticker unlock flow for high performance, alpha: $alpha")
 
         try {
+            // Determine sticker type from model decision
             val stickerType = when (decision.friendAction) {
-                in 1..3 -> "comfort"    // Sensory stickers
-                in 4..6 -> "achievement" // Milestone stickers
-                in 7..9 -> "celebration" // Celebration stickers
-                else -> "encouragement"  // Default encouragement
+                in 1..3 -> "comfort"      // Sensory stickers
+                in 4..6 -> "achievement"  // Milestone stickers
+                in 7..9 -> "celebration"  // Celebration stickers
+                else -> "encouragement"   // Default encouragement
             }
 
             Log.d(TAG, "Creating intent for UnlockStickerActivity with sticker: $stickerType")
 
             val intent = Intent(this, UnlockStickerActivity::class.java)
 
-            // Pass sticker type
+            // Pass sticker type and performance data
             intent.putExtra("STICKER_TYPE", stickerType)
             intent.putExtra("ALPHA_SCORE", alpha)
+            intent.putExtra("PERFORMANCE_TIER", 1) // Tier 1 = highest
 
-            // Pass game data needed for navigation after sticker collection
+            // Pass all game data needed for navigation after sticker collection
             intent.putExtra("FINAL_ALPHA", calculateFinalAlpha())
             intent.putExtra("POPPED_BUBBLES", poppedBubbles)
             intent.putExtra("TOTAL_BUBBLES", totalBubbles)
@@ -1327,124 +1399,28 @@ class ActivitySequenceUnderActivity : AppCompatActivity() {
             intent.putExtra("USER_SELECTED_ROUTINE", userSelectedRoutineId)
             intent.putExtra("USER_AGE", userAge)
 
+            // Pass model decision data if needed
+            intent.putExtra("MODEL_DECISION_ROUTINE", decision.routineAction)
+            intent.putExtra("MODEL_DECISION_SEQUENCE", decision.sequenceAction)
+            intent.putExtra("MODEL_DECISION_FRIEND", decision.friendAction)
+            intent.putExtra("MODEL_DECISION_MOTIVATION", decision.motivationId)
+
             Log.d(TAG, "Starting UnlockStickerActivity...")
             startActivity(intent)
-            Log.d(TAG, "UnlockStickerActivity started successfully")
 
-            // Don't call finish() here - let the animation complete first
-            // The sticker activity will handle finishing this activity
+            // Don't finish() here - let the sticker activity handle it
 
         } catch (e: Exception) {
             Log.e(TAG, "ERROR starting UnlockStickerActivity: ${e.message}")
             e.printStackTrace()
             isNavigatingToSticker = false  // Reset on error
 
-            // Fallback to scoreboard
+            // Fallback to normal scoreboard
             Toast.makeText(this, "Couldn't show sticker. Going to scoreboard.", Toast.LENGTH_SHORT).show()
             Handler().postDelayed({
                 onSessionComplete()
             }, 1000)
         }
-    }
-
-    private fun goToRoutineSelection() {
-        Log.d(TAG, "Going to Routine Selection")
-
-        Handler(Looper.getMainLooper()).postDelayed({
-            val intent = Intent(this, RoutineSelectionActivity::class.java)
-            // Pass any needed data
-            intent.putExtra("SHOW_UNLOCKED_ROUTINES", true)
-            intent.putExtra("COMPLETED_SUBROUTINES", sessionMetrics.completedSubRoutines.size)
-            intent.putExtra("FINAL_ALPHA", calculateFinalAlpha())
-            startActivity(intent)
-            finish()
-        }, 1000) // Small delay for smooth transition
-    }
-
-    private fun unlockTherapeuticSticker(decision: ModelDecision, alpha: Float) {
-        val stickerType = when (decision.friendAction) {
-            in 1..3 -> "comfort"    // Sensory stickers
-            in 4..6 -> "achievement" // Milestone stickers
-            in 7..9 -> "celebration" // Celebration stickers
-            else -> "encouragement"  // Default encouragement
-        }
-
-        Log.d(TAG, "Unlocking sticker: $stickerType with alpha: $alpha")
-
-        // Show sticker unlock animation
-        showStickerUnlockAnimation(stickerType, alpha)
-
-        // Save sticker unlock to profile
-        saveStickerUnlock(stickerType, currentRoutineId, alpha)
-    }
-
-    private fun showStickerUnlockAnimation(stickerType: String, alpha: Float) {
-        Log.d(TAG, "Showing sticker animation: $stickerType")
-
-        // Create sticker reveal animation
-        val stickerView = ImageView(this).apply {
-            layoutParams = FrameLayout.LayoutParams(200, 200).apply {
-                gravity = Gravity.CENTER
-            }
-            setImageResource(
-                when (stickerType) {
-                    "comfort" -> R.drawable.happy_emotion
-                    "achievement" -> R.drawable.bottle
-                    "celebration" -> R.drawable.sanitations
-                    else -> R.drawable.bad
-                }
-            )
-            scaleX = 0f
-            scaleY = 0f
-            this.alpha = 0f
-        }
-
-        val rootView = findViewById<FrameLayout>(R.id.rootContainer)
-        rootView.addView(stickerView)
-
-        // Animate sticker reveal
-        stickerView.animate()
-            .scaleX(1.5f)
-            .scaleY(1.5f)
-            .alpha(1f)
-            .rotationBy(360f)
-            .setDuration(1000)
-            .withEndAction {
-                stickerView.animate()
-                    .scaleX(1f)
-                    .scaleY(1f)
-                    .setDuration(500)
-                    .withEndAction {
-                        Handler().postDelayed({
-                            stickerView.animate()
-                                .alpha(0f)
-                                .setDuration(500)
-                                .withEndAction {
-                                    rootView.removeView(stickerView)
-                                    Log.d(TAG, "Sticker animation completed")
-                                }
-                                .start()
-                        }, 2000)
-                    }
-                    .start()
-            }
-            .start()
-
-        // Show congratulatory message based on alpha
-        val message = when {
-            alpha >= 8.0 -> "Therapeutic breakthrough! 🎯"
-            alpha >= 6.0 -> "Amazing progress! 🌟"
-            alpha >= 4.0 -> "Great work! New sticker! 🏆"
-            else -> "You earned a sticker! 🎉"
-        }
-
-        Toast.makeText(this, message, Toast.LENGTH_LONG).show()
-        Log.d(TAG, "Sticker message: $message")
-    }
-
-    private fun saveStickerUnlock(stickerType: String, routineId: Int, alpha: Float) {
-        Log.d(TAG, "Saving sticker: $stickerType for routine $routineId with alpha $alpha")
-        // In real implementation, save to Firebase/SharedPreferences
     }
 
     private fun calculateAverageResponseTime(): Long {
@@ -1748,61 +1724,6 @@ class ActivitySequenceUnderActivity : AppCompatActivity() {
         val fullMessage = "$errorMessage. ${outcome.recommendation}"
         Toast.makeText(this, fullMessage, Toast.LENGTH_SHORT).show()
         Log.d(TAG, "Error message: $fullMessage")
-    }
-
-    private fun prepareNextChallenge() {
-        Log.d(TAG, "Preparing next challenge...")
-        Log.d(TAG, "Current: Routine=$currentRoutineId, Sub=$currentSubRoutineId")
-        Log.d(TAG, "Completed sub-routines: ${sessionMetrics.completedSubRoutines}")
-
-        // Determine next sub-routine (cycle through 0, 1, 2)
-        val nextSubRoutine = (currentSubRoutineId + 1) % 3
-
-        Log.d(TAG, "Next sub-routine: $nextSubRoutine")
-
-        // Update for next round
-        currentSubRoutineId = nextSubRoutine
-
-        // Get new correct order
-        val routineData = routines[currentRoutineId]?.get(currentSubRoutineId)
-        if (routineData != null) {
-            currentCorrectOrder = routineData.first.toMutableList()
-            currentDifficultyLevel = routineData.second
-            Log.d(TAG, "New routine data: ${routineData.third}, Difficulty: $currentDifficultyLevel")
-            Log.d(TAG, "New correct order: $currentCorrectOrder")
-        } else {
-            Log.e(TAG, "No routine data found for next challenge")
-            // Fallback to first sub-routine
-            currentSubRoutineId = 0
-            currentCorrectOrder = mutableListOf("wake_up", "make_bed", "drink_water")
-        }
-
-        // Reset for new challenge
-        resetGameState()
-        selectedOrder.clear()
-        runOnUiThread {
-            verticalContainer.removeAllViews()
-        }
-        verticalImages.clear()
-
-        // Create new layout
-        createVerticalLayout()
-
-        // Update instruction
-        val routineName = when (currentRoutineId) {
-            0 -> "Morning Routine"
-            1 -> "Bedtime Routine"
-            2 -> "School Routine"
-            else -> "Daily Activity"
-        }
-
-        val subRoutineDesc = routines[currentRoutineId]?.get(currentSubRoutineId)?.third ?: ""
-        runOnUiThread {
-            gameTitle.text = "$routineName: $subRoutineDesc"
-            tvInstruction.text = "New challenge! Remember the order"
-        }
-
-        Log.d(TAG, "New challenge ready: $routineName - $subRoutineDesc")
     }
 
     private fun stopTimer() {
