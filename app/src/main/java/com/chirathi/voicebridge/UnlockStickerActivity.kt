@@ -233,6 +233,46 @@ class UnlockStickerActivity : AppCompatActivity() {
         }
     }
 
+    private fun checkRoutineUnlock(stickerCount: Int) {
+        val sharedPrefs = getSharedPreferences("sticker_progress", MODE_PRIVATE)
+
+        when (stickerCount) {
+            3 -> unlockRoutine(1, "Bedtime Routine", stickerCount) // Unlock bedtime after 3 stickers
+            6 -> unlockRoutine(2, "School Routine", stickerCount)  // Unlock school after 6 stickers
+        }
+    }
+
+    private fun unlockRoutine(routineId: Int, routineName: String, stickerCount: Int) {
+        val sharedPrefs = getSharedPreferences("unlocked_routines", MODE_PRIVATE)
+        val editor = sharedPrefs.edit()
+        editor.putBoolean("routine_$routineId", true)
+        editor.apply()
+
+        // Show unlock message
+        Handler(Looper.getMainLooper()).post {
+            Toast.makeText(
+                this,
+                "🎉 $routineName Unlocked!",
+                Toast.LENGTH_LONG
+            ).show()
+        }
+
+        // Update title text
+        val nextStickersNeeded = when (routineId) {
+            1 -> 3 // Need 3 more stickers for school routine (total 6)
+            2 -> 0 // All routines unlocked
+            else -> 0
+        }
+
+        runOnUiThread {
+            if (nextStickersNeeded > 0) {
+                titleText.text = "🎉 $routineName Unlocked!\nCollect $nextStickersNeeded more stickers for next routine!"
+            } else {
+                titleText.text = "🎉 All Routines Unlocked!\nYou're a star! ⭐"
+            }
+        }
+    }
+
     private fun hideBoxAndRevealCard() {
         // 1. Hide gift box
         ObjectAnimator.ofFloat(giftBox, "alpha", 1f, 0f).apply {
