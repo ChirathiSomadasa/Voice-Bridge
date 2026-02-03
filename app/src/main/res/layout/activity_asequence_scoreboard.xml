@@ -1,250 +1,215 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
-    android:id="@+id/rootContainer"
+    android:id="@+id/staircaseContainer"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@drawable/gradient_therapeutic_background"
-    android:padding="16dp"
-    tools:context=".ASequenceScoreboardActivity">
+    android:background="@drawable/activity_scorebaord_bg"
+    android:padding="16dp">
 
-    <!-- Therapeutic Title -->
+    <!-- Title -->
     <TextView
         android:id="@+id/therapeuticMessage"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="24dp"
-        android:layout_marginHorizontal="24dp"
-        android:gravity="center"
-        android:text="Therapeutic Journey!"
-        android:textColor="@color/white"
-        android:textSize="28sp"
-        android:textStyle="bold"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
-
-    <!-- Alpha Score Display -->
-    <TextView
-        android:id="@+id/alphaDisplay"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="12dp"
-        android:background="@drawable/therapeutic_badge"
-        android:gravity="center"
-        android:paddingHorizontal="24dp"
-        android:paddingVertical="8dp"
-        android:text="Alpha: 0.0"
-        android:textColor="@color/white"
-        android:textSize="20sp"
+        android:text="Your Score"
+        android:textSize="24sp"
         android:textStyle="bold"
-        app:layout_constraintEnd_toEndOf="parent"
+        android:textColor="@color/black"
+        android:gravity="center"
+        app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/therapeuticMessage" />
-
-    <!-- Star Character -->
-    <ImageView
-        android:id="@+id/starCharacter"
-        android:layout_width="120dp"
-        android:layout_height="120dp"
-        android:layout_marginTop="32dp"
-        android:src="@drawable/star_filled_glow"
-        android:visibility="visible"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/alphaDisplay" />
+        android:layout_marginTop="40dp"/>
 
-    <!-- Staircase Container -->
+    <!-- Motivational Quote -->
+    <TextView
+        android:id="@+id/motivationalQuote"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text=""
+        android:textSize="18sp"
+        android:textStyle="italic"
+        android:textColor="@color/colorAccent"
+        android:gravity="center"
+        android:padding="12dp"
+        app:layout_constraintTop_toBottomOf="@+id/therapeuticMessage"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:layout_marginTop="20dp"/>
+
+    <!-- Stairs Container -->
     <androidx.constraintlayout.widget.ConstraintLayout
-        android:id="@+id/staircaseContainer"
-        android:layout_width="0dp"
-        android:layout_height="300dp"
-        android:layout_marginTop="32dp"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/starCharacter">
+        android:id="@+id/stairsWrapper"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        app:layout_constraintTop_toBottomOf="@+id/motivationalQuote"
+        app:layout_constraintBottom_toTopOf="@+id/buttonsContainer"
+        android:layout_marginTop="20dp"
+        android:layout_marginBottom="20dp">
 
-        <!-- Step 5 (Top) -->
         <ImageView
-            android:id="@+id/stepBlock5"
-            android:layout_width="120dp"
-            android:layout_height="40dp"
-            android:layout_marginTop="0dp"
-            android:src="@drawable/staircase_block"
-            app:layout_constraintEnd_toEndOf="parent"
+            android:id="@+id/starCharacter"
+            android:layout_width="70dp"
+            android:layout_height="70dp"
+            android:src="@drawable/score_star"
+            android:visibility="invisible"
+            android:elevation="10dp"
+            app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent" />
+            android:layout_marginStart="20dp"/>
 
-        <TextView
-            android:id="@+id/stepLabel5"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="8dp"
-            android:gravity="center"
-            android:text="We did it!"
-            android:textColor="@color/white"
-            android:textSize="14sp"
-            android:textStyle="bold"
-            app:layout_constraintBottom_toTopOf="@id/stepBlock5"
-            app:layout_constraintEnd_toEndOf="@id/stepBlock5"
-            app:layout_constraintStart_toStartOf="@id/stepBlock5" />
-
-        <!-- Step 4 -->
-        <ImageView
-            android:id="@+id/stepBlock4"
-            android:layout_width="140dp"
-            android:layout_height="40dp"
-            android:layout_marginTop="60dp"
-            android:src="@drawable/staircase_block"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent" />
-
-        <TextView
-            android:id="@+id/stepLabel4"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="8dp"
-            android:gravity="center"
-            android:text="So close!"
-            android:textColor="@color/white"
-            android:textSize="14sp"
-            android:textStyle="bold"
-            app:layout_constraintBottom_toTopOf="@id/stepBlock4"
-            app:layout_constraintEnd_toEndOf="@id/stepBlock4"
-            app:layout_constraintStart_toStartOf="@id/stepBlock4" />
-
-        <!-- Step 3 -->
-        <ImageView
-            android:id="@+id/stepBlock3"
-            android:layout_width="160dp"
-            android:layout_height="40dp"
-            android:layout_marginTop="120dp"
-            android:src="@drawable/staircase_block"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent" />
-
-        <TextView
-            android:id="@+id/stepLabel3"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="8dp"
-            android:gravity="center"
-            android:text="Moving along!"
-            android:textColor="@color/white"
-            android:textSize="14sp"
-            android:textStyle="bold"
-            app:layout_constraintBottom_toTopOf="@id/stepBlock3"
-            app:layout_constraintEnd_toEndOf="@id/stepBlock3"
-            app:layout_constraintStart_toStartOf="@id/stepBlock3" />
-
-        <!-- Step 2 -->
-        <ImageView
-            android:id="@+id/stepBlock2"
-            android:layout_width="180dp"
-            android:layout_height="40dp"
-            android:layout_marginTop="180dp"
-            android:src="@drawable/staircase_block"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent" />
-
-        <TextView
-            android:id="@+id/stepLabel2"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="8dp"
-            android:gravity="center"
-            android:text="Going up!"
-            android:textColor="@color/white"
-            android:textSize="14sp"
-            android:textStyle="bold"
-            app:layout_constraintBottom_toTopOf="@id/stepBlock2"
-            app:layout_constraintEnd_toEndOf="@id/stepBlock2"
-            app:layout_constraintStart_toStartOf="@id/stepBlock2" />
-
-        <!-- Step 1 (Bottom) -->
         <ImageView
             android:id="@+id/stepBlock1"
-            android:layout_width="200dp"
+            android:layout_width="140dp"
             android:layout_height="40dp"
-            android:layout_marginTop="240dp"
             android:src="@drawable/staircase_block"
-            app:layout_constraintEnd_toEndOf="parent"
+            android:visibility="gone"
+            app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent" />
+            android:layout_marginStart="20dp"
+            android:layout_marginBottom="40dp"/>
 
         <TextView
             android:id="@+id/stepLabel1"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="8dp"
-            android:gravity="center"
             android:text="Step by step!"
-            android:textColor="@color/white"
             android:textSize="14sp"
             android:textStyle="bold"
-            app:layout_constraintBottom_toTopOf="@id/stepBlock1"
-            app:layout_constraintEnd_toEndOf="@id/stepBlock1"
-            app:layout_constraintStart_toStartOf="@id/stepBlock1" />
+            android:textColor="@color/white"
+            android:visibility="gone"
+            app:layout_constraintBottom_toTopOf="@+id/stepBlock1"
+            app:layout_constraintStart_toStartOf="@+id/stepBlock1"
+            app:layout_constraintEnd_toEndOf="@+id/stepBlock1"/>
+
+        <ImageView
+            android:id="@+id/stepBlock2"
+            android:layout_width="140dp"
+            android:layout_height="40dp"
+            android:src="@drawable/staircase_block"
+            android:visibility="gone"
+            app:layout_constraintBottom_toTopOf="@+id/stepBlock1"
+            app:layout_constraintStart_toStartOf="@+id/stepBlock1"
+            android:layout_marginStart="60dp"
+            android:layout_marginBottom="40dp"/>
+
+        <TextView
+            android:id="@+id/stepLabel2"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Going up!"
+            android:visibility="gone"
+            app:layout_constraintBottom_toTopOf="@+id/stepBlock2"
+            app:layout_constraintStart_toStartOf="@+id/stepBlock2"
+            app:layout_constraintEnd_toEndOf="@+id/stepBlock2"/>
+
+        <ImageView
+            android:id="@+id/stepBlock3"
+            android:layout_width="140dp"
+            android:layout_height="40dp"
+            android:src="@drawable/staircase_block"
+            android:visibility="gone"
+            app:layout_constraintBottom_toTopOf="@+id/stepBlock2"
+            app:layout_constraintStart_toStartOf="@+id/stepBlock2"
+            android:layout_marginStart="60dp"
+            android:layout_marginBottom="40dp"/>
+
+        <TextView
+            android:id="@+id/stepLabel3"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Moving along!"
+            android:visibility="gone"
+            app:layout_constraintBottom_toTopOf="@+id/stepBlock3"
+            app:layout_constraintStart_toStartOf="@+id/stepBlock3"
+            app:layout_constraintEnd_toEndOf="@+id/stepBlock3"/>
+
+        <ImageView
+            android:id="@+id/stepBlock4"
+            android:layout_width="140dp"
+            android:layout_height="40dp"
+            android:src="@drawable/staircase_block"
+            android:visibility="gone"
+            app:layout_constraintBottom_toTopOf="@+id/stepBlock3"
+            app:layout_constraintStart_toStartOf="@+id/stepBlock3"
+            android:layout_marginStart="60dp"
+            android:layout_marginBottom="40dp"/>
+
+        <TextView
+            android:id="@+id/stepLabel4"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="So close!"
+            android:visibility="gone"
+            app:layout_constraintBottom_toTopOf="@+id/stepBlock4"
+            app:layout_constraintStart_toStartOf="@+id/stepBlock4"
+            app:layout_constraintEnd_toEndOf="@+id/stepBlock4"/>
+
+        <ImageView
+            android:id="@+id/stepBlock5"
+            android:layout_width="140dp"
+            android:layout_height="40dp"
+            android:src="@drawable/staircase_block"
+            android:visibility="gone"
+            app:layout_constraintBottom_toTopOf="@+id/stepBlock4"
+            app:layout_constraintStart_toStartOf="@+id/stepBlock4"
+            android:layout_marginStart="60dp"
+            android:layout_marginBottom="40dp"/>
+
+        <TextView
+            android:id="@+id/stepLabel5"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="We did it!"
+            android:visibility="gone"
+            app:layout_constraintBottom_toTopOf="@+id/stepBlock5"
+            app:layout_constraintStart_toStartOf="@+id/stepBlock5"
+            app:layout_constraintEnd_toEndOf="@+id/stepBlock5"/>
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 
-    <!-- Progress Description -->
-    <TextView
-        android:id="@+id/progressDescription"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="16dp"
-        android:layout_marginHorizontal="24dp"
-        android:gravity="center"
-        android:text="Progress details will appear here"
-        android:textColor="@color/white"
-        android:textSize="16sp"
-        android:lineSpacingExtra="4dp"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/staircaseContainer" />
-
-    <!-- Action Buttons -->
+    <!-- Buttons Container -->
     <LinearLayout
-        android:id="@+id/buttonContainer"
-        android:layout_width="0dp"
+        android:id="@+id/buttonsContainer"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="24dp"
-        android:layout_marginBottom="32dp"
-        android:gravity="center"
         android:orientation="horizontal"
+        android:gravity="center"
+        android:layout_marginBottom="40dp"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/progressDescription"
-        app:layout_constraintWidth_percent="0.9">
+        app:layout_constraintEnd_toEndOf="parent">
 
         <Button
             android:id="@+id/btnContinue"
             android:layout_width="0dp"
-            android:layout_height="56dp"
-            android:layout_marginEnd="8dp"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="16dp"
             android:layout_weight="1"
-            android:background="@drawable/rounded_button_background_g"
             android:text="Play Again"
-            android:textAllCaps="false"
-            android:textColor="@color/white"
-            android:textSize="18sp" />
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:background="@drawable/rounded_button_background_g"
+            android:textColor="@android:color/white"
+            android:elevation="4dp"
+            android:alpha="0"/>
 
         <Button
             android:id="@+id/btnHome"
             android:layout_width="0dp"
-            android:layout_height="56dp"
+            android:layout_height="wrap_content"
             android:layout_weight="1"
+            android:text="Routine Selection"
+            android:textSize="16sp"
+            android:textStyle="bold"
             android:background="@drawable/rounded_button_background"
-            android:text="Dashboard"
-            android:textAllCaps="false"
-            android:textColor="@color/white"
-            android:textSize="18sp" />
+            android:textColor="@android:color/white"
+            android:elevation="4dp"
+            android:alpha="0"/>
+
     </LinearLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>
