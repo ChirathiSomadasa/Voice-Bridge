@@ -62,11 +62,6 @@ class ASequenceScoreboardActivity : AppCompatActivity() {
         )
     )
 
-    // Block colors based on performance
-    private val highAccuracyColor = Color.parseColor("#4CAF50")  // Green
-    private val mediumAccuracyColor = Color.parseColor("#FF9800") // Orange
-    private val lowAccuracyColor = Color.parseColor("#FF6B8B")   // Pink
-
     // UI Elements
     private lateinit var staircaseContainer: ConstraintLayout
     private lateinit var therapeuticMessage: TextView
@@ -97,6 +92,16 @@ class ASequenceScoreboardActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_asequence_scoreboard)
+
+        // TEMPORARY DEBUG: Log all intent extras
+        val extras = intent.extras
+        if (extras != null) {
+            Log.d(TAG, "=== ALL INTENT EXTRAS ===")
+            for (key in extras.keySet()) {
+                Log.d(TAG, "$key = ${extras[key]}")
+            }
+            Log.d(TAG, "========================")
+        }
 
         // Get therapeutic data from intent
         getIntentData()
@@ -193,45 +198,42 @@ class ASequenceScoreboardActivity : AppCompatActivity() {
 
         Log.d(TAG, "Stair calculation - Alpha: $finalAlpha, Time: ${avgResponseTime}ms, Attempts: $attempts, Errors: $errors")
 
-        // Debug: Check what values are actually received
-        Log.d(TAG, "DEBUG - Intent extras:")
-        Log.d(TAG, "AVG_RESPONSE_TIME: $avgResponseTime")
-        Log.d(TAG, "ATTEMPTS_COUNT: $attempts")
-        Log.d(TAG, "ERROR_COUNT: $errors")
-        Log.d(TAG, "FINAL_ALPHA: $finalAlpha")
-
-        // FIXED: More specific conditions for staircase levels
+        // FIXED: More realistic staircase logic
         totalSteps = when {
-            // 5 stairs: Excellent performance (first try success or very good)
-            (attempts == 1 && errors == 0 && finalAlpha > 0) -> {
-                Log.d(TAG, "Condition: 5 stairs - First try success")
+            // 5 STAIRS: EXCELLENT - First try success or very high performance
+            (attempts == 1 && errors == 0 && finalAlpha >= 7.0f) -> {
+                Log.d(TAG, "Condition: 5 stairs - First try mastery")
                 5
             }
-            (finalAlpha >= 7.0f && errors <= 1 && avgResponseTime < 5000) -> {
-                Log.d(TAG, "Condition: 5 stairs - High alpha, low errors, fast response")
-                5
-            }
-            (finalAlpha >= 5.0f && errors <= 2 && avgResponseTime < 8000) -> {
-                Log.d(TAG, "Condition: 5 stairs - Good performance")
+            (finalAlpha >= 8.0f && errors <= 1) -> {
+                Log.d(TAG, "Condition: 5 stairs - Excellent performance")
                 5
             }
 
-            // 3 stairs: Moderate performance (some errors or slower)
-            (finalAlpha >= 3.0f || errors <= 3) -> {
-                Log.d(TAG, "Condition: 3 stairs - Moderate performance")
+            // 3 STAIRS: MODERATE - Made good progress
+            (finalAlpha >= 5.0f && errors <= 2) -> {
+                Log.d(TAG, "Condition: 3 stairs - Good progress")
                 3
             }
-            (attempts <= 3 && errors <= 4) -> {
-                Log.d(TAG, "Condition: 3 stairs - Few attempts with some errors")
+            (finalAlpha >= 3.0f && attempts <= 2 && errors <= 3) -> {
+                Log.d(TAG, "Condition: 3 stairs - Completed with some help")
                 3
             }
 
-            // 1 stair: Needs more practice (multiple failures)
+            // 1 STAIR: NEEDS PRACTICE - Struggled or low performance
             else -> {
-                Log.d(TAG, "Condition: 1 stair - Needs practice")
+                Log.d(TAG, "Condition: 1 stair - Needs more practice")
                 1
             }
         }
+
+        // Debug evaluation
+        Log.d(TAG, "=== DEBUG EVALUATION ===")
+        Log.d(TAG, "Attempts == 1 && errors == 0 && finalAlpha >= 7.0: ${attempts == 1 && errors == 0 && finalAlpha >= 7.0f}")
+        Log.d(TAG, "finalAlpha >= 8.0 && errors <= 1: ${finalAlpha >= 8.0f && errors <= 1}")
+        Log.d(TAG, "finalAlpha >= 5.0 && errors <= 2: ${finalAlpha >= 5.0f && errors <= 2}")
+        Log.d(TAG, "finalAlpha >= 3.0 && attempts <= 2 && errors <= 3: ${finalAlpha >= 3.0f && attempts <= 2 && errors <= 3}")
+        Log.d(TAG, "========================")
 
         // Safety check: Ensure totalSteps is valid
         totalSteps = totalSteps.coerceIn(1, 5)
@@ -239,7 +241,6 @@ class ASequenceScoreboardActivity : AppCompatActivity() {
         starFinalStep = totalSteps - 1
         Log.d(TAG, "Final decision: $totalSteps steps, Star at step: $starFinalStep")
     }
-
 
     private fun buildStaircase() {
         val themeColor = when(totalSteps) {
@@ -270,7 +271,14 @@ class ASequenceScoreboardActivity : AppCompatActivity() {
             else -> "Well done!"
         }
         therapeuticMessage.text = message
-        motivationalQuote.text = ""
+        therapeuticMessage.alpha = 0f
+        therapeuticMessage.visibility = View.VISIBLE
+
+        // Animate the therapeutic message
+        therapeuticMessage.animate()
+            .alpha(1f)
+            .setDuration(800)
+            .start()
     }
 
     private fun hideExtraStairs() {
@@ -303,7 +311,6 @@ class ASequenceScoreboardActivity : AppCompatActivity() {
 
     private fun animateBlockDrop(stepIndex: Int) {
         val block = stepBlocks[stepIndex]
-        // val label = stepLabels[stepIndex] // Unused
 
         // Reduced from 600f to 200f to move the whole staircase higher up
         val baseY = 200f
@@ -319,10 +326,6 @@ class ASequenceScoreboardActivity : AppCompatActivity() {
 
         val fadeInAnim = ObjectAnimator.ofFloat(block, "alpha", 0f, 1f)
         fadeInAnim.duration = 400
-
-        // Labels disabled based on request
-        // label.translationY = targetY - 30
-        // label.translationX = targetX + (blockWidth / 2) - 30
 
         val animSet = AnimatorSet()
         animSet.playTogether(dropAnim, slideAnim, fadeInAnim)
@@ -439,22 +442,6 @@ class ASequenceScoreboardActivity : AppCompatActivity() {
         }
     }
 
-    // Unused method, kept to avoid compilation errors if referenced elsewhere, but not called.
-    private fun showStepLabel(stepIndex: Int) {
-        if (stepIndex < stepLabels.size) {
-            val label = stepLabels[stepIndex]
-            label.visibility = View.VISIBLE
-            label.alpha = 0f
-            label.animate()
-                .alpha(1f)
-                .scaleX(1.1f)
-                .scaleY(1.1f)
-                .setDuration(300)
-                .setInterpolator(OvershootInterpolator())
-                .start()
-        }
-    }
-
     private fun showQuoteForStep(step: Int) {
         val quotes = motivationalQuotes[totalSteps] ?: return
 
@@ -464,16 +451,30 @@ class ASequenceScoreboardActivity : AppCompatActivity() {
         motivationalQuote.visibility = View.VISIBLE
         motivationalQuote.alpha = 0f
 
-        // Position the quote above the star
-        val quotePosY = starCharacter.y - motivationalQuote.height - 40f
-        motivationalQuote.y = quotePosY
-        motivationalQuote.x = starCharacter.x - (motivationalQuote.width / 2) + (starCharacter.width / 2)
+        // Wait for layout to complete before positioning
+        motivationalQuote.post {
+            // Position the quote above the star
+            val quoteHeight = motivationalQuote.measuredHeight
+            val quoteWidth = motivationalQuote.measuredWidth
+            val starWidth = starCharacter.width
 
-        val fadeIn = ObjectAnimator.ofFloat(motivationalQuote, "alpha", 0f, 1f)
-        fadeIn.duration = 800
-        fadeIn.start()
+            // Center the quote horizontally relative to the star
+            val centerX = starCharacter.x + (starWidth / 2) - (quoteWidth / 2)
 
-        Log.d(TAG, "Showing quote: ${quotes[quoteIndex]} at step $step")
+            // Position the quote above the star with some spacing
+            val quotePosY = starCharacter.y - quoteHeight - 20f
+
+            motivationalQuote.x = centerX
+            motivationalQuote.y = quotePosY
+
+            Log.d(TAG, "Quote positioning - Star: (${starCharacter.x}, ${starCharacter.y}), Quote: ($centerX, $quotePosY)")
+
+            val fadeIn = ObjectAnimator.ofFloat(motivationalQuote, "alpha", 0f, 1f)
+            fadeIn.duration = 800
+            fadeIn.start()
+
+            Log.d(TAG, "Showing quote: '${quotes[quoteIndex]}' at step $step (totalSteps: $totalSteps)")
+        }
     }
 
     private fun startStarGlow() {
