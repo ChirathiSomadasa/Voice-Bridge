@@ -1626,7 +1626,7 @@ class ActivitySequenceUnderActivity : AppCompatActivity() {
         // Celebration based on model's motivation decision
         when (outcome.modelDecision.motivationId) {
             0 -> playStarsCelebration()  // Simple stars
-            1 -> playQuoteCelebration(outcome.modelDecision)  // Motivational quote
+            1 -> playStarsCelebration()
             2 -> playFullCelebration()  // Full animation
         }
     }
