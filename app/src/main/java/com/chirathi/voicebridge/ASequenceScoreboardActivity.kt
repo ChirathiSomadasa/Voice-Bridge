@@ -19,6 +19,7 @@ import android.widget.ImageView
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.constraintlayout.widget.ConstraintLayout
+import kotlin.math.min
 
 class ASequenceScoreboardActivity : AppCompatActivity() {
 
@@ -140,6 +141,8 @@ class ASequenceScoreboardActivity : AppCompatActivity() {
         previousError = intent.getStringExtra("PREVIOUS_ERROR") ?: "none"
         userSelectedRoutine = intent.getIntExtra("USER_SELECTED_ROUTINE", 0)
         userAge = intent.getIntExtra("USER_AGE", 6)
+
+        Log.d(TAG, "Received from intent - FinalAlpha: $finalAlpha, ErrorCount: $errorCount")
     }
 
     private fun initializeSounds() {
@@ -186,20 +189,57 @@ class ASequenceScoreboardActivity : AppCompatActivity() {
         // Get performance data from intent
         val avgResponseTime = intent.getLongExtra("AVG_RESPONSE_TIME", 0L)
         val attempts = intent.getIntExtra("ATTEMPTS_COUNT", 0)
+        val errors = intent.getIntExtra("ERROR_COUNT", 0)
 
-        Log.d(TAG, "Stair calculation - Alpha: $finalAlpha, Time: ${avgResponseTime}ms, Attempts: $attempts")
+        Log.d(TAG, "Stair calculation - Alpha: $finalAlpha, Time: ${avgResponseTime}ms, Attempts: $attempts, Errors: $errors")
 
-        // Determine steps based on performance (NOT just alpha)
+        // Debug: Check what values are actually received
+        Log.d(TAG, "DEBUG - Intent extras:")
+        Log.d(TAG, "AVG_RESPONSE_TIME: $avgResponseTime")
+        Log.d(TAG, "ATTEMPTS_COUNT: $attempts")
+        Log.d(TAG, "ERROR_COUNT: $errors")
+        Log.d(TAG, "FINAL_ALPHA: $finalAlpha")
+
+        // FIXED: More specific conditions for staircase levels
         totalSteps = when {
-            finalAlpha >= 9.0f && avgResponseTime < 6000 && attempts == 1 -> 5
-            finalAlpha >= 7.0f || (finalAlpha >= 5.0f && avgResponseTime < 8000) -> 5
-            finalAlpha >= 4.0f || avgResponseTime < 15000 -> 3
-            else -> 1
+            // 5 stairs: Excellent performance (first try success or very good)
+            (attempts == 1 && errors == 0 && finalAlpha > 0) -> {
+                Log.d(TAG, "Condition: 5 stairs - First try success")
+                5
+            }
+            (finalAlpha >= 7.0f && errors <= 1 && avgResponseTime < 5000) -> {
+                Log.d(TAG, "Condition: 5 stairs - High alpha, low errors, fast response")
+                5
+            }
+            (finalAlpha >= 5.0f && errors <= 2 && avgResponseTime < 8000) -> {
+                Log.d(TAG, "Condition: 5 stairs - Good performance")
+                5
+            }
+
+            // 3 stairs: Moderate performance (some errors or slower)
+            (finalAlpha >= 3.0f || errors <= 3) -> {
+                Log.d(TAG, "Condition: 3 stairs - Moderate performance")
+                3
+            }
+            (attempts <= 3 && errors <= 4) -> {
+                Log.d(TAG, "Condition: 3 stairs - Few attempts with some errors")
+                3
+            }
+
+            // 1 stair: Needs more practice (multiple failures)
+            else -> {
+                Log.d(TAG, "Condition: 1 stair - Needs practice")
+                1
+            }
         }
 
+        // Safety check: Ensure totalSteps is valid
+        totalSteps = totalSteps.coerceIn(1, 5)
+
         starFinalStep = totalSteps - 1
-        Log.d(TAG, "Staircase: $totalSteps steps")
+        Log.d(TAG, "Final decision: $totalSteps steps, Star at step: $starFinalStep")
     }
+
 
     private fun buildStaircase() {
         val themeColor = when(totalSteps) {
@@ -308,8 +348,7 @@ class ASequenceScoreboardActivity : AppCompatActivity() {
         if (starFinalStep < 0 || starFinalStep >= stepBlocks.size) return
         val targetBlock = stepBlocks[starFinalStep]
 
-        // Position the star.
-        // CHANGE: Changed +20f to -40f to position the star higher above the block.
+        // Position the star
         val finalX = targetBlock.x + (targetBlock.width / 4)
         val finalY = targetBlock.y - starCharacter.height - 40f
 
@@ -317,6 +356,10 @@ class ASequenceScoreboardActivity : AppCompatActivity() {
         starCharacter.y = finalY
         starCharacter.visibility = View.VISIBLE
         starCharacter.alpha = 0f
+
+        // Ensure motivational quote is properly initialized
+        motivationalQuote.alpha = 0f
+        motivationalQuote.visibility = View.VISIBLE
 
         // Animation Phase A: Appear and Swirl in place
         val appearAnim = AnimatorSet()
@@ -345,10 +388,10 @@ class ASequenceScoreboardActivity : AppCompatActivity() {
             }
 
             override fun onAnimationEnd(animation: Animator) {
-                // CHANGE: Removed the loop that showed step labels.
-
-                // Show quote ABOVE the settled star
-                showQuoteForStep(starFinalStep)
+                // Show quote immediately after star animation
+                Handler(Looper.getMainLooper()).postDelayed({
+                    showQuoteForStep(starFinalStep)
+                }, 300)
 
                 // Finalize state
                 settleStar()
@@ -415,22 +458,22 @@ class ASequenceScoreboardActivity : AppCompatActivity() {
     private fun showQuoteForStep(step: Int) {
         val quotes = motivationalQuotes[totalSteps] ?: return
 
-        if (step < quotes.size) {
-            motivationalQuote.text = quotes[step]
-            motivationalQuote.visibility = View.VISIBLE
+        // Use step index to get the appropriate quote
+        val quoteIndex = min(step, quotes.size - 1)
+        motivationalQuote.text = quotes[quoteIndex]
+        motivationalQuote.visibility = View.VISIBLE
+        motivationalQuote.alpha = 0f
 
-            // CHANGE: Dynamic positioning to place the quote above the star.
-            // We use .post() to ensure the TextView has measured its new text height.
-            motivationalQuote.post {
-                val spacing = 30f // Space between star and quote
-                // Set Y position so the bottom of the quote is above the star
-                motivationalQuote.y = starCharacter.y - motivationalQuote.height - spacing
-            }
+        // Position the quote above the star
+        val quotePosY = starCharacter.y - motivationalQuote.height - 40f
+        motivationalQuote.y = quotePosY
+        motivationalQuote.x = starCharacter.x - (motivationalQuote.width / 2) + (starCharacter.width / 2)
 
-            val fadeIn = ObjectAnimator.ofFloat(motivationalQuote, "alpha", 0f, 1f)
-            fadeIn.duration = 600
-            fadeIn.start()
-        }
+        val fadeIn = ObjectAnimator.ofFloat(motivationalQuote, "alpha", 0f, 1f)
+        fadeIn.duration = 800
+        fadeIn.start()
+
+        Log.d(TAG, "Showing quote: ${quotes[quoteIndex]} at step $step")
     }
 
     private fun startStarGlow() {
