@@ -110,6 +110,10 @@ class ActivitySequenceUnderActivity : AppCompatActivity() {
     private lateinit var hintIndicator: ImageView
     private lateinit var visualHintOverlay: View
 
+    // Control buttons
+    private lateinit var btnUndo: Button
+    private lateinit var btnClear: Button
+
     // TextViews for order display
     private lateinit var tvOrder1: TextView
     private lateinit var tvOrder2: TextView
@@ -424,7 +428,7 @@ class ActivitySequenceUnderActivity : AppCompatActivity() {
         Log.d(TAG, "Hints: $shouldShowHints, Type: $hintType")
 
         // Update UI based on model decision
-        updateInstructionBasedOnModel(decision)
+        updateInstructionBasedOnModel(decision, isInitialPhase = true)
         updateHintIndicator()
     }
 
@@ -638,8 +642,8 @@ class ActivitySequenceUnderActivity : AppCompatActivity() {
         return (this * multiplier).roundToInt() / multiplier
     }
 
-    private fun updateInstructionBasedOnModel(decision: ModelDecision) {
-        Log.d(TAG, "updateInstructionBasedOnModel: Routine=$currentRoutineId, Sub=$currentSubRoutineId")
+    private fun updateInstructionBasedOnModel(decision: ModelDecision, isInitialPhase: Boolean = false) {
+        Log.d(TAG, "updateInstructionBasedOnModel: Routine=$currentRoutineId, Sub=$currentSubRoutineId, Phase=${if (isInitialPhase) "initial" else "gameplay"}")
 
         // Set routine name based on currentRoutineId
         val routineName = when (currentRoutineId) {
@@ -660,31 +664,40 @@ class ActivitySequenceUnderActivity : AppCompatActivity() {
 
         Log.d(TAG, "Title set: $title")
 
-        // Set therapeutic instruction
-        val instruction = when (decision.sequenceAction) {
-            1 -> "Take your time. I'll show you where to tap!"
-            2 -> "Listen carefully. I'll tell you what's next!"
-            else -> "Remember the order. You can do it!"
+        // Set different instructions for initial phase (correct order display) vs gameplay phase
+        val instruction = if (isInitialPhase) {
+            // When showing correct order initially
+            "Look and remember the correct order"
+        } else {
+            // When playing the jumbled game
+            when (decision.sequenceAction) {
+                1 -> "Tap in the right order"
+                2 -> "Tap in the right order"
+                else -> "Tap in the right order"
+            }
         }
 
         runOnUiThread {
             tvInstruction.text = instruction
+            // Speak the instruction if TTS is ready
+            if (isTtsReady) {
+                textToSpeech.speak(instruction, TextToSpeech.QUEUE_FLUSH, null, "instruction")
+            }
         }
 
-        Log.d(TAG, "Instruction: $instruction")
+        Log.d(TAG, "Instruction: $instruction (Phase: ${if (isInitialPhase) "initial" else "gameplay"})")
     }
 
     private fun updateHintIndicator() {
         runOnUiThread {
             hintIndicator.visibility = if (shouldShowHints) View.VISIBLE else View.GONE
-            hintIndicator.setImageResource(
-                when (hintType) {
-                    "visual" -> R.drawable.ic_eye_hint
-                    "auditory" -> R.drawable.ic_ear_hint
-                    else -> R.drawable.ic_no_hint
-                }
-            )
-            Log.d(TAG, "Hint indicator: $hintType (visible=${hintIndicator.visibility == View.VISIBLE})")
+            val iconRes = when (hintType) {
+                "visual" -> R.drawable.ic_eye_hint
+                "auditory" -> R.drawable.ic_ear_hint
+                else -> R.drawable.ic_no_hint
+            }
+            hintIndicator.setImageResource(iconRes)
+            Log.d(TAG, "Hint indicator: $hintType, icon: $iconRes (visible=${hintIndicator.visibility == View.VISIBLE})")
         }
     }
 
@@ -701,6 +714,10 @@ class ActivitySequenceUnderActivity : AppCompatActivity() {
             timerTextView = findViewById(R.id.timerTextView)
             hintIndicator = findViewById(R.id.hintIndicator)
             visualHintOverlay = findViewById(R.id.visualHintOverlay)
+
+            // Control buttons
+            btnUndo = findViewById(R.id.btnUndo)
+            btnClear = findViewById(R.id.btnClear)
 
             tvOrder1 = findViewById(R.id.tv_order_1)
             tvOrder2 = findViewById(R.id.tv_order_2)
@@ -719,6 +736,16 @@ class ActivitySequenceUnderActivity : AppCompatActivity() {
         btnStart.setOnClickListener {
             Log.d(TAG, "Start button clicked")
             startGame()
+        }
+
+        btnUndo.setOnClickListener {
+            Log.d(TAG, "Undo button clicked")
+            undoLastSelection()
+        }
+
+        btnClear.setOnClickListener {
+            Log.d(TAG, "Clear button clicked")
+            clearAllSelections()
         }
 
         // Setup the initial view state
@@ -753,9 +780,7 @@ class ActivitySequenceUnderActivity : AppCompatActivity() {
         elapsedTime = 0L
         isTimerRunning = true
         timerHandler.post(timerRunnable)
-        runOnUiThread {
-            timerTextView.visibility = View.VISIBLE
-        }
+        // Timer visibility is now handled by showControlButtons() in transitionToVerticalLayout()
         Log.d(TAG, "Timer started")
     }
 
@@ -764,7 +789,13 @@ class ActivitySequenceUnderActivity : AppCompatActivity() {
             try {
                 horizontalContainer.visibility = View.VISIBLE
                 btnStart.visibility = View.VISIBLE
+
+                // Hide timer and control buttons in initial view
                 timerTextView.visibility = View.GONE
+                btnUndo.visibility = View.GONE
+                btnClear.visibility = View.GONE
+
+                // Hide gameplay elements
                 verticalContainer.visibility = View.GONE
                 orderDisplay.visibility = View.GONE
                 visualHintOverlay.visibility = View.GONE
@@ -921,10 +952,50 @@ class ActivitySequenceUnderActivity : AppCompatActivity() {
     private fun startGame() {
         runOnUiThread {
             btnStart.visibility = View.GONE
+            // Update instruction for gameplay phase
+            updateInstructionForGameplay()
         }
         startTimer()
         transitionToVerticalLayout()
         Log.d(TAG, "Game started")
+    }
+
+    private fun updateInstructionForGameplay() {
+        // Get updated model decision for gameplay
+        val features = prepareBehavioralFeatures(
+            currentAccuracy = if (attemptsCount > 0) {
+                (sessionMetrics.correctCount.toFloat() / attemptsCount * 100)
+            } else 0f,
+            avgResponseTime = calculateAverageResponseTime(),
+            jitter = calculateJitter()
+        )
+
+        val decision = gameMaster.predict(features)
+
+        // Update instruction for gameplay phase (jumbled ordering)
+        val instruction = when (decision.sequenceAction) {
+            1 -> "Take your time. I'll show you where to tap!"
+            2 -> "Listen carefully. I'll tell you what's next!"
+            else -> "Let's order correctly. Tap in the right sequence!"
+        }
+
+        runOnUiThread {
+            tvInstruction.text = instruction
+            if (isTtsReady) {
+                textToSpeech.speak(instruction, TextToSpeech.QUEUE_FLUSH, null, "gameplay_instruction")
+            }
+        }
+
+        // Update hint type based on model decision
+        hintType = when (decision.sequenceAction) {
+            1 -> "visual"
+            2 -> "auditory"
+            else -> "none"
+        }
+        shouldShowHints = decision.sequenceAction > 0
+        updateHintIndicator()
+
+        Log.d(TAG, "Gameplay instruction: $instruction, Hint type: $hintType")
     }
 
     private fun transitionToVerticalLayout() {
@@ -939,6 +1010,17 @@ class ActivitySequenceUnderActivity : AppCompatActivity() {
                     horizontalContainer.visibility = View.GONE
                     verticalContainer.visibility = View.VISIBLE
                     orderDisplay.visibility = View.VISIBLE
+
+                    // Show timer and control buttons with animation
+                    timerTextView.visibility = View.VISIBLE
+                    btnUndo.visibility = View.VISIBLE
+                    btnClear.visibility = View.VISIBLE
+
+                    // Optional: Add fade-in animation for buttons
+                    btnUndo.alpha = 0f
+                    btnClear.alpha = 0f
+                    btnUndo.animate().alpha(1f).setDuration(300).start()
+                    btnClear.animate().alpha(1f).setDuration(300).start()
 
                     createVerticalLayout()
 
@@ -1005,9 +1087,9 @@ class ActivitySequenceUnderActivity : AppCompatActivity() {
                                 LinearLayout.LayoutParams.WRAP_CONTENT,
                                 LinearLayout.LayoutParams.WRAP_CONTENT
                             ).apply {
-                                width = 180
-                                height = 180
-                                setMargins(0, 16, 0, 16)
+                                width = 280 // Increased to 280dp for better visibility
+                                height = 280 // Increased to 280dp for better visibility
+                                setMargins(0, 20, 0, 20) // Increased margins
                             }
                         }
 
@@ -1022,14 +1104,19 @@ class ActivitySequenceUnderActivity : AppCompatActivity() {
                             if (drawableRes != 0) {
                                 setImageResource(drawableRes)
                                 tag = stepId  // Tag with the step ID
+                                scaleType = ImageView.ScaleType.CENTER_INSIDE
+                                adjustViewBounds = true
                                 Log.d(TAG, "Image $index: stepId=$stepId, drawable=$drawableRes")
                             } else {
                                 Log.e(TAG, "No drawable resource found for stepId: $stepId")
                                 setImageResource(R.drawable.seq_rtn0_sub1_1_wakeup)
                                 tag = stepId
+                                scaleType = ImageView.ScaleType.CENTER_INSIDE
+                                adjustViewBounds = true
                             }
 
                             isClickable = true
+                            setPadding(16, 16, 16, 16) // Add padding for touch area
 
                             // Add visual hint capability
                             if (hintType == "visual" && shouldShowHints) {
@@ -1061,18 +1148,94 @@ class ActivitySequenceUnderActivity : AppCompatActivity() {
                         frameLayout.addView(imageView)
                         verticalContainer.addView(frameLayout)
                         verticalImages.add(imageView)
+
+                        Log.d(TAG, "Created vertical image $index with size 280dp")
+
                     } catch (e: Exception) {
                         Log.e(TAG, "Error creating image view $index: ${e.message}")
                         e.printStackTrace()
                     }
                 }
 
-                Log.d(TAG, "Created ${verticalImages.size} image views")
+                Log.d(TAG, "Created ${verticalImages.size} image views (280dp each)")
+
             } catch (e: Exception) {
                 Log.e(TAG, "Error in createVerticalLayout: ${e.message}")
                 e.printStackTrace()
             }
         }
+    }
+
+    private fun undoLastSelection() {
+        if (selectedOrder.isEmpty()) {
+            Toast.makeText(this, "No steps to undo", Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        val lastSelected = selectedOrder.removeLast()
+        Log.d(TAG, "Undoing last selection: $lastSelected")
+
+        // Find and reset the corresponding image view
+        verticalImages.firstOrNull { it.tag == lastSelected }?.let { imageView ->
+            runOnUiThread {
+                imageView.alpha = 1f
+                imageView.isClickable = true
+
+                // Remove the badge
+                val parent = imageView.parent as? FrameLayout
+                parent?.let {
+                    for (i in it.childCount - 1 downTo 0) {
+                        val child = it.getChildAt(i)
+                        if (child is TextView && child.tag == "badge") {
+                            it.removeView(child)
+                        }
+                    }
+                }
+            }
+        }
+
+        // Update order display
+        updateOrderDisplay()
+
+        Toast.makeText(this, "Undid last step", Toast.LENGTH_SHORT).show()
+    }
+
+    private fun clearAllSelections() {
+        if (selectedOrder.isEmpty()) {
+            Toast.makeText(this, "No steps to clear", Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        Log.d(TAG, "Clearing all ${selectedOrder.size} selections")
+
+        // Reset all selected images
+        selectedOrder.forEach { stepId ->
+            verticalImages.firstOrNull { it.tag == stepId }?.let { imageView ->
+                runOnUiThread {
+                    imageView.alpha = 1f
+                    imageView.isClickable = true
+
+                    // Remove the badge
+                    val parent = imageView.parent as? FrameLayout
+                    parent?.let {
+                        for (i in it.childCount - 1 downTo 0) {
+                            val child = it.getChildAt(i)
+                            if (child is TextView && child.tag == "badge") {
+                                it.removeView(child)
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        // Clear the selection list
+        selectedOrder.clear()
+
+        // Update order display
+        updateOrderDisplay()
+
+        Toast.makeText(this, "Cleared all selections", Toast.LENGTH_SHORT).show()
     }
 
     private fun showInitialHint() {
@@ -1276,11 +1439,11 @@ class ActivitySequenceUnderActivity : AppCompatActivity() {
                     }
                 }
 
-                // UPDATED BADGE CREATION - Optimized for vertical layout
+                // UPDATED BADGE - Larger for bigger images
                 val badge = TextView(this@ActivitySequenceUnderActivity).apply {
                     text = orderNumber
                     tag = "badge"
-                    textSize = 24f // Larger for vertical layout
+                    textSize = 26f // Larger for better visibility
                     setTextColor(ContextCompat.getColor(this@ActivitySequenceUnderActivity, android.R.color.white))
                     setBackgroundResource(R.drawable.circle_badge)
                     gravity = Gravity.CENTER
@@ -1289,11 +1452,11 @@ class ActivitySequenceUnderActivity : AppCompatActivity() {
                     includeFontPadding = false
                     setPadding(0, 0, 0, 0)
 
-                    // Use even larger size for vertical layout
-                    val params = FrameLayout.LayoutParams(70, 70).apply {
+                    // Larger size for bigger images
+                    val params = FrameLayout.LayoutParams(80, 80).apply {
                         gravity = Gravity.TOP or Gravity.END
-                        topMargin = 10
-                        rightMargin = 10
+                        topMargin = 12
+                        rightMargin = 12
                     }
                     layoutParams = params
 
@@ -1311,6 +1474,7 @@ class ActivitySequenceUnderActivity : AppCompatActivity() {
                     Log.d(TAG, "Vertical badge $orderNumber added to ${imageView.tag}")
                     Log.d(TAG, "Badge position: (${badge.left}, ${badge.top})")
                     Log.d(TAG, "Badge visible: ${badge.visibility == View.VISIBLE}")
+                    Log.d(TAG, "Badge size: ${badge.width}x${badge.height}")
                 }
 
                 Log.d(TAG, "Added badge $orderNumber to image ${imageView.tag}")
@@ -1334,6 +1498,22 @@ class ActivitySequenceUnderActivity : AppCompatActivity() {
                     2 -> tvOrder3.text = "3. $stepName"
                 }
                 Log.d(TAG, "Order $index: $imageType -> $stepName")
+            }
+
+            // Clear any remaining order lines
+            when (selectedOrder.size) {
+                0 -> {
+                    tvOrder1.text = "1. "
+                    tvOrder2.text = "2. "
+                    tvOrder3.text = "3. "
+                }
+                1 -> {
+                    tvOrder2.text = "2. "
+                    tvOrder3.text = "3. "
+                }
+                2 -> {
+                    tvOrder3.text = "3. "
+                }
             }
         }
     }
@@ -1627,6 +1807,10 @@ class ActivitySequenceUnderActivity : AppCompatActivity() {
             tvOrder1.text = "1. "
             tvOrder2.text = "2. "
             tvOrder3.text = "3. "
+
+            // Ensure buttons are still visible
+            btnUndo.visibility = View.VISIBLE
+            btnClear.visibility = View.VISIBLE
         }
 
         // Reset images with therapeutic consideration
@@ -1637,8 +1821,8 @@ class ActivitySequenceUnderActivity : AppCompatActivity() {
             // Adjust for motor difficulties if needed
             if (outcome.modelDecision.sequenceAction == 1) {
                 val params = imageView.layoutParams
-                params.width = 200  // Larger for motor support
-                params.height = 200
+                params.width = 280  // Keep the large size for motor support
+                params.height = 280
                 imageView.layoutParams = params
             }
 
