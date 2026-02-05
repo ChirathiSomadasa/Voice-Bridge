@@ -198,18 +198,18 @@
             android:layout_marginEnd="16dp"
             android:layout_weight="1"
             android:text="Play Again"
-            android:background="@drawable/rounded_button_background_g"
+            android:backgroundTint="@color/green"
             android:textColor="@android:color/white"
-            android:alpha="0"/>
+            />
 
         <Button
             android:id="@+id/btnHome"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="Home"
-            android:background="@drawable/rounded_button_background"
+            android:text="Dashboard"
+            android:backgroundTint="@color/dark_orange"
             android:textColor="@android:color/white"
-            android:alpha="0"/>
+            />
     </LinearLayout>
 </androidx.constraintlayout.widget.ConstraintLayout>
