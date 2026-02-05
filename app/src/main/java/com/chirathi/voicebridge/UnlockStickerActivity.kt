@@ -334,10 +334,10 @@ class UnlockStickerActivity : AppCompatActivity() {
     private fun revealStickerWithGlow() {
         // Set sticker image based on type
         val stickerDrawable = when (stickerType) {
-            "comfort" -> R.drawable.happy_emotion
-            "achievement" -> R.drawable.trophy
-            "celebration" -> R.drawable.water_image
-            "encouragement" -> R.drawable.teacher_signup
+            "comfort" -> R.drawable.sticker_unlock_three
+            "achievement" -> R.drawable.sticker_unlock_four
+            "celebration" -> R.drawable.sticker_unlock_thirteen
+            "encouragement" -> R.drawable.sticker_unlock_twelve
             else -> R.drawable.sticker
         }
 
