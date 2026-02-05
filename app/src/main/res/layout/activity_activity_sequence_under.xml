@@ -25,65 +25,106 @@
         <!-- Bubbles will be added programmatically -->
     </LinearLayout>
 
-    <!-- Top Game Image with overlay -->
-    <FrameLayout
-        android:id="@+id/topGameContainer"
+    <!-- Top Game Image without overlay text -->
+    <ImageView
+        android:id="@+id/topGameImage"
         android:layout_width="match_parent"
         android:layout_height="200dp"
+        android:scaleType="fitXY"
+        android:src="@drawable/activity_sequence"
+        android:alpha="0.9"
         app:layout_constraintTop_toBottomOf="@id/bubbleContainer"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
+
+    <TextView
+        android:id="@+id/game_title"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Therapeutic Sequencing"
+        android:textSize="22sp"
+        android:textStyle="bold"
+        android:textColor="@color/white"
+        android:background="@drawable/title_background"
+        android:padding="12dp"
+        app:layout_constraintTop_toBottomOf="@id/topGameImage"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:layout_marginTop="8dp" />
+
+    <!-- Therapeutic hint indicator -->
+    <ImageView
+        android:id="@+id/hintIndicator"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:src="@drawable/ic_no_hint"
+        android:layout_margin="16dp"
+        android:visibility="gone"
+        app:layout_constraintTop_toTopOf="@id/topGameImage"
+        app:layout_constraintEnd_toEndOf="parent" />
+
+    <!-- Top bar with Timer and Control buttons in same line -->
+    <LinearLayout
+        android:id="@+id/topControlBar"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:paddingHorizontal="16dp"
+        android:paddingVertical="8dp"
+        app:layout_constraintTop_toBottomOf="@id/game_title"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent">
 
-        <ImageView
-            android:id="@+id/topGameImage"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:scaleType="fitXY"
-            android:src="@drawable/activity_sequence"
-            android:alpha="0.9" />
-
-        <!-- Therapeutic hint indicator -->
-        <ImageView
-            android:id="@+id/hintIndicator"
-            android:layout_width="40dp"
-            android:layout_height="40dp"
-            android:src="@drawable/ic_no_hint"
-            android:layout_margin="16dp"
-            android:visibility="gone"
-            app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintEnd_toEndOf="parent" />
-
-        <!-- Game title overlay -->
+        <!-- Timer display on left -->
         <TextView
-            android:id="@+id/game_title"
+            android:id="@+id/timerTextView"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Therapeutic Sequencing"
-            android:textSize="22sp"
+            android:text="00:00"
+            android:textSize="18sp"
             android:textStyle="bold"
-            android:textColor="@color/white"
-            android:background="@drawable/title_background"
-            android:padding="12dp"
-            android:layout_gravity="center"
-            android:layout_marginTop="16dp" />
-    </FrameLayout>
+            android:textColor="@color/green"
+            android:background="@drawable/timer_background"
+            android:padding="8dp"
+            android:visibility="gone"
+            android:layout_marginEnd="16dp" />
 
-    <!-- Timer display -->
-    <TextView
-        android:id="@+id/timerTextView"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="00:00"
-        android:textSize="18sp"
-        android:textStyle="bold"
-        android:textColor="@color/green"
-        android:background="@drawable/timer_background"
-        android:padding="8dp"
-        android:visibility="gone"
-        app:layout_constraintTop_toBottomOf="@id/topGameContainer"
-        app:layout_constraintEnd_toEndOf="parent"
-        android:layout_marginTop="16dp"
-        android:layout_marginEnd="16dp" />
+        <!-- Spacer to push control buttons to the right -->
+        <Space
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:layout_weight="1" />
+
+        <!-- Control buttons on right -->
+        <Button
+            android:id="@+id/btnUndo"
+            android:layout_width="wrap_content"
+            android:layout_height="48dp"
+            android:text="Undo"
+            android:backgroundTint="@color/dark_orange"
+            android:textColor="@color/white"
+            android:textSize="16sp"
+            android:paddingStart="16dp"
+            android:paddingEnd="16dp"
+            android:layout_marginEnd="8dp"
+            android:elevation="2dp"
+            android:visibility="gone" />
+
+        <Button
+            android:id="@+id/btnClear"
+            android:layout_width="wrap_content"
+            android:layout_height="48dp"
+            android:text="Clear All"
+            android:backgroundTint="@color/pink"
+            android:textColor="@color/white"
+            android:textSize="16sp"
+            android:paddingStart="16dp"
+            android:paddingEnd="16dp"
+            android:elevation="2dp"
+            android:visibility="gone" />
+
+    </LinearLayout>
 
     <!-- Visual hint overlay (circular glow) -->
     <View
@@ -104,7 +145,7 @@
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:fillViewport="true"
-        app:layout_constraintTop_toBottomOf="@id/timerTextView"
+        app:layout_constraintTop_toBottomOf="@id/topControlBar"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
@@ -114,7 +155,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:padding="20dp">
+            android:padding="16dp">
 
             <!-- Instruction text -->
             <TextView
@@ -127,62 +168,69 @@
                 android:gravity="center"
                 android:padding="16dp"
                 android:background="@drawable/instruction_background"
-                android:layout_marginBottom="24dp" />
+                android:layout_marginBottom="16dp" />
 
-            <!-- Horizontal images (initial learning state) -->
+            <!-- Horizontal images (initial learning state) - CORRECT ORDER -->
             <LinearLayout
                 android:id="@+id/horizontal_images_container"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="horizontal"
                 android:gravity="center"
-                android:layout_marginBottom="24dp">
+                android:layout_marginBottom="24dp"
+                android:weightSum="3">
 
                 <!-- Images will be populated dynamically based on routine -->
-                <!-- Placeholder structure -->
+                <!-- Placeholder structure - Made larger for children -->
                 <FrameLayout
                     android:id="@+id/horizontal_frame_1"
-                    android:layout_width="100dp"
-                    android:layout_height="100dp"
-                    android:layout_margin="8dp"
+                    android:layout_width="0dp"
+                    android:layout_height="140dp"
+                    android:layout_weight="1"
+                    android:layout_margin="6dp"
                     android:background="@drawable/image_container_bg">
 
                     <ImageView
                         android:id="@+id/horizontal_img_1"
                         android:layout_width="match_parent"
                         android:layout_height="match_parent"
-                        android:scaleType="fitCenter"
-                        android:padding="8dp" />
+                        android:scaleType="centerInside"
+                        android:adjustViewBounds="true"
+                        android:padding="12dp" />
                 </FrameLayout>
 
                 <FrameLayout
                     android:id="@+id/horizontal_frame_2"
-                    android:layout_width="100dp"
-                    android:layout_height="100dp"
-                    android:layout_margin="8dp"
+                    android:layout_width="0dp"
+                    android:layout_height="140dp"
+                    android:layout_weight="1"
+                    android:layout_margin="6dp"
                     android:background="@drawable/image_container_bg">
 
                     <ImageView
                         android:id="@+id/horizontal_img_2"
                         android:layout_width="match_parent"
                         android:layout_height="match_parent"
-                        android:scaleType="fitCenter"
-                        android:padding="8dp" />
+                        android:scaleType="centerInside"
+                        android:adjustViewBounds="true"
+                        android:padding="12dp" />
                 </FrameLayout>
 
                 <FrameLayout
                     android:id="@+id/horizontal_frame_3"
-                    android:layout_width="100dp"
-                    android:layout_height="100dp"
-                    android:layout_margin="8dp"
+                    android:layout_width="0dp"
+                    android:layout_height="140dp"
+                    android:layout_weight="1"
+                    android:layout_margin="6dp"
                     android:background="@drawable/image_container_bg">
 
                     <ImageView
                         android:id="@+id/horizontal_img_3"
                         android:layout_width="match_parent"
                         android:layout_height="match_parent"
-                        android:scaleType="fitCenter"
-                        android:padding="8dp" />
+                        android:scaleType="centerInside"
+                        android:adjustViewBounds="true"
+                        android:padding="12dp" />
                 </FrameLayout>
             </LinearLayout>
 
@@ -193,7 +241,7 @@
                 android:layout_height="56dp"
                 android:text="START"
                 android:layout_gravity="center"
-                android:background="@drawable/rounded_button_therapeutic"
+                app:backgroundTint="@color/dark_orange"
                 android:textColor="@color/white"
                 android:textSize="18sp"
                 android:paddingStart="40dp"
@@ -201,14 +249,14 @@
                 android:layout_marginBottom="32dp"
                 android:elevation="4dp" />
 
-            <!-- Vertical images container (gameplay state) -->
+            <!-- Vertical images container (gameplay state) - JUMBLED ORDER -->
             <LinearLayout
                 android:id="@+id/vertical_images_container"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="vertical"
                 android:gravity="center"
-                android:layout_marginBottom="32dp"
+                android:layout_marginBottom="16dp"
                 android:visibility="gone">
 
                 <!-- Vertical images will be added programmatically here -->
@@ -222,8 +270,8 @@
                 android:layout_height="wrap_content"
                 android:orientation="vertical"
                 android:background="@drawable/order_display_bg"
-                android:padding="20dp"
-                android:layout_marginBottom="24dp"
+                android:padding="16dp"
+                android:layout_marginBottom="16dp"
                 android:visibility="gone"
                 android:elevation="2dp">
 
@@ -231,19 +279,21 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:text="Your Sequence:"
-                    android:textSize="16sp"
+                    android:textSize="18sp"
                     android:textStyle="bold"
                     android:textColor="@color/dark_orange"
-                    android:layout_marginBottom="12dp" />
+                    android:layout_marginBottom="12dp"
+                    android:gravity="center" />
 
                 <TextView
                     android:id="@+id/tv_order_1"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:text="1. "
-                    android:textSize="18sp"
+                    android:textSize="20sp"
                     android:textColor="@color/green"
-                    android:paddingVertical="4dp" />
+                    android:paddingVertical="8dp"
+                    android:gravity="center" />
 
                 <View
                     android:layout_width="match_parent"
@@ -256,9 +306,10 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:text="2. "
-                    android:textSize="18sp"
+                    android:textSize="20sp"
                     android:textColor="@color/green"
-                    android:paddingVertical="4dp" />
+                    android:paddingVertical="8dp"
+                    android:gravity="center" />
 
                 <View
                     android:layout_width="match_parent"
@@ -271,9 +322,10 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:text="3. "
-                    android:textSize="18sp"
+                    android:textSize="20sp"
                     android:textColor="@color/green"
-                    android:paddingVertical="4dp" />
+                    android:paddingVertical="8dp"
+                    android:gravity="center" />
             </LinearLayout>
 
             <!-- Therapeutic tips section -->
@@ -291,11 +343,12 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:text="Therapeutic Tip"
-                    android:textSize="16sp"
+                    android:textSize="18sp"
                     android:textStyle="bold"
                     android:textColor="@color/green"
                     android:drawableStart="@drawable/ic_tip"
                     android:drawablePadding="8dp"
+                    android:gravity="center"
                     android:layout_marginBottom="8dp" />
 
                 <TextView
@@ -303,9 +356,10 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:text="Take your time and focus on one step at a time."
-                    android:textSize="14sp"
+                    android:textSize="16sp"
                     android:textColor="@color/dark_orange"
-                    android:lineSpacingExtra="4dp" />
+                    android:lineSpacingExtra="4dp"
+                    android:gravity="center" />
             </LinearLayout>
 
             <!-- Space for dynamic content -->
