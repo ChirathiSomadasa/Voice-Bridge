@@ -2,6 +2,7 @@ package com.chirathi.voicebridge
 
 import android.content.Context
 import android.content.Intent
+import android.content.SharedPreferences
 import android.graphics.Typeface
 import android.media.MediaPlayer
 import android.os.Bundle
@@ -54,11 +55,17 @@ class ActivitySequenceUnderActivity : AppCompatActivity() {
     private val sessionMetrics = TapMetrics()
     private fun getLocalAlpha(): Float = calculateFinalAlpha()
 
-    // Bubble progress tracking
-    private var totalBubbles = 5
+    // Bubble progress tracking - CHANGED: 3 bubbles for 3 sub-routines
+    private var totalBubbles = 3  // Changed from 5 to 3
     private var poppedBubbles = 0
     private lateinit var bubbleContainer: LinearLayout
     private val bubbleViews = mutableListOf<ImageView>()
+
+    // SharedPreferences for bubble persistence
+    private lateinit var sharedPreferences: SharedPreferences
+    private val BUBBLE_PREFS = "bubble_prefs"
+    private val KEY_POPPED_BUBBLES = "popped_bubbles"
+    private val KEY_COMPLETED_SUBROUTINES = "completed_subroutines"
 
     // Model-driven variables
     private var currentRoutineId: Int = 0
@@ -88,6 +95,9 @@ class ActivitySequenceUnderActivity : AppCompatActivity() {
     private val timerHandler = Handler(Looper.getMainLooper())
     private lateinit var timerRunnable: Runnable
     private var isTimerRunning = false
+
+    // Track completed sub-routines
+    private val completedSubRoutines = mutableSetOf<Pair<Int, Int>>()
 
     // UI Elements
     private lateinit var horizontalContainer: LinearLayout
@@ -129,7 +139,7 @@ class ActivitySequenceUnderActivity : AppCompatActivity() {
 
     // Array resources for easier access
     private val routineArrayResources = mapOf(
-        Pair(0, 0) to R.array.seq_rtn0_sub1,  // rtn0, sub1
+        Pair(0, 0) to R.array.seq_rtn0_sub1,  // rtn0, sub1 - WAKE UP ROUTINE
         Pair(0, 1) to R.array.seq_rtn0_sub2,  // rtn0, sub2
         Pair(0, 2) to R.array.seq_rtn0_sub3,  // rtn0, sub3
     )
@@ -140,9 +150,15 @@ class ActivitySequenceUnderActivity : AppCompatActivity() {
 
         Log.d(TAG, "onCreate: Activity started")
 
+        // Initialize SharedPreferences
+        sharedPreferences = getSharedPreferences(BUBBLE_PREFS, Context.MODE_PRIVATE)
+
         // Get user's routine selection from intent
         userSelectedRoutineId = intent.getIntExtra("SELECTED_ROUTINE_ID", 0)
         Log.d(TAG, "User selected routine: $userSelectedRoutineId")
+
+        // Load completed sub-routines from preferences
+        loadCompletedSubRoutines()
 
         // Initialize therapeutic model
         gameMaster = GameMasterModel(this)
@@ -158,7 +174,7 @@ class ActivitySequenceUnderActivity : AppCompatActivity() {
         initializeSounds()
 
         setupTimer()
-        setupBubbleProgress()
+        setupBubbleProgress() // Load bubble state from preferences
 
         // Load user profile for age
         loadUserProfile()
@@ -191,18 +207,30 @@ class ActivitySequenceUnderActivity : AppCompatActivity() {
         bubbleContainer.removeAllViews()
         bubbleViews.clear()
 
+        // Load popped bubbles count from preferences
+        poppedBubbles = sharedPreferences.getInt(KEY_POPPED_BUBBLES, 0)
+        Log.d(TAG, "Loaded popped bubbles: $poppedBubbles from preferences")
+
         for (i in 0 until totalBubbles) {
             val bubble = ImageView(this).apply {
                 layoutParams = LinearLayout.LayoutParams(60, 60).apply {
                     marginEnd = 10
                 }
-                setImageResource(R.drawable.bubble_full)
+
+                // Check if this bubble should be popped
+                if (i < poppedBubbles) {
+                    setImageResource(R.drawable.bubble_popped)
+                    visibility = View.GONE
+                } else {
+                    setImageResource(R.drawable.bubble_full)
+                }
+
                 tag = "bubble_$i"
             }
             bubbleContainer.addView(bubble)
             bubbleViews.add(bubble)
         }
-        Log.d(TAG, "Bubble progress setup: $totalBubbles bubbles")
+        Log.d(TAG, "Bubble progress setup: $totalBubbles bubbles, $poppedBubbles already popped")
     }
 
     private fun popBubble() {
@@ -231,10 +259,56 @@ class ActivitySequenceUnderActivity : AppCompatActivity() {
 
             poppedBubbles++
 
+            // Save popped bubbles count to preferences
+            savePoppedBubbles()
+
+            // Save current sub-routine as completed
+            markCurrentSubRoutineAsCompleted()
+
             // Check for sticker unlock
             Log.d(TAG, "Sub-routine completed! Checking for sticker...")
             checkStickerUnlock()
+        } else {
+            Log.d(TAG, "All bubbles already popped!")
+            checkStickerUnlock()
         }
+    }
+
+    private fun savePoppedBubbles() {
+        sharedPreferences.edit().putInt(KEY_POPPED_BUBBLES, poppedBubbles).apply()
+        Log.d(TAG, "Saved popped bubbles: $poppedBubbles")
+    }
+
+    private fun markCurrentSubRoutineAsCompleted() {
+        val subRoutineKey = Pair(currentRoutineId, currentSubRoutineId)
+        completedSubRoutines.add(subRoutineKey)
+        sessionMetrics.completedSubRoutines.add(subRoutineKey)
+
+        // Save to preferences
+        val completedSet = sharedPreferences.getStringSet(KEY_COMPLETED_SUBROUTINES, mutableSetOf()) ?: mutableSetOf()
+        completedSet.add("${currentRoutineId}_${currentSubRoutineId}")
+        sharedPreferences.edit().putStringSet(KEY_COMPLETED_SUBROUTINES, completedSet).apply()
+
+        Log.d(TAG, "Marked sub-routine $currentRoutineId-$currentSubRoutineId as completed")
+    }
+
+    private fun loadCompletedSubRoutines() {
+        val completedSet = sharedPreferences.getStringSet(KEY_COMPLETED_SUBROUTINES, mutableSetOf()) ?: mutableSetOf()
+        completedSet.forEach { key ->
+            val parts = key.split("_")
+            if (parts.size == 2) {
+                val routineId = parts[0].toIntOrNull()
+                val subRoutineId = parts[1].toIntOrNull()
+                if (routineId != null && subRoutineId != null) {
+                    completedSubRoutines.add(Pair(routineId, subRoutineId))
+                }
+            }
+        }
+        Log.d(TAG, "Loaded completed sub-routines: $completedSubRoutines")
+    }
+
+    private fun isSubRoutineCompleted(routineId: Int, subRoutineId: Int): Boolean {
+        return completedSubRoutines.contains(Pair(routineId, subRoutineId))
     }
 
     private fun onSessionComplete() {
@@ -279,6 +353,10 @@ class ActivitySequenceUnderActivity : AppCompatActivity() {
         intent.putExtra("PREVIOUS_ERROR", if (sessionMetrics.errorCount > 0) "positional" else "none")
         intent.putExtra("USER_SELECTED_ROUTINE", userSelectedRoutineId)
         intent.putExtra("USER_AGE", userAge)
+
+        // Pass completed sub-routines
+        val completedIds = completedSubRoutines.map { "${it.first}_${it.second}" }.toTypedArray()
+        intent.putExtra("COMPLETED_SUBROUTINE_IDS", completedIds)
 
         startActivity(intent)
         finish()
@@ -327,7 +405,10 @@ class ActivitySequenceUnderActivity : AppCompatActivity() {
             }
         } else {
             Log.e(TAG, "No routine data found for routine=$currentRoutineId, sub=$currentSubRoutineId")
-            currentCorrectOrder = mutableListOf("wake_up", "make_bed", "drink_water") // Default fallback
+            // FIX: Default to first sub-routine of morning routine
+            currentCorrectOrder = mutableListOf("wake_up", "make_bed", "drink_water")
+            currentSubRoutineId = 0
+            currentDifficultyLevel = 1
             Handler(Looper.getMainLooper()).post {
                 showInitialCorrectOrder()
             }
@@ -350,53 +431,84 @@ class ActivitySequenceUnderActivity : AppCompatActivity() {
     private fun selectSubRoutineBasedOnPerformance(decision: ModelDecision) {
         Log.d(TAG, "selectSubRoutineBasedOnPerformance called")
 
-        // Get previous performance data
+        // Get previous performance data from intent
         val previousAlpha = intent.getFloatExtra("PREVIOUS_ALPHA", 0f)
         val previousCorrect = intent.getIntExtra("PREVIOUS_CORRECT", 0)
         val previousSubRoutine = intent.getIntExtra("PREVIOUS_SUBROUTINE", -1)
         val previousError = intent.getStringExtra("PREVIOUS_ERROR")
 
-        // Calculate performance metrics
-        val totalAttempts = sessionMetrics.correctCount + sessionMetrics.errorCount
-        val accuracy = if (totalAttempts > 0) {
-            sessionMetrics.correctCount.toFloat() / totalAttempts
-        } else 1f
-
-        // Determine next sub-routine based on performance
-        currentSubRoutineId = when {
-            // EXCELLENT performance (high accuracy, few errors) → Progress to next
-            accuracy >= 0.8f && sessionMetrics.errorCount <= 1 -> {
-                val nextSub = if (previousSubRoutine != -1) {
-                    minOf(previousSubRoutine + 1, 2) // Max sub-routine is 2
-                } else 1 // Start with sub1 if no previous
-                Log.d(TAG, "Excellent performance → Progress to sub-routine $nextSub")
-                nextSub
+        // Get completed sub-routines from intent
+        val completedIds = intent.getStringArrayExtra("COMPLETED_SUBROUTINE_IDS")
+        completedIds?.forEach { id ->
+            val parts = id.split("_")
+            if (parts.size == 2) {
+                val routineId = parts[0].toIntOrNull()
+                val subRoutineId = parts[1].toIntOrNull()
+                if (routineId != null && subRoutineId != null) {
+                    completedSubRoutines.add(Pair(routineId, subRoutineId))
+                }
             }
+        }
 
-            // GOOD performance → Stay at current level
-            accuracy >= 0.6f && sessionMetrics.errorCount <= 2 -> {
-                val currentSub = if (previousSubRoutine != -1) previousSubRoutine else 0
-                Log.d(TAG, "Good performance → Stay at sub-routine $currentSub")
-                currentSub
+        Log.d(TAG, "Completed sub-routines: $completedSubRoutines")
+
+        // Check which sub-routines are available for current routine
+        val availableSubRoutines = mutableListOf<Int>()
+        for (i in 0..2) { // Assuming 3 sub-routines per routine
+            if (!isSubRoutineCompleted(currentRoutineId, i)) {
+                availableSubRoutines.add(i)
             }
+        }
 
-            // POOR performance → Repeat same or go back
-            else -> {
-                if (previousSubRoutine > 0) {
-                    val repeatSub = maxOf(previousSubRoutine - 1, 0) // Go back one level
-                    Log.d(TAG, "Poor performance → Repeat sub-routine $repeatSub")
-                    repeatSub
-                } else {
-                    Log.d(TAG, "Poor performance → Repeat sub-routine 0")
-                    0
+        Log.d(TAG, "Available sub-routines for routine $currentRoutineId: $availableSubRoutines")
+
+        if (availableSubRoutines.isEmpty()) {
+            // All sub-routines completed, start over
+            Log.d(TAG, "All sub-routines completed! Starting from beginning.")
+            resetAllProgress()
+            currentSubRoutineId = 0
+        } else {
+            // Choose next sub-routine based on performance
+            currentSubRoutineId = when {
+                // If first time or no previous data, start with first available
+                previousSubRoutine == -1 || !availableSubRoutines.contains(previousSubRoutine) -> {
+                    availableSubRoutines.first()
+                }
+
+                // EXCELLENT performance (high accuracy, few errors) → Progress to next
+                previousAlpha >= 8.0f && previousCorrect >= 2 && (previousError == null || previousError == "none") -> {
+                    val nextIndex = availableSubRoutines.indexOf(previousSubRoutine) + 1
+                    if (nextIndex < availableSubRoutines.size) availableSubRoutines[nextIndex] else previousSubRoutine
+                }
+
+                // GOOD performance → Stay at current level
+                previousAlpha >= 6.0f -> {
+                    previousSubRoutine
+                }
+
+                // POOR performance → Repeat same or go back
+                else -> {
+                    val prevIndex = availableSubRoutines.indexOf(previousSubRoutine)
+                    if (prevIndex > 0) availableSubRoutines[prevIndex - 1] else previousSubRoutine
                 }
             }
         }
 
         Log.d(TAG, "Selected sub-routine: $currentSubRoutineId")
+    }
 
-        // Store this for next session
-        sessionMetrics.completedSubRoutines.add(Pair(currentRoutineId, currentSubRoutineId))
+    private fun resetAllProgress() {
+        // Clear all progress
+        poppedBubbles = 0
+        completedSubRoutines.clear()
+
+        // Clear preferences
+        sharedPreferences.edit().clear().apply()
+
+        // Reset bubble views
+        setupBubbleProgress()
+
+        Log.d(TAG, "All progress reset")
     }
 
     private fun prepareBehavioralFeatures(
@@ -861,15 +973,6 @@ class ActivitySequenceUnderActivity : AppCompatActivity() {
                 val jumbledStepIds = currentCorrectOrder.shuffled()
                 Log.d(TAG, "Jumbled order: $jumbledStepIds")
 
-                // Load images from array resource
-                val arrayResId = routineArrayResources[Pair(currentRoutineId, currentSubRoutineId)]
-                if (arrayResId == null) {
-                    Log.e(TAG, "No array resource found for routine=$currentRoutineId, sub=$currentSubRoutineId")
-                    return@runOnUiThread
-                }
-
-                val imageArray = resources.obtainTypedArray(arrayResId)
-
                 // Create a mapping of step ID to drawable resource
                 val stepToDrawableMap = when (currentSubRoutineId) {
                     0 -> mapOf(
@@ -887,7 +990,11 @@ class ActivitySequenceUnderActivity : AppCompatActivity() {
                         "apply_powder" to R.drawable.seq_rtn0_sub3_2_cream,
                         "put_pajamas" to R.drawable.seq_rtn0_sub3_3_wash
                     )
-                    else -> emptyMap()
+                    else -> mapOf(
+                        "wake_up" to R.drawable.seq_rtn0_sub1_1_wakeup,
+                        "make_bed" to R.drawable.seq_rtn0_sub1_2_bed,
+                        "drink_water" to R.drawable.seq_rtn0_sub1_3_drink
+                    )
                 }
 
                 // Now create image views for each jumbled step ID
@@ -960,7 +1067,6 @@ class ActivitySequenceUnderActivity : AppCompatActivity() {
                     }
                 }
 
-                imageArray.recycle()
                 Log.d(TAG, "Created ${verticalImages.size} image views")
             } catch (e: Exception) {
                 Log.e(TAG, "Error in createVerticalLayout: ${e.message}")
@@ -1171,7 +1277,7 @@ class ActivitySequenceUnderActivity : AppCompatActivity() {
                 }
 
                 // UPDATED BADGE CREATION - Optimized for vertical layout
-                val badge = TextView(this).apply {
+                val badge = TextView(this@ActivitySequenceUnderActivity).apply {
                     text = orderNumber
                     tag = "badge"
                     textSize = 24f // Larger for vertical layout
@@ -1269,8 +1375,7 @@ class ActivitySequenceUnderActivity : AppCompatActivity() {
                 sessionMetrics.correctCount++
                 correctAnswers = 3
 
-                // MARK SUB-ROUTINE AS COMPLETED
-                sessionMetrics.completedSubRoutines.add(Pair(currentRoutineId, currentSubRoutineId))
+                // MARK SUB-ROUTINE AS COMPLETED (will be done in popBubble)
                 Log.d(TAG, "Sub-routine completed: $currentRoutineId-$currentSubRoutineId")
 
                 // POP BUBBLE FOR PROGRESS (this will trigger scoreboard)
@@ -1398,6 +1503,10 @@ class ActivitySequenceUnderActivity : AppCompatActivity() {
             intent.putExtra("PREVIOUS_ERROR", if (sessionMetrics.errorCount > 0) "positional" else "none")
             intent.putExtra("USER_SELECTED_ROUTINE", userSelectedRoutineId)
             intent.putExtra("USER_AGE", userAge)
+
+            // Pass completed sub-routines
+            val completedIds = completedSubRoutines.map { "${it.first}_${it.second}" }.toTypedArray()
+            intent.putExtra("COMPLETED_SUBROUTINE_IDS", completedIds)
 
             // Pass model decision data if needed
             intent.putExtra("MODEL_DECISION_ROUTINE", decision.routineAction)
