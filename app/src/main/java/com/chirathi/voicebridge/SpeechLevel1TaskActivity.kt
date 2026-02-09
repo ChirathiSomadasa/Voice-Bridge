@@ -14,6 +14,7 @@ import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import com.google.firebase.auth.FirebaseAuth
 import java.util.*
+import java.util.concurrent.Executors
 
 class SpeechLevel1TaskActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
 
@@ -52,7 +53,10 @@ class SpeechLevel1TaskActivity : AppCompatActivity(), TextToSpeech.OnInitListene
 
     private var tts: TextToSpeech? = null
     private var isTtsReady = false
-    private val pronunciationAssesment = PronunciationAssesment()
+
+    // NEW: Wav2Vec2 Scorer & Executor
+    private lateinit var wav2Vec2Scorer: Wav2Vec2Scorer
+    private val executor = Executors.newSingleThreadExecutor()
 
     // Auth
     private lateinit var auth: FirebaseAuth
@@ -66,23 +70,23 @@ class SpeechLevel1TaskActivity : AppCompatActivity(), TextToSpeech.OnInitListene
         auth = FirebaseAuth.getInstance()
         currentUserId = auth.currentUser?.uid ?: ""
 
-        // ---------------- SAVED PROGRESS LOGIC (USER SPECIFIC) ----------------
-        // 1. Check if intent has a batch (e.g. continuing from next level)
+        // Initialize Wav2Vec2 Scorer
+        wav2Vec2Scorer = Wav2Vec2Scorer(this)
+
+        // ---------------- SAVED PROGRESS LOGIC ----------------
         if (intent.hasExtra("BATCH_INDEX")) {
             currentBatchIndex = intent.getIntExtra("BATCH_INDEX", 0)
         } else {
-            // 2. If opening fresh, load from SharedPreferences using USER ID
             if (currentUserId.isNotEmpty()) {
                 val prefs = getSharedPreferences("VoiceBridgePrefs", Context.MODE_PRIVATE)
-                // Key is now specific to this user
                 currentBatchIndex = prefs.getInt("SAVED_BATCH_LEVEL_1_$currentUserId", 0)
             } else {
-                currentBatchIndex = 0 // Default if no user logged in
+                currentBatchIndex = 0
             }
         }
 
         setupCurrentBatch()
-        // ----------------------------------------------------------------------
+        // ------------------------------------------------------
 
         tvLetter = findViewById(R.id.tvLetter)
         llPlaySound = findViewById(R.id.llPlaySound)
@@ -122,7 +126,6 @@ class SpeechLevel1TaskActivity : AppCompatActivity(), TextToSpeech.OnInitListene
         }
 
         if (startIndex >= fullGraphemeList.size) {
-            // If user finished all batches, maybe reset or stay at last batch
             currentBatchIndex = 0
             setupCurrentBatch()
             return
@@ -154,31 +157,38 @@ class SpeechLevel1TaskActivity : AppCompatActivity(), TextToSpeech.OnInitListene
 
     private fun assessLetterPronunciation() {
         val letter = currentLetterList[currentIndex]
-        val referencePronunciation = pronunciationMap[letter] ?: letter.lowercase()
+        // Target label is the letter itself (e.g., "A")
+        val targetLabel = letter
 
+        // Show Listening Dialog
         listeningDialog = ListeningDialog(this)
         listeningDialog.show()
 
-        pronunciationAssesment.assess(
-            referenceText = referencePronunciation,
-            onResult = { result ->
-                runOnUiThread {
+        // Run AI Task in Background
+        executor.execute {
+            // 1. Record Audio (2.5 seconds for letters)
+            val audioData = wav2Vec2Scorer.recordAudio(2500)
+
+            // Switch to UI thread to show "Processing"
+            runOnUiThread {
+                if (::listeningDialog.isInitialized && listeningDialog.isShowing) {
                     listeningDialog.dismiss()
-                    processingDialog = ProcessingDialog(this)
-                    processingDialog.show()
                 }
+                processingDialog = ProcessingDialog(this)
+                processingDialog.show()
+            }
 
-                Handler(Looper.getMainLooper()).postDelayed({
-                    val score = result.accuracyScore.toInt()
-                    letterScores[currentIndex] = score
+            if (audioData != null) {
+                // 2. Predict Score using ONNX Model
+                val (pronunciationType, score) = wav2Vec2Scorer.predict(audioData, targetLabel)
 
-                    val pronunciationType = when {
-                        score >= 75 -> "GOOD_PRONUNCIATION"
-                        score >= 50 -> "MODERATE_PRONUNCIATION"
-                        else -> "POOR_PRONUNCIATION"
+                // 3. Update UI with Result
+                runOnUiThread {
+                    if (::processingDialog.isInitialized && processingDialog.isShowing) {
+                        processingDialog.dismiss()
                     }
 
-                    processingDialog.dismiss()
+                    letterScores[currentIndex] = score
 
                     FeedbackDialog(this).show(
                         score = score,
@@ -187,15 +197,17 @@ class SpeechLevel1TaskActivity : AppCompatActivity(), TextToSpeech.OnInitListene
                         pronunciationType = pronunciationType
                     )
                     btnNext.isEnabled = true
-                }, 1000)
-            },
-            onError = { error ->
+                }
+            } else {
+                // Handle Recording Error
                 runOnUiThread {
-                    listeningDialog.dismiss()
-                    Toast.makeText(this, error, Toast.LENGTH_LONG).show()
+                    if (::processingDialog.isInitialized && processingDialog.isShowing) {
+                        processingDialog.dismiss()
+                    }
+                    Toast.makeText(this, "Recording Failed. Please try again.", Toast.LENGTH_SHORT).show()
                 }
             }
-        )
+        }
     }
 
     private fun displayCurrentLetter() {
@@ -225,13 +237,10 @@ class SpeechLevel1TaskActivity : AppCompatActivity(), TextToSpeech.OnInitListene
         val hasMoreLetters = nextBatchStartIndex < fullGraphemeList.size
 
         if (progressScore >= 75) {
-            // ---------------- SAVE PROGRESS (USER SPECIFIC) ----------------
             if (hasMoreLetters && currentUserId.isNotEmpty()) {
                 val prefs = getSharedPreferences("VoiceBridgePrefs", Context.MODE_PRIVATE)
-                // We use the same User ID specific key to save
                 prefs.edit().putInt("SAVED_BATCH_LEVEL_1_$currentUserId", currentBatchIndex + 1).apply()
             }
-
 
             successDialog = SuccessDialog(this)
             successDialog.show()
