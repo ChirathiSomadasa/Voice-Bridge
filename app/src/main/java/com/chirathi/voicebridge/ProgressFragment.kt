@@ -148,7 +148,7 @@ class ProgressFragment : Fragment() {
             val drawable = RoundedCircularProgressDrawable(
                 context = context,
                 progressColor = color,
-                backgroundColor = Color.parseColor("#E0E0E0"),
+                backgroundColor = Color.parseColor("#CCCBCB"),
                 strokeWidthDp = 8f
             )
             progressBar.progressDrawable = drawable
@@ -180,7 +180,7 @@ class ProgressFragment : Fragment() {
         val drawable = RoundedCircularProgressDrawable(
             context = context,
             progressColor = color,
-            backgroundColor = Color.parseColor("#E0E0E0"),
+            backgroundColor = Color.parseColor("#CCCBCB"),
             strokeWidthDp = 12f
         )
         circleProgress.progressDrawable = drawable
