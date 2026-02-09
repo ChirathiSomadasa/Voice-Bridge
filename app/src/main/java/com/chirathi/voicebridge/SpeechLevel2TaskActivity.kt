@@ -4,7 +4,9 @@ import android.Manifest
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
-import android.os.*
+import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
 import android.speech.tts.TextToSpeech
 import android.widget.*
 import androidx.appcompat.app.AppCompatActivity
@@ -12,6 +14,7 @@ import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import com.google.firebase.auth.FirebaseAuth
 import java.util.*
+import java.util.concurrent.Executors
 
 class SpeechLevel2TaskActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
 
@@ -53,13 +56,13 @@ class SpeechLevel2TaskActivity : AppCompatActivity(), TextToSpeech.OnInitListene
     private var tts: TextToSpeech? = null
     private var isTtsReady = false
 
-    // Auth for User Specific Progress
+    // Auth
     private lateinit var auth: FirebaseAuth
     private var currentUserId: String = ""
 
-    // TFLite components
-    private lateinit var featureExtractor: AudioFeatureExtractor
-    private lateinit var tfliteHelper: PronunciationTFLiteHelper
+    // NEW: Wav2Vec2 Scorer & Executor
+    private lateinit var wav2Vec2Scorer: Wav2Vec2Scorer
+    private val executor = Executors.newSingleThreadExecutor()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -69,11 +72,13 @@ class SpeechLevel2TaskActivity : AppCompatActivity(), TextToSpeech.OnInitListene
         auth = FirebaseAuth.getInstance()
         currentUserId = auth.currentUser?.uid ?: ""
 
+        // Initialize Wav2Vec2 Scorer
+        wav2Vec2Scorer = Wav2Vec2Scorer(this)
+
         // ---------------- BATCH & PROGRESS LOGIC ----------------
         if (intent.hasExtra("BATCH_INDEX")) {
             currentBatchIndex = intent.getIntExtra("BATCH_INDEX", 0)
         } else {
-            // Load saved batch for LEVEL 2 specific to this user
             if (currentUserId.isNotEmpty()) {
                 val prefs = getSharedPreferences("VoiceBridgePrefs", Context.MODE_PRIVATE)
                 currentBatchIndex = prefs.getInt("SAVED_BATCH_LEVEL_2_$currentUserId", 0)
@@ -89,13 +94,6 @@ class SpeechLevel2TaskActivity : AppCompatActivity(), TextToSpeech.OnInitListene
 
         checkPermissions()
         tts = TextToSpeech(this, this)
-        featureExtractor = AudioFeatureExtractor()
-
-        try {
-            tfliteHelper = PronunciationTFLiteHelper(this)
-        } catch (e: Exception) {
-            e.printStackTrace()
-        }
 
         btnNext.isEnabled = false
         displayCurrentWord()
@@ -105,7 +103,12 @@ class SpeechLevel2TaskActivity : AppCompatActivity(), TextToSpeech.OnInitListene
         }
 
         llSpeakSound.setOnClickListener {
-            assessWordPronunciation()
+            if (ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED) {
+                assessWordPronunciation()
+            } else {
+                Toast.makeText(this, "Microphone permission required", Toast.LENGTH_SHORT).show()
+                checkPermissions()
+            }
         }
 
         btnNext.setOnClickListener {
@@ -121,7 +124,6 @@ class SpeechLevel2TaskActivity : AppCompatActivity(), TextToSpeech.OnInitListene
             endIndex = fullWordList.size
         }
 
-        // Safety Reset if finished
         if (startIndex >= fullWordList.size) {
             currentBatchIndex = 0
             setupCurrentBatch()
@@ -152,53 +154,57 @@ class SpeechLevel2TaskActivity : AppCompatActivity(), TextToSpeech.OnInitListene
     }
 
     private fun assessWordPronunciation() {
+        val currentWordItem = currentBatchList[currentIndex]
+        val targetWord = currentWordItem.word
+
+        // Show Listening Dialog
         listeningDialog = ListeningDialog(this)
         listeningDialog.show()
 
-        val mfccInput = featureExtractor.extractFeatures()
+        // Run AI Task in Background
+        executor.execute {
+            // 1. Record Audio (3 seconds for words)
+            val audioData = wav2Vec2Scorer.recordAudio(3000)
 
-        val referenceWord = currentBatchList[currentIndex].word
-
-        PronunciationAssesment().assess(referenceWord, onResult = { paResult ->
+            // Switch to UI to show "Processing"
             runOnUiThread {
                 if (::listeningDialog.isInitialized && listeningDialog.isShowing) {
                     listeningDialog.dismiss()
                 }
-
                 processingDialog = ProcessingDialog(this)
                 processingDialog.show()
+            }
 
-                val azureScore = paResult.pronunciationScore.toInt()
-                val type = when {
-                    azureScore >= 75 -> "GOOD_PRONUNCIATION"
-                    azureScore >= 50 -> "MODERATE_PRONUNCIATION"
-                    else -> "POOR_PRONUNCIATION"
-                }
+            if (audioData != null) {
+                // 2. Predict Score using ONNX Model
+                val (pronunciationType, score) = wav2Vec2Scorer.predict(audioData, targetWord)
 
-                wordScores[currentIndex] = azureScore
-
-                Handler(Looper.getMainLooper()).postDelayed({
+                // 3. Update UI
+                runOnUiThread {
                     if (::processingDialog.isInitialized && processingDialog.isShowing) {
                         processingDialog.dismiss()
                     }
 
+                    wordScores[currentIndex] = score
+
                     FeedbackDialog(this).show(
-                        score = azureScore,
+                        score = score,
                         level = 2,
-                        word = referenceWord,
-                        pronunciationType = type
+                        word = targetWord,
+                        pronunciationType = pronunciationType
                     )
                     btnNext.isEnabled = true
-                }, 700)
+                }
+            } else {
+                // Handle Recording Error
+                runOnUiThread {
+                    if (::processingDialog.isInitialized && processingDialog.isShowing) {
+                        processingDialog.dismiss()
+                    }
+                    Toast.makeText(this, "Recording Failed. Please try again.", Toast.LENGTH_SHORT).show()
+                }
             }
-        }, onError = { errorMsg ->
-            runOnUiThread {
-                if (::listeningDialog.isInitialized && listeningDialog.isShowing) listeningDialog.dismiss()
-                if (::processingDialog.isInitialized && processingDialog.isShowing) processingDialog.dismiss()
-                Toast.makeText(this, errorMsg, Toast.LENGTH_SHORT).show()
-                btnNext.isEnabled = true
-            }
-        })
+        }
     }
 
     private fun displayCurrentWord() {
@@ -230,13 +236,11 @@ class SpeechLevel2TaskActivity : AppCompatActivity(), TextToSpeech.OnInitListene
         val hasMoreWords = nextBatchStartIndex < fullWordList.size
 
         if (progress >= 75) {
-            // Save Progress (User Specific)
             if (hasMoreWords && currentUserId.isNotEmpty()) {
                 val prefs = getSharedPreferences("VoiceBridgePrefs", Context.MODE_PRIVATE)
                 prefs.edit().putInt("SAVED_BATCH_LEVEL_2_$currentUserId", currentBatchIndex + 1).apply()
             }
 
-            // Show Success Dialog
             successDialog = SuccessDialog(this)
             successDialog.show()
             successDialog.setOnDismissListener {
