@@ -50,11 +50,11 @@
 
     <TextView
         android:id="@+id/tvPhrase"
-        android:layout_width="wrap_content"
+        android:layout_width="350dp"
         android:layout_height="wrap_content"
         android:layout_marginTop="36dp"
-
         android:textColor="@color/green_dark"
+        android:textAlignment="center"
         android:textSize="28sp"
         android:textStyle="bold"
         app:layout_constraintEnd_toEndOf="parent"

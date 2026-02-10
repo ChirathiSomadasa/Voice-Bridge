@@ -118,8 +118,6 @@
                 android:textStyle="bold"
                 app:backgroundTint="@color/light_orange" />
 
-
-
         </LinearLayout>
     </ScrollView>
 
