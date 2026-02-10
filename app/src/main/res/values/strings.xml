@@ -67,5 +67,5 @@
     <string name="refresh">refresh</string>
     <string name="speaker">speaker</string>
     <string name="view_objects">View Objects</string>
-    <string name="view_amp_say"><![CDATA[View & Say]]></string>
+    <string name="view_amp_listen"><![CDATA[View & Listen]]></string>
 </resources>
