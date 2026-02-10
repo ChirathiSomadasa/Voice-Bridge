@@ -105,6 +105,21 @@
                 android:textStyle="bold"
                 app:backgroundTint="@color/pink" />
 
+            <Button
+                android:id="@+id/btn_object_detection"
+                style="@style/SolidPinkButton"
+                android:layout_width="match_parent"
+                android:layout_height="55dp"
+                android:layout_marginTop="24dp"
+                android:text="@string/view_amp_say"
+                android:textAllCaps="false"
+                android:textColor="@color/white"
+                android:textSize="20sp"
+                android:textStyle="bold"
+                app:backgroundTint="@color/light_orange" />
+
+
+
         </LinearLayout>
     </ScrollView>
 

@@ -31,5 +31,11 @@ class SymbolCommunicationActivity : AppCompatActivity() {
             startActivity(intent)
         }
 
+        val viewObjectsBtn = findViewById<Button>(R.id.btn_object_detection)
+        viewObjectsBtn.setOnClickListener {
+            val intent = Intent(this, ViewObjectsActivity::class.java)
+            startActivity(intent)
+        }
+
     }
 }
