@@ -1,6 +1,7 @@
 package com.chirathi.voicebridge
 
 import android.content.Intent
+import android.graphics.BitmapFactory
 import android.os.Bundle
 import android.speech.tts.TextToSpeech
 import android.speech.tts.Voice
@@ -39,6 +40,12 @@ class PhraseActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
         quickWordImage.setImageResource(selectedIconDrawable)
         phraseText?.text = selectedPhrase
 
+        val imageBytes = intent.getByteArrayExtra("DETECTED_IMAGE")
+
+        if (imageBytes != null) {
+            val bitmap = BitmapFactory.decodeByteArray(imageBytes, 0, imageBytes.size)
+            quickWordImage.setImageBitmap(bitmap)
+        }
         setTimeAndGreeting()
 
         // Initialize TextToSpeech with specific engine if needed
