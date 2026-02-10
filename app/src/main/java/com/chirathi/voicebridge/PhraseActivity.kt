@@ -134,12 +134,12 @@ class PhraseActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
     private fun setVoiceParameters() {
         try {
             // Higher pitch for child-like voice (1.0 is normal, >1.0 is higher)
-            tts?.setPitch(1.3f)  // Higher pitch sounds more child-like
+            tts?.setPitch(2.5f)  // Higher pitch sounds more child-like
 
             // Slightly faster speech rate for energetic child voice
-            tts?.setSpeechRate(1.1f)  // 1.0 is normal rate
+            tts?.setSpeechRate(0.9f)  // 1.0 is normal rate
 
-            Log.d("TTS", "Voice parameters set: Pitch=1.3, Rate=1.1")
+            Log.d("TTS", "Voice parameters set: Pitch=2.5, Rate=0.9")
         } catch (e: Exception) {
             Log.e("TTS", "Error setting voice parameters: ${e.message}")
         }
