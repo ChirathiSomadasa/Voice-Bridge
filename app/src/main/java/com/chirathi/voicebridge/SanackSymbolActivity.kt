@@ -25,13 +25,13 @@ class SanackSymbolActivity : AppCompatActivity() {
         val iconData = mapOf(
             R.id.imgIceCream to Pair(R.drawable.ice_cream, "I want ice cream"),
             R.id.imgChocolate to Pair(R.drawable.chocolate, "I want chocolate"),
-            R.id.imgCrsips to Pair(R.drawable.crisps, " "),
-            R.id.imgBiscuit to Pair(R.drawable.biscuit, " "),
-            R.id.imgPeaNuts to Pair(R.drawable.nuts, " "),
-            R.id.imgPop to Pair(R.drawable.pop, ""),
-            R.id.imgYogurt to Pair(R.drawable.yogurt, ""),
-            R.id.imgCake to Pair(R.drawable.cake, ""),
-            R.id.imgToffee to Pair(R.drawable.toffee, "")
+            R.id.imgCrsips to Pair(R.drawable.crisps, " I want crsips"),
+            R.id.imgBiscuit to Pair(R.drawable.biscuit, "I want biscuit "),
+            R.id.imgPeaNuts to Pair(R.drawable.nuts, "I want peanuts "),
+            R.id.imgPop to Pair(R.drawable.pop, "I want lollypop"),
+            R.id.imgYogurt to Pair(R.drawable.yogurt, "I want yogurt"),
+            R.id.imgCake to Pair(R.drawable.cake, "I want cake"),
+            R.id.imgToffee to Pair(R.drawable.toffee, "I want toffee")
         )
 
         // Set click listeners for all icons

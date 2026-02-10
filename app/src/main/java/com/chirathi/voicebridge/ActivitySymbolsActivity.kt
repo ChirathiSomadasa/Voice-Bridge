@@ -26,19 +26,19 @@ class ActivitySymbolsActivity : AppCompatActivity() {
         val iconData = mapOf(
             R.id.imgCycle to Pair(R.drawable.cycle, "I want to cycle a bicycle"),
             R.id.imgTV to Pair(R.drawable.flatscreen_tv, "I want to watch TV"),
-            R.id.imgStudy to Pair(R.drawable.study, ""),
-            R.id.imgBathe to Pair(R.drawable.bathe, " "),
-            R.id.imgWashFace to Pair(R.drawable.wash_face, " "),
-            R.id.imgWashHands to Pair(R.drawable.wash_hands, " "),
-            R.id.imgRun to Pair(R.drawable.run, " "),
-            R.id.imgGo to Pair(R.drawable.go, " "),
-            R.id.imgSit to Pair(R.drawable.sit, ""),
-            R.id.imgExercise to Pair(R.drawable.exercise, " "),
-            R.id.imgSwim to Pair(R.drawable.swim, " "),
-            R.id.imgSwing to Pair(R.drawable.swing, " "),
-            R.id.imgCelebrate to Pair(R.drawable.celebrate, " "),
-            R.id.imgCelebrateBirth to Pair(R.drawable.celebrate_birth, " "),
-            R.id.imgSleep to Pair(R.drawable.sleep, " ")
+            R.id.imgStudy to Pair(R.drawable.study, "I want to do my studies"),
+            R.id.imgBathe to Pair(R.drawable.bathe, "I want to have a bathe "),
+            R.id.imgWashFace to Pair(R.drawable.wash_face, " I want to wash my face"),
+            R.id.imgWashHands to Pair(R.drawable.wash_hands, "I want to wash my hands "),
+            R.id.imgRun to Pair(R.drawable.run, "I want to run "),
+            R.id.imgGo to Pair(R.drawable.go, "I want to go"),
+            R.id.imgSit to Pair(R.drawable.sit, "I want to sit"),
+            R.id.imgExercise to Pair(R.drawable.exercise, " I want to do exercise"),
+            R.id.imgSwim to Pair(R.drawable.swim, " I want to swim"),
+            R.id.imgSwing to Pair(R.drawable.swing, " I want to swing"),
+            R.id.imgCelebrate to Pair(R.drawable.celebrate, " I want to celebrate"),
+            R.id.imgCelebrateBirth to Pair(R.drawable.celebrate_birth, "Happy Birthday!"),
+            R.id.imgSleep to Pair(R.drawable.sleep, "I want to sleep ")
         )
 
         // Set click listeners for all icons

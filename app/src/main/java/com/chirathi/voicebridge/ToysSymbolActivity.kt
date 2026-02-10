@@ -25,15 +25,15 @@ class ToysSymbolActivity : AppCompatActivity() {
         val iconData = mapOf(
             R.id.imgDoll to Pair(R.drawable.doll, "I want a doll"),
             R.id.imgTeddyBear to Pair(R.drawable.teddy_bear, "I want teddy bear"),
-            R.id.imgPhone to Pair(R.drawable.toy_telephone, " "),
-            R.id.imgToyBox to Pair(R.drawable.toy_box, " "),
-            R.id.imgPullCar to Pair(R.drawable.pull_along_toy, " "),
-            R.id.imgSoldier to Pair(R.drawable.toy_soldier, " "),
-            R.id.imgColourBook to Pair(R.drawable.colouring_book, ""),
-            R.id.imgBall to Pair(R.drawable.toy_ball, " "),
-            R.id.imgToyCar to Pair(R.drawable.toy_car, " "),
-            R.id.imgKite to Pair(R.drawable.kite, " "),
-            R.id.imgBubbles to Pair(R.drawable.bubbles, " ")
+            R.id.imgPhone to Pair(R.drawable.toy_telephone, "I want toy phone "),
+            R.id.imgToyBox to Pair(R.drawable.toy_box, " I want toy box"),
+            R.id.imgPullCar to Pair(R.drawable.pull_along_toy, " I want to pull toys"),
+            R.id.imgSoldier to Pair(R.drawable.toy_soldier, " I want toy soldier"),
+            R.id.imgColourBook to Pair(R.drawable.colouring_book, "I want colour book"),
+            R.id.imgBall to Pair(R.drawable.toy_ball, "I want ball "),
+            R.id.imgToyCar to Pair(R.drawable.toy_car, "I want toy car "),
+            R.id.imgKite to Pair(R.drawable.kite, "I want a kite "),
+            R.id.imgBubbles to Pair(R.drawable.bubbles, "I want to play bubble ")
         )
 
         // Set click listeners for all icons
