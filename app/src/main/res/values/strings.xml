@@ -68,4 +68,6 @@
     <string name="speaker">speaker</string>
     <string name="view_objects">View Objects</string>
     <string name="view_amp_listen"><![CDATA[View & Listen]]></string>
+    <string name="detect_object">Detect Object</string>
+    <string name="take_photo">Take Photo</string>
 </resources>
