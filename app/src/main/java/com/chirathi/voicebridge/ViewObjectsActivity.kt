@@ -1,6 +1,7 @@
 package com.chirathi.voicebridge
 
 import android.Manifest
+import android.content.Intent
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
@@ -29,6 +30,8 @@ class ViewObjectsActivity : AppCompatActivity() {
     private lateinit var resultText: TextView
     private lateinit var yoloDetector: YoloV5Detector
     private lateinit var labels: List<String>
+    private var hasNavigated = false
+    private var detectedImageBytes: ByteArray? = null
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -123,17 +126,26 @@ class ViewObjectsActivity : AppCompatActivity() {
     private fun processImage(imageProxy: ImageProxy) {
         try {
             val bitmap = imageProxy.toBitmap()
+            detectedImageBytes = bitmapToByteArray(bitmap)
 
             // Convert bitmap to multipart
             val multipart = bitmapToMultipart(bitmap)
 
             // Send to server
             RetrofitClient.instance.uploadImage(multipart).enqueue(object : retrofit2.Callback<CaptionResponse> {
-                override fun onResponse(call: retrofit2.Call<CaptionResponse>, response: retrofit2.Response<CaptionResponse>) {
-                    if (response.isSuccessful) {
-                        val caption = response.body()?.caption ?: "No caption"
+                override fun onResponse(
+                    call: retrofit2.Call<CaptionResponse>,
+                    response: retrofit2.Response<CaptionResponse>
+                ) {
+                    if (response.isSuccessful && !hasNavigated) {
+
+                        val caption = response.body()?.caption ?: "Object detected"
+
+                        hasNavigated = true
                         runOnUiThread {
                             resultText.text = caption
+
+                            navigateToPhraseActivity(caption)
                         }
                     } else {
                         runOnUiThread { resultText.text = "Server error" }
@@ -141,7 +153,8 @@ class ViewObjectsActivity : AppCompatActivity() {
                 }
 
                 override fun onFailure(call: retrofit2.Call<CaptionResponse>, t: Throwable) {
-                    runOnUiThread { resultText.text = "Request failed: ${t.message}" }
+                    runOnUiThread {
+                        resultText.text = "Request failed: ${t.message}" }
                 }
             })
 
@@ -150,6 +163,23 @@ class ViewObjectsActivity : AppCompatActivity() {
         } finally {
             imageProxy.close()
         }
+    }
+
+    private fun navigateToPhraseActivity(detectedSentence: String) {
+
+        val intent = Intent(this, PhraseActivity::class.java)
+
+        // Pass detected sentence
+        intent.putExtra("SELECTED_PHRASE", detectedSentence)
+
+        detectedImageBytes?.let {
+            intent.putExtra("DETECTED_IMAGE", it)
+        }
+        //  default icon
+        intent.putExtra("SELECTED_ICON_DRAWABLE", R.drawable.play)
+
+        startActivity(intent)
+        finish() // stop camera screen
     }
 
 
@@ -187,13 +217,23 @@ class ViewObjectsActivity : AppCompatActivity() {
             this, Manifest.permission.CAMERA
         ) == PackageManager.PERMISSION_GRANTED
 
-    private fun bitmapToMultipart(bitmap: Bitmap, filename: String = "image.jpg"): MultipartBody.Part {
+    private fun bitmapToMultipart(
+        bitmap: Bitmap,
+        filename: String = "image.jpg"
+    ): MultipartBody.Part {
         val bos = ByteArrayOutputStream()
         bitmap.compress(Bitmap.CompressFormat.JPEG, 90, bos)
         val byteArray = bos.toByteArray()
         val requestBody = RequestBody.create("image/*".toMediaTypeOrNull(), byteArray)
         return MultipartBody.Part.createFormData("image", filename, requestBody)
     }
+
+    private fun bitmapToByteArray(bitmap: Bitmap): ByteArray {
+        val stream = ByteArrayOutputStream()
+        bitmap.compress(Bitmap.CompressFormat.JPEG, 80, stream)
+        return stream.toByteArray()
+    }
+
 
 
 
