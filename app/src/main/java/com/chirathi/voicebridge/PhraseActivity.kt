@@ -2,6 +2,7 @@ package com.chirathi.voicebridge
 
 import android.content.Intent
 import android.graphics.BitmapFactory
+import android.os.Build
 import android.os.Bundle
 import android.speech.tts.TextToSpeech
 import android.speech.tts.Voice
@@ -98,48 +99,36 @@ class PhraseActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
             return
         }
 
-        // Method 1: Try to find a child-like voice (Android 21+)
-        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.LOLLIPOP) {
-            try {
-                // Get available voices
-                val voices = tts!!.voices
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            val voices = tts!!.voices
+            val tinyVoice = voices.firstOrNull { voice ->
+                voice.locale == Locale.US &&
+                        !voice.isNetworkConnectionRequired &&
+                        voice.quality >= Voice.QUALITY_HIGH
+            }
 
-                // Look for child-like voices - common names include "child", "kids", "young", etc.
-                val childVoice = voices.find { voice ->
-                    voice.name.contains("child", ignoreCase = true) ||
-                            voice.name.contains("kids", ignoreCase = true) ||
-                            voice.name.contains("young", ignoreCase = true) ||
-                            voice.name.contains("boy", ignoreCase = true) ||
-                            voice.name.contains("girl", ignoreCase = true)
-                }
-
-                if (childVoice != null) {
-                    tts!!.voice = childVoice
-                    Log.d("TTS", "Using child voice: ${childVoice.name}")
-                } else {
-                    // If no child voice found, adjust pitch and speech rate
-                    setVoiceParameters()
-                }
-            } catch (e: Exception) {
+            if (tinyVoice != null) {
+                tts!!.voice = tinyVoice
+                setVoiceParameters()
+                Log.d("TTS", "Using tiny voice: ${tinyVoice.name}")
+            } else {
                 setVoiceParameters()
             }
-        } else {
-            // For older Android versions, use parameter method
-            setVoiceParameters()
         }
+
 
         speakerBtn?.isEnabled = true
     }
 
     private fun setVoiceParameters() {
         try {
-            // Higher pitch for child-like voice (1.0 is normal, >1.0 is higher)
-            tts?.setPitch(2.5f)  // Higher pitch sounds more child-like
+            // Higher pitch for child-like voice
+            tts?.setPitch(1.9f)  // Higher pitch sounds more child-like
 
             // Slightly faster speech rate for energetic child voice
             tts?.setSpeechRate(0.9f)  // 1.0 is normal rate
 
-            Log.d("TTS", "Voice parameters set: Pitch=2.5, Rate=0.9")
+            Log.d("TTS", "Voice parameters set: Pitch=1.9, Rate=0.9")
         } catch (e: Exception) {
             Log.e("TTS", "Error setting voice parameters: ${e.message}")
         }
