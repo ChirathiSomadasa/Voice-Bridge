@@ -44,14 +44,17 @@ class RhythmSummaryActivity : AppCompatActivity() {
     private lateinit var gameMaster: GameMasterModel
     private var currentRound = 0
     private var score = 0
-    private var totalRounds = 5 // Will be adjusted dynamically
+    private var totalRounds = 5
     private var correctAnswerIndex = 0
     private var isAnswerSelected = false
     private var isConfidenceBuilderMode = false
-    private var individualLatencyBuffer: Long = 3000 // Default 3 seconds
+    private var individualLatencyBuffer: Long = 3000
     private var therapeuticIntent: TherapeuticIntent? = null
+
+    // 🔴 FIX: Added these trackers
     private var confidenceBuilderSuccesses = 0
     private var consecutiveWrongAnswers = 0
+    private var isConfidenceBuilderRoundActive = false // Separate flag for active round
 
     // Behavioral tracking
     private var responseStartTime: Long = 0
@@ -113,18 +116,13 @@ class RhythmSummaryActivity : AppCompatActivity() {
             setContentView(R.layout.activity_rythm_summary)
             Log.d(TAG, "Layout set successfully")
 
-            // Initialize Game Master
             gameMaster = GameMasterModel(this)
-
-            // Initialize UI components
             initializeViews()
             Log.d(TAG, "Views initialized successfully")
 
-            // Get song title from intent
             currentSongTitle = intent.getStringExtra("SONG_TITLE") ?: "Row Row Row Your Boat"
             Log.d(TAG, "Received song title: $currentSongTitle")
 
-            // Get therapeutic intent if passed
             therapeuticIntent = intent.getSerializableExtra("THERAPEUTIC_INTENT") as? TherapeuticIntent
 
             try {
@@ -139,24 +137,20 @@ class RhythmSummaryActivity : AppCompatActivity() {
                 wrongSound = MediaPlayer()
             }
 
-            // Setup based on song
             setupSongData()
             Log.d(TAG, "Song data setup complete")
 
-            // Get individualized latency buffer
             individualLatencyBuffer = gameMaster.getIndividualizedLatencyBuffer()
             Log.d(TAG, "Individual latency buffer: ${individualLatencyBuffer}ms")
 
             setupUI()
             Log.d(TAG, "UI setup complete")
 
-            // Start first round with delay to allow therapeutic assessment
             Handler(Looper.getMainLooper()).postDelayed({
                 startNewRound()
                 Log.d(TAG, "First round started")
             }, 1000)
 
-            // Set next button click listener
             nextButton.setOnClickListener {
                 Log.d(TAG, "Next button clicked")
                 onNextButtonClick()
@@ -192,10 +186,7 @@ class RhythmSummaryActivity : AppCompatActivity() {
             feedbackOverlay = findViewById(R.id.feedbackOverlay)
             feedbackIcon = findViewById(R.id.feedbackIcon)
             feedbackText = findViewById(R.id.feedbackText)
-
-            // CRITICAL FIX: Initialize feedbackContainer FIRST
             feedbackContainer = findViewById(R.id.feedbackContainer)
-
             nextButton = findViewById(R.id.nextButton)
             rootLayout = findViewById(R.id.rootLayout)
 
@@ -209,13 +200,11 @@ class RhythmSummaryActivity : AppCompatActivity() {
 
         } catch (e: Exception) {
             Log.e(TAG, "ERROR initializing views: ${e.message}", e)
-            // If therapeutic components don't exist, create them programmatically
             createTherapeuticComponentsIfMissing()
         }
     }
 
     private fun createTherapeuticComponentsIfMissing() {
-        // Create confidence builder overlay if it doesn't exist
         confidenceBuilderOverlay = FrameLayout(this).apply {
             id = R.id.confidenceBuilderOverlay
             layoutParams = FrameLayout.LayoutParams(
@@ -254,7 +243,6 @@ class RhythmSummaryActivity : AppCompatActivity() {
             setPadding(16.dpToPx(), 16.dpToPx(), 16.dpToPx(), 16.dpToPx())
         }
 
-        // Add to root layout
         val parent = findViewById<ViewGroup>(R.id.rootLayout)
         parent.addView(confidenceBuilderOverlay)
         confidenceBuilderOverlay.addView(therapeuticMessage)
@@ -313,18 +301,10 @@ class RhythmSummaryActivity : AppCompatActivity() {
     private fun setupUI() {
         Log.d(TAG, "Setting up UI")
         try {
-            // Adjust UI complexity based on therapeutic intent
             adjustUIComplexity()
-
-            // Setup panda animation
             animatePanda()
-
-            // Setup progress dots
             setupProgressDots()
-
-            // Update score display
             updateScore()
-
         } catch (e: Exception) {
             Log.e(TAG, "Error in setupUI: ${e.message}", e)
         }
@@ -333,35 +313,31 @@ class RhythmSummaryActivity : AppCompatActivity() {
     private fun adjustUIComplexity() {
         val intent = therapeuticIntent ?: return
 
-        // Adjust grid based on UI complexity
         val columnCount = when {
-            intent.uiComplexity < 0.4f -> 1 // Single column for very simple UI
-            intent.uiComplexity < 0.6f -> 2 // 2x2 grid for moderate complexity
-            else -> 2 // Default 2x2 grid
+            intent.uiComplexity < 0.4f -> 1
+            intent.uiComplexity < 0.6f -> 2
+            else -> 2
         }
 
         optionsGrid.columnCount = columnCount
         optionsGrid.rowCount = if (columnCount == 1) 4 else 2
 
-        // Adjust text size and contrast
         wordTitle.textSize = when {
             intent.uiComplexity < 0.4f -> 24f
             intent.uiComplexity < 0.6f -> 28f
             else -> 32f
         }
 
-        // Set high contrast colors for better visibility
         if (intent.uiComplexity < 0.5f) {
             findViewById<View>(R.id.rootLayout).setBackgroundColor(Color.WHITE)
             wordTitle.setTextColor(Color.BLACK)
         }
 
-        // Adjust total rounds based on session duration
         totalRounds = when (intent.sessionDuration) {
-            in 0..5 -> 3 // Very short session
-            in 6..10 -> 5 // Short session
-            in 11..15 -> 7 // Medium session
-            else -> 5 // Default
+            in 0..5 -> 3
+            in 6..10 -> 5
+            in 11..15 -> 7
+            else -> 5
         }
 
         Log.d(TAG, "UI Complexity adjusted: ${intent.uiComplexity}, Rounds: $totalRounds")
@@ -410,9 +386,9 @@ class RhythmSummaryActivity : AppCompatActivity() {
     private fun Int.dpToPx(): Int = (this * resources.displayMetrics.density).toInt()
 
     private fun startNewRound() {
-        Log.d(TAG, "🎮 Starting new round ${currentRound + 1}/$totalRounds")
+        Log.d(TAG, "🎮 Starting new round ${currentRound + 1}/$totalRounds (Confidence mode: $isConfidenceBuilderRoundActive)")
 
-        if (currentRound >= totalRounds) {
+        if (currentRound >= totalRounds && !isConfidenceBuilderRoundActive) {
             Log.d(TAG, "✅ Game finished! Score: $score/$totalRounds")
             navigateToScoreboard()
             return
@@ -429,37 +405,24 @@ class RhythmSummaryActivity : AppCompatActivity() {
         confidenceBuilderOverlay.visibility = View.GONE
         optionsGrid.visibility = View.VISIBLE
 
-        // Reset confidence builder
-        if (isConfidenceBuilderMode && currentRound == 0) {
-            isConfidenceBuilderMode = false
-            therapeuticMessage.visibility = View.GONE
-        }
-
-        // Check confidence builder
+        // 🔴 FIX: Check if we should activate confidence builder
         if (shouldActivateConfidenceBuilder()) {
             activateConfidenceBuilderMode()
-            // Start timer for confidence builder mode
             startResponseTimer()
             return
         }
 
-        // Get keyword
+        // Normal round setup
         val keyword = getUniqueKeyword()
         val correctImageRes = keywordImages[keyword.word] ?: android.R.drawable.ic_dialog_info
-
-        // Generate options
         val wrongOptions = generateDiagnosticDistractors(keyword.word)
         val gameRound = createGameRound(keyword.word, correctImageRes, wrongOptions)
 
-        // Display
         wordTitle.text = "Find: ${keyword.word.uppercase()}"
         displayOptions(gameRound)
         updateProgressDots()
-
-        // Enable options
         optionsGrid.isEnabled = true
 
-        // Start timer for normal mode
         startResponseTimer()
     }
 
@@ -467,13 +430,17 @@ class RhythmSummaryActivity : AppCompatActivity() {
         timeoutHandler?.removeCallbacksAndMessages(null)
         isTimerActive = true
 
-        // FIX: Store the time when options become VISIBLE, not when timer "starts"
+        // 🔴 FIX: Different delays for different modes
+        val optionsVisibleDelay = if (isConfidenceBuilderRoundActive) 300 else 1500
+        val timeoutDuration = if (isConfidenceBuilderRoundActive) 10000 else 5000
+        val minResponseTime = if (isConfidenceBuilderRoundActive) 300 else 800
+
         Handler(Looper.getMainLooper()).postDelayed({
             responseStartTime = System.currentTimeMillis()
-            Log.d(TAG, "⏰ Timer started at ${responseStartTime}")
+            Log.d(TAG, "⏰ Timer started at ${responseStartTime} - options now visible")
 
-            // Reduce minimum response time for confidence builder mode
-            val timeoutDuration = if (isConfidenceBuilderMode) 8000 else 5000
+            // Store the visible time separately for "too fast" detection
+            val optionsVisibleTime = responseStartTime
 
             timeoutHandler = Handler(Looper.getMainLooper())
             timeoutHandler?.postDelayed({
@@ -482,59 +449,50 @@ class RhythmSummaryActivity : AppCompatActivity() {
                     handleTimeout()
                 }
             }, timeoutDuration.toLong())
-        }, if (isConfidenceBuilderMode) 500 else 1500) // Shorter delay for confidence builder
+        }, optionsVisibleDelay.toLong())
     }
-
 
     private fun shouldActivateConfidenceBuilder(): Boolean {
         if (currentRound == 0) return false
-        if (isConfidenceBuilderMode) return false
+        if (isConfidenceBuilderRoundActive) return false // Don't reactivate if already in a confidence builder round
 
-        // Track consecutive wrong answers in NORMAL mode only
+        // Check for 2 consecutive wrong answers in NORMAL mode
         if (consecutiveWrongAnswers >= 2) {
             Log.d(TAG, "🎯 2 consecutive wrong answers - activating confidence builder WITHOUT counting as round")
             return true
         }
 
-        return false
+        return therapeuticIntent?.primaryGoal == "build_confidence"
     }
 
     private fun activateConfidenceBuilderMode() {
         Log.d(TAG, "Activating Confidence Builder Mode")
         isConfidenceBuilderMode = true
+        isConfidenceBuilderRoundActive = true // 🔴 FIX: Set the active flag
 
-        // Show therapeutic message
         therapeuticMessage.text = "Let's try an easier one! You can do it!"
         therapeuticMessage.visibility = View.VISIBLE
 
-        // Make sure confidence builder overlay is visible
         confidenceBuilderOverlay.visibility = View.VISIBLE
         simplifiedOptionsContainer.visibility = View.VISIBLE
         optionsGrid.visibility = View.GONE
-
-        // Clear any previous views
         simplifiedOptionsContainer.removeAllViews()
 
-        // Get keyword
         val keyword = getUniqueKeyword()
         val correctImageRes = keywordImages[keyword.word] ?: android.R.drawable.ic_dialog_info
 
-        // 🔴 FIX: Don't shuffle for confidence builder - keep correct answer at index 0
+        // 🔴 FIX: Always keep correct answer at index 0
         val simpleOptions = listOf(
             Pair(keyword.word, correctImageRes),  // Index 0 = correct
             Pair("apple", android.R.drawable.ic_menu_help)  // Index 1 = wrong
         )
 
-        // 🔴 FIX: Explicitly set correctAnswerIndex = 0
-        correctAnswerIndex = 0
+        correctAnswerIndex = 0 // Explicitly set correct answer index
 
         val gameRound = GameRound(keyword.word, correctImageRes, simpleOptions)
         displaySimplifiedOptions(gameRound)
 
-        // Update therapeutic message
         wordTitle.text = "Tap the ${keyword.word}:"
-
-        // Give extra time
         individualLatencyBuffer = (individualLatencyBuffer * 1.5f).toLong()
 
         Log.d(TAG, "Confidence builder activated with keyword: ${keyword.word}")
@@ -542,10 +500,7 @@ class RhythmSummaryActivity : AppCompatActivity() {
     }
 
     private fun generateDiagnosticDistractors(keyword: String): List<Pair<String, Int>> {
-        // Use Game Master's diagnostic distractor engine
         val diagnosticDistractors = gameMaster.getDiagnosticDistractors(keyword, 3)
-
-        // Add some generic distractors as fallback
         val genericDistractors = listOf(
             Pair("apple", android.R.drawable.ic_menu_help),
             Pair("ball", android.R.drawable.ic_menu_help),
@@ -560,20 +515,17 @@ class RhythmSummaryActivity : AppCompatActivity() {
     }
 
     private fun getUniqueKeyword(): Keyword {
-        // Reset if all keywords used or list empty
         if (availableKeywords.isEmpty() || usedKeywords.size >= currentKeywords.size * 0.7) {
             availableKeywords = currentKeywords.toMutableList()
             usedKeywords.clear()
             Log.d(TAG, "🔄 Reset available keywords pool")
         }
 
-        // Filter out used keywords
         val available = availableKeywords.filter { it.word !in usedKeywords }
 
         val keyword = if (available.isNotEmpty()) {
             available.random()
         } else {
-            // If somehow all are used, pick any and reset
             val randomKeyword = currentKeywords.random()
             availableKeywords = currentKeywords.toMutableList()
             usedKeywords.clear()
@@ -589,20 +541,15 @@ class RhythmSummaryActivity : AppCompatActivity() {
     }
 
     private fun createGameRound(keyword: String, correctImageRes: Int, wrongOptions: List<Pair<String, Int>>): GameRound {
-        // Combine correct and wrong options
         val allOptions = mutableListOf(Pair(keyword, correctImageRes))
         allOptions.addAll(wrongOptions.take(3))
-
-        // Shuffle
         val shuffledOptions = allOptions.shuffled()
         correctAnswerIndex = shuffledOptions.indexOfFirst { it.first == keyword }
-
         return GameRound(keyword, correctImageRes, shuffledOptions)
     }
 
     private fun displayOptions(gameRound: GameRound) {
         val columnCount = optionsGrid.columnCount
-        val rowCount = optionsGrid.rowCount
         val optionSize = resources.displayMetrics.widthPixels / columnCount - 48.dpToPx()
 
         for (i in gameRound.options.indices) {
@@ -617,13 +564,12 @@ class RhythmSummaryActivity : AppCompatActivity() {
 
         val optionSize = resources.displayMetrics.widthPixels / 2 - 48.dpToPx()
 
-        // 🔴 FIX: Don't shuffle - display in order (index 0 = correct, index 1 = wrong)
+        // 🔴 FIX: Don't shuffle - maintain order
         for (i in gameRound.options.indices) {
             val option = gameRound.options[i]
             createSimplifiedOptionCard(i, option.first, option.second, optionSize, gameRound.keyword)
         }
 
-        // 🔴 Log to verify
         Log.d(TAG, "Confidence builder - Correct answer at index 0: ${gameRound.options[0].first}")
     }
 
@@ -654,7 +600,6 @@ class RhythmSummaryActivity : AppCompatActivity() {
             }
         }
 
-        // 🔴 MISSING CODE - Add this:
         val imageView = ImageView(this).apply {
             layoutParams = ViewGroup.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT,
@@ -677,7 +622,6 @@ class RhythmSummaryActivity : AppCompatActivity() {
         card.addView(imageView)
         optionsGrid.addView(card)
 
-        // Entrance animation
         card.alpha = 0f
         card.translationY = 100f
         card.animate()
@@ -694,12 +638,11 @@ class RhythmSummaryActivity : AppCompatActivity() {
                 gravity = android.view.Gravity.CENTER
                 marginStart = if (index == 0) 0 else 16.dpToPx()
             }
-            radius = 24.dpToPx().toFloat() // Larger radius for simplicity
-            cardElevation = 8.dpToPx().toFloat() // Higher elevation for prominence
+            radius = 24.dpToPx().toFloat()
+            cardElevation = 8.dpToPx().toFloat()
             isClickable = true
             tag = index
 
-            // High contrast background
             setCardBackgroundColor(if (index == 0) Color.parseColor("#E3F2FD") else Color.parseColor("#FFF3E0"))
 
             setOnClickListener {
@@ -731,7 +674,6 @@ class RhythmSummaryActivity : AppCompatActivity() {
             }
         }
 
-        // Add text label for clarity
         val textView = TextView(this).apply {
             text = word
             textSize = 20f
@@ -757,7 +699,6 @@ class RhythmSummaryActivity : AppCompatActivity() {
         card.addView(container)
         simplifiedOptionsContainer.addView(card)
 
-        // More pronounced entrance animation
         card.alpha = 0f
         card.scaleX = 0.5f
         card.scaleY = 0.5f
@@ -773,48 +714,59 @@ class RhythmSummaryActivity : AppCompatActivity() {
     private fun handleOptionClick(card: CardView, selectedIndex: Int, selectedWord: String,
                                   correctKeyword: String, responseTime: Long) {
 
-        // Prevent clicks on disabled cards
         if (!card.isClickable || isAnswerSelected) {
             Log.d(TAG, "⛔ Click ignored - card not clickable or answer already selected")
             return
         }
 
-        // Prevent too-fast clicks (minimum 800ms after options appear)
-        if (responseTime < 800) {
-            Log.d(TAG, "⚡ Too fast click: ${responseTime}ms - ignoring")
-            Toast.makeText(this, "Take your time! Look carefully.", Toast.LENGTH_SHORT).show()
-            return
+        val minResponseTime = if (isConfidenceBuilderRoundActive) 300 else 800
+        val optionsVisibleDelay = if (isConfidenceBuilderRoundActive) 300 else 1500
+        val timeFromOptionsVisible = System.currentTimeMillis() - (responseStartTime - optionsVisibleDelay)
+        Log.d(TAG, "🖱️ Option $selectedIndex clicked: $selectedWord, Time from options: ${timeFromOptionsVisible}ms")
+        val isHighlightedCorrectCard = selectedIndex == correctAnswerIndex &&
+                (card.cardBackgroundColor.defaultColor == Color.parseColor("#E8F5E9") ||
+                        card.cardBackgroundColor.defaultColor == Color.GREEN)
+
+        if (isHighlightedCorrectCard) {
+            card.setCardBackgroundColor(Color.WHITE) // or default color
         }
 
-        // Stop the timer
+        if (responseTime < minResponseTime && !isHighlightedCorrectCard) {
+            Log.d(TAG, "⚡ Too fast click: ${responseTime}ms - ${if (isConfidenceBuilderRoundActive) "allowing with warning" else "ignoring"}")
+
+            if (isConfidenceBuilderRoundActive) {
+                Toast.makeText(this, "Take a deep breath, you've got this!", Toast.LENGTH_SHORT).show()
+                // Don't return - allow the click to process
+            } else {
+                Toast.makeText(this, "Take your time! Look carefully.", Toast.LENGTH_SHORT).show()
+                return
+            }
+        }
+
         isTimerActive = false
         timeoutHandler?.removeCallbacksAndMessages(null)
-
 
         Log.d(TAG, "🖱️ Option $selectedIndex clicked: $selectedWord, Time: ${responseTime}ms")
         isAnswerSelected = true
 
-        // Disable all cards to prevent multiple clicks
         disableAllCards()
 
         val isCorrect = selectedIndex == correctAnswerIndex
         gameMaster.trackResponse(responseStartTime, isCorrect, selectedWord, correctKeyword)
 
+        // 🔴 FIX: Track consecutive wrong answers properly
         if (isCorrect) {
             consecutiveWrongAnswers = 0
-            // Track success even in confidence builder mode
-            if (isConfidenceBuilderMode) {
+            if (isConfidenceBuilderRoundActive) {
                 confidenceBuilderSuccesses++
                 Log.d(TAG, "🎯 Confidence builder success! Total: $confidenceBuilderSuccesses")
             }
+            score++ // Increment score for correct answers in ALL modes
         } else {
             consecutiveWrongAnswers++
-            if (isConfidenceBuilderMode) {
-                Log.d(TAG, "😓 Confidence builder attempt failed")
-            }
+            Log.d(TAG, "❌ Wrong answer - Consecutive wrong: $consecutiveWrongAnswers")
         }
 
-        // Play sound
         try {
             if (isCorrect) correctSound.start() else wrongSound.start()
         } catch (e: Exception) {
@@ -822,36 +774,34 @@ class RhythmSummaryActivity : AppCompatActivity() {
         }
 
         if (isCorrect) {
-            Log.d(TAG, "✅ Correct!")
-            score++
+            Log.d(TAG, "✅ Correct! Score: $score")
             showFeedback(true, card)
 
-            // Exit confidence builder on success
-            if (isConfidenceBuilderMode) {
+            // 🔴 FIX: Exit confidence builder mode on success
+            if (isConfidenceBuilderRoundActive) {
+                Log.d(TAG, "🎉 Confidence builder success - exiting mode")
                 isConfidenceBuilderMode = false
+                isConfidenceBuilderRoundActive = false
                 therapeuticMessage.visibility = View.GONE
                 simplifiedOptionsContainer.visibility = View.GONE
                 optionsGrid.visibility = View.VISIBLE
-                confidenceBuilderOverlay.visibility = View.GONE  // 🔴 ADD THIS
+                confidenceBuilderOverlay.visibility = View.GONE
             }
         } else {
             Log.d(TAG, "❌ Wrong!")
             showFeedback(false, card)
-            // Highlight correct answer but still show it's wrong
             highlightCorrectAnswer()
         }
 
         updateScore()
 
-        // Show feedback, then next button
         Handler(Looper.getMainLooper()).postDelayed({
             hideFeedbackAndShowNextButton()
-        }, 1500) // 1.5 seconds delay
+        }, 1500)
     }
 
     private fun handleTimeout() {
         if (!isAnswerSelected) {
-            isAnswerSelected = true
             isTimerActive = false
             timeoutHandler?.removeCallbacksAndMessages(null)
             Log.d(TAG, "💡 Showing hint after timeout")
@@ -859,31 +809,29 @@ class RhythmSummaryActivity : AppCompatActivity() {
             therapeuticMessage.text = "Look carefully! The correct answer is highlighted."
             therapeuticMessage.visibility = View.VISIBLE
 
-            // Highlight correct answer but STAY CLICKABLE
-            val correctCard = if (isConfidenceBuilderMode) {
-                simplifiedOptionsContainer.getChildAt(correctAnswerIndex) as? androidx.cardview.widget.CardView
+            val correctCard = if (isConfidenceBuilderRoundActive) {
+                simplifiedOptionsContainer.getChildAt(correctAnswerIndex) as? CardView
             } else {
-                optionsGrid.getChildAt(correctAnswerIndex) as? androidx.cardview.widget.CardView
+                optionsGrid.getChildAt(correctAnswerIndex) as? CardView
             }
 
             correctCard?.let {
-                // SIMPLE FIX: Just use background color, no border
-                it.setCardBackgroundColor(Color.parseColor("#E8F5E9")) // Very light green
-                it.isClickable = true // Keep it clickable!
-                it.isEnabled = true // Make sure it's enabled
+                it.setCardBackgroundColor(Color.parseColor("#E8F5E9"))
+                it.isClickable = true
+                it.isEnabled = true
             }
 
-            // Auto-proceed after longer delay
             Handler(Looper.getMainLooper()).postDelayed({
-                if (isAnswerSelected) {
+                if (!isAnswerSelected) {
+                    Log.d(TAG, "⏰ Auto-proceeding after timeout with no answer")
                     hideFeedbackAndShowNextButton()
                 }
-            }, 5000) // Give 5 more seconds after hint
+            }, 5000)
         }
     }
 
     private fun disableAllCards() {
-        if (isConfidenceBuilderMode) {
+        if (isConfidenceBuilderRoundActive) {
             for (i in 0 until simplifiedOptionsContainer.childCount) {
                 val child = simplifiedOptionsContainer.getChildAt(i)
                 if (child is CardView) {
@@ -901,7 +849,7 @@ class RhythmSummaryActivity : AppCompatActivity() {
     }
 
     private fun highlightCorrectAnswer() {
-        val correctCard = if (isConfidenceBuilderMode) {
+        val correctCard = if (isConfidenceBuilderRoundActive) {
             simplifiedOptionsContainer.getChildAt(correctAnswerIndex) as? CardView
         } else {
             optionsGrid.getChildAt(correctAnswerIndex) as? CardView
@@ -968,11 +916,9 @@ class RhythmSummaryActivity : AppCompatActivity() {
             .start()
 
         if (!::feedbackContainer.isInitialized) {
-            // Try to find it again
             feedbackContainer = findViewById(R.id.feedbackContainer)
         }
 
-        // 🔴 FIX THIS - Use feedbackContainer variable instead of getChildAt(0)
         feedbackContainer.scaleX = 0.5f
         feedbackContainer.scaleY = 0.5f
         feedbackContainer.alpha = 0f
@@ -996,7 +942,6 @@ class RhythmSummaryActivity : AppCompatActivity() {
                 feedbackText.visibility = View.GONE
                 therapeuticMessage.visibility = View.GONE
 
-                // 🔴 CRITICAL FIX - Reset feedback container properties
                 if (::feedbackContainer.isInitialized) {
                     feedbackContainer.scaleX = 1f
                     feedbackContainer.scaleY = 1f
@@ -1049,18 +994,21 @@ class RhythmSummaryActivity : AppCompatActivity() {
     private fun onNextButtonClick() {
         nextButton.visibility = View.GONE
 
-        // 🔴 FIX: Only increment currentRound for NORMAL rounds
-        if (!isConfidenceBuilderMode) {
-            currentRound++
-            Log.d(TAG, "✅ Normal round completed. Progress: $currentRound/$totalRounds")
-        } else {
+        // 🔴 FIX: Properly handle round counting
+        if (isConfidenceBuilderRoundActive) {
             Log.d(TAG, "🔄 Confidence builder round completed - not counting toward total")
-            // Reset confidence builder mode but DON'T increment round counter
+            // Reset all confidence builder flags
             isConfidenceBuilderMode = false
+            isConfidenceBuilderRoundActive = false
             therapeuticMessage.visibility = View.GONE
             confidenceBuilderOverlay.visibility = View.GONE
             simplifiedOptionsContainer.visibility = View.GONE
             optionsGrid.visibility = View.VISIBLE
+
+            // Don't increment currentRound
+        } else {
+            currentRound++
+            Log.d(TAG, "✅ Normal round completed. Progress: $currentRound/$totalRounds")
         }
 
         startNewRound()
@@ -1074,7 +1022,6 @@ class RhythmSummaryActivity : AppCompatActivity() {
             intent.putExtra("TOTAL_ROUNDS", totalRounds)
             intent.putExtra("SONG_TITLE", currentSongTitle)
 
-            // Pass session metrics for therapeutic analysis
             val sessionMetrics = gameMaster.getSessionSummary()
             intent.putExtra("SESSION_METRICS", sessionMetrics)
 
