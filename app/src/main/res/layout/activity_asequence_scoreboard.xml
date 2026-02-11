@@ -12,15 +12,15 @@
         android:id="@+id/therapeuticMessage"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Your Score"
+        android:layout_marginTop="28dp"
+        android:gravity="center"
+        android:text=""
+        android:textColor="@color/white"
         android:textSize="35dp"
         android:textStyle="bold"
-        android:textColor="@color/white"
-        android:gravity="center"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        android:layout_marginTop="30dp"/>
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
 
     <TextView
         android:id="@+id/motivationalQuote"
@@ -198,9 +198,9 @@
             android:layout_marginEnd="16dp"
             android:layout_weight="1"
             android:text="Play Again"
-            android:backgroundTint="@color/green"
-            android:textColor="@android:color/white"
-            />
+            android:background="@drawable/rounded_button_background_g"
+            app:backgroundTint="@null"
+            android:textColor="@android:color/white" />
 
         <Button
             android:id="@+id/btnHome"
@@ -208,8 +208,8 @@
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:text="Dashboard"
-            android:backgroundTint="@color/dark_orange"
-            android:textColor="@android:color/white"
-            />
+            android:background="@drawable/rounded_button_background"
+            app:backgroundTint="@null"
+            android:textColor="@android:color/white" />
     </LinearLayout>
 </androidx.constraintlayout.widget.ConstraintLayout>
