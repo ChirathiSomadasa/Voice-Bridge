@@ -9,6 +9,8 @@ import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
 import android.util.Log
+import android.view.Gravity
+import android.view.MotionEvent
 import android.view.View
 import android.view.animation.OvershootInterpolator
 import android.view.animation.TranslateAnimation
@@ -17,6 +19,7 @@ import android.view.ViewGroup
 import androidx.appcompat.app.AppCompatActivity
 import androidx.cardview.widget.CardView
 import androidx.core.content.ContextCompat
+import kotlin.math.abs
 
 class RhythmSummaryActivity : AppCompatActivity() {
 
@@ -33,12 +36,27 @@ class RhythmSummaryActivity : AppCompatActivity() {
     private lateinit var feedbackText: TextView
     private lateinit var feedbackOverlay: FrameLayout
     private lateinit var nextButton: Button
+    private lateinit var confidenceBuilderOverlay: FrameLayout
+    private lateinit var simplifiedOptionsContainer: LinearLayout
+    private lateinit var therapeuticMessage: TextView
 
+    // Therapeutic components
+    private lateinit var gameMaster: GameMasterModel
     private var currentRound = 0
     private var score = 0
-    private var totalRounds = 5
+    private var totalRounds = 5 // Will be adjusted dynamically
     private var correctAnswerIndex = 0
     private var isAnswerSelected = false
+    private var isConfidenceBuilderMode = false
+    private var individualLatencyBuffer: Long = 3000 // Default 3 seconds
+    private var therapeuticIntent: TherapeuticIntent? = null
+    private var confidenceBuilderSuccesses = 0
+    private var consecutiveWrongAnswers = 0
+
+    // Behavioral tracking
+    private var responseStartTime: Long = 0
+    private val responseTimes = mutableListOf<Long>()
+    private val touchPatterns = mutableListOf<Pair<Float, Float>>()
 
     // Track used keywords to avoid repetition
     private val usedKeywords = mutableSetOf<String>()
@@ -46,6 +64,11 @@ class RhythmSummaryActivity : AppCompatActivity() {
     private lateinit var mediaPlayer: MediaPlayer
     private lateinit var correctSound: MediaPlayer
     private lateinit var wrongSound: MediaPlayer
+    private lateinit var instructionsText: TextView
+    private lateinit var rootLayout: View
+    private lateinit var feedbackContainer: LinearLayout
+    private var isTimerActive = false
+    private var timeoutHandler: Handler? = null
 
     // Define Keyword data class
     data class Keyword(val word: String, val imageRes: Int, val startTime: Int, val endTime: Int)
@@ -56,11 +79,9 @@ class RhythmSummaryActivity : AppCompatActivity() {
         "dream" to R.drawable.rhy_song0_dream,
         "creek" to R.drawable.rhy_song0_creek,
         "mouse" to R.drawable.rhy_song0_mouse,
-        "squeak" to R.drawable.squeak,
         "river" to R.drawable.rhy_song0_river,
         "polar bear" to R.drawable.rhy_song0_polar_bear,
         "crocodile" to R.drawable.rhy_song0_crocodile,
-        "scream" to R.drawable.scream_image,
         "star" to R.drawable.rhy_song1_star,
         "world" to R.drawable.rhy_song1_world,
         "diamond" to R.drawable.rhy_song1_diamond,
@@ -76,51 +97,13 @@ class RhythmSummaryActivity : AppCompatActivity() {
         "crown" to R.drawable.crown_image
     )
 
-    // Distractor images map - using other song images as distractors
-    private val distractorImages = mapOf(
-        // For "Row Row Row Your Boat" song
-        "car" to R.drawable.car,
-        "plane" to R.drawable.plane,
-        "bicycle" to R.drawable.bicycle_image,
-        "ocean" to R.drawable.rhy_song0_boat,
-        "lake" to R.drawable.rhy_song0_stream,
-        "waterfall" to R.drawable.rhy_song0_river,
-        "mountain" to R.drawable.hill_image,
-        "valley" to R.drawable.rhy_song0_dream,
-        "forest" to R.drawable.rhy_song0_creek,
-
-        // For "Twinkle Twinkle Little Star" song
-        "moon" to R.drawable.rhy_song1_moon,
-        "planet" to R.drawable.planet,
-        "sky" to R.drawable.rhy_song1_dark_blue_sky,
-        "cloud" to R.drawable.rhy_song1_window,
-        "eye" to R.drawable.rhy_song1_eyes,
-        "night sky" to R.drawable.rhy_song1_star,
-
-        // General distractors
-        "juice" to R.drawable.sticker,
-        "helmet" to R.drawable.helmet_image,
-        "apple" to R.drawable.apple_image,
-        "ball" to R.drawable.ball_image,
-        "cat" to R.drawable.cat_image,
-        "hat" to R.drawable.crown_image,
-        "cap" to R.drawable.rhy_song1_traveller
-    )
-
     data class GameRound(val keyword: String, val correctImageRes: Int, val options: List<Pair<String, Int>>)
 
     private lateinit var currentKeywords: List<Keyword>
     private lateinit var availableKeywords: MutableList<Keyword>
 
-    // Define ALL water-related keywords that shouldn't appear together
-    private val allWaterTerms = listOf(
-        "stream", "river", "creek", "lake", "ocean", "water", "waterfall",
-        "pond", "sea", "boat", "sail", "ship", "wave", "tide"
-    )
-
-    // Validated image caches
-    private val validatedKeywordImages = mutableMapOf<String, Int>()
-    private val validatedDistractorImages = mutableMapOf<String, Int>()
+    // Water-related keywords that shouldn't appear together
+    private val waterTerms = listOf("stream", "river", "creek", "lake", "ocean", "water", "boat")
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -128,7 +111,10 @@ class RhythmSummaryActivity : AppCompatActivity() {
 
         try {
             setContentView(R.layout.activity_rythm_summary)
-            Log.d(TAG, "Layout set successfully: activity_rythm_summary")
+            Log.d(TAG, "Layout set successfully")
+
+            // Initialize Game Master
+            gameMaster = GameMasterModel(this)
 
             // Initialize UI components
             initializeViews()
@@ -138,32 +124,37 @@ class RhythmSummaryActivity : AppCompatActivity() {
             currentSongTitle = intent.getStringExtra("SONG_TITLE") ?: "Row Row Row Your Boat"
             Log.d(TAG, "Received song title: $currentSongTitle")
 
+            // Get therapeutic intent if passed
+            therapeuticIntent = intent.getSerializableExtra("THERAPEUTIC_INTENT") as? TherapeuticIntent
+
             try {
-                // Initialize sound effects
                 mediaPlayer = MediaPlayer.create(this, R.raw.button_click)
                 correctSound = MediaPlayer.create(this, R.raw.correct_sound)
                 wrongSound = MediaPlayer.create(this, R.raw.wrong_sound)
                 Log.d(TAG, "Sound effects initialized")
             } catch (e: Exception) {
-                Log.w(TAG, "Sound files not found, using silent players")
+                Log.w(TAG, "Sound files not found")
                 mediaPlayer = MediaPlayer()
                 correctSound = MediaPlayer()
                 wrongSound = MediaPlayer()
             }
 
-            // Validate and cache all images
-            validateAllImages()
-            Log.d(TAG, "Image validation complete")
-
             // Setup based on song
             setupSongData()
             Log.d(TAG, "Song data setup complete")
 
+            // Get individualized latency buffer
+            individualLatencyBuffer = gameMaster.getIndividualizedLatencyBuffer()
+            Log.d(TAG, "Individual latency buffer: ${individualLatencyBuffer}ms")
+
             setupUI()
             Log.d(TAG, "UI setup complete")
 
-            startNewRound()
-            Log.d(TAG, "First round started")
+            // Start first round with delay to allow therapeutic assessment
+            Handler(Looper.getMainLooper()).postDelayed({
+                startNewRound()
+                Log.d(TAG, "First round started")
+            }, 1000)
 
             // Set next button click listener
             nextButton.setOnClickListener {
@@ -175,105 +166,105 @@ class RhythmSummaryActivity : AppCompatActivity() {
 
         } catch (e: Exception) {
             Log.e(TAG, "FATAL ERROR in onCreate: ${e.message}", e)
-            e.printStackTrace()
-
-            // Show error to user
             Toast.makeText(this, "Error loading game: ${e.message}", Toast.LENGTH_LONG).show()
-
-            // Try to go back
-            try {
-                finish()
-            } catch (e2: Exception) {
-                Log.e(TAG, "Error finishing activity: ${e2.message}", e2)
-            }
+            finish()
         }
     }
 
-    private fun validateAllImages() {
-        Log.d(TAG, "Validating all images...")
-
-        // Validate keyword images
-        keywordImages.forEach { (word, resId) ->
-            if (isDrawableValid(resId)) {
-                validatedKeywordImages[word] = resId
-                Log.d(TAG, "✓ Valid keyword image: $word ($resId)")
-            } else {
-                Log.w(TAG, "✗ Invalid keyword image: $word ($resId)")
-                // Fallback to system drawable
-                validatedKeywordImages[word] = android.R.drawable.ic_dialog_info
+    override fun onTouchEvent(event: MotionEvent): Boolean {
+        when (event.action) {
+            MotionEvent.ACTION_DOWN, MotionEvent.ACTION_MOVE -> {
+                gameMaster.trackTouch(event.x, event.y, System.currentTimeMillis())
             }
         }
-
-        // Validate distractor images
-        distractorImages.forEach { (word, resId) ->
-            if (isDrawableValid(resId)) {
-                validatedDistractorImages[word] = resId
-                Log.d(TAG, "✓ Valid distractor image: $word ($resId)")
-            } else {
-                Log.w(TAG, "✗ Invalid distractor image: $word ($resId)")
-                // Fallback to system drawable
-                validatedDistractorImages[word] = android.R.drawable.ic_dialog_info
-            }
-        }
-
-        Log.d(TAG, "Image validation complete. Keywords: ${validatedKeywordImages.size}, Distractors: ${validatedDistractorImages.size}")
-    }
-
-    private fun isDrawableValid(resId: Int): Boolean {
-        return try {
-            val drawable = ContextCompat.getDrawable(this, resId)
-            drawable != null
-        } catch (e: Resources.NotFoundException) {
-            false
-        } catch (e: Exception) {
-            false
-        }
+        return super.onTouchEvent(event)
     }
 
     private fun initializeViews() {
         Log.d(TAG, "Initializing views...")
         try {
             pandaImage = findViewById(R.id.pandaImage)
-            Log.d(TAG, "Found pandaImage: $pandaImage")
-
             wordTitle = findViewById(R.id.wordTitle)
-            Log.d(TAG, "Found wordTitle: $wordTitle")
-
             scoreText = findViewById(R.id.scoreText)
-            Log.d(TAG, "Found scoreText: $scoreText")
-
             progressContainer = findViewById(R.id.progressContainer)
-            Log.d(TAG, "Found progressContainer: $progressContainer")
-
+            instructionsText = findViewById(R.id.instructionsText)
             optionsGrid = findViewById(R.id.optionsGrid)
-            Log.d(TAG, "Found optionsGrid: $optionsGrid")
-
             feedbackOverlay = findViewById(R.id.feedbackOverlay)
-            Log.d(TAG, "Found feedbackOverlay: $feedbackOverlay")
-
             feedbackIcon = findViewById(R.id.feedbackIcon)
-            Log.d(TAG, "Found feedbackIcon: $feedbackIcon")
-
             feedbackText = findViewById(R.id.feedbackText)
-            Log.d(TAG, "Found feedbackText: $feedbackText")
+
+            // CRITICAL FIX: Initialize feedbackContainer FIRST
+            feedbackContainer = findViewById(R.id.feedbackContainer)
 
             nextButton = findViewById(R.id.nextButton)
-            Log.d(TAG, "Found nextButton: $nextButton")
+            rootLayout = findViewById(R.id.rootLayout)
+
+            // Therapeutic UI components
+            confidenceBuilderOverlay = findViewById(R.id.confidenceBuilderOverlay)
+            simplifiedOptionsContainer = findViewById(R.id.simplifiedOptionsContainer)
+            therapeuticMessage = findViewById(R.id.therapeuticMessage)
 
             Log.d(TAG, "All views initialized successfully")
+            Log.d(TAG, "feedbackContainer initialized: ${feedbackContainer != null}")
 
         } catch (e: Exception) {
             Log.e(TAG, "ERROR initializing views: ${e.message}", e)
-            throw RuntimeException("Failed to initialize views: ${e.message}", e)
+            // If therapeutic components don't exist, create them programmatically
+            createTherapeuticComponentsIfMissing()
         }
+    }
+
+    private fun createTherapeuticComponentsIfMissing() {
+        // Create confidence builder overlay if it doesn't exist
+        confidenceBuilderOverlay = FrameLayout(this).apply {
+            id = R.id.confidenceBuilderOverlay
+            layoutParams = FrameLayout.LayoutParams(
+                FrameLayout.LayoutParams.MATCH_PARENT,
+                FrameLayout.LayoutParams.MATCH_PARENT
+            )
+            setBackgroundColor(Color.parseColor("#80FFFFFF"))
+            visibility = View.GONE
+        }
+
+        simplifiedOptionsContainer = LinearLayout(this).apply {
+            id = R.id.simplifiedOptionsContainer
+            layoutParams = LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+            ).apply {
+                gravity = Gravity.CENTER
+            }
+            orientation = LinearLayout.HORIZONTAL
+            gravity = Gravity.CENTER
+            visibility = View.GONE
+        }
+
+        therapeuticMessage = TextView(this).apply {
+            id = R.id.therapeuticMessage
+            layoutParams = FrameLayout.LayoutParams(
+                FrameLayout.LayoutParams.WRAP_CONTENT,
+                FrameLayout.LayoutParams.WRAP_CONTENT
+            ).apply {
+                gravity = Gravity.CENTER
+            }
+            textSize = 18f
+            setTextColor(Color.parseColor("#4CAF50"))
+            gravity = Gravity.CENTER
+            visibility = View.GONE
+            setPadding(16.dpToPx(), 16.dpToPx(), 16.dpToPx(), 16.dpToPx())
+        }
+
+        // Add to root layout
+        val parent = findViewById<ViewGroup>(R.id.rootLayout)
+        parent.addView(confidenceBuilderOverlay)
+        confidenceBuilderOverlay.addView(therapeuticMessage)
+        confidenceBuilderOverlay.addView(simplifiedOptionsContainer)
     }
 
     private fun setupSongData() {
         Log.d(TAG, "Setting up song data for: $currentSongTitle")
-        // Get keywords from the song that was played
         currentKeywords = when (currentSongTitle) {
             "Row Row Row Your Boat" -> {
-                Log.d(TAG, "Loading Row Row Row Your Boat keywords")
                 listOf(
                     Keyword("boat", R.drawable.rhy_song0_boat, 11000, 12000),
                     Keyword("stream", R.drawable.rhy_song0_stream, 13000, 15000),
@@ -286,7 +277,6 @@ class RhythmSummaryActivity : AppCompatActivity() {
                 )
             }
             "Twinkle Twinkle Little Star" -> {
-                Log.d(TAG, "Loading Twinkle Twinkle Little Star keywords")
                 listOf(
                     Keyword("star", R.drawable.rhy_song1_star, 8000, 10000),
                     Keyword("world", R.drawable.rhy_song1_world, 16000, 18000),
@@ -301,7 +291,6 @@ class RhythmSummaryActivity : AppCompatActivity() {
                 )
             }
             "Jack and Jill" -> {
-                Log.d(TAG, "Loading Jack and Jill keywords")
                 listOf(
                     Keyword("hill", R.drawable.hill_image, 10500, 11000),
                     Keyword("water", R.drawable.water_image, 12500, 14000),
@@ -309,7 +298,6 @@ class RhythmSummaryActivity : AppCompatActivity() {
                 )
             }
             else -> {
-                Log.w(TAG, "Unknown song title, using default keywords")
                 listOf(
                     Keyword("boat", R.drawable.rhy_song0_boat, 11000, 12000),
                     Keyword("stream", R.drawable.rhy_song0_stream, 13000, 15000),
@@ -318,7 +306,6 @@ class RhythmSummaryActivity : AppCompatActivity() {
             }
         }
 
-        // Create a mutable copy for available keywords
         availableKeywords = currentKeywords.toMutableList()
         Log.d(TAG, "Available keywords: ${availableKeywords.size}")
     }
@@ -326,21 +313,58 @@ class RhythmSummaryActivity : AppCompatActivity() {
     private fun setupUI() {
         Log.d(TAG, "Setting up UI")
         try {
+            // Adjust UI complexity based on therapeutic intent
+            adjustUIComplexity()
+
             // Setup panda animation
             animatePanda()
-            Log.d(TAG, "Panda animation started")
 
             // Setup progress dots
             setupProgressDots()
-            Log.d(TAG, "Progress dots setup")
 
             // Update score display
             updateScore()
-            Log.d(TAG, "Score display updated")
 
         } catch (e: Exception) {
             Log.e(TAG, "Error in setupUI: ${e.message}", e)
         }
+    }
+
+    private fun adjustUIComplexity() {
+        val intent = therapeuticIntent ?: return
+
+        // Adjust grid based on UI complexity
+        val columnCount = when {
+            intent.uiComplexity < 0.4f -> 1 // Single column for very simple UI
+            intent.uiComplexity < 0.6f -> 2 // 2x2 grid for moderate complexity
+            else -> 2 // Default 2x2 grid
+        }
+
+        optionsGrid.columnCount = columnCount
+        optionsGrid.rowCount = if (columnCount == 1) 4 else 2
+
+        // Adjust text size and contrast
+        wordTitle.textSize = when {
+            intent.uiComplexity < 0.4f -> 24f
+            intent.uiComplexity < 0.6f -> 28f
+            else -> 32f
+        }
+
+        // Set high contrast colors for better visibility
+        if (intent.uiComplexity < 0.5f) {
+            findViewById<View>(R.id.rootLayout).setBackgroundColor(Color.WHITE)
+            wordTitle.setTextColor(Color.BLACK)
+        }
+
+        // Adjust total rounds based on session duration
+        totalRounds = when (intent.sessionDuration) {
+            in 0..5 -> 3 // Very short session
+            in 6..10 -> 5 // Short session
+            in 11..15 -> 7 // Medium session
+            else -> 5 // Default
+        }
+
+        Log.d(TAG, "UI Complexity adjusted: ${intent.uiComplexity}, Rounds: $totalRounds")
     }
 
     private fun animatePanda() {
@@ -359,7 +383,6 @@ class RhythmSummaryActivity : AppCompatActivity() {
     private fun setupProgressDots() {
         try {
             progressContainer.removeAllViews()
-            Log.d(TAG, "Cleared progress container")
 
             for (i in 0 until totalRounds) {
                 val dot = View(this)
@@ -387,359 +410,251 @@ class RhythmSummaryActivity : AppCompatActivity() {
     private fun Int.dpToPx(): Int = (this * resources.displayMetrics.density).toInt()
 
     private fun startNewRound() {
-        Log.d(TAG, "Starting new round. Current round: $currentRound, Total rounds: $totalRounds")
+        Log.d(TAG, "🎮 Starting new round ${currentRound + 1}/$totalRounds")
 
         if (currentRound >= totalRounds) {
-            Log.d(TAG, "Game finished! Score: $score/$totalRounds")
-            // Game finished, navigate to scoreboard
+            Log.d(TAG, "✅ Game finished! Score: $score/$totalRounds")
             navigateToScoreboard()
             return
         }
 
+        // Reset state
         isAnswerSelected = false
         nextButton.visibility = View.GONE
-        Log.d(TAG, "Reset round state")
 
-        // Clear previous options
+        // Clear all visual hints
         optionsGrid.removeAllViews()
-        Log.d(TAG, "Cleared previous options")
+        simplifiedOptionsContainer.removeAllViews()
+        simplifiedOptionsContainer.visibility = View.GONE
+        confidenceBuilderOverlay.visibility = View.GONE
+        optionsGrid.visibility = View.VISIBLE
 
-        // Get a keyword that hasn't been used yet
+        // Reset confidence builder
+        if (isConfidenceBuilderMode && currentRound == 0) {
+            isConfidenceBuilderMode = false
+            therapeuticMessage.visibility = View.GONE
+        }
+
+        // Check confidence builder
+        if (shouldActivateConfidenceBuilder()) {
+            activateConfidenceBuilderMode()
+            // Start timer for confidence builder mode
+            startResponseTimer()
+            return
+        }
+
+        // Get keyword
         val keyword = getUniqueKeyword()
-        val correctImageRes = validatedKeywordImages[keyword.word] ?: android.R.drawable.ic_dialog_info
-        Log.d(TAG, "Selected keyword: ${keyword.word}, validated image res: $correctImageRes")
+        val correctImageRes = keywordImages[keyword.word] ?: android.R.drawable.ic_dialog_info
 
-        // Generate wrong options - use other song images as distractors
-        val wrongOptions = generateWrongOptions(keyword.word)
-        Log.d(TAG, "Generated ${wrongOptions.size} wrong options")
-
-        // Create game round
+        // Generate options
+        val wrongOptions = generateDiagnosticDistractors(keyword.word)
         val gameRound = createGameRound(keyword.word, correctImageRes, wrongOptions)
-        Log.d(TAG, "Game round created with ${gameRound.options.size} options")
 
-        // Display the word to find
+        // Display
         wordTitle.text = "Find: ${keyword.word.uppercase()}"
-        Log.d(TAG, "Word title set: ${wordTitle.text}")
-
-        // Create and display options
         displayOptions(gameRound)
-        Log.d(TAG, "Options displayed")
-
-        // Update progress dots
         updateProgressDots()
-        Log.d(TAG, "Progress dots updated")
+
+        // Enable options
+        optionsGrid.isEnabled = true
+
+        // Start timer for normal mode
+        startResponseTimer()
+    }
+
+    private fun startResponseTimer() {
+        timeoutHandler?.removeCallbacksAndMessages(null)
+        isTimerActive = true
+
+        // FIX: Store the time when options become VISIBLE, not when timer "starts"
+        Handler(Looper.getMainLooper()).postDelayed({
+            responseStartTime = System.currentTimeMillis()
+            Log.d(TAG, "⏰ Timer started at ${responseStartTime}")
+
+            // Reduce minimum response time for confidence builder mode
+            val timeoutDuration = if (isConfidenceBuilderMode) 8000 else 5000
+
+            timeoutHandler = Handler(Looper.getMainLooper())
+            timeoutHandler?.postDelayed({
+                if (!isAnswerSelected && isTimerActive) {
+                    Log.d(TAG, "⏰ Response timeout triggered after ${timeoutDuration}ms")
+                    handleTimeout()
+                }
+            }, timeoutDuration.toLong())
+        }, if (isConfidenceBuilderMode) 500 else 1500) // Shorter delay for confidence builder
+    }
+
+
+    private fun shouldActivateConfidenceBuilder(): Boolean {
+        if (currentRound == 0) return false
+        if (isConfidenceBuilderMode) return false
+
+        // Track consecutive wrong answers in NORMAL mode only
+        if (consecutiveWrongAnswers >= 2) {
+            Log.d(TAG, "🎯 2 consecutive wrong answers - activating confidence builder WITHOUT counting as round")
+            return true
+        }
+
+        return false
+    }
+
+    private fun activateConfidenceBuilderMode() {
+        Log.d(TAG, "Activating Confidence Builder Mode")
+        isConfidenceBuilderMode = true
+
+        // Show therapeutic message
+        therapeuticMessage.text = "Let's try an easier one! You can do it!"
+        therapeuticMessage.visibility = View.VISIBLE
+
+        // Make sure confidence builder overlay is visible
+        confidenceBuilderOverlay.visibility = View.VISIBLE
+        simplifiedOptionsContainer.visibility = View.VISIBLE
+        optionsGrid.visibility = View.GONE
+
+        // Clear any previous views
+        simplifiedOptionsContainer.removeAllViews()
+
+        // Get keyword
+        val keyword = getUniqueKeyword()
+        val correctImageRes = keywordImages[keyword.word] ?: android.R.drawable.ic_dialog_info
+
+        // 🔴 FIX: Don't shuffle for confidence builder - keep correct answer at index 0
+        val simpleOptions = listOf(
+            Pair(keyword.word, correctImageRes),  // Index 0 = correct
+            Pair("apple", android.R.drawable.ic_menu_help)  // Index 1 = wrong
+        )
+
+        // 🔴 FIX: Explicitly set correctAnswerIndex = 0
+        correctAnswerIndex = 0
+
+        val gameRound = GameRound(keyword.word, correctImageRes, simpleOptions)
+        displaySimplifiedOptions(gameRound)
+
+        // Update therapeutic message
+        wordTitle.text = "Tap the ${keyword.word}:"
+
+        // Give extra time
+        individualLatencyBuffer = (individualLatencyBuffer * 1.5f).toLong()
+
+        Log.d(TAG, "Confidence builder activated with keyword: ${keyword.word}")
+        Log.d(TAG, "Correct answer index set to: $correctAnswerIndex")
+    }
+
+    private fun generateDiagnosticDistractors(keyword: String): List<Pair<String, Int>> {
+        // Use Game Master's diagnostic distractor engine
+        val diagnosticDistractors = gameMaster.getDiagnosticDistractors(keyword, 3)
+
+        // Add some generic distractors as fallback
+        val genericDistractors = listOf(
+            Pair("apple", android.R.drawable.ic_menu_help),
+            Pair("ball", android.R.drawable.ic_menu_help),
+            Pair("car", android.R.drawable.ic_menu_help)
+        )
+
+        return if (diagnosticDistractors.size >= 3) {
+            diagnosticDistractors
+        } else {
+            diagnosticDistractors + genericDistractors.take(3 - diagnosticDistractors.size)
+        }
     }
 
     private fun getUniqueKeyword(): Keyword {
-        Log.d(TAG, "Getting unique keyword. Used: ${usedKeywords.size}, Available: ${availableKeywords.size}")
-
-        // If we've used all keywords, reset and start over
-        if (availableKeywords.isEmpty()) {
-            Log.d(TAG, "All keywords used, resetting...")
+        // Reset if all keywords used or list empty
+        if (availableKeywords.isEmpty() || usedKeywords.size >= currentKeywords.size * 0.7) {
             availableKeywords = currentKeywords.toMutableList()
             usedKeywords.clear()
+            Log.d(TAG, "🔄 Reset available keywords pool")
         }
 
-        // Get a random keyword that hasn't been used
+        // Filter out used keywords
         val available = availableKeywords.filter { it.word !in usedKeywords }
+
         val keyword = if (available.isNotEmpty()) {
             available.random()
         } else {
-            // If all have been used, get any random one
-            availableKeywords.random()
+            // If somehow all are used, pick any and reset
+            val randomKeyword = currentKeywords.random()
+            availableKeywords = currentKeywords.toMutableList()
+            usedKeywords.clear()
+            usedKeywords.add(randomKeyword.word)
+            randomKeyword
         }
 
-        // Mark as used
         usedKeywords.add(keyword.word)
         availableKeywords.remove(keyword)
-        Log.d(TAG, "Selected keyword: ${keyword.word}")
 
+        Log.d(TAG, "📝 Selected keyword: ${keyword.word}, Remaining: ${availableKeywords.size}")
         return keyword
     }
 
-    private fun generateWrongOptions(keyword: String): List<Pair<String, Int>> {
-        Log.d(TAG, "Generating wrong options for: $keyword")
-        val wrongOptions = mutableListOf<Pair<String, Int>>()
-        val usedWrongOptions = mutableSetOf<String>()
-
-        // Check if current keyword is a water-related term
-        val isWaterKeyword = allWaterTerms.contains(keyword)
-        Log.d(TAG, "Keyword '$keyword' is water-related: $isWaterKeyword")
-
-        // Step 1: Get all possible wrong options from the same song
-        val sameSongWrongOptions = mutableListOf<Pair<String, Int>>()
-
-        // Filter current keywords for wrong options (excluding the correct keyword)
-        for (kw in currentKeywords) {
-            if (kw.word != keyword) {
-                // Check if this is a water-related term
-                val isWrongOptionWaterTerm = allWaterTerms.contains(kw.word)
-
-                // If current keyword is a water term, don't allow any other water terms
-                if (isWaterKeyword && isWrongOptionWaterTerm) {
-                    Log.d(TAG, "Skipping water term '${kw.word}' because keyword '$keyword' is also water-related")
-                    continue
-                }
-
-                val imageRes = validatedKeywordImages[kw.word] ?: android.R.drawable.ic_dialog_info
-                sameSongWrongOptions.add(Pair(kw.word, imageRes))
-            }
-        }
-
-        // Shuffle and add up to 2 same-song wrong options (ensuring no duplicates)
-        val shuffledSameSong = sameSongWrongOptions.shuffled()
-        var addedCount = 0
-
-        for (option in shuffledSameSong) {
-            if (addedCount >= 2) break
-            if (option.first !in usedWrongOptions) {
-                wrongOptions.add(option)
-                usedWrongOptions.add(option.first)
-                addedCount++
-            }
-        }
-
-        Log.d(TAG, "Added $addedCount same-song wrong options")
-
-        // Step 2: If we need more options, add from unrelated categories
-        if (wrongOptions.size < 3) {
-            val neededCount = 3 - wrongOptions.size
-
-            // Create a list of unrelated categories based on keyword type
-            val unrelatedDistractorWords = when {
-                isWaterKeyword -> {
-                    // If keyword is water-related, use completely unrelated categories
-                    listOf("car", "plane", "house", "tree", "mountain", "sun", "star",
-                        "apple", "ball", "cat", "dog", "bird", "hat", "shoe", "book")
-                }
-                keyword == "boat" -> listOf("car", "plane", "bicycle", "train", "bus", "house", "tree")
-                keyword in listOf("star", "sun", "moon", "light") -> listOf("flower", "tree", "house", "mountain", "cloud", "apple", "ball")
-                keyword in listOf("hill", "mountain") -> listOf("valley", "forest", "desert", "plain", "cave", "house", "tree")
-                keyword in listOf("water", "crown") -> listOf("hat", "helmet", "cap", "shield", "sword", "apple", "ball")
-                else -> listOf("apple", "ball", "cat", "dog", "bird", "fish", "house", "tree")
-            }.filter {
-                // Filter to only validated distractors AND ensure they're not water-related if keyword is water-related
-                it in validatedDistractorImages && !(isWaterKeyword && allWaterTerms.contains(it))
-            }
-
-            var unrelatedAdded = 0
-            for (unrelatedWord in unrelatedDistractorWords.shuffled()) {
-                if (unrelatedAdded >= neededCount) break
-
-                // Make sure it's not a duplicate and not the correct keyword
-                if (unrelatedWord != keyword &&
-                    unrelatedWord !in usedWrongOptions &&
-                    !(isWaterKeyword && allWaterTerms.contains(unrelatedWord))) {
-
-                    val imageRes = validatedDistractorImages[unrelatedWord] ?: android.R.drawable.ic_dialog_info
-                    wrongOptions.add(Pair(unrelatedWord, imageRes))
-                    usedWrongOptions.add(unrelatedWord)
-                    unrelatedAdded++
-                }
-            }
-
-            Log.d(TAG, "Added $unrelatedAdded unrelated wrong options")
-        }
-
-        // Step 3: Final validation - ensure we have exactly 3 unique wrong options
-        val validatedOptions = mutableListOf<Pair<String, Int>>()
-        val finalSeen = mutableSetOf<String>()
-
-        for (option in wrongOptions) {
-            if (option.first != keyword &&
-                option.first !in finalSeen &&
-                !(isWaterKeyword && allWaterTerms.contains(option.first))) {
-
-                // Final validation of the image resource
-                val finalResId = if (isDrawableValid(option.second)) {
-                    option.second
-                } else {
-                    Log.w(TAG, "Image resource ${option.second} for '${option.first}' is invalid, using fallback")
-                    android.R.drawable.ic_dialog_info
-                }
-
-                validatedOptions.add(Pair(option.first, finalResId))
-                finalSeen.add(option.first)
-
-                if (validatedOptions.size >= 3) break
-            }
-        }
-
-        // Step 4: If we still don't have 3 options, add safe defaults
-        while (validatedOptions.size < 3) {
-            val safeDefaults = listOf(
-                Pair("apple", android.R.drawable.ic_menu_help),
-                Pair("ball", android.R.drawable.ic_menu_help),
-                Pair("cat", android.R.drawable.ic_menu_help)
-            )
-
-            for (default in safeDefaults) {
-                if (validatedOptions.size >= 3) break
-                if (default.first != keyword &&
-                    default.first !in finalSeen &&
-                    !(isWaterKeyword && allWaterTerms.contains(default.first))) {
-                    validatedOptions.add(default)
-                    finalSeen.add(default.first)
-                }
-            }
-        }
-
-        Log.d(TAG, "Final wrong options for keyword '$keyword': ${validatedOptions.map { it.first }}")
-        return validatedOptions.take(3)
-    }
-
     private fun createGameRound(keyword: String, correctImageRes: Int, wrongOptions: List<Pair<String, Int>>): GameRound {
-        Log.d(TAG, "Creating game round for keyword: $keyword")
+        // Combine correct and wrong options
+        val allOptions = mutableListOf(Pair(keyword, correctImageRes))
+        allOptions.addAll(wrongOptions.take(3))
 
-        // Check if current keyword is a water-related term
-        val isWaterKeyword = allWaterTerms.contains(keyword)
-        Log.d(TAG, "Keyword '$keyword' is water-related: $isWaterKeyword")
-        Log.d(TAG, "Correct image resource ID: $correctImageRes (valid: ${isDrawableValid(correctImageRes)})")
-
-        // Step 1: Validate and deduplicate wrong options
-        val validatedWrongOptions = mutableListOf<Pair<String, Int>>()
-        val seenWords = mutableSetOf<String>()
-
-        for ((index, option) in wrongOptions.withIndex()) {
-            Log.d(TAG, "Processing wrong option $index: word='${option.first}', isWater=${allWaterTerms.contains(option.first)}")
-
-            if (option.first != keyword && option.first !in seenWords) {
-                // Check if we're trying to add a water-related term when keyword is water-related
-                if (isWaterKeyword && allWaterTerms.contains(option.first)) {
-                    Log.d(TAG, "REJECTED: Skipping water term '${option.first}' because keyword '$keyword' is also water-related")
-                    continue
-                }
-
-                // Validate the image resource
-                val validResId = if (isDrawableValid(option.second)) {
-                    option.second
-                } else {
-                    Log.w(TAG, "Invalid resource for '${option.first}', using fallback")
-                    android.R.drawable.ic_menu_help
-                }
-
-                validatedWrongOptions.add(Pair(option.first, validResId))
-                seenWords.add(option.first)
-
-                if (validatedWrongOptions.size >= 3) break
-            }
-        }
-
-        Log.d(TAG, "Validated wrong options after water check: ${validatedWrongOptions.map { it.first }}")
-
-        // Step 2: Ensure we have exactly 3 wrong options
-        val finalWrongOptions = if (validatedWrongOptions.size >= 3) {
-            validatedWrongOptions.take(3)
-        } else {
-            // Add safe defaults if needed
-            val defaultOptions = listOf(
-                Pair("apple", android.R.drawable.ic_menu_help),
-                Pair("ball", android.R.drawable.ic_menu_help),
-                Pair("cat", android.R.drawable.ic_menu_help)
-            )
-
-            val finalOptions = validatedWrongOptions.toMutableList()
-            for (default in defaultOptions) {
-                if (finalOptions.size >= 3) break
-                if (default.first != keyword && default.first !in seenWords) {
-                    finalOptions.add(default)
-                    seenWords.add(default.first)
-                }
-            }
-            finalOptions.take(3)
-        }
-
-        Log.d(TAG, "Final wrong options count: ${finalWrongOptions.size}")
-
-        // Step 3: Validate correct image resource
-        val validatedCorrectImageRes = if (isDrawableValid(correctImageRes)) {
-            correctImageRes
-        } else {
-            Log.w(TAG, "Correct image resource $correctImageRes is invalid, using fallback")
-            android.R.drawable.ic_dialog_info
-        }
-
-        // Step 4: Combine correct and wrong options, then shuffle
-        val allOptions = mutableListOf(
-            Pair(keyword, validatedCorrectImageRes)
-        )
-        allOptions.addAll(finalWrongOptions)
-
-        // Shuffle the options
+        // Shuffle
         val shuffledOptions = allOptions.shuffled()
-
-        // Step 5: Find the index of correct answer after shuffling
         correctAnswerIndex = shuffledOptions.indexOfFirst { it.first == keyword }
 
-        // Step 6: Final validation - ensure no duplicates in shuffled options
-        val finalOptions = mutableListOf<Pair<String, Int>>()
-        val finalSeen = mutableSetOf<String>()
-
-        for (option in shuffledOptions) {
-            if (option.first !in finalSeen) {
-                // Final validation of each image
-                val finalResId = if (isDrawableValid(option.second)) {
-                    option.second
-                } else {
-                    android.R.drawable.ic_menu_help
-                }
-                finalOptions.add(Pair(option.first, finalResId))
-                finalSeen.add(option.first)
-            }
-        }
-
-        // Re-find correct answer index after deduplication
-        correctAnswerIndex = finalOptions.indexOfFirst { it.first == keyword }
-
-        Log.d(TAG, "Correct answer index: $correctAnswerIndex")
-        Log.d(TAG, "Final options: ${finalOptions.map { "${it.first}(${it.second})" }}")
-
-        return GameRound(keyword, validatedCorrectImageRes, finalOptions)
+        return GameRound(keyword, correctImageRes, shuffledOptions)
     }
 
     private fun displayOptions(gameRound: GameRound) {
-        Log.d(TAG, "Displaying ${gameRound.options.size} options")
-        val columnCount = 2
-        val rowCount = 2
-        val optionSize = resources.displayMetrics.widthPixels / 2 - 48.dpToPx()
-        Log.d(TAG, "Option size: $optionSize")
+        val columnCount = optionsGrid.columnCount
+        val rowCount = optionsGrid.rowCount
+        val optionSize = resources.displayMetrics.widthPixels / columnCount - 48.dpToPx()
 
         for (i in gameRound.options.indices) {
             val option = gameRound.options[i]
-            Log.d(TAG, "Creating option $i: ${option.first} with resource ${option.second}")
-
             createOptionCard(i, option.first, option.second, optionSize, gameRound.keyword)
         }
-        Log.d(TAG, "All options displayed")
+    }
+
+    private fun displaySimplifiedOptions(gameRound: GameRound) {
+        simplifiedOptionsContainer.visibility = View.VISIBLE
+        optionsGrid.visibility = View.GONE
+
+        val optionSize = resources.displayMetrics.widthPixels / 2 - 48.dpToPx()
+
+        // 🔴 FIX: Don't shuffle - display in order (index 0 = correct, index 1 = wrong)
+        for (i in gameRound.options.indices) {
+            val option = gameRound.options[i]
+            createSimplifiedOptionCard(i, option.first, option.second, optionSize, gameRound.keyword)
+        }
+
+        // 🔴 Log to verify
+        Log.d(TAG, "Confidence builder - Correct answer at index 0: ${gameRound.options[0].first}")
     }
 
     private fun createOptionCard(index: Int, word: String, imageResId: Int, size: Int, correctKeyword: String) {
-        // Create card view for option
         val card = CardView(this).apply {
             layoutParams = GridLayout.LayoutParams().apply {
                 width = size
                 height = size
-                columnSpec = GridLayout.spec(index % 2, 1f)
-                rowSpec = GridLayout.spec(index / 2, 1f)
+                columnSpec = GridLayout.spec(index % optionsGrid.columnCount, 1f)
+                rowSpec = GridLayout.spec(index / optionsGrid.columnCount, 1f)
                 setMargins(8.dpToPx(), 8.dpToPx(), 8.dpToPx(), 8.dpToPx())
             }
             radius = 16.dpToPx().toFloat()
             cardElevation = 4.dpToPx().toFloat()
             isClickable = true
+            isFocusable = true
+            isEnabled = true
             tag = index
 
-            // Set background color
             setCardBackgroundColor(Color.WHITE)
 
             setOnClickListener {
-                Log.d(TAG, "Option $index clicked: $word")
-                if (!isAnswerSelected) {
-                    handleOptionClick(this, index)
+                if (!isAnswerSelected && isEnabled) {
+                    val responseTime = System.currentTimeMillis() - responseStartTime
+                    responseTimes.add(responseTime)
+                    handleOptionClick(this, index, word, correctKeyword, responseTime)
                 }
             }
         }
 
-        // Create image view
+        // 🔴 MISSING CODE - Add this:
         val imageView = ImageView(this).apply {
             layoutParams = ViewGroup.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT,
@@ -747,66 +662,22 @@ class RhythmSummaryActivity : AppCompatActivity() {
             )
             scaleType = ImageView.ScaleType.FIT_CENTER
 
-            // Set image with error handling
             try {
                 val drawable = ContextCompat.getDrawable(this@RhythmSummaryActivity, imageResId)
                 if (drawable != null) {
                     setImageResource(imageResId)
-                    Log.d(TAG, "Successfully loaded image for $word: $imageResId")
                 } else {
-                    Log.e(TAG, "Drawable is null for resource: $imageResId")
                     setImageResource(android.R.drawable.ic_menu_help)
                 }
-            } catch (e: Resources.NotFoundException) {
-                Log.e(TAG, "Resource not found for $word: $imageResId", e)
-                setImageResource(android.R.drawable.ic_menu_help)
             } catch (e: Exception) {
-                Log.e(TAG, "Error loading image for $word: $imageResId", e)
                 setImageResource(android.R.drawable.ic_menu_help)
             }
-
-            isClickable = false
-            adjustViewBounds = true
-            setPadding(8.dpToPx(), 8.dpToPx(), 8.dpToPx(), 8.dpToPx())
-
-            // Post check to verify image loaded
-            post {
-                if (drawable == null) {
-                    Log.e(TAG, "Image failed to load for: $word, resId: $imageResId")
-                    // Try to load a different image
-                    setImageResource(android.R.drawable.ic_dialog_alert)
-                }
-            }
         }
 
-        // Add text label below image for debugging
-        val textView = TextView(this).apply {
-            layoutParams = ViewGroup.LayoutParams(
-                ViewGroup.LayoutParams.WRAP_CONTENT,
-                ViewGroup.LayoutParams.WRAP_CONTENT
-            )
-            text = word
-            textSize = 12f
-            setTextColor(Color.BLACK)
-            gravity = android.view.Gravity.CENTER
-            visibility = View.GONE // Hide in production, use for debugging
-        }
-
-        val container = LinearLayout(this).apply {
-            orientation = LinearLayout.VERTICAL
-            gravity = android.view.Gravity.CENTER
-            layoutParams = ViewGroup.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT,
-                ViewGroup.LayoutParams.MATCH_PARENT
-            )
-            addView(imageView, ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT)
-            addView(textView)
-        }
-
-        card.addView(container)
+        card.addView(imageView)
         optionsGrid.addView(card)
 
-        // Add entrance animation
+        // Entrance animation
         card.alpha = 0f
         card.translationY = 100f
         card.animate()
@@ -817,85 +688,246 @@ class RhythmSummaryActivity : AppCompatActivity() {
             .start()
     }
 
-    private fun handleOptionClick(card: CardView, selectedIndex: Int) {
-        Log.d(TAG, "Handling option click. Selected: $selectedIndex, Correct: $correctAnswerIndex")
+    private fun createSimplifiedOptionCard(index: Int, word: String, imageResId: Int, size: Int, correctKeyword: String) {
+        val card = CardView(this).apply {
+            layoutParams = LinearLayout.LayoutParams(size, size).apply {
+                gravity = android.view.Gravity.CENTER
+                marginStart = if (index == 0) 0 else 16.dpToPx()
+            }
+            radius = 24.dpToPx().toFloat() // Larger radius for simplicity
+            cardElevation = 8.dpToPx().toFloat() // Higher elevation for prominence
+            isClickable = true
+            tag = index
+
+            // High contrast background
+            setCardBackgroundColor(if (index == 0) Color.parseColor("#E3F2FD") else Color.parseColor("#FFF3E0"))
+
+            setOnClickListener {
+                Log.d(TAG, "Simplified option $index clicked: $word")
+                if (!isAnswerSelected) {
+                    val responseTime = System.currentTimeMillis() - responseStartTime
+                    responseTimes.add(responseTime)
+                    handleOptionClick(this, index, word, correctKeyword, responseTime)
+                }
+            }
+        }
+
+        val imageView = ImageView(this).apply {
+            layoutParams = ViewGroup.LayoutParams(
+                (size * 0.8).toInt(),
+                (size * 0.8).toInt()
+            )
+            scaleType = ImageView.ScaleType.FIT_CENTER
+
+            try {
+                val drawable = ContextCompat.getDrawable(this@RhythmSummaryActivity, imageResId)
+                if (drawable != null) {
+                    setImageResource(imageResId)
+                } else {
+                    setImageResource(android.R.drawable.ic_menu_help)
+                }
+            } catch (e: Exception) {
+                setImageResource(android.R.drawable.ic_menu_help)
+            }
+        }
+
+        // Add text label for clarity
+        val textView = TextView(this).apply {
+            text = word
+            textSize = 20f
+            setTextColor(Color.BLACK)
+            gravity = android.view.Gravity.CENTER
+            layoutParams = LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.WRAP_CONTENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT
+            )
+        }
+
+        val container = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            gravity = android.view.Gravity.CENTER
+            layoutParams = ViewGroup.LayoutParams(
+                ViewGroup.LayoutParams.WRAP_CONTENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT
+            )
+            addView(imageView)
+            addView(textView)
+        }
+
+        card.addView(container)
+        simplifiedOptionsContainer.addView(card)
+
+        // More pronounced entrance animation
+        card.alpha = 0f
+        card.scaleX = 0.5f
+        card.scaleY = 0.5f
+        card.animate()
+            .alpha(1f)
+            .scaleX(1f)
+            .scaleY(1f)
+            .setDuration(600)
+            .setStartDelay(index * 200L)
+            .start()
+    }
+
+    private fun handleOptionClick(card: CardView, selectedIndex: Int, selectedWord: String,
+                                  correctKeyword: String, responseTime: Long) {
+
+        // Prevent clicks on disabled cards
+        if (!card.isClickable || isAnswerSelected) {
+            Log.d(TAG, "⛔ Click ignored - card not clickable or answer already selected")
+            return
+        }
+
+        // Prevent too-fast clicks (minimum 800ms after options appear)
+        if (responseTime < 800) {
+            Log.d(TAG, "⚡ Too fast click: ${responseTime}ms - ignoring")
+            Toast.makeText(this, "Take your time! Look carefully.", Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        // Stop the timer
+        isTimerActive = false
+        timeoutHandler?.removeCallbacksAndMessages(null)
+
+
+        Log.d(TAG, "🖱️ Option $selectedIndex clicked: $selectedWord, Time: ${responseTime}ms")
         isAnswerSelected = true
 
-        try {
-            mediaPlayer.start()
-            Log.d(TAG, "Button click sound played")
-        } catch (e: Exception) {
-            Log.w(TAG, "Could not play button sound: ${e.message}")
-        }
+        // Disable all cards to prevent multiple clicks
+        disableAllCards()
 
-        // Disable all cards
-        for (i in 0 until optionsGrid.childCount) {
-            val childCard = optionsGrid.getChildAt(i) as CardView
-            childCard.isClickable = false
-        }
-        Log.d(TAG, "All cards disabled")
+        val isCorrect = selectedIndex == correctAnswerIndex
+        gameMaster.trackResponse(responseStartTime, isCorrect, selectedWord, correctKeyword)
 
-        if (selectedIndex == correctAnswerIndex) {
-            Log.d(TAG, "Correct answer!")
-            // Correct answer
-            score++
-            showFeedback(true, card)
-            try {
-                correctSound.start()
-                Log.d(TAG, "Correct sound played")
-            } catch (e: Exception) {
-                Log.w(TAG, "Could not play correct sound: ${e.message}")
+        if (isCorrect) {
+            consecutiveWrongAnswers = 0
+            // Track success even in confidence builder mode
+            if (isConfidenceBuilderMode) {
+                confidenceBuilderSuccesses++
+                Log.d(TAG, "🎯 Confidence builder success! Total: $confidenceBuilderSuccesses")
             }
         } else {
-            Log.d(TAG, "Wrong answer!")
-            // Wrong answer
+            consecutiveWrongAnswers++
+            if (isConfidenceBuilderMode) {
+                Log.d(TAG, "😓 Confidence builder attempt failed")
+            }
+        }
+
+        // Play sound
+        try {
+            if (isCorrect) correctSound.start() else wrongSound.start()
+        } catch (e: Exception) {
+            Log.w(TAG, "Could not play sound")
+        }
+
+        if (isCorrect) {
+            Log.d(TAG, "✅ Correct!")
+            score++
+            showFeedback(true, card)
+
+            // Exit confidence builder on success
+            if (isConfidenceBuilderMode) {
+                isConfidenceBuilderMode = false
+                therapeuticMessage.visibility = View.GONE
+                simplifiedOptionsContainer.visibility = View.GONE
+                optionsGrid.visibility = View.VISIBLE
+                confidenceBuilderOverlay.visibility = View.GONE  // 🔴 ADD THIS
+            }
+        } else {
+            Log.d(TAG, "❌ Wrong!")
             showFeedback(false, card)
-            try {
-                wrongSound.start()
-                Log.d(TAG, "Wrong sound played")
-            } catch (e: Exception) {
-                Log.w(TAG, "Could not play wrong sound: ${e.message}")
+            // Highlight correct answer but still show it's wrong
+            highlightCorrectAnswer()
+        }
+
+        updateScore()
+
+        // Show feedback, then next button
+        Handler(Looper.getMainLooper()).postDelayed({
+            hideFeedbackAndShowNextButton()
+        }, 1500) // 1.5 seconds delay
+    }
+
+    private fun handleTimeout() {
+        if (!isAnswerSelected) {
+            isAnswerSelected = true
+            isTimerActive = false
+            timeoutHandler?.removeCallbacksAndMessages(null)
+            Log.d(TAG, "💡 Showing hint after timeout")
+
+            therapeuticMessage.text = "Look carefully! The correct answer is highlighted."
+            therapeuticMessage.visibility = View.VISIBLE
+
+            // Highlight correct answer but STAY CLICKABLE
+            val correctCard = if (isConfidenceBuilderMode) {
+                simplifiedOptionsContainer.getChildAt(correctAnswerIndex) as? androidx.cardview.widget.CardView
+            } else {
+                optionsGrid.getChildAt(correctAnswerIndex) as? androidx.cardview.widget.CardView
             }
 
-            // Highlight correct answer
-            val correctCard = optionsGrid.getChildAt(correctAnswerIndex) as CardView
-            correctCard.setCardBackgroundColor(Color.GREEN)
-            correctCard.animate()
+            correctCard?.let {
+                // SIMPLE FIX: Just use background color, no border
+                it.setCardBackgroundColor(Color.parseColor("#E8F5E9")) // Very light green
+                it.isClickable = true // Keep it clickable!
+                it.isEnabled = true // Make sure it's enabled
+            }
+
+            // Auto-proceed after longer delay
+            Handler(Looper.getMainLooper()).postDelayed({
+                if (isAnswerSelected) {
+                    hideFeedbackAndShowNextButton()
+                }
+            }, 5000) // Give 5 more seconds after hint
+        }
+    }
+
+    private fun disableAllCards() {
+        if (isConfidenceBuilderMode) {
+            for (i in 0 until simplifiedOptionsContainer.childCount) {
+                val child = simplifiedOptionsContainer.getChildAt(i)
+                if (child is CardView) {
+                    child.isClickable = false
+                }
+            }
+        } else {
+            for (i in 0 until optionsGrid.childCount) {
+                val child = optionsGrid.getChildAt(i)
+                if (child is CardView) {
+                    child.isClickable = false
+                }
+            }
+        }
+    }
+
+    private fun highlightCorrectAnswer() {
+        val correctCard = if (isConfidenceBuilderMode) {
+            simplifiedOptionsContainer.getChildAt(correctAnswerIndex) as? CardView
+        } else {
+            optionsGrid.getChildAt(correctAnswerIndex) as? CardView
+        }
+
+        correctCard?.let {
+            it.setCardBackgroundColor(Color.GREEN)
+            it.animate()
                 .scaleX(1.1f)
                 .scaleY(1.1f)
                 .setDuration(100)
                 .start()
         }
-
-        // Update score
-        updateScore()
-        Log.d(TAG, "Score updated: $score/$totalRounds")
-
-        // Show feedback overlay for 2 seconds, then show next button
-        Handler(Looper.getMainLooper()).postDelayed({
-            Log.d(TAG, "Showing next button after feedback")
-            hideFeedbackAndShowNextButton()
-        }, 1000)
     }
 
     private fun showFeedback(isCorrect: Boolean, selectedCard: CardView) {
-        Log.d(TAG, "Showing feedback. Is correct: $isCorrect")
         if (isCorrect) {
             selectedCard.setCardBackgroundColor(Color.GREEN)
-
-            // Try to use custom drawable, fallback to system drawable
             try {
                 feedbackIcon.setImageResource(R.drawable.correct_answer)
-                Log.d(TAG, "Set correct answer icon")
             } catch (e: android.content.res.Resources.NotFoundException) {
-                Log.w(TAG, "Custom correct icon not found, using system icon")
                 feedbackIcon.setImageResource(android.R.drawable.ic_menu_report_image)
             }
-
             feedbackText.text = "Excellent!"
             feedbackText.setTextColor(Color.parseColor("#4CAF50"))
 
-            // Celebration animation for correct answer
             selectedCard.animate()
                 .scaleX(1.1f)
                 .scaleY(1.1f)
@@ -910,20 +942,14 @@ class RhythmSummaryActivity : AppCompatActivity() {
                 .start()
         } else {
             selectedCard.setCardBackgroundColor(Color.RED)
-
-            // Try to use custom drawable, fallback to system drawable
             try {
                 feedbackIcon.setImageResource(R.drawable.delete)
-                Log.d(TAG, "Set wrong answer icon")
             } catch (e: android.content.res.Resources.NotFoundException) {
-                Log.w(TAG, "Custom delete icon not found, using system icon")
                 feedbackIcon.setImageResource(android.R.drawable.ic_delete)
             }
-
-            feedbackText.text = "Wrong!"
+            feedbackText.text = "Try again!"
             feedbackText.setTextColor(Color.parseColor("#F44336"))
 
-            // Shake animation for wrong answer
             val shake = TranslateAnimation(0f, 20f, 0f, 0f)
             shake.duration = 50
             shake.repeatCount = 4
@@ -931,21 +957,22 @@ class RhythmSummaryActivity : AppCompatActivity() {
             selectedCard.startAnimation(shake)
         }
 
-        // Show feedback overlay with animation
         feedbackIcon.visibility = View.VISIBLE
         feedbackText.visibility = View.VISIBLE
         feedbackOverlay.visibility = View.VISIBLE
-        Log.d(TAG, "Feedback overlay shown")
 
-        // Animate the overlay appearance
         feedbackOverlay.alpha = 0f
         feedbackOverlay.animate()
             .alpha(1f)
             .setDuration(300)
             .start()
 
-        // Animate the feedback container
-        val feedbackContainer = feedbackOverlay.getChildAt(0) as LinearLayout
+        if (!::feedbackContainer.isInitialized) {
+            // Try to find it again
+            feedbackContainer = findViewById(R.id.feedbackContainer)
+        }
+
+        // 🔴 FIX THIS - Use feedbackContainer variable instead of getChildAt(0)
         feedbackContainer.scaleX = 0.5f
         feedbackContainer.scaleY = 0.5f
         feedbackContainer.alpha = 0f
@@ -960,8 +987,6 @@ class RhythmSummaryActivity : AppCompatActivity() {
     }
 
     private fun hideFeedbackAndShowNextButton() {
-        Log.d(TAG, "Hiding feedback and showing next button")
-        // Hide feedback overlay with animation
         feedbackOverlay.animate()
             .alpha(0f)
             .setDuration(300)
@@ -969,11 +994,17 @@ class RhythmSummaryActivity : AppCompatActivity() {
                 feedbackOverlay.visibility = View.GONE
                 feedbackIcon.visibility = View.GONE
                 feedbackText.visibility = View.GONE
-                Log.d(TAG, "Feedback overlay hidden")
+                therapeuticMessage.visibility = View.GONE
+
+                // 🔴 CRITICAL FIX - Reset feedback container properties
+                if (::feedbackContainer.isInitialized) {
+                    feedbackContainer.scaleX = 1f
+                    feedbackContainer.scaleY = 1f
+                    feedbackContainer.alpha = 1f
+                }
             }
             .start()
 
-        // Show next button
         nextButton.visibility = View.VISIBLE
         nextButton.alpha = 0f
         nextButton.translationY = 50f
@@ -982,14 +1013,11 @@ class RhythmSummaryActivity : AppCompatActivity() {
             .translationY(0f)
             .setDuration(300)
             .start()
-        Log.d(TAG, "Next button shown")
     }
 
     private fun updateScore() {
         scoreText.text = "$score/$totalRounds"
-        Log.d(TAG, "Score text updated: ${scoreText.text}")
 
-        // Animate score update
         scoreText.animate()
             .scaleX(1.2f)
             .scaleY(1.2f)
@@ -1005,7 +1033,6 @@ class RhythmSummaryActivity : AppCompatActivity() {
     }
 
     private fun updateProgressDots() {
-        Log.d(TAG, "Updating progress dots. Current round: $currentRound")
         for (i in 0 until progressContainer.childCount) {
             val dot = progressContainer.getChildAt(i)
             dot.setBackgroundColor(
@@ -1020,11 +1047,22 @@ class RhythmSummaryActivity : AppCompatActivity() {
     }
 
     private fun onNextButtonClick() {
-        Log.d(TAG, "Next button clicked, moving to round ${currentRound + 1}")
-        // Hide next button
         nextButton.visibility = View.GONE
 
-        currentRound++
+        // 🔴 FIX: Only increment currentRound for NORMAL rounds
+        if (!isConfidenceBuilderMode) {
+            currentRound++
+            Log.d(TAG, "✅ Normal round completed. Progress: $currentRound/$totalRounds")
+        } else {
+            Log.d(TAG, "🔄 Confidence builder round completed - not counting toward total")
+            // Reset confidence builder mode but DON'T increment round counter
+            isConfidenceBuilderMode = false
+            therapeuticMessage.visibility = View.GONE
+            confidenceBuilderOverlay.visibility = View.GONE
+            simplifiedOptionsContainer.visibility = View.GONE
+            optionsGrid.visibility = View.VISIBLE
+        }
+
         startNewRound()
     }
 
@@ -1035,13 +1073,16 @@ class RhythmSummaryActivity : AppCompatActivity() {
             intent.putExtra("SCORE", score)
             intent.putExtra("TOTAL_ROUNDS", totalRounds)
             intent.putExtra("SONG_TITLE", currentSongTitle)
-            Log.d(TAG, "Starting RMScoreboardActivity")
+
+            // Pass session metrics for therapeutic analysis
+            val sessionMetrics = gameMaster.getSessionSummary()
+            intent.putExtra("SESSION_METRICS", sessionMetrics)
+
             startActivity(intent)
             finish()
-            Log.d(TAG, "RhythmSummaryActivity finished")
         } catch (e: Exception) {
             Log.e(TAG, "Error navigating to scoreboard: ${e.message}", e)
-            Toast.makeText(this, "Error loading scoreboard: ${e.message}", Toast.LENGTH_LONG).show()
+            Toast.makeText(this, "Error loading scoreboard", Toast.LENGTH_LONG).show()
             finish()
         }
     }
@@ -1053,9 +1094,8 @@ class RhythmSummaryActivity : AppCompatActivity() {
             mediaPlayer.release()
             correctSound.release()
             wrongSound.release()
-            Log.d(TAG, "Media players released")
         } catch (e: Exception) {
-            Log.e(TAG, "Error releasing media players: ${e.message}", e)
+            Log.e(TAG, "Error releasing media players", e)
         }
     }
 }
