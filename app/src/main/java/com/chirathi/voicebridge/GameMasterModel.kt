@@ -4,8 +4,14 @@ import android.content.Context
 import android.util.Log
 import org.tensorflow.lite.Interpreter
 import java.io.FileInputStream
+import java.io.Serializable
 import java.nio.MappedByteBuffer
 import java.nio.channels.FileChannel
+import java.util.concurrent.ConcurrentHashMap
+import kotlin.math.abs
+import kotlin.math.max
+import kotlin.math.pow
+import kotlin.math.sqrt
 
 data class ModelDecision(
     val emotionLevel: Int,   // 0=Basic, 1=Context, 2=Scenario
@@ -14,8 +20,37 @@ data class ModelDecision(
     val motivationId: Int,   // 0=Stars, 1=Quote, 2=Anim
     val rhythmComplexity: Float, // 0.0 - 1.0
     val routineAction: Int,  // 0=Morning, 1=Bed, 2=School, 3=Play
-    val subRoutineRecommendation: Int // 0=Repeat, 1=Stay, 2=Progress
-)
+    val subRoutineRecommendation: Int, // 0=Repeat, 1=Stay, 2=Progress
+    val therapeuticIntent: TherapeuticIntent // NEW: Therapeutic goal for this session
+): Serializable
+
+data class TherapeuticIntent(
+    val primaryGoal: String, // "reduce_cognitive_load", "build_confidence", "improve_attention"
+    val uiComplexity: Float, // 0.1-1.0 (controls UI simplicity)
+    val sessionDuration: Int, // Recommended session length in minutes
+    val adaptiveScaling: Boolean // Whether to adapt difficulty mid-session
+): Serializable
+
+data class BehavioralProfile(
+    val jitter: Float, // Motor variance
+    val hesitation: Float, // Cognitive latency
+    val accuracy: Float,
+    val responseTime: Float,
+    val errorPattern: List<Int>, // Pattern of errors
+    val engagementScore: Float,
+    val frustrationLevel: Float,
+    val processingSpeed: Float
+): Serializable
+
+data class SessionMetrics(
+    val startTime: Long,
+    var interactionCount: Int = 0,
+    var correctCount: Int = 0,
+    var errorCount: Int = 0,
+    val avgResponseTime: Float = 0f,
+    val behavioralProfile: BehavioralProfile? = null,
+    val therapeuticIntent: TherapeuticIntent? = null
+): Serializable
 
 class GameMasterModel(context: Context) {
     private var interpreter: Interpreter? = null
@@ -28,7 +63,41 @@ class GameMasterModel(context: Context) {
     private var idxRhy = -1
     private var idxRtn = -1
     private var idxMot = -1
-    private var idxSub = -1  // NEW: for sub-routine recommendation
+    private var idxSub = -1
+    private var idxIntent = -1  // NEW: Therapeutic intent head
+
+    // Behavioral tracking
+    private val sessionMetrics = SessionMetrics(System.currentTimeMillis())
+    private val responseTimes = mutableListOf<Long>()
+    private val touchCoordinates = mutableListOf<Pair<Float, Float>>()
+    private val errorPatterns = mutableListOf<Int>()
+    private var engagementStartTime: Long = 0
+
+    // Therapeutic profile cache
+    private var currentTherapeuticIntent: TherapeuticIntent? = null
+    private var currentBehavioralProfile: BehavioralProfile? = null
+
+    // Metadata for diagnostic distractors
+    private val diagnosticMetadata = mapOf(
+        // Phonetic distractors (for auditory discrimination)
+        "boat" to listOf("coat", "goat", "float", "moat"),
+        "star" to listOf("car", "far", "bar", "jar"),
+        "hill" to listOf("pill", "mill", "fill", "will"),
+        "water" to listOf("daughter", "otter", "quarter", "slaughter"),
+
+        // Semantic distractors (for category understanding)
+        "boat" to listOf("anchor", "sail", "oar", "lifejacket"),
+        "star" to listOf("moon", "planet", "comet", "galaxy"),
+        "river" to listOf("stream", "creek", "brook", "canal"),
+        "sun" to listOf("light", "heat", "day", "sky"),
+
+        // Visual distractors (for shape/color discrimination)
+        "circle" to listOf("square", "triangle", "oval", "diamond"),
+        "red" to listOf("blue", "green", "yellow", "orange"),
+
+        // Emotional distractors (for emotion recognition)
+        "happy" to listOf("sad", "angry", "surprised", "scared")
+    )
 
     init {
         try {
@@ -39,11 +108,15 @@ class GameMasterModel(context: Context) {
             Log.d(TAG, "Model loaded. Inspecting output tensors...")
             inspectOutputTensors()
 
+            // Start engagement tracking
+            engagementStartTime = System.currentTimeMillis()
+
         } catch (e: Exception) {
             Log.e(TAG, "Error loading model: ${e.message}")
             e.printStackTrace()
         }
     }
+
 
     private fun loadModelFile(context: Context, filename: String): MappedByteBuffer {
         val fileDescriptor = context.assets.openFd(filename)
@@ -62,12 +135,12 @@ class GameMasterModel(context: Context) {
 
         val size3Indices = mutableListOf<Int>()
         val size4Indices = mutableListOf<Int>()
+        val size2Indices = mutableListOf<Int>() // For intent classification
 
         for (i in 0 until count) {
             val tensor = interpreter!!.getOutputTensor(i)
             val shape = tensor.shape()
 
-            // Log all tensor info
             Log.d(TAG, "Tensor $i: Shape ${shape.contentToString()}, DataType: ${tensor.dataType()}, Name: ${tensor.name()}")
 
             when {
@@ -91,33 +164,377 @@ class GameMasterModel(context: Context) {
                     idxSub = i // Sub-routine recommendation (Size 2: 0=Repeat, 1=Progress)
                     Log.d(TAG, "Assigned idxSub = $i (Sub-routine Recommendation)")
                 }
+                shape.size == 2 && shape[1] == 5 -> {
+                    idxIntent = i // Therapeutic Intent (Size 5: 5 possible therapeutic goals)
+                    Log.d(TAG, "Assigned idxIntent = $i (Therapeutic Intent)")
+                }
             }
         }
 
-        // Sort size3 indices for consistent assignment
+        // Sort and assign size3 indices
         size3Indices.sort()
-
-        // Assign based on common patterns
         if (size3Indices.size >= 3) {
-            // Pattern 1: [emotion, sequence, motivation] - most common
             idxEmo = size3Indices[0]
             idxSeq = size3Indices[1]
             idxMot = size3Indices[2]
-
             Log.d(TAG, "Assigned size3 tensors: Emo=$idxEmo, Seq=$idxSeq, Mot=$idxMot")
-        } else if (size3Indices.size == 2) {
-            // Fallback if only 2 size3 tensors
-            idxEmo = size3Indices[0]
-            idxSeq = size3Indices[1]
-            Log.d(TAG, "Only 2 size3 tensors: Emo=$idxEmo, Seq=$idxSeq")
         }
 
-        // Log final assignments
         Log.d(TAG, "Final assignments:")
         Log.d(TAG, "  Emotion: $idxEmo, Friend: $idxFrn, Sequence: $idxSeq")
         Log.d(TAG, "  Motivation: $idxMot, Rhythm: $idxRhy, Routine: $idxRtn")
-        Log.d(TAG, "  Sub-routine: $idxSub")
+        Log.d(TAG, "  Sub-routine: $idxSub, Intent: $idxIntent")
     }
+
+    // =========== BEHAVIORAL FEATURE EXTRACTOR ===========
+
+    fun trackTouch(x: Float, y: Float, timestamp: Long) {
+        touchCoordinates.add(Pair(x, y))
+
+        // Calculate motor jitter (variance in movement)
+        if (touchCoordinates.size >= 3) {
+            val jitter = calculateJitter()
+            Log.d(TAG, "Motor Jitter: $jitter")
+        }
+    }
+
+    fun trackResponse(startTime: Long, isCorrect: Boolean, selectedOption: String, correctOption: String) {
+        val responseTime = System.currentTimeMillis() - startTime
+        responseTimes.add(responseTime)
+
+        if (isCorrect) {
+            sessionMetrics.correctCount++
+        } else {
+            sessionMetrics.errorCount++
+            // Record error type based on semantic similarity
+            val errorType = classifyErrorType(selectedOption, correctOption)
+            errorPatterns.add(errorType)
+        }
+
+        sessionMetrics.interactionCount++
+
+        // Update behavioral profile in real-time
+        updateBehavioralProfile()
+
+        // Check if therapeutic intervention is needed
+        if (shouldTriggerTherapeuticIntervention()) {
+            Log.d(TAG, "⚠️ Therapeutic intervention triggered!")
+            // Could trigger UI simplification or confidence builder mode
+        }
+    }
+
+    private fun calculateJitter(): Float {
+        if (touchCoordinates.size < 3) return 0f
+
+        val variances = mutableListOf<Float>()
+        for (i in 1 until touchCoordinates.size) {
+            val (x1, y1) = touchCoordinates[i-1]
+            val (x2, y2) = touchCoordinates[i]
+            val distance = sqrt((x2 - x1).pow(2) + (y2 - y1).pow(2))
+            variances.add(distance)
+        }
+
+        val mean = variances.average().toFloat()
+        val variance = variances.map { (it - mean).pow(2) }.average().toFloat()
+
+        return sqrt(variance)
+    }
+
+    private fun classifyErrorType(selected: String, correct: String): Int {
+        return when {
+            // Phonetic error (similar sounding)
+            selected in (diagnosticMetadata[correct]?.filter {
+                it.soundsLike(selected)
+            } ?: emptyList()) -> 1
+
+            // Semantic error (related meaning)
+            selected in (diagnosticMetadata[correct] ?: emptyList()) -> 2
+
+            // Visual error (similar appearance)
+            selected.length == correct.length -> 3
+
+            // Random error
+            else -> 4
+        }
+    }
+
+    private fun String.soundsLike(other: String): Boolean {
+        // Simple phonetic similarity check (in production, use proper algorithm)
+        val vowels = setOf('a', 'e', 'i', 'o', 'u')
+        val thisVowels = this.filter { it.toLowerCase() in vowels }
+        val otherVowels = other.filter { it.toLowerCase() in vowels }
+        return thisVowels == otherVowels
+    }
+
+    private fun updateBehavioralProfile() {
+        if (responseTimes.isEmpty()) return
+
+        val avgRT = responseTimes.average().toFloat()
+        val accuracy = if (sessionMetrics.interactionCount > 0) {
+            sessionMetrics.correctCount.toFloat() / sessionMetrics.interactionCount
+        } else 0f
+
+        val hesitation = calculateHesitation()
+        val jitter = calculateJitter()
+        val engagementScore = calculateEngagementScore()
+        val frustrationLevel = calculateFrustrationLevel()
+        val processingSpeed = 1000f / avgRT // items per second
+
+        currentBehavioralProfile = BehavioralProfile(
+            jitter = jitter,
+            hesitation = hesitation,
+            accuracy = accuracy,
+            responseTime = avgRT,
+            errorPattern = errorPatterns.takeLast(5), // Recent pattern
+            engagementScore = engagementScore,
+            frustrationLevel = frustrationLevel,
+            processingSpeed = processingSpeed
+        )
+
+        Log.d(TAG, "Updated Behavioral Profile:")
+        Log.d(TAG, "  Accuracy: $accuracy, Avg RT: ${avgRT}ms")
+        Log.d(TAG, "  Jitter: $jitter, Hesitation: $hesitation")
+        Log.d(TAG, "  Frustration: $frustrationLevel, Engagement: $engagementScore")
+    }
+
+    private fun calculateHesitation(): Float {
+        if (responseTimes.size < 2) return 0f
+        val mean = responseTimes.average()
+        val variance = responseTimes.map { (it - mean).pow(2) }.average()
+        return sqrt(variance).toFloat() / mean.toFloat() // Coefficient of variation
+    }
+
+    private fun calculateEngagementScore(): Float {
+        val sessionDuration = System.currentTimeMillis() - engagementStartTime
+        val interactionsPerMinute = (sessionMetrics.interactionCount.toFloat() / (sessionDuration / 60000f))
+        val accuracyWeight = sessionMetrics.correctCount.toFloat() / maxOf(1, sessionMetrics.interactionCount)
+
+        return (interactionsPerMinute * 0.6f + accuracyWeight * 0.4f).coerceIn(0f, 1f)
+    }
+
+    private fun calculateFrustrationLevel(): Float {
+        if (errorPatterns.isEmpty()) return 0f
+
+        // Consecutive errors indicate frustration
+        var consecutiveErrors = 0
+        var maxConsecutive = 0
+        for (i in max(0, errorPatterns.size - 5) until errorPatterns.size) {
+            if (errorPatterns[i] > 0) { // Error occurred
+                consecutiveErrors++
+                maxConsecutive = maxOf(maxConsecutive, consecutiveErrors)
+            } else {
+                consecutiveErrors = 0
+            }
+        }
+
+        return (maxConsecutive.toFloat() / 5f).coerceIn(0f, 1f)
+    }
+
+    private fun shouldTriggerTherapeuticIntervention(): Boolean {
+        val profile = currentBehavioralProfile ?: return false
+
+        // Trigger intervention if:
+        // 1. Frustration is high
+        // 2. Accuracy is low
+        // 3. Response time is increasing
+        return profile.frustrationLevel > 0.7f ||
+                profile.accuracy < 0.3f ||
+                (responseTimes.size >= 3 && responseTimes.takeLast(3).average() > responseTimes.dropLast(3).average() * 1.5)
+    }
+
+    // =========== DYNAMIC PROFILE INTERCEPTOR ===========
+
+    fun predictWithBehavioralContext(inputFeatures: FloatArray): ModelDecision {
+        val profile = currentBehavioralProfile
+
+        // Augment input features with behavioral data if available
+        val augmentedFeatures = if (profile != null) {
+            val behavioralFeatures = floatArrayOf(
+                profile.jitter,
+                profile.hesitation,
+                profile.accuracy,
+                profile.responseTime / 1000f, // Convert to seconds
+                profile.frustrationLevel,
+                profile.engagementScore,
+                profile.processingSpeed
+            )
+            inputFeatures + behavioralFeatures
+        } else {
+            inputFeatures
+        }
+
+        val baseDecision = predict(augmentedFeatures)
+
+        // Override therapeutic intent based on behavioral state
+        val therapeuticIntent = determineTherapeuticIntent(profile, baseDecision)
+
+        return baseDecision.copy(therapeuticIntent = therapeuticIntent)
+    }
+
+    private fun determineTherapeuticIntent(
+        profile: BehavioralProfile?,
+        baseDecision: ModelDecision
+    ): TherapeuticIntent {
+        val profile = profile ?: return TherapeuticIntent(
+            primaryGoal = "build_confidence",
+            uiComplexity = 0.5f,
+            sessionDuration = 10,
+            adaptiveScaling = true
+        )
+
+        return when {
+            profile.frustrationLevel > 0.7f -> TherapeuticIntent(
+                primaryGoal = "reduce_frustration",
+                uiComplexity = 0.3f, // Very simple UI
+                sessionDuration = 5, // Short session
+                adaptiveScaling = true
+            )
+
+            profile.accuracy < 0.4f -> TherapeuticIntent(
+                primaryGoal = "build_confidence",
+                uiComplexity = 0.4f,
+                sessionDuration = 8,
+                adaptiveScaling = true
+            )
+
+            profile.engagementScore < 0.3f -> TherapeuticIntent(
+                primaryGoal = "improve_attention",
+                uiComplexity = 0.6f, // Slightly more engaging
+                sessionDuration = 12,
+                adaptiveScaling = true
+            )
+
+            else -> TherapeuticIntent(
+                primaryGoal = "maintain_progress",
+                uiComplexity = 0.7f,
+                sessionDuration = 15,
+                adaptiveScaling = true
+            )
+        }
+    }
+
+    fun getIndividualizedLatencyBuffer(): Long {
+        val profile = currentBehavioralProfile ?: return 3000L // Default 3 seconds
+
+        // Buffer = Average RT + 50% for processing variability
+        val buffer = profile.responseTime * 1.5f
+        return buffer.toLong().coerceIn(2000L, 10000L) // Min 2s, Max 10s
+    }
+
+    fun getDiagnosticDistractors(keyword: String, count: Int = 3): List<Pair<String, Int>> {
+        val distractors = mutableListOf<Pair<String, Int>>()
+        val profile = currentBehavioralProfile
+
+        // Select distractors based on therapeutic need
+        val distractorTypes = when (profile?.errorPattern?.lastOrNull()) {
+            1 -> "phonetic" // Child struggles with similar sounds
+            2 -> "semantic" // Child struggles with meanings
+            3 -> "visual"   // Child struggles with shapes
+            else -> "mixed"  // General challenge
+        }
+
+        val availableDistractors = diagnosticMetadata[keyword] ?: emptyList()
+
+        when (distractorTypes) {
+            "phonetic" -> {
+                // Use phonetic distractors for auditory discrimination
+                distractors.addAll(availableDistractors.filter { it.soundsLike(keyword) }
+                    .take(count).map { Pair(it, getFallbackImageForWord(it)) })
+            }
+            "semantic" -> {
+                // Use semantic distractors for category understanding
+                distractors.addAll(availableDistractors.take(count)
+                    .map { Pair(it, getFallbackImageForWord(it)) })
+            }
+            else -> {
+                // Mixed challenge
+                distractors.addAll(availableDistractors.shuffled().take(count)
+                    .map { Pair(it, getFallbackImageForWord(it)) })
+            }
+        }
+
+
+        // Fill remaining slots with generic distractors if needed
+        while (distractors.size < count) {
+            distractors.add(Pair("item_${distractors.size}", android.R.drawable.ic_menu_help))
+        }
+
+        return distractors
+    }
+
+    private fun getFallbackImageForWord(word: String): Int {
+        return when (word.lowercase()) {
+            // ===== BOAT PHONETIC DISTRACTORS =====
+            "coat" -> R.drawable.coat
+            "goat" -> R.drawable.goat
+            "note" -> R.drawable.note
+
+            // ===== CREEK PHONETIC DISTRACTORS =====
+//            "car" -> R.drawable.car_image
+//            "jar" -> R.drawable.jar_image
+//            "bar" -> R.drawable.bar_image
+//            "far" -> R.drawable.far_image
+//
+//            // ===== HILL PHONETIC DISTRACTORS =====
+//            "pill" -> R.drawable.pill_image
+//            "mill" -> R.drawable.mill_image
+//            "fill" -> R.drawable.fill_image
+//            "will" -> R.drawable.will_image
+//
+//            // ===== WATER PHONETIC DISTRACTORS =====
+//            "daughter" -> R.drawable.daughter_image
+//            "otter" -> R.drawable.otter_image
+//            "quarter" -> R.drawable.quarter_image
+//            "slaughter" -> R.drawable.slaughter_image
+//
+//            // ===== BOAT SEMANTIC DISTRACTORS =====
+//            "anchor" -> R.drawable.anchor_image
+//            "sail" -> R.drawable.sail_image
+//            "oar" -> R.drawable.oar_image
+//            "lifejacket" -> R.drawable.lifejacket_image
+//
+//            // ===== STAR SEMANTIC DISTRACTORS =====
+//            "moon" -> R.drawable.moon_image
+//            "planet" -> R.drawable.planet_image
+//            "comet" -> R.drawable.comet_image
+//            "galaxy" -> R.drawable.galaxy_image
+//
+//            // ===== RIVER SEMANTIC DISTRACTORS =====
+//            "stream" -> R.drawable.rhy_song0_stream  // You have this
+//            "creek" -> R.drawable.creek_image
+//            "brook" -> R.drawable.brook_image
+//            "canal" -> R.drawable.canal_image
+//
+//            // ===== SUN SEMANTIC DISTRACTORS =====
+//            "light" -> R.drawable.rhy_song1_light  // You have this
+//            "heat" -> R.drawable.heat_image
+//            "day" -> R.drawable.day_image
+//            "sky" -> R.drawable.sky_image
+//
+//            // ===== SHAPES =====
+//            "square" -> R.drawable.square_image
+//            "triangle" -> R.drawable.triangle_image
+//            "oval" -> R.drawable.oval_image
+//            "diamond" -> R.drawable.rhy_song1_diamond  // You have this
+//
+//            // ===== COLORS =====
+//            "blue" -> R.drawable.blue_image
+//            "green" -> R.drawable.green_image
+//            "yellow" -> R.drawable.yellow_image
+//            "orange" -> R.drawable.orange_image
+//
+//            // ===== EMOTIONS =====
+//            "sad" -> R.drawable.sad_image
+//            "angry" -> R.drawable.angry_image
+//            "surprised" -> R.drawable.surprised_image
+//            "scared" -> R.drawable.scared_image
+
+            // Generic fallback
+            else -> android.R.drawable.ic_menu_help
+        }
+    }
+
+    // =========== ORIGINAL PREDICT FUNCTION (UPDATED) ===========
 
     fun predict(inputFeatures: FloatArray): ModelDecision {
         if (interpreter == null) {
@@ -126,18 +543,19 @@ class GameMasterModel(context: Context) {
         }
 
         // Validate input
-        if (inputFeatures.size != 8) {
-            Log.e(TAG, "Input features size ${inputFeatures.size} != 8")
-            return getDefaultDecision(inputFeatures)
+        val featureCount = if (inputFeatures.size > 8) inputFeatures.size else 8
+        val paddedFeatures = if (inputFeatures.size < featureCount) {
+            inputFeatures + FloatArray(featureCount - inputFeatures.size) { 0f }
+        } else {
+            inputFeatures
         }
 
-        // Log input for debugging
-        Log.d(TAG, "Input features: ${inputFeatures.joinToString(", ")}")
+        Log.d(TAG, "Input features size: ${paddedFeatures.size}")
 
-        // 1. Prepare Inputs
-        val inputs = Array(1) { inputFeatures }
+        // Prepare Inputs
+        val inputs = Array(1) { paddedFeatures }
 
-        // 2. Prepare Outputs based on discovered indices
+        // Prepare Outputs
         val outputs = mutableMapOf<Int, Any>()
 
         // Prepare all possible output arrays
@@ -148,8 +566,9 @@ class GameMasterModel(context: Context) {
         if (idxRtn != -1) outputs[idxRtn] = Array(1) { FloatArray(4) }
         if (idxMot != -1) outputs[idxMot] = Array(1) { FloatArray(3) }
         if (idxSub != -1) outputs[idxSub] = Array(1) { FloatArray(2) }
+        if (idxIntent != -1) outputs[idxIntent] = Array(1) { FloatArray(5) }
 
-        // 3. Run Inference
+        // Run Inference
         try {
             interpreter?.runForMultipleInputsOutputs(arrayOf(inputs), outputs)
             Log.d(TAG, "Inference successful")
@@ -159,19 +578,25 @@ class GameMasterModel(context: Context) {
             return getDefaultDecision(inputFeatures)
         }
 
-        // 4. Parse Results with null safety
+        // Parse Results
         val emotionLevel = if (idxEmo != -1) argMax((outputs[idxEmo] as Array<FloatArray>)[0]) else 0
         val friendAction = if (idxFrn != -1) argMax((outputs[idxFrn] as Array<FloatArray>)[0]) else 0
         val sequenceAction = if (idxSeq != -1) argMax((outputs[idxSeq] as Array<FloatArray>)[0]) else 0
         val motivationId = if (idxMot != -1) argMax((outputs[idxMot] as Array<FloatArray>)[0]) else 0
         val rhythmComplexity = if (idxRhy != -1) (outputs[idxRhy] as Array<FloatArray>)[0][0].coerceIn(0f, 1f) else 0.5f
         val routineAction = if (idxRtn != -1) argMax((outputs[idxRtn] as Array<FloatArray>)[0]) else 0
+        val therapeuticIntent = TherapeuticIntent(
+            primaryGoal = "build_confidence",
+            uiComplexity = 0.5f,
+            sessionDuration = 10,
+            adaptiveScaling = true
+        )
 
-        // NEW: Calculate sub-routine recommendation based on performance
+        // Calculate sub-routine recommendation
         val subRoutineRecommendation = calculateSubRoutineRecommendation(
             sequenceAction = sequenceAction,
-            accuracy = inputFeatures[5], // Accuracy from features
-            errorCount = inputFeatures[7].toInt() // Assuming error count is feature 7
+            accuracy = inputFeatures.getOrNull(5) ?: 0f,
+            errorCount = inputFeatures.getOrNull(7)?.toInt() ?: 0
         )
 
         return ModelDecision(
@@ -181,14 +606,11 @@ class GameMasterModel(context: Context) {
             motivationId,
             rhythmComplexity,
             routineAction,
-            subRoutineRecommendation
+            subRoutineRecommendation,
+            therapeuticIntent
         )
     }
 
-    /**
-     * Calculate sub-routine recommendation based on performance
-     * Returns: 0=Repeat same sub-routine, 1=Stay at current, 2=Progress to next
-     */
     private fun calculateSubRoutineRecommendation(
         sequenceAction: Int,
         accuracy: Float,
@@ -213,14 +635,10 @@ class GameMasterModel(context: Context) {
         }
     }
 
-    /**
-     * Default decision when model fails
-     */
     private fun getDefaultDecision(inputFeatures: FloatArray): ModelDecision {
-        val age = inputFeatures[0].toInt()
-        val accuracy = inputFeatures[5]
+        val age = inputFeatures.getOrNull(0)?.toInt() ?: 6
+        val accuracy = inputFeatures.getOrNull(5) ?: 0f
 
-        // Simple heuristic based on age and accuracy
         val sequenceAction = when {
             age < 7 || accuracy < 50f -> 2 // Auditory hints for younger or struggling
             else -> 1 // Visual hints for others
@@ -239,7 +657,13 @@ class GameMasterModel(context: Context) {
             motivationId = 0,
             rhythmComplexity = 0.5f,
             routineAction = 0,
-            subRoutineRecommendation = subRoutineRec
+            subRoutineRecommendation = subRoutineRec,
+            therapeuticIntent = TherapeuticIntent(
+                primaryGoal = "build_confidence",
+                uiComplexity = 0.5f,
+                sessionDuration = 10,
+                adaptiveScaling = true
+            )
         )
     }
 
@@ -253,5 +677,18 @@ class GameMasterModel(context: Context) {
             }
         }
         return maxIdx
+    }
+
+    fun getSessionSummary(): SessionMetrics {
+        return sessionMetrics.copy(behavioralProfile = currentBehavioralProfile)
+    }
+
+    fun resetSession() {
+        responseTimes.clear()
+        touchCoordinates.clear()
+        errorPatterns.clear()
+        engagementStartTime = System.currentTimeMillis()
+        currentBehavioralProfile = null
+        currentTherapeuticIntent = null
     }
 }
