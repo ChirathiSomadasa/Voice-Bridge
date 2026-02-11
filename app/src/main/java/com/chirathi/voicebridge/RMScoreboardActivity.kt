@@ -1,38 +1,46 @@
 package com.chirathi.voicebridge
 
 import android.animation.ObjectAnimator
-import android.animation.ValueAnimator
 import android.content.Intent
+import android.content.res.Resources
 import android.graphics.Color
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
+import android.util.Log
 import android.view.animation.AccelerateDecelerateInterpolator
-import android.view.animation.RotateAnimation
-import android.widget.Button
-import android.widget.FrameLayout
-import android.widget.ImageView
-import android.widget.TextView
+import android.widget.*
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.ContextCompat
 import kotlin.random.Random
 
 class RMScoreboardActivity : AppCompatActivity() {
 
-    private lateinit var scoreValue: TextView
-    private lateinit var scoreLabel: TextView
+    private lateinit var candyJarContainer: FrameLayout
+    private lateinit var candyJarImage: ImageView
+    private lateinit var candyCountText: TextView
     private lateinit var resultText: TextView
-    private lateinit var star1: ImageView
-    private lateinit var star2: ImageView
-    private lateinit var star3: ImageView
+    private lateinit var effortMessage: TextView
     private lateinit var sparklesContainer: FrameLayout
-    private lateinit var musicNotesContainer: FrameLayout
     private lateinit var replayButton: Button
     private lateinit var dashboardButton: Button
-    private lateinit var ribbonImage: ImageView
+    private lateinit var jarFillProgress: ProgressBar
 
     private var score = 0
     private var totalRounds = 0
     private var songTitle = ""
+    private var sessionMetrics: SessionMetrics? = null
+
+    private val candyDrawables = listOf(
+        R.drawable.candy_red,
+        R.drawable.candy_blue,
+        R.drawable.candy_green,
+        R.drawable.candy_yellow,
+        R.drawable.candy_purple
+    )
+
+    // Use a different TAG name to avoid conflict
+    private val SCOREBOARD_TAG = "RMScoreboardActivity"
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -43,172 +51,299 @@ class RMScoreboardActivity : AppCompatActivity() {
         score = intent.getIntExtra("SCORE", 0)
         totalRounds = intent.getIntExtra("TOTAL_ROUNDS", 5)
         songTitle = intent.getStringExtra("SONG_TITLE") ?: ""
+        sessionMetrics = intent.getSerializableExtra("SESSION_METRICS") as? SessionMetrics
 
-        scoreValue.text = "$score/$totalRounds"
-        scoreLabel.text = "Rhythm Score"
+        candyCountText.text = "$score candies"
 
         setResultText(score)
-        setStarRating(score)
-        setupAnimations(score)
+        setEffortMessage()
+        setupCandyJarAnimation(score)
         setupButtonListeners()
     }
 
     private fun initializeViews() {
-        scoreValue = findViewById(R.id.scoreValue)
-        scoreLabel = findViewById(R.id.scoreLabel)
-        resultText = findViewById(R.id.youWinText)
-        star1 = findViewById(R.id.star1)
-        star2 = findViewById(R.id.star2)
-        star3 = findViewById(R.id.star3)
+        candyJarContainer = findViewById(R.id.candyJarContainer)
+        candyJarImage = findViewById(R.id.candyJarImage)
+        candyCountText = findViewById(R.id.candyCountText)
+        resultText = findViewById(R.id.resultText)
+        effortMessage = findViewById(R.id.effortMessage)
         sparklesContainer = findViewById(R.id.sparklesContainer)
-        musicNotesContainer = findViewById(R.id.musicNotesContainer)
         replayButton = findViewById(R.id.replayButton)
         dashboardButton = findViewById(R.id.dashboardButton)
-        ribbonImage = findViewById(R.id.ribbonImage)
+        jarFillProgress = findViewById(R.id.jarFillProgress)
+
+        // Set initial jar as empty
+        candyJarImage.setImageResource(R.drawable.empty_jar)
+        jarFillProgress.progress = 0
     }
 
     private fun setResultText(score: Int) {
-        when (score) {
-            0 -> {
-                resultText.text = "You Lose"
-                resultText.setTextColor(Color.parseColor("#FFFFFF"))
+        when {
+            score == 0 -> {
+                resultText.text = "You Tried!"
+                resultText.setTextColor(Color.parseColor("#FF9800"))
             }
-            1, 2 -> {
-                resultText.text = "Nice Try!"
-                resultText.setTextColor(Color.parseColor("#FFFFFF"))
+            score <= totalRounds / 3 -> {
+                resultText.text = "Good Effort!"
+                resultText.setTextColor(Color.parseColor("#4CAF50"))
             }
-            3, 4 -> {
-                resultText.text = "Well Done!"
-                resultText.setTextColor(Color.parseColor("#FFFFFF"))
+            score <= totalRounds * 2 / 3 -> {
+                resultText.text = "Great Job!"
+                resultText.setTextColor(Color.parseColor("#2196F3"))
             }
             else -> {
-                resultText.text = "You Win!"
-                resultText.setTextColor(Color.parseColor("#FFFFFF"))
+                resultText.text = "Amazing!"
+                resultText.setTextColor(Color.parseColor("#9C27B0"))
             }
         }
+
+        // Animate text
+        resultText.alpha = 0f
+        resultText.translationY = 50f
+        resultText.animate()
+            .alpha(1f)
+            .translationY(0f)
+            .setDuration(800)
+            .start()
     }
 
-    private fun setStarRating(score: Int) {
-        val stars = when (score) {
-            0 -> 0
-            1, 2 -> 1
-            3, 4 -> 2
-            else -> 3
+    private fun setEffortMessage() {
+        val messages = when {
+            score == 0 -> listOf(
+                "Every try counts!",
+                "You showed great persistence!",
+                "You listened carefully!"
+            )
+            score <= totalRounds / 3 -> listOf(
+                "You're learning!",
+                "Great focus today!",
+                "You're getting better!"
+            )
+            score <= totalRounds * 2 / 3 -> listOf(
+                "You worked really hard!",
+                "What excellent attention!",
+                "You're doing wonderful!"
+            )
+            else -> listOf(
+                "You're a superstar!",
+                "Incredible concentration!",
+                "You nailed it!"
+            )
         }
 
-        if (stars >= 1) star1.setImageResource(R.drawable.star_filled)
-        if (stars >= 2) star2.setImageResource(R.drawable.star_filled)
-        if (stars == 3) star3.setImageResource(R.drawable.star_filled)
+        effortMessage.text = messages.random()
 
-        animateStars(stars)
-    }
+        // Personalized message based on session metrics
+        sessionMetrics?.let { metrics ->
+            metrics.behavioralProfile?.let { profile ->
+                val personalizedMessages = mutableListOf<String>()
 
-    private fun animateStars(numStars: Int) {
-        val stars = listOf(star1, star2, star3)
+                if (profile.engagementScore > 0.7) {
+                    personalizedMessages.add("You were so focused!")
+                }
+                if (profile.frustrationLevel < 0.3) {
+                    personalizedMessages.add("You stayed calm and kept trying!")
+                }
+                if (profile.accuracy > 0.6) {
+                    personalizedMessages.add("You're really understanding the words!")
+                }
 
+                if (personalizedMessages.isNotEmpty()) {
+                    effortMessage.text = personalizedMessages.random()
+                }
+            }
+        }
+
+        effortMessage.alpha = 0f
         Handler(Looper.getMainLooper()).postDelayed({
-            for (i in 0 until numStars) {
-                Handler(Looper.getMainLooper()).postDelayed({
-                    val scaleAnim = ObjectAnimator.ofFloat(stars[i], "scaleX", 0.5f, 1.2f, 1f)
-                    scaleAnim.duration = 500
-                    scaleAnim.interpolator = AccelerateDecelerateInterpolator()
-
-                    val scaleYAnim = ObjectAnimator.ofFloat(stars[i], "scaleY", 0.5f, 1.2f, 1f)
-                    scaleYAnim.duration = 500
-                    scaleYAnim.interpolator = AccelerateDecelerateInterpolator()
-
-                    try {
-                        stars[i].setImageResource(R.drawable.star_filled_glow)
-                    } catch (e: Exception) {
-                        stars[i].setImageResource(R.drawable.star_filled)
-                    }
-
-                    scaleAnim.start()
-                    scaleYAnim.start()
-
-                    Handler(Looper.getMainLooper()).postDelayed({
-                        stars[i].setImageResource(R.drawable.star_filled)
-                    }, 500)
-
-                    if (numStars >= 2) {
-                        addSparkleAtStar(stars[i])
-                    }
-
-                }, i * 300L)
-            }
+            effortMessage.animate()
+                .alpha(1f)
+                .setDuration(600)
+                .start()
         }, 500)
     }
 
-    private fun setupAnimations(score: Int) {
-        animateRibbon(score)
+    private fun setupCandyJarAnimation(score: Int) {
+        // Calculate fill percentage
+        val fillPercentage = (score.toFloat() / totalRounds.toFloat()) * 100f
 
-        when (score) {
-            0 -> {
-                animateResultText(false)
+        // Animate progress bar
+        jarFillProgress.max = 100
+        val progressAnimator = ObjectAnimator.ofInt(jarFillProgress, "progress", 0, fillPercentage.toInt())
+        progressAnimator.duration = 1500
+        progressAnimator.interpolator = AccelerateDecelerateInterpolator()
+        progressAnimator.start()
+
+        // Fill jar with candies
+        Handler(Looper.getMainLooper()).postDelayed({
+            fillJarWithCandies(score)
+        }, 500)
+
+        // Add sparkles for good scores
+        if (score > totalRounds / 2) {
+            createSparkles(score * 2)
+        }
+    }
+
+    private fun fillJarWithCandies(candyCount: Int) {
+        candyJarImage.setImageResource(R.drawable.empty_jar)
+
+        // Clear existing candies
+        candyJarContainer.removeViews(1, candyJarContainer.childCount - 1)
+
+        // Calculate positions for candies
+        val jarWidth = candyJarContainer.width
+        val jarHeight = candyJarContainer.height
+        val candySize = (jarWidth * 0.15).toInt()
+
+        // Layer candies from bottom up
+        val rows = 3 // Maximum rows of candies
+        val candiesPerRow = 4
+
+        for (i in 0 until candyCount) {
+            val row = i / candiesPerRow
+            if (row >= rows) break // Don't overflow jar
+
+            val positionInRow = i % candiesPerRow
+            val delay = i * 100L
+
+            Handler(Looper.getMainLooper()).postDelayed({
+                addCandyToJar(i, row, positionInRow, candySize, jarWidth, jarHeight)
+            }, delay)
+        }
+
+        // Update jar image based on fill level
+        Handler(Looper.getMainLooper()).postDelayed({
+            updateJarImage(candyCount)
+        }, candyCount * 100L + 500)
+    }
+
+    private fun addCandyToJar(index: Int, row: Int, position: Int, candySize: Int, jarWidth: Int, jarHeight: Int) {
+        val candy = ImageView(this)
+        val candyDrawable = candyDrawables[index % candyDrawables.size]
+
+        candy.setImageResource(candyDrawable)
+        candy.layoutParams = FrameLayout.LayoutParams(candySize, candySize)
+
+        val layoutParams = candy.layoutParams as FrameLayout.LayoutParams
+
+        // Calculate position within jar
+        val jarPadding = (jarWidth * 0.1).toInt()
+        val availableWidth = jarWidth - jarPadding * 2 - candySize
+        val xPosition = jarPadding + (availableWidth * position / 3).toInt()
+
+        // Stack from bottom
+        val rowHeight = (jarHeight * 0.25).toInt()
+        val yBase = (jarHeight * 0.65).toInt() // Start from 65% of jar height
+        val yPosition = yBase - (row * rowHeight)
+
+        layoutParams.leftMargin = xPosition
+        layoutParams.topMargin = yPosition
+
+        // Random rotation
+        candy.rotation = Random.nextFloat() * 360
+
+        candyJarContainer.addView(candy)
+
+        // Drop animation
+        candy.translationY = -jarHeight.toFloat()
+        candy.scaleX = 0.5f
+        candy.scaleY = 0.5f
+
+        candy.animate()
+            .translationY(0f)
+            .scaleX(1f)
+            .scaleY(1f)
+            .setDuration(600)
+            .setInterpolator(AccelerateDecelerateInterpolator())
+            .start()
+
+        // Bounce effect
+        Handler(Looper.getMainLooper()).postDelayed({
+            candy.animate()
+                .translationY(-10f)
+                .setDuration(200)
+                .withEndAction {
+                    candy.animate()
+                        .translationY(0f)
+                        .setDuration(200)
+                        .start()
+                }
+                .start()
+        }, 600)
+
+        // Update candy count text
+        candyCountText.text = "${index + 1} candies"
+    }
+
+    private fun updateJarImage(candyCount: Int) {
+        val fillLevel = if (totalRounds > 0) candyCount.toFloat() / totalRounds.toFloat() else 0f
+        Log.d(SCOREBOARD_TAG, "🎯 UPDATE JAR: Candies=$candyCount, Total=$totalRounds, Fill=$fillLevel")
+
+        // NEVER show empty jar - always show at least low jar
+        val jarResource = when {
+            candyCount == 0 -> {
+                Log.d(SCOREBOARD_TAG, "🟡 Showing LOW jar (0 candies)")
+                R.drawable.jar_low // Changed from empty_jar
             }
-            1, 2 -> {
-                createSparkles(3)
-                createMusicNotes(2)
-                animateResultText(true)
+            fillLevel < 0.3 -> {
+                Log.d(SCOREBOARD_TAG, "🟡 Showing LOW jar (<30%)")
+                R.drawable.jar_low
             }
-            3, 4 -> {
-                createSparkles(8)
-                createMusicNotes(4)
-                animateResultText(true)
+            fillLevel < 0.6 -> {
+                Log.d(SCOREBOARD_TAG, "🟠 Showing MEDIUM jar (30-60%)")
+                R.drawable.jar_medium
+            }
+            fillLevel < 0.9 -> {
+                Log.d(SCOREBOARD_TAG, "🟢 Showing HIGH jar (60-90%)")
+                R.drawable.jar_high
             }
             else -> {
-                createSparkles(15)
-                createMusicNotes(6)
-                animateResultText(true)
+                Log.d(SCOREBOARD_TAG, "🔴 Showing FULL jar (90-100%)")
+                R.drawable.jar_full
             }
         }
-    }
 
-    private fun animateRibbon(score: Int) {
-        if (score == 0) {
-            // No bounce animation for lose
-            val fadeAnim = ObjectAnimator.ofFloat(ribbonImage, "alpha", 0.7f, 0.5f, 0.7f)
-            fadeAnim.duration = 2000
-            fadeAnim.repeatCount = ObjectAnimator.INFINITE
-            fadeAnim.repeatMode = ObjectAnimator.REVERSE
-            fadeAnim.start()
-        } else {
-            // Bounce animation for scores > 0
-            val bounceAnim = ObjectAnimator.ofFloat(ribbonImage, "translationY", 0f, -10f, 0f)
-            bounceAnim.duration = 1500
-            bounceAnim.repeatCount = ObjectAnimator.INFINITE
-            bounceAnim.repeatMode = ObjectAnimator.REVERSE
-            bounceAnim.start()
+        // Set the jar image
+        try {
+            candyJarImage.setImageResource(jarResource)
+            Log.d(SCOREBOARD_TAG, "✅ Jar image updated")
+        } catch (e: Resources.NotFoundException) {
+            Log.e(SCOREBOARD_TAG, "❌ Resource not found", e)
+            // Fallback - at least show something
+            candyJarImage.setImageResource(R.drawable.jar_low)
         }
     }
 
-    private fun animateResultText(shouldPulse: Boolean) {
-        if (shouldPulse) {
-            val pulseAnim = ObjectAnimator.ofFloat(resultText, "scaleX", 1f, 1.1f, 1f)
-            pulseAnim.duration = 1200
-            pulseAnim.repeatCount = ObjectAnimator.INFINITE
-            pulseAnim.repeatMode = ObjectAnimator.REVERSE
-            pulseAnim.start()
+    private fun celebrateFullJar() {
+        resultText.text = "Jar is FULL!"
 
-            val pulseYAnim = ObjectAnimator.ofFloat(resultText, "scaleY", 1f, 1.1f, 1f)
-            pulseYAnim.duration = 1200
-            pulseYAnim.repeatCount = ObjectAnimator.INFINITE
-            pulseYAnim.repeatMode = ObjectAnimator.REVERSE
-            pulseYAnim.start()
-        } else {
-            val fadeAnim = ObjectAnimator.ofFloat(resultText, "alpha", 0.8f, 1f, 0.8f)
-            fadeAnim.duration = 1500
-            fadeAnim.repeatCount = ObjectAnimator.INFINITE
-            fadeAnim.repeatMode = ObjectAnimator.REVERSE
-            fadeAnim.start()
-        }
+        // Big celebration animation
+        candyJarImage.animate()
+            .scaleX(1.2f)
+            .scaleY(1.2f)
+            .setDuration(300)
+            .withEndAction {
+                candyJarImage.animate()
+                    .scaleX(1f)
+                    .scaleY(1f)
+                    .setDuration(300)
+                    .start()
+            }
+            .start()
+
+        // Extra sparkles
+        createSparkles(20)
+
+        // Confetti-like candies falling
+        createFallingCandies(10)
     }
 
     private fun createSparkles(count: Int) {
         for (i in 0 until count) {
             Handler(Looper.getMainLooper()).postDelayed({
                 addRandomSparkle()
-            }, i * 200L)
+            }, i * 100L)
         }
     }
 
@@ -225,32 +360,10 @@ class RMScoreboardActivity : AppCompatActivity() {
         animateSparkle(sparkle)
     }
 
-    private fun addSparkleAtStar(star: ImageView) {
-        val sparkle = ImageView(this)
-        sparkle.setImageResource(R.drawable.sparkle_yellow)
-        sparkle.layoutParams = FrameLayout.LayoutParams(30, 30)
-
-        val location = IntArray(2)
-        star.getLocationOnScreen(location)
-        val containerLocation = IntArray(2)
-        sparklesContainer.getLocationOnScreen(containerLocation)
-
-        val x = location[0] - containerLocation[0] + star.width / 2 - 15
-        val y = location[1] - containerLocation[1] + star.height / 2 - 15
-
-        val layoutParams = sparkle.layoutParams as FrameLayout.LayoutParams
-        layoutParams.leftMargin = x
-        layoutParams.topMargin = y
-
-        sparklesContainer.addView(sparkle)
-        animateSparkle(sparkle)
-    }
-
     private fun animateSparkle(sparkle: ImageView) {
         val fadeAnim = ObjectAnimator.ofFloat(sparkle, "alpha", 0f, 1f, 0f)
         fadeAnim.duration = 1000
         fadeAnim.repeatCount = 3
-        fadeAnim.repeatMode = ObjectAnimator.RESTART
 
         val scaleAnim = ObjectAnimator.ofFloat(sparkle, "scaleX", 0.5f, 1.5f, 0.5f)
         scaleAnim.duration = 1000
@@ -269,77 +382,60 @@ class RMScoreboardActivity : AppCompatActivity() {
         }, 3000)
     }
 
-    private fun createMusicNotes(count: Int) {
-        val musicNoteRes = listOf(
-            R.drawable.m_one, R.drawable.m_two, R.drawable.m_three,
-            R.drawable.m_four, R.drawable.m_five, R.drawable.m_six
-        )
-
+    private fun createFallingCandies(count: Int) {
         for (i in 0 until count) {
             Handler(Looper.getMainLooper()).postDelayed({
-                addMusicNote(musicNoteRes[i % musicNoteRes.size])
-            }, i * 300L)
+                addFallingCandy()
+            }, i * 200L)
         }
     }
 
-    private fun addMusicNote(noteRes: Int) {
-        val note = ImageView(this)
-        note.setImageResource(noteRes)
-        note.layoutParams = FrameLayout.LayoutParams(60, 60)
+    private fun addFallingCandy() {
+        val candy = ImageView(this)
+        val candyDrawable = candyDrawables.random()
 
-        val layoutParams = note.layoutParams as FrameLayout.LayoutParams
-        layoutParams.leftMargin = Random.nextInt(0, musicNotesContainer.width - 60)
-        layoutParams.topMargin = Random.nextInt(0, musicNotesContainer.height - 60)
+        candy.setImageResource(candyDrawable)
+        val size = Random.nextInt(30, 60)
+        candy.layoutParams = FrameLayout.LayoutParams(size, size)
 
-        musicNotesContainer.addView(note)
-        animateMusicNote(note)
+        val layoutParams = candy.layoutParams as FrameLayout.LayoutParams
+        layoutParams.leftMargin = Random.nextInt(0, candyJarContainer.width - size)
+        layoutParams.topMargin = -size // Start above container
+
+        candyJarContainer.addView(candy)
+        animateFallingCandy(candy, size)
     }
 
-    private fun animateMusicNote(note: ImageView) {
-        val floatAnim = ObjectAnimator.ofFloat(note, "translationY", 0f, -Random.nextInt(100, 300).toFloat())
-        floatAnim.duration = 3000
+    private fun animateFallingCandy(candy: ImageView, size: Int) {
+        val fallDistance = candyJarContainer.height + size
+        val fallAnim = ObjectAnimator.ofFloat(candy, "translationY", 0f, fallDistance.toFloat())
+        fallAnim.duration = 2000
 
-        val breathAnim = ObjectAnimator.ofFloat(note, "scaleX", 0.8f, 1.2f, 0.8f)
-        breathAnim.duration = 1000
-        breathAnim.repeatCount = ValueAnimator.INFINITE
-        breathAnim.repeatMode = ValueAnimator.REVERSE
+        val rotationAnim = ObjectAnimator.ofFloat(candy, "rotation", 0f, Random.nextFloat() * 720 - 360)
+        rotationAnim.duration = 2000
 
-        val breathYAnim = ObjectAnimator.ofFloat(note, "scaleY", 0.8f, 1.2f, 0.8f)
-        breathYAnim.duration = 1000
-        breathYAnim.repeatCount = ValueAnimator.INFINITE
-        breathYAnim.repeatMode = ValueAnimator.REVERSE
-
-        val shakeAnim = ObjectAnimator.ofFloat(note, "rotation", -15f, 15f, -15f)
-        shakeAnim.duration = 800
-        shakeAnim.repeatCount = ValueAnimator.INFINITE
-        shakeAnim.repeatMode = ValueAnimator.REVERSE
-
-        floatAnim.start()
-        breathAnim.start()
-        breathYAnim.start()
-        shakeAnim.start()
-
-        floatAnim.addUpdateListener {
-            if (floatAnim.animatedFraction >= 0.8f) {
-                note.alpha = note.alpha - 0.05f
-            }
-        }
+        fallAnim.start()
+        rotationAnim.start()
 
         Handler(Looper.getMainLooper()).postDelayed({
-            musicNotesContainer.removeView(note)
-            if (score >= 1) {
-                addMusicNote(listOf(
-                    R.drawable.m_one, R.drawable.m_two, R.drawable.m_three,
-                    R.drawable.m_four, R.drawable.m_five, R.drawable.m_six
-                ).random())
-            }
-        }, 3000)
+            candyJarContainer.removeView(candy)
+        }, 2000)
     }
 
     private fun setupButtonListeners() {
         replayButton.setOnClickListener {
             val intent = Intent(this, RhythmSummaryActivity::class.java)
             intent.putExtra("SONG_TITLE", songTitle)
+
+            // Pass therapeutic intent for continuity
+            val therapeuticIntent = TherapeuticIntent(
+                primaryGoal = "maintain_progress",
+                uiComplexity = 0.6f,
+                sessionDuration = 10,
+                adaptiveScaling = true
+            )
+            intent.putExtra("THERAPEUTIC_INTENT", therapeuticIntent)
+
             startActivity(intent)
             finish()
         }
@@ -349,13 +445,32 @@ class RMScoreboardActivity : AppCompatActivity() {
             startActivity(intent)
             finish()
         }
+
+        // Add candy jar click listener for fun interaction (VISUAL ONLY)
+        candyJarContainer.setOnClickListener {
+            // Just visual feedback, no candy changes
+            candyJarImage.animate()
+                .scaleX(1.05f)
+                .scaleY(1.05f)
+                .setDuration(200)
+                .withEndAction {
+                    candyJarImage.animate()
+                        .scaleX(1f)
+                        .scaleY(1f)
+                        .setDuration(200)
+                        .start()
+                }
+                .start()
+        }
     }
 
     override fun onResume() {
         super.onResume()
-    }
-
-    override fun onPause() {
-        super.onPause()
+        // Ensure jar is properly filled
+        if (score > 0) {
+            Handler(Looper.getMainLooper()).postDelayed({
+                fillJarWithCandies(score)
+            }, 100)
+        }
     }
 }
