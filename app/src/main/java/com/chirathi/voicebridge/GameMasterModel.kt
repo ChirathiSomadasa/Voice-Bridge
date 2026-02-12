@@ -449,16 +449,16 @@ class GameMasterModel(context: Context) {
         val outputs = mutableMapOf<Int, Any>()
 
         // Allocate outputs for all tensor heads
-        if (idxEmo != -1) outputs[idxEmo] = Array(1) { FloatArray(3) }
-        if (idxFrn != -1) outputs[idxFrn] = Array(1) { FloatArray(10) }
-        if (idxSeq != -1) outputs[idxSeq] = Array(1) { FloatArray(3) }
-        if (idxRhy != -1) outputs[idxRhy] = Array(1) { FloatArray(1) }
-        if (idxRtn != -1) outputs[idxRtn] = Array(1) { FloatArray(4) }
-        if (idxMot != -1) outputs[idxMot] = Array(1) { FloatArray(3) }
-        if (idxSub != -1) outputs[idxSub] = Array(1) { FloatArray(2) }
-        if (idxIntent != -1) outputs[idxIntent] = Array(1) { FloatArray(5) }
-        if (idxLevel != -1) outputs[idxLevel] = Array(1) { FloatArray(4) } // 4 levels
-        if (idxStrategy != -1) outputs[idxStrategy] = Array(1) { FloatArray(6) } // 6 strategies
+        if (idxEmo != -1) outputs[idxEmo] = Array(2) { FloatArray(3) }
+        if (idxFrn != -1) outputs[idxFrn] = Array(2) { FloatArray(10) }
+        if (idxSeq != -1) outputs[idxSeq] = Array(2) { FloatArray(3) }
+        if (idxRhy != -1) outputs[idxRhy] = Array(2) { FloatArray(1) }
+        if (idxRtn != -1) outputs[idxRtn] = Array(2) { FloatArray(4) }
+        if (idxMot != -1) outputs[idxMot] = Array(2) { FloatArray(3) }
+        if (idxSub != -1) outputs[idxSub] = Array(2) { FloatArray(2) }
+        if (idxIntent != -1) outputs[idxIntent] = Array(2) { FloatArray(5) }
+        if (idxLevel != -1) outputs[idxLevel] = Array(2) { FloatArray(4) } // 4 levels
+        if (idxStrategy != -1) outputs[idxStrategy] = Array(2) { FloatArray(6) } // 6 strategies
 
         try {
             interpreter?.runForMultipleInputsOutputs(inputs, outputs)
