@@ -12,7 +12,7 @@
     <androidx.constraintlayout.widget.ConstraintLayout
         android:id="@+id/headerLayout"
         android:layout_width="411dp"
-        android:layout_height="292dp"
+        android:layout_height="192dp"
         android:background="@drawable/header_cloud_background"
         android:paddingTop="40dp"
         app:layout_constraintEnd_toEndOf="parent"
@@ -35,6 +35,7 @@
 
         <!-- Word to Find -->
         <LinearLayout
+            android:id="@+id/wordContainer"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_marginTop="-2dp"
@@ -69,9 +70,9 @@
             android:id="@+id/scoreCard"
             android:layout_width="100dp"
             android:layout_height="100dp"
-            android:layout_marginTop="-140dp"
+            android:layout_marginTop="-50dp"
             android:layout_marginEnd="13dp"
-            android:layout_marginBottom="16dp"
+            android:layout_marginBottom="1dp"
             app:cardBackgroundColor="@color/light_green"
             app:cardCornerRadius="20dp"
             app:cardElevation="16dp"
@@ -116,6 +117,44 @@
 
         </com.google.android.material.card.MaterialCardView>
 
+        <!-- 🏆 LEVEL BADGE - Below Score Card -->
+        <androidx.cardview.widget.CardView
+            android:id="@+id/levelBadge"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:elevation="8dp"
+            app:cardBackgroundColor="@android:color/transparent"
+            app:cardElevation="0dp"
+            app:cardCornerRadius="0dp"
+            app:layout_constraintEnd_toEndOf="@id/scoreCard"
+            app:layout_constraintStart_toStartOf="@id/scoreCard"
+            app:layout_constraintTop_toBottomOf="@id/scoreCard">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="@drawable/level_flag_background"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:paddingStart="20dp"
+                android:paddingTop="8dp"
+                android:paddingEnd="20dp"
+                android:paddingBottom="8dp">
+
+                <TextView
+                    android:id="@+id/levelIndicator"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Beginner"
+                    android:textColor="@android:color/white"
+                    android:textSize="16sp"
+                    android:textStyle="bold" />
+
+            </LinearLayout>
+
+        </androidx.cardview.widget.CardView>
+
     </androidx.constraintlayout.widget.ConstraintLayout>
 
     <!-- Progress Indicator -->
@@ -124,7 +163,7 @@
         android:layout_width="0dp"
         android:layout_height="20dp"
         android:layout_marginStart="24dp"
-        android:layout_marginTop="-92dp"
+        android:layout_marginTop="10dp"
         android:layout_marginEnd="24dp"
         android:background="@drawable/progress_background"
         android:gravity="center"
@@ -137,44 +176,27 @@
         <!-- Progress dots will be added dynamically -->
 
     </LinearLayout>
+
+    <!-- 🎯 STRATEGY TOAST - Fades in/out (FIXED) -->
     <TextView
         android:id="@+id/strategyIndicator"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="4dp"
-        android:elevation="4dp"
-        android:paddingStart="16dp"
-        android:paddingTop="6dp"
-        android:paddingEnd="16dp"
-        android:paddingBottom="6dp"
-        android:text="Focus: Balanced"
-        android:textColor="#4A90E2"
-        android:textSize="14sp"
+        android:layout_marginTop="12dp"
+        android:alpha="0"
+        android:elevation="10dp"
+        android:paddingStart="24dp"
+        android:paddingTop="10dp"
+        android:paddingEnd="24dp"
+        android:paddingBottom="10dp"
+        android:text="🎯 Focus: Balanced"
+        android:textColor="@android:color/white"
+        android:textSize="15sp"
         android:textStyle="bold"
-        android:visibility="visible"
+        android:visibility="gone"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/levelIndicator" />
-
-    <TextView
-        android:id="@+id/levelIndicator"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:elevation="4dp"
-        android:paddingStart="20dp"
-        android:paddingTop="8dp"
-        android:paddingEnd="20dp"
-        android:paddingBottom="8dp"
-        android:text="⭐ Beginner"
-        android:textColor="#FF6B35"
-        android:textSize="18sp"
-        android:textStyle="bold"
-        android:visibility="visible"
-        app:layout_constraintBottom_toTopOf="@+id/instructionsText"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/progressContainer"
-        app:layout_constraintVertical_chainStyle="packed" />
+        app:layout_constraintTop_toBottomOf="@id/progressContainer" />
 
     <!-- Instructions -->
     <TextView
@@ -252,13 +274,11 @@
             android:gravity="center"
             android:orientation="horizontal"
             android:padding="16dp"
-            android:visibility="gone">
-
-
-        </LinearLayout>
+            android:visibility="gone" />
 
     </FrameLayout>
 
+    <!-- Feedback Overlay -->
     <FrameLayout
         android:id="@+id/feedbackOverlay"
         android:layout_width="match_parent"
