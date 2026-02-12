@@ -1,9 +1,13 @@
 package com.chirathi.voicebridge
 
 import android.content.Context
+import com.chirathi.voicebridge.ml.GameMaster
 import android.util.Log
 import org.tensorflow.lite.Interpreter
+import org.tensorflow.lite.support.tensorbuffer.TensorBuffer
+import java.io.File
 import java.io.FileInputStream
+import java.io.FileNotFoundException
 import java.io.Serializable
 import java.nio.MappedByteBuffer
 import java.nio.channels.FileChannel
@@ -101,89 +105,121 @@ class GameMasterModel(context: Context) {
 
     init {
         try {
-            val modelFile = loadModelFile(context, "game_master.tflite")
-            val options = Interpreter.Options()
-            interpreter = Interpreter(modelFile, options)
-
-            Log.d(TAG, "Model loaded. Inspecting output tensors...")
+            // Load strictly from assets (where Android puts the file)
+            exploreAssets(context)
+            val modelFile = loadModelFile(context)
+            interpreter = Interpreter(modelFile)
+            Log.d(TAG, "✅ Model loaded successfully")
             inspectOutputTensors()
-
-            // Start engagement tracking
-            engagementStartTime = System.currentTimeMillis()
-
         } catch (e: Exception) {
-            Log.e(TAG, "Error loading model: ${e.message}")
-            e.printStackTrace()
+            Log.e(TAG, "❌ Error loading model: ${e.message}")
         }
     }
 
+    // NEW: Load directly from app/src/main/ml/game_master.tflite
+    private fun loadModelFileFromPath(context: Context): MappedByteBuffer {
+        try {
+            // Get the file from the app's source directory
+            val modelPath = context.filesDir.parent + "/src/main/ml/game_master.tflite"
+            val file = File(modelPath)
 
-    private fun loadModelFile(context: Context, filename: String): MappedByteBuffer {
-        val fileDescriptor = context.assets.openFd(filename)
-        val inputStream = FileInputStream(fileDescriptor.fileDescriptor)
-        val fileChannel = inputStream.channel
-        val startOffset = fileDescriptor.startOffset
-        val declaredLength = fileDescriptor.declaredLength
-        return fileChannel.map(FileChannel.MapMode.READ_ONLY, startOffset, declaredLength)
+            if (file.exists()) {
+                Log.d(TAG, "✅ Loading model from: $modelPath")
+                val inputStream = FileInputStream(file)
+                val fileChannel = inputStream.channel
+                return fileChannel.map(FileChannel.MapMode.READ_ONLY, 0, file.length())
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "Failed to load from path: ${e.message}")
+        }
+
+        // Fallback - try to copy from assets if available
+        return loadModelFile(context)
+    }
+
+
+    private fun loadModelFile(context: Context): MappedByteBuffer {
+        // Android build system flattens 'ml' folder into the root of assets
+        // or keeps it as 'ml/'. We check both to be safe.
+        val possiblePaths = listOf(
+            "game_master.tflite",       // Standard location (Root of assets)
+            "ml/game_master.tflite"     // Explicit subfolder
+        )
+
+        for (path in possiblePaths) {
+            try {
+                val fileDescriptor = context.assets.openFd(path)
+                val inputStream = FileInputStream(fileDescriptor.fileDescriptor)
+                val fileChannel = inputStream.channel
+                val startOffset = fileDescriptor.startOffset
+                val declaredLength = fileDescriptor.declaredLength
+                Log.d(TAG, "Found model at: $path")
+                return fileChannel.map(FileChannel.MapMode.READ_ONLY, startOffset, declaredLength)
+            } catch (e: Exception) {
+                // Continue searching
+            }
+        }
+        throw FileNotFoundException("Model file not found in Assets. Checked: $possiblePaths")
+    }
+
+    private fun exploreAssets(context: Context) {
+        try {
+            Log.d(TAG, "🔍 === EXPLORING ASSETS FOLDER ===")
+
+            // List root of assets
+            val rootAssets = context.assets.list("")
+            Log.d(TAG, "📁 Root assets: ${rootAssets?.joinToString() ?: "empty"}")
+
+            // Check if 'ml' folder exists
+            if (rootAssets?.contains("ml") == true) {
+                val mlAssets = context.assets.list("ml")
+                Log.d(TAG, "📁 ml/ folder contents: ${mlAssets?.joinToString() ?: "empty"}")
+            }
+
+            // Also check if file exists directly in root
+            val gameMasterInRoot = rootAssets?.contains("game_master.tflite") == true
+            Log.d(TAG, "📄 game_master.tflite in root: $gameMasterInRoot")
+
+        } catch (e: Exception) {
+            Log.e(TAG, "Error exploring assets: ${e.message}")
+        }
     }
 
     private fun inspectOutputTensors() {
         if (interpreter == null) return
 
         val count = interpreter!!.outputTensorCount
-        Log.d(TAG, "Total output tensors: $count")
-
         val size3Indices = mutableListOf<Int>()
-        val size4Indices = mutableListOf<Int>()
-        val size2Indices = mutableListOf<Int>() // For intent classification
+
+        // Reset indices
+        idxEmo = -1; idxFrn = -1; idxSeq = -1; idxRhy = -1
+        idxRtn = -1; idxMot = -1; idxSub = -1; idxIntent = -1
 
         for (i in 0 until count) {
             val tensor = interpreter!!.getOutputTensor(i)
             val shape = tensor.shape()
+            val size = if (shape.size > 1) shape[1] else 0
 
-            Log.d(TAG, "Tensor $i: Shape ${shape.contentToString()}, DataType: ${tensor.dataType()}, Name: ${tensor.name()}")
+            Log.d(TAG, "Tensor $i: Shape ${shape.contentToString()}")
 
-            when {
-                shape.size == 2 && shape[1] == 10 -> {
-                    idxFrn = i // Friend Action (Size 10)
-                    Log.d(TAG, "Assigned idxFrn = $i (Friend Action)")
-                }
-                shape.size == 2 && shape[1] == 4 -> {
-                    idxRtn = i // Routine Action (Size 4)
-                    Log.d(TAG, "Assigned idxRtn = $i (Routine Action)")
-                }
-                shape.size == 2 && shape[1] == 3 -> {
-                    size3Indices.add(i) // Emotion, Sequence, Motivation (Size 3)
-                    Log.d(TAG, "Added size3 tensor at index $i")
-                }
-                shape.size == 2 && shape[1] == 1 -> {
-                    idxRhy = i // Rhythm Complexity (Size 1)
-                    Log.d(TAG, "Assigned idxRhy = $i (Rhythm Complexity)")
-                }
-                shape.size == 2 && shape[1] == 2 -> {
-                    idxSub = i // Sub-routine recommendation (Size 2: 0=Repeat, 1=Progress)
-                    Log.d(TAG, "Assigned idxSub = $i (Sub-routine Recommendation)")
-                }
-                shape.size == 2 && shape[1] == 5 -> {
-                    idxIntent = i // Therapeutic Intent (Size 5: 5 possible therapeutic goals)
-                    Log.d(TAG, "Assigned idxIntent = $i (Therapeutic Intent)")
-                }
+            when (size) {
+                10 -> idxFrn = i
+                4 -> idxRtn = i
+                1 -> idxRhy = i
+                2 -> idxSub = i
+                5 -> idxIntent = i
+                3 -> size3Indices.add(i)
             }
         }
 
-        // Sort and assign size3 indices
         size3Indices.sort()
         if (size3Indices.size >= 3) {
             idxEmo = size3Indices[0]
             idxSeq = size3Indices[1]
             idxMot = size3Indices[2]
-            Log.d(TAG, "Assigned size3 tensors: Emo=$idxEmo, Seq=$idxSeq, Mot=$idxMot")
         }
 
-        Log.d(TAG, "Final assignments:")
-        Log.d(TAG, "  Emotion: $idxEmo, Friend: $idxFrn, Sequence: $idxSeq")
-        Log.d(TAG, "  Motivation: $idxMot, Rhythm: $idxRhy, Routine: $idxRtn")
-        Log.d(TAG, "  Sub-routine: $idxSub, Intent: $idxIntent")
+        Log.d(TAG, "Mapped: Rtn=$idxRtn, Frn=$idxFrn, Sub=$idxSub, Intent=$idxIntent")
     }
 
     // =========== BEHAVIORAL FEATURE EXTRACTOR ===========
@@ -537,78 +573,80 @@ class GameMasterModel(context: Context) {
     // =========== ORIGINAL PREDICT FUNCTION (UPDATED) ===========
 
     fun predict(inputFeatures: FloatArray): ModelDecision {
-        if (interpreter == null) {
-            Log.e(TAG, "Interpreter is null, returning default decision")
-            return getDefaultDecision(inputFeatures)
-        }
+        if (interpreter == null) return getDefaultDecision(inputFeatures)
 
-        // Validate input
-        val featureCount = if (inputFeatures.size > 8) inputFeatures.size else 8
+        // 1. Prepare Inputs
+        val featureCount = max(inputFeatures.size, 8)
         val paddedFeatures = if (inputFeatures.size < featureCount) {
-            inputFeatures + FloatArray(featureCount - inputFeatures.size) { 0f }
-        } else {
-            inputFeatures
-        }
+            inputFeatures + FloatArray(featureCount - inputFeatures.size)
+        } else inputFeatures
 
-        Log.d(TAG, "Input features size: ${paddedFeatures.size}")
-
-        // Prepare Inputs
-        val inputs = Array(1) { paddedFeatures }
-
-        // Prepare Outputs
+        val inputs = arrayOf(paddedFeatures)
         val outputs = mutableMapOf<Int, Any>()
 
-        // Prepare all possible output arrays
+        // 2. Allocate Outputs (Only for existing tensors)
         if (idxEmo != -1) outputs[idxEmo] = Array(1) { FloatArray(3) }
         if (idxFrn != -1) outputs[idxFrn] = Array(1) { FloatArray(10) }
         if (idxSeq != -1) outputs[idxSeq] = Array(1) { FloatArray(3) }
         if (idxRhy != -1) outputs[idxRhy] = Array(1) { FloatArray(1) }
         if (idxRtn != -1) outputs[idxRtn] = Array(1) { FloatArray(4) }
         if (idxMot != -1) outputs[idxMot] = Array(1) { FloatArray(3) }
+
+        // These are currently -1, but this logic ensures future compatibility
         if (idxSub != -1) outputs[idxSub] = Array(1) { FloatArray(2) }
         if (idxIntent != -1) outputs[idxIntent] = Array(1) { FloatArray(5) }
 
-        // Run Inference
+        // 3. Run Inference
         try {
-            interpreter?.runForMultipleInputsOutputs(arrayOf(inputs), outputs)
-            Log.d(TAG, "Inference successful")
+            interpreter?.runForMultipleInputsOutputs(inputs, outputs)
         } catch (e: Exception) {
             Log.e(TAG, "Inference failed: ${e.message}")
-            e.printStackTrace()
             return getDefaultDecision(inputFeatures)
         }
 
-        // Parse Results
+        // 4. Parse Results
         val emotionLevel = if (idxEmo != -1) argMax((outputs[idxEmo] as Array<FloatArray>)[0]) else 0
         val friendAction = if (idxFrn != -1) argMax((outputs[idxFrn] as Array<FloatArray>)[0]) else 0
-        val sequenceAction = if (idxSeq != -1) argMax((outputs[idxSeq] as Array<FloatArray>)[0]) else 0
+        val sequenceAction = if (idxSeq != -1) argMax((outputs[idxSeq] as Array<FloatArray>)[0]) else 1
         val motivationId = if (idxMot != -1) argMax((outputs[idxMot] as Array<FloatArray>)[0]) else 0
         val rhythmComplexity = if (idxRhy != -1) (outputs[idxRhy] as Array<FloatArray>)[0][0].coerceIn(0f, 1f) else 0.5f
         val routineAction = if (idxRtn != -1) argMax((outputs[idxRtn] as Array<FloatArray>)[0]) else 0
-        val therapeuticIntent = TherapeuticIntent(
-            primaryGoal = "build_confidence",
-            uiComplexity = 0.5f,
-            sessionDuration = 10,
-            adaptiveScaling = true
-        )
 
-        // Calculate sub-routine recommendation
-        val subRoutineRecommendation = calculateSubRoutineRecommendation(
-            sequenceAction = sequenceAction,
-            accuracy = inputFeatures.getOrNull(5) ?: 0f,
-            errorCount = inputFeatures.getOrNull(7)?.toInt() ?: 0
-        )
+        // 5. Smart Fallback for Missing Tensors
+
+        // Sub-routine: Use model if available, else calculate manually
+        val subRoutineRecommendation = if (idxSub != -1) {
+            argMax((outputs[idxSub] as Array<FloatArray>)[0])
+        } else {
+            calculateSubRoutineRecommendation(
+                sequenceAction,
+                inputFeatures.getOrNull(5) ?: 0f,
+                inputFeatures.getOrNull(7)?.toInt() ?: 0
+            )
+        }
+
+        // Therapeutic Intent: Use model if available, else use default
+        val therapeuticIntent = if (idxIntent != -1) {
+            val intentIdx = argMax((outputs[idxIntent] as Array<FloatArray>)[0])
+            getIntentFromIndex(intentIdx)
+        } else {
+            TherapeuticIntent("build_confidence", 0.5f, 10, true)
+        }
 
         return ModelDecision(
-            emotionLevel,
-            friendAction,
-            sequenceAction,
-            motivationId,
-            rhythmComplexity,
-            routineAction,
-            subRoutineRecommendation,
-            therapeuticIntent
+            emotionLevel, friendAction, sequenceAction, motivationId,
+            rhythmComplexity, routineAction, subRoutineRecommendation, therapeuticIntent
         )
+    }
+
+    private fun getIntentFromIndex(index: Int): TherapeuticIntent {
+        return when(index) {
+            0 -> TherapeuticIntent("reduce_cognitive_load", 0.3f, 5, true)
+            1 -> TherapeuticIntent("build_confidence", 0.5f, 10, true)
+            2 -> TherapeuticIntent("improve_attention", 0.7f, 12, true)
+            3 -> TherapeuticIntent("challenge_mastery", 0.9f, 15, true)
+            else -> TherapeuticIntent("maintain_progress", 0.6f, 10, false)
+        }
     }
 
     private fun calculateSubRoutineRecommendation(
