@@ -9,18 +9,16 @@
     android:background="#F8FAFF"
     tools:context=".RhythmSummaryActivity">
 
-    <!-- Modern Header with Wave Design -->
     <androidx.constraintlayout.widget.ConstraintLayout
         android:id="@+id/headerLayout"
-        android:layout_width="413dp"
-        android:layout_height="296dp"
+        android:layout_width="411dp"
+        android:layout_height="292dp"
         android:background="@drawable/header_cloud_background"
         android:paddingTop="40dp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent">
 
-        <!-- Panda Mascot -->
         <ImageView
             android:id="@+id/pandaImage"
             android:layout_width="140dp"
@@ -126,7 +124,7 @@
         android:layout_width="0dp"
         android:layout_height="20dp"
         android:layout_marginStart="24dp"
-        android:layout_marginTop="-96dp"
+        android:layout_marginTop="-92dp"
         android:layout_marginEnd="24dp"
         android:background="@drawable/progress_background"
         android:gravity="center"
@@ -139,6 +137,44 @@
         <!-- Progress dots will be added dynamically -->
 
     </LinearLayout>
+    <TextView
+        android:id="@+id/strategyIndicator"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="4dp"
+        android:elevation="4dp"
+        android:paddingStart="16dp"
+        android:paddingTop="6dp"
+        android:paddingEnd="16dp"
+        android:paddingBottom="6dp"
+        android:text="Focus: Balanced"
+        android:textColor="#4A90E2"
+        android:textSize="14sp"
+        android:textStyle="bold"
+        android:visibility="visible"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/levelIndicator" />
+
+    <TextView
+        android:id="@+id/levelIndicator"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:elevation="4dp"
+        android:paddingStart="20dp"
+        android:paddingTop="8dp"
+        android:paddingEnd="20dp"
+        android:paddingBottom="8dp"
+        android:text="⭐ Beginner"
+        android:textColor="#FF6B35"
+        android:textSize="18sp"
+        android:textStyle="bold"
+        android:visibility="visible"
+        app:layout_constraintBottom_toTopOf="@+id/instructionsText"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/progressContainer"
+        app:layout_constraintVertical_chainStyle="packed" />
 
     <!-- Instructions -->
     <TextView
@@ -146,7 +182,7 @@
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginStart="24dp"
-        android:layout_marginTop="16dp"
+        android:layout_marginTop="22dp"
         android:layout_marginEnd="24dp"
         android:gravity="center"
         android:text="Tap the correct image for the word!"
@@ -218,13 +254,11 @@
             android:padding="16dp"
             android:visibility="gone">
 
-            <!-- Simplified options will be added dynamically -->
 
         </LinearLayout>
 
     </FrameLayout>
 
-    <!-- Center Feedback Overlay -->
     <FrameLayout
         android:id="@+id/feedbackOverlay"
         android:layout_width="match_parent"
