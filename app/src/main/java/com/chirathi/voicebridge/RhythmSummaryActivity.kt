@@ -40,6 +40,7 @@ class RhythmSummaryActivity : AppCompatActivity() {
     private lateinit var confidenceBuilderOverlay: FrameLayout
     private lateinit var simplifiedOptionsContainer: LinearLayout
     private lateinit var therapeuticMessage: TextView
+    private lateinit var levelBadge: androidx.cardview.widget.CardView
     private lateinit var levelIndicator: TextView
     private lateinit var strategyIndicator: TextView
 
@@ -202,14 +203,13 @@ class RhythmSummaryActivity : AppCompatActivity() {
             feedbackContainer = findViewById(R.id.feedbackContainer)
             nextButton = findViewById(R.id.nextButton)
             rootLayout = findViewById(R.id.rootLayout)
+
+            // Level Badge components
+            levelBadge = findViewById(R.id.levelBadge)
             levelIndicator = findViewById(R.id.levelIndicator)
-            strategyIndicator = findViewById(R.id.strategyIndicator) ?: TextView(this).apply {
-                id = R.id.strategyIndicator
-                layoutParams = LinearLayout.LayoutParams(
-                    LinearLayout.LayoutParams.WRAP_CONTENT,
-                    LinearLayout.LayoutParams.WRAP_CONTENT
-                )
-            }
+
+            // Strategy Toast
+            strategyIndicator = findViewById(R.id.strategyIndicator)
 
             // Therapeutic UI components
             confidenceBuilderOverlay = findViewById(R.id.confidenceBuilderOverlay) ?: createConfidenceBuilderOverlay()
@@ -293,7 +293,7 @@ class RhythmSummaryActivity : AppCompatActivity() {
             animatePanda()
             setupProgressDots()
             updateScore()
-            updateIndicators()
+            updateLevelBadge()
             individualLatencyBuffer = gameMaster.getIndividualizedLatencyBuffer()
         } catch (e: Exception) {
             Log.e(TAG, "Error in setupUI: ${e.message}", e)
@@ -319,7 +319,6 @@ class RhythmSummaryActivity : AppCompatActivity() {
             else -> 32f
         }
 
-        // ✅ FIXED: Use intent directly, not nullable chain
         if (intent.uiComplexity < 0.5f) {
             rootLayout.setBackgroundColor(Color.WHITE)
             wordTitle.setTextColor(Color.BLACK)
@@ -335,30 +334,80 @@ class RhythmSummaryActivity : AppCompatActivity() {
         Log.d(TAG, "UI Complexity adjusted: ${intent.uiComplexity}, Rounds: $totalRounds")
     }
 
-    private fun updateIndicators() {
-        // Update level indicator
-        val levelText = when (currentDifficultyLevel) {
-            1 -> "⭐ Level 1: Beginner"
-            2 -> "⭐⭐ Level 2: Easy"
-            3 -> "⭐⭐⭐ Level 3: Medium"
-            4 -> "⭐⭐⭐⭐ Level 4: Advanced"
-            else -> "Level $currentDifficultyLevel"
-        }
-        levelIndicator.text = levelText
-        levelIndicator.visibility = View.VISIBLE
+    // =========== LEVEL BADGE METHODS ===========
 
-        // Update strategy indicator
-        val strategyText = when (currentDistractorStrategy?.type) {
-            "random" -> "🎯 Focus: Easy"
-            "phonetic" -> "🔊 Focus: Rhyming"
-            "semantic" -> "📚 Focus: Meanings"
-            "visual" -> "👁️ Focus: Shapes"
-            "mixed" -> "🔄 Focus: Mixed"
-            "diagnostic" -> "🎓 Focus: Your Challenge"
-            else -> "🎯 Balanced"
+    private fun updateLevelBadge() {
+        try {
+            // Update text and colors based on level - FIXED: Use list instead of nested pairs
+            val levelData = when (currentDifficultyLevel) {
+                1 -> listOf("🌱", "Beginner", "⭐", "#FF6B35")
+                2 -> listOf("🔍", "Explorer", "⭐⭐", "#4A90E2")
+                3 -> listOf("🏆", "Master", "⭐⭐⭐", "#9B59B6")
+                4 -> listOf("👑", "Genius", "⭐⭐⭐⭐", "#F1C40F")
+                else -> listOf("🎯", "Level $currentDifficultyLevel", "⭐", "#FF6B35")
+            }
+            levelIndicator.text = levelData[1]
+            levelBadge.setCardBackgroundColor(Color.parseColor(levelData[3]))
+
+            // Bounce animation
+            levelBadge.animate()
+                .scaleX(1.1f)
+                .scaleY(1.1f)
+                .setDuration(200)
+                .withEndAction {
+                    levelBadge.animate()
+                        .scaleX(1f)
+                        .scaleY(1f)
+                        .setDuration(200)
+                        .start()
+                }
+                .start()
+
+            Log.d(TAG, "Level badge updated: ${levelData[1]} ${levelData[2]}")
+        } catch (e: Exception) {
+            Log.e(TAG, "Error updating level badge: ${e.message}", e)
         }
-        strategyIndicator.text = strategyText
-        strategyIndicator.visibility = View.VISIBLE
+    }
+
+    // =========== STRATEGY TOAST METHODS ===========
+
+    private fun showStrategyToast() {
+        try {
+            val strategyText = when (currentDistractorStrategy?.type) {
+                "random" -> "🎯 Easy Peasy!"
+                "phonetic" -> "🔊 Listen for Rhymes!"
+                "semantic" -> "📚 Same Meaning!"
+                "visual" -> "👁️ Look at Shapes!"
+                "mixed" -> "🔄 Super Mix!"
+                "diagnostic" -> "🎓 You're Improving!"
+                else -> "🎯 Let's Learn!"
+            }
+
+            strategyIndicator.text = strategyText
+            strategyIndicator.visibility = View.VISIBLE
+
+            // Fade in
+            strategyIndicator.animate()
+                .alpha(1f)
+                .setDuration(500)
+                .withEndAction {
+                    // Stay for 2.5 seconds then fade out
+                    Handler(Looper.getMainLooper()).postDelayed({
+                        strategyIndicator.animate()
+                            .alpha(0f)
+                            .setDuration(500)
+                            .withEndAction {
+                                strategyIndicator.visibility = View.GONE
+                            }
+                            .start()
+                    }, 2500)
+                }
+                .start()
+
+            Log.d(TAG, "Strategy toast shown: $strategyText")
+        } catch (e: Exception) {
+            Log.e(TAG, "Error showing strategy toast: ${e.message}", e)
+        }
     }
 
     private fun animatePanda() {
@@ -403,7 +452,6 @@ class RhythmSummaryActivity : AppCompatActivity() {
         }
     }
 
-    // ✅ FIXED: Added missing updateProgressDots function
     private fun updateProgressDots() {
         try {
             // Update colors of existing dots based on current round
@@ -471,7 +519,10 @@ class RhythmSummaryActivity : AppCompatActivity() {
             currentModelDecision = gameMaster.predictWithBehavioralContext(inputFeatures)
             currentDifficultyLevel = currentModelDecision?.recommendedLevel ?: currentDifficultyLevel
             currentDistractorStrategy = currentModelDecision?.distractorStrategy ?: currentDistractorStrategy
-            updateIndicators()
+
+            // Update UI with new model decisions
+            updateLevelBadge()
+            showStrategyToast()
         }
 
         // Generate round with model-based distractors
@@ -493,7 +544,7 @@ class RhythmSummaryActivity : AppCompatActivity() {
 
         wordTitle.text = "Find: ${keyword.word.uppercase()}"
         displayOptions(gameRound)
-        updateProgressDots()  // ✅ Now works!
+        updateProgressDots()
         optionsGrid.isEnabled = true
 
         startResponseTimer()
@@ -503,7 +554,6 @@ class RhythmSummaryActivity : AppCompatActivity() {
         if (currentRound == 0) return false
         if (isConfidenceBuilderRoundActive) return false
 
-        // ✅ FIXED: Safe null checks
         val therapeuticIntent = currentTherapeuticIntent
         val frustrationLevel = gameMaster.getSessionSummary().behavioralProfile?.frustrationLevel ?: 0f
 
@@ -802,13 +852,12 @@ class RhythmSummaryActivity : AppCompatActivity() {
         val newLevel = gameMaster.getRecommendedLevel()
         if (newLevel != currentDifficultyLevel) {
             currentDifficultyLevel = newLevel
-            updateIndicators()
+            updateLevelBadge()
             showLevelChangeMessage()
         }
 
         updateScore()
-        updateProgressDots()  // ✅ Now works!
-        updateIndicators()
+        updateProgressDots()
 
         Handler(Looper.getMainLooper()).postDelayed({
             hideFeedbackAndShowNextButton()
@@ -951,10 +1000,10 @@ class RhythmSummaryActivity : AppCompatActivity() {
 
     private fun showLevelChangeMessage() {
         val message = when (currentDifficultyLevel) {
-            1 -> "Starting with Level 1! ⭐"
-            2 -> "Moving to Level 2! ⭐⭐"
-            3 -> "Great job! Level 3! ⭐⭐⭐"
-            4 -> "Amazing! Advanced Level! ⭐⭐⭐⭐"
+            1 -> "Starting as Beginner! 🌱"
+            2 -> "Now an Explorer! 🔍"
+            3 -> "You're a Master! 🏆"
+            4 -> "Absolute Genius! 👑"
             else -> "Level changed to $currentDifficultyLevel"
         }
         Toast.makeText(this, message, Toast.LENGTH_SHORT).show()
@@ -1004,6 +1053,7 @@ class RhythmSummaryActivity : AppCompatActivity() {
             intent.putExtra("SONG_TITLE", currentSongTitle)
             intent.putExtra("FINAL_LEVEL", currentDifficultyLevel)
             intent.putExtra("FINAL_STRATEGY", currentDistractorStrategy?.type)
+            intent.putExtra("FINAL_LEVEL_NAME", levelIndicator.text)
 
             val sessionMetrics = gameMaster.getSessionSummary()
             intent.putExtra("SESSION_METRICS", sessionMetrics)
