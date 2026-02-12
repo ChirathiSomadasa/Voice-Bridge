@@ -58,7 +58,7 @@ object KeywordImageMapper {
 
         // Stream rhymes
         "dream" to R.drawable.rhy_song0_dream,
-//        "cream" to R.drawable.cream,
+        "cream" to R.drawable.cream,
 //        "beam" to R.drawable.beam,
 //        "team" to R.drawable.team,
 //        "seam" to R.drawable.seam,
@@ -237,7 +237,7 @@ object KeywordImageMapper {
         "cat" to R.drawable.cat,
 //        "dog" to R.drawable.dog,
 //        "bird" to R.drawable.bird,
-//        "fish" to R.drawable.fish,
+        "fish" to R.drawable.fish,
 //        "flower" to R.drawable.flower,
         "cloud" to R.drawable.cloud
     )
