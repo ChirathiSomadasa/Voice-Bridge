@@ -53,12 +53,27 @@ class RMScoreboardActivity : AppCompatActivity() {
         songTitle = intent.getStringExtra("SONG_TITLE") ?: ""
         sessionMetrics = intent.getSerializableExtra("SESSION_METRICS") as? SessionMetrics
 
-        candyCountText.text = "$score candies"
+        // Set qualitative candy count description - always positive!
+        candyCountText.text = getCandyCountDescription(score, totalRounds)
 
         setResultText(score)
         setEffortMessage()
         setupCandyJarAnimation(score)
         setupButtonListeners()
+    }
+
+    /**
+     * Returns a qualitative description of the candy count - always positive and encouraging!
+     */
+    private fun getCandyCountDescription(score: Int, totalRounds: Int): String {
+        return when {
+            score == 0 -> "Your jar is ready for candies!"  // Positive, forward-looking
+            score <= totalRounds / 4 -> "You got some candies! 🍬"
+            score <= totalRounds / 2 -> "You're filling your jar! 🍭"
+            score <= totalRounds * 3 / 4 -> "Lots of candies! 🌟"
+            score < totalRounds -> "Almost full! ✨"
+            else -> "Full jar! Amazing! 🎉"
+        }
     }
 
     private fun initializeViews() {
@@ -72,16 +87,16 @@ class RMScoreboardActivity : AppCompatActivity() {
         dashboardButton = findViewById(R.id.dashboardButton)
         jarFillProgress = findViewById(R.id.jarFillProgress)
 
-        // Set initial jar as empty
-        candyJarImage.setImageResource(R.drawable.empty_jar)
+        // Start with a positive message and jar with at least a few candies
         jarFillProgress.progress = 0
     }
 
     private fun setResultText(score: Int) {
+        // Always positive result messages - no "You Tried!" for zero
         when {
             score == 0 -> {
-                resultText.text = "You Tried!"
-                resultText.setTextColor(Color.parseColor("#FF9800"))
+                resultText.text = "Great Listening!"
+                resultText.setTextColor(Color.parseColor("#4CAF50"))  // Green instead of orange
             }
             score <= totalRounds / 3 -> {
                 resultText.text = "Good Effort!"
@@ -108,26 +123,35 @@ class RMScoreboardActivity : AppCompatActivity() {
     }
 
     private fun setEffortMessage() {
+        // All messages are positive and encouraging
         val messages = when {
             score == 0 -> listOf(
-                "Every try counts!",
-                "You showed great persistence!",
-                "You listened carefully!"
+                "You're learning so much!",
+                "Every time you try, you get better!",
+                "You listened so carefully!",
+                "Your ears are getting stronger!",
+                "Great focus today!"
             )
             score <= totalRounds / 3 -> listOf(
-                "You're learning!",
+                "You're learning so fast!",
                 "Great focus today!",
-                "You're getting better!"
+                "You're getting better and better!",
+                "Wonderful listening skills!",
+                "You should be so proud!"
             )
             score <= totalRounds * 2 / 3 -> listOf(
                 "You worked really hard!",
                 "What excellent attention!",
-                "You're doing wonderful!"
+                "You're doing wonderful!",
+                "Amazing progress!",
+                "You're a listening star!"
             )
             else -> listOf(
                 "You're a superstar!",
                 "Incredible concentration!",
-                "You nailed it!"
+                "You nailed it!",
+                "Perfect listening!",
+                "You're amazing!"
             )
         }
 
@@ -138,13 +162,13 @@ class RMScoreboardActivity : AppCompatActivity() {
             metrics.behavioralProfile?.let { profile ->
                 val personalizedMessages = mutableListOf<String>()
 
-                if (profile.engagementScore > 0.7) {
+                if (profile.engagementScore > 0.5) {  // Lowered threshold to be more inclusive
                     personalizedMessages.add("You were so focused!")
                 }
-                if (profile.frustrationLevel < 0.3) {
+                if (profile.frustrationLevel < 0.5) {  // Lowered threshold
                     personalizedMessages.add("You stayed calm and kept trying!")
                 }
-                if (profile.accuracy > 0.6) {
+                if (profile.accuracy > 0.4) {  // Lowered threshold
                     personalizedMessages.add("You're really understanding the words!")
                 }
 
@@ -164,8 +188,11 @@ class RMScoreboardActivity : AppCompatActivity() {
     }
 
     private fun setupCandyJarAnimation(score: Int) {
-        // Calculate fill percentage
-        val fillPercentage = (score.toFloat() / totalRounds.toFloat()) * 100f
+        // Always show at least 1 candy for encouragement
+        val displayScore = if (score == 0) 1 else score
+
+        // Calculate fill percentage based on display score
+        val fillPercentage = (displayScore.toFloat() / totalRounds.toFloat()) * 100f
 
         // Animate progress bar
         jarFillProgress.max = 100
@@ -174,19 +201,18 @@ class RMScoreboardActivity : AppCompatActivity() {
         progressAnimator.interpolator = AccelerateDecelerateInterpolator()
         progressAnimator.start()
 
-        // Fill jar with candies
+        // Fill jar with candies - always at least 1!
         Handler(Looper.getMainLooper()).postDelayed({
-            fillJarWithCandies(score)
+            fillJarWithCandies(displayScore)
         }, 500)
 
-        // Add sparkles for good scores
-        if (score > totalRounds / 2) {
-            createSparkles(score * 2)
-        }
+        // Add sparkles for everyone! Every child deserves celebration
+        createSparkles(5 + score)  // Always at least 5 sparkles
     }
 
     private fun fillJarWithCandies(candyCount: Int) {
-        candyJarImage.setImageResource(R.drawable.empty_jar)
+        // Start with jar_low instead of empty_jar
+        candyJarImage.setImageResource(R.drawable.jar_low)
 
         // Clear existing candies
         candyJarContainer.removeViews(1, candyJarContainer.childCount - 1)
@@ -272,19 +298,24 @@ class RMScoreboardActivity : AppCompatActivity() {
                 .start()
         }, 600)
 
-        // Update candy count text
-        candyCountText.text = "${index + 1} candies"
+        // Update candy count text with encouraging qualitative description
+        candyCountText.text = getCandyCountDescription(index + 1, totalRounds)
+
+        // Add a little celebration sound in text form
+        if (index == 0) {
+            Toast.makeText(this, "🎉 First candy! 🎉", Toast.LENGTH_SHORT).show()
+        }
     }
 
     private fun updateJarImage(candyCount: Int) {
         val fillLevel = if (totalRounds > 0) candyCount.toFloat() / totalRounds.toFloat() else 0f
         Log.d(SCOREBOARD_TAG, "🎯 UPDATE JAR: Candies=$candyCount, Total=$totalRounds, Fill=$fillLevel")
 
-        // NEVER show empty jar - always show at least low jar
+        // NEVER show empty jar - ALWAYS show at least jar_low
         val jarResource = when {
-            candyCount == 0 -> {
-                Log.d(SCOREBOARD_TAG, "🟡 Showing LOW jar (0 candies)")
-                R.drawable.jar_low // Changed from empty_jar
+            candyCount <= 1 -> {  // Even for 1 candy, show jar_low
+                Log.d(SCOREBOARD_TAG, "🟡 Showing LOW jar (starting out)")
+                R.drawable.jar_low
             }
             fillLevel < 0.3 -> {
                 Log.d(SCOREBOARD_TAG, "🟡 Showing LOW jar (<30%)")
@@ -310,13 +341,13 @@ class RMScoreboardActivity : AppCompatActivity() {
             Log.d(SCOREBOARD_TAG, "✅ Jar image updated")
         } catch (e: Resources.NotFoundException) {
             Log.e(SCOREBOARD_TAG, "❌ Resource not found", e)
-            // Fallback - at least show something
+            // Fallback - always show something
             candyJarImage.setImageResource(R.drawable.jar_low)
         }
     }
 
     private fun celebrateFullJar() {
-        resultText.text = "Jar is FULL!"
+        resultText.text = "Jar is FULL! 🎉🎉🎉"
 
         // Big celebration animation
         candyJarImage.animate()
@@ -333,10 +364,10 @@ class RMScoreboardActivity : AppCompatActivity() {
             .start()
 
         // Extra sparkles
-        createSparkles(20)
+        createSparkles(30)
 
         // Confetti-like candies falling
-        createFallingCandies(10)
+        createFallingCandies(15)
     }
 
     private fun createSparkles(count: Int) {
@@ -446,9 +477,9 @@ class RMScoreboardActivity : AppCompatActivity() {
             finish()
         }
 
-        // Add candy jar click listener for fun interaction (VISUAL ONLY)
+        // Add candy jar click listener for fun interaction
         candyJarContainer.setOnClickListener {
-            // Just visual feedback, no candy changes
+            // Fun visual feedback
             candyJarImage.animate()
                 .scaleX(1.05f)
                 .scaleY(1.05f)
@@ -461,16 +492,31 @@ class RMScoreboardActivity : AppCompatActivity() {
                         .start()
                 }
                 .start()
+
+            // Show fun messages when jar is tapped
+            val clickMessages = listOf(
+                "Yum! 🍬",
+                "So yummy! 🍭",
+                "Sweet! 🍬🍭",
+                "Delicious! 🍫",
+                "Candy time! 🎉",
+                "Your candies are safe! ✨"
+            )
+            candyCountText.text = clickMessages.random()
+
+            // Revert back after 2 seconds
+            Handler(Looper.getMainLooper()).postDelayed({
+                candyCountText.text = getCandyCountDescription(score, totalRounds)
+            }, 2000)
         }
     }
 
     override fun onResume() {
         super.onResume()
-        // Ensure jar is properly filled
-        if (score > 0) {
-            Handler(Looper.getMainLooper()).postDelayed({
-                fillJarWithCandies(score)
-            }, 100)
-        }
+        // Always show at least 1 candy for encouragement
+        val displayScore = if (score == 0) 1 else score
+        Handler(Looper.getMainLooper()).postDelayed({
+            fillJarWithCandies(displayScore)
+        }, 100)
     }
 }
