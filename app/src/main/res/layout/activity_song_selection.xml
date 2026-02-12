@@ -10,10 +10,10 @@
 
     <ImageView
         android:id="@+id/topGameImage"
-        android:layout_width="match_parent"
-        android:layout_height="360dp"
+        android:layout_width="427dp"
+        android:layout_height="325dp"
         android:scaleType="fitXY"
-        android:src="@drawable/activity_sequence"
+        android:src="@drawable/rhythm_bg"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
