@@ -5,14 +5,14 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Bundle
-import android.os.Handler
-import android.os.Looper
 import android.speech.tts.TextToSpeech
 import android.widget.*
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.SetOptions
 import java.util.*
 import java.util.concurrent.Executors
 
@@ -40,13 +40,11 @@ class SpeechLevel1TaskActivity : AppCompatActivity(), TextToSpeech.OnInitListene
     private var currentIndex = 0
     private lateinit var letterScores: IntArray
 
-    // UI Components
     private lateinit var tvLetter: TextView
     private lateinit var llPlaySound: LinearLayout
     private lateinit var llSpeakSound: LinearLayout
     private lateinit var btnNext: Button
 
-    // Dialogs
     private lateinit var listeningDialog: ListeningDialog
     private lateinit var processingDialog: ProcessingDialog
     private lateinit var successDialog: SuccessDialog
@@ -54,11 +52,9 @@ class SpeechLevel1TaskActivity : AppCompatActivity(), TextToSpeech.OnInitListene
     private var tts: TextToSpeech? = null
     private var isTtsReady = false
 
-    // NEW: Wav2Vec2 Scorer & Executor
     private lateinit var wav2Vec2Scorer: Wav2Vec2Scorer
     private val executor = Executors.newSingleThreadExecutor()
 
-    // Auth
     private lateinit var auth: FirebaseAuth
     private var currentUserId: String = ""
 
@@ -66,14 +62,10 @@ class SpeechLevel1TaskActivity : AppCompatActivity(), TextToSpeech.OnInitListene
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_speech_level1_task)
 
-        // Initialize Auth & Get User ID
         auth = FirebaseAuth.getInstance()
         currentUserId = auth.currentUser?.uid ?: ""
-
-        // Initialize Wav2Vec2 Scorer
         wav2Vec2Scorer = Wav2Vec2Scorer(this)
 
-        // ---------------- SAVED PROGRESS LOGIC ----------------
         if (intent.hasExtra("BATCH_INDEX")) {
             currentBatchIndex = intent.getIntExtra("BATCH_INDEX", 0)
         } else {
@@ -86,7 +78,6 @@ class SpeechLevel1TaskActivity : AppCompatActivity(), TextToSpeech.OnInitListene
         }
 
         setupCurrentBatch()
-        // ------------------------------------------------------
 
         tvLetter = findViewById(R.id.tvLetter)
         llPlaySound = findViewById(R.id.llPlaySound)
@@ -120,17 +111,14 @@ class SpeechLevel1TaskActivity : AppCompatActivity(), TextToSpeech.OnInitListene
     private fun setupCurrentBatch() {
         val startIndex = currentBatchIndex * 5
         var endIndex = startIndex + 5
-
         if (endIndex > fullGraphemeList.size) {
             endIndex = fullGraphemeList.size
         }
-
         if (startIndex >= fullGraphemeList.size) {
             currentBatchIndex = 0
             setupCurrentBatch()
             return
         }
-
         currentLetterList = fullGraphemeList.subList(startIndex, endIndex)
         letterScores = IntArray(currentLetterList.size) { 0 }
         currentIndex = 0
@@ -157,19 +145,13 @@ class SpeechLevel1TaskActivity : AppCompatActivity(), TextToSpeech.OnInitListene
 
     private fun assessLetterPronunciation() {
         val letter = currentLetterList[currentIndex]
-        // Target label is the letter itself (e.g., "A")
         val targetLabel = letter
 
-        // Show Listening Dialog
         listeningDialog = ListeningDialog(this)
         listeningDialog.show()
 
-        // Run AI Task in Background
         executor.execute {
-            // 1. Record Audio (2.5 seconds for letters)
             val audioData = wav2Vec2Scorer.recordAudio(2500)
-
-            // Switch to UI thread to show "Processing"
             runOnUiThread {
                 if (::listeningDialog.isInitialized && listeningDialog.isShowing) {
                     listeningDialog.dismiss()
@@ -179,35 +161,53 @@ class SpeechLevel1TaskActivity : AppCompatActivity(), TextToSpeech.OnInitListene
             }
 
             if (audioData != null) {
-                // 2. Predict Score using ONNX Model
                 val (pronunciationType, score) = wav2Vec2Scorer.predict(audioData, targetLabel)
 
-                // 3. Update UI with Result
+                // Save Result to Firebase immediately
+                saveToHistory(letter, score, 1, pronunciationType)
+
                 runOnUiThread {
                     if (::processingDialog.isInitialized && processingDialog.isShowing) {
                         processingDialog.dismiss()
                     }
-
                     letterScores[currentIndex] = score
-
-                    FeedbackDialog(this).show(
-                        score = score,
-                        level = 1,
-                        word = letter,
-                        pronunciationType = pronunciationType
-                    )
+                    FeedbackDialog(this).show(score = score, level = 1, word = letter, pronunciationType = pronunciationType)
                     btnNext.isEnabled = true
                 }
             } else {
-                // Handle Recording Error
                 runOnUiThread {
                     if (::processingDialog.isInitialized && processingDialog.isShowing) {
                         processingDialog.dismiss()
                     }
-                    Toast.makeText(this, "Recording Failed. Please try again.", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(this, "Recording Failed.", Toast.LENGTH_SHORT).show()
                 }
             }
         }
+    }
+
+    private fun saveToHistory(content: String, score: Int, level: Int, pronunciationType: String) {
+        if (currentUserId.isEmpty()) return
+
+        val category = when {
+            score >= 75 -> "good"
+            score >= 50 -> "moderate"
+            else -> "poor"
+        }
+
+        val feedbackMap = hashMapOf(
+            "userId" to currentUserId,
+            "content" to content,
+            "score" to score,
+            "level" to level,
+            "type" to pronunciationType,
+            "category" to category,
+            "item_type" to "letter",
+            "timestamp" to com.google.firebase.Timestamp.now()
+        )
+
+        FirebaseFirestore.getInstance().collection("pronunciation_feedback")
+            .add(feedbackMap)
+            .addOnFailureListener { e -> e.printStackTrace() }
     }
 
     private fun displayCurrentLetter() {
@@ -232,14 +232,21 @@ class SpeechLevel1TaskActivity : AppCompatActivity(), TextToSpeech.OnInitListene
 
     private fun finishLevel() {
         val progressScore = calculateProgress()
-
         val nextBatchStartIndex = (currentBatchIndex + 1) * 5
         val hasMoreLetters = nextBatchStartIndex < fullGraphemeList.size
 
         if (progressScore >= 75) {
+            val nextBatch = currentBatchIndex + 1
             if (hasMoreLetters && currentUserId.isNotEmpty()) {
+                // 1. Local Save
                 val prefs = getSharedPreferences("VoiceBridgePrefs", Context.MODE_PRIVATE)
-                prefs.edit().putInt("SAVED_BATCH_LEVEL_1_$currentUserId", currentBatchIndex + 1).apply()
+                prefs.edit().putInt("SAVED_BATCH_LEVEL_1_$currentUserId", nextBatch).apply()
+
+                // 2. Firebase Sync
+                val updateMap = hashMapOf("level1_batch" to nextBatch)
+                FirebaseFirestore.getInstance().collection("student_progress")
+                    .document(currentUserId)
+                    .set(updateMap, SetOptions.merge())
             }
 
             successDialog = SuccessDialog(this)
