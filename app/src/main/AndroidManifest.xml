@@ -16,6 +16,9 @@
         android:theme="@style/Theme.VoiceBridge"
         tools:targetApi="31">
         <activity
+            android:name=".ParentReportActivity"
+            android:exported="false" />
+        <activity
             android:name=".LevelTransitionActivity"
             android:exported="false" />
         <activity
@@ -27,7 +30,7 @@
         <activity
             android:name=".LetterProgressActivity"
             android:exported="false" />
-         <activity
+        <activity
             android:name=".PainSymbolsActivity"
             android:exported="false" />
         <activity
@@ -87,7 +90,6 @@
         <activity
             android:name=".RhythmSummaryActivity"
             android:exported="false" />
-        
         <activity
             android:name=".RMScoreboardActivity"
             android:exported="false" />
@@ -199,6 +201,17 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="${applicationId}.provider"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/provider_paths" />
+        </provider>
+
     </application>
 
 </manifest>
