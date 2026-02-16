@@ -15,6 +15,10 @@ import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.SetOptions
 import java.util.*
 import java.util.concurrent.Executors
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 class SpeechLevel1TaskActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
 
@@ -151,35 +155,62 @@ class SpeechLevel1TaskActivity : AppCompatActivity(), TextToSpeech.OnInitListene
         listeningDialog.show()
 
         executor.execute {
+            // 1. Audio Recording (2.5 seconds for letters)
             val audioData = wav2Vec2Scorer.recordAudio(2500)
+
+            // 2. Dismiss Listening and Show Processing (Lottie)
             runOnUiThread {
                 if (::listeningDialog.isInitialized && listeningDialog.isShowing) {
                     listeningDialog.dismiss()
                 }
-                processingDialog = ProcessingDialog(this)
+                processingDialog = ProcessingDialog(this@SpeechLevel1TaskActivity)
                 processingDialog.show()
             }
 
             if (audioData != null) {
+                // 3. Get Wav2Vec2 Score
                 val (pronunciationType, score) = wav2Vec2Scorer.predict(audioData, targetLabel)
+
+                val category = when {
+                    score >= 75 -> "good"
+                    score >= 50 -> "moderate"
+                    else -> "bad"
+                }
 
                 // Save Result to Firebase immediately
                 saveToHistory(letter, score, 1, pronunciationType)
 
-                runOnUiThread {
-                    if (::processingDialog.isInitialized && processingDialog.isShowing) {
-                        processingDialog.dismiss()
+                // 4. Launch Coroutine for API call while Processing Dialog is showing
+                CoroutineScope(Dispatchers.IO).launch {
+
+                    // Call the suspend function from FeedbackGenerator
+                    val aiFeedbackText = FeedbackGenerator.getDynamicFeedback(score, category)
+
+                    // 5. Switch back to Main Thread to update UI
+                    withContext(Dispatchers.Main) {
+
+                        // Dismiss Processing Animation
+                        if (::processingDialog.isInitialized && processingDialog.isShowing) {
+                            processingDialog.dismiss()
+                        }
+
+                        letterScores[currentIndex] = score
+
+                        // Show Feedback Dialog with the generated text
+                        FeedbackDialog(this@SpeechLevel1TaskActivity).show(
+                            score = score,
+                            category = category,
+                            feedbackMessage = aiFeedbackText
+                        )
+                        btnNext.isEnabled = true
                     }
-                    letterScores[currentIndex] = score
-                    FeedbackDialog(this).show(score = score, level = 1, word = letter, pronunciationType = pronunciationType)
-                    btnNext.isEnabled = true
                 }
             } else {
                 runOnUiThread {
                     if (::processingDialog.isInitialized && processingDialog.isShowing) {
                         processingDialog.dismiss()
                     }
-                    Toast.makeText(this, "Recording Failed.", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(this@SpeechLevel1TaskActivity, "Recording Failed.", Toast.LENGTH_SHORT).show()
                 }
             }
         }
