@@ -71,6 +71,7 @@ class SpeechLevel3TaskActivity : AppCompatActivity(), TextToSpeech.OnInitListene
     private lateinit var listeningDialog: ListeningDialog
     private lateinit var processingDialog: ProcessingDialog
     private lateinit var successDialog: SuccessDialog
+    private lateinit var soundManager: SoundManager
 
     private var tts: TextToSpeech? = null
     private var isTtsReady = false
@@ -82,6 +83,8 @@ class SpeechLevel3TaskActivity : AppCompatActivity(), TextToSpeech.OnInitListene
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_speech_level3_task)
+
+        soundManager = SoundManager(this)
 
         auth = FirebaseAuth.getInstance()
         currentUserId = auth.currentUser?.uid ?: ""
@@ -110,10 +113,12 @@ class SpeechLevel3TaskActivity : AppCompatActivity(), TextToSpeech.OnInitListene
         displayCurrentSentence()
 
         llPlaySound.setOnClickListener {
+            soundManager.playClickSound() // Play UI pop sound
             if (isTtsReady) speakSentence(tvSentence.text.toString())
         }
 
         llSpeakSound.setOnClickListener {
+            soundManager.playClickSound() // Play UI pop sound
             if (ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED) {
                 assessSentencePronunciation()
             } else {
@@ -317,6 +322,8 @@ class SpeechLevel3TaskActivity : AppCompatActivity(), TextToSpeech.OnInitListene
     override fun onDestroy() {
         tts?.stop()
         tts?.shutdown()
+        // Release Sound Pool to avoid memory leaks
+        soundManager.release()
         super.onDestroy()
     }
 }
