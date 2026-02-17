@@ -32,7 +32,7 @@ class LoginActivity : AppCompatActivity() {
 
         // Initialize ProgressDialog
         progressDialog = ProgressDialog(this).apply {
-            setMessage("Logging in...")
+            setMessage("Logging in, please wait...")
             setCancelable(false)
         }
 
@@ -56,7 +56,7 @@ class LoginActivity : AppCompatActivity() {
 
         // Input Validation
         if (emailText.isEmpty() || passwordText.isEmpty()) {
-            Toast.makeText(this, "Please enter email and password", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, "Please enter both your email and password.", Toast.LENGTH_SHORT).show()
             return
         }
 
@@ -66,8 +66,6 @@ class LoginActivity : AppCompatActivity() {
         // Firebase Authentication Sign-In
         auth.signInWithEmailAndPassword(emailText, passwordText)
             .addOnCompleteListener { task ->
-                progressDialog.dismiss()
-
                 if (task.isSuccessful) {
                     val userId = auth.currentUser?.uid
                     if (userId != null) {
@@ -75,8 +73,17 @@ class LoginActivity : AppCompatActivity() {
                         fetchUserRoleAndNavigate(userId)
                     }
                 } else {
-                    // Display error message if login failed
-                    Toast.makeText(this, "Login failed: ${task.exception?.message}", Toast.LENGTH_SHORT).show()
+                    progressDialog.dismiss()
+
+                    // Map technical Firebase errors to user-friendly messages
+                    val errorMessage = when (task.exception?.message) {
+                        "There is no user record corresponding to this identifier. The user may have been deleted." -> "We couldn't find an account with that email."
+                        "The email address is badly formatted." -> "Please enter a valid email address."
+                        "A network error (such as timeout, interrupted connection or unreachable host) has occurred." -> "Network error. Please check your internet connection."
+                        else -> "Incorrect email or password. Please try again." // Catch-all for wrong passwords/general auth errors
+                    }
+
+                    Toast.makeText(this, errorMessage, Toast.LENGTH_LONG).show()
                 }
             }
     }
@@ -84,6 +91,8 @@ class LoginActivity : AppCompatActivity() {
     private fun fetchUserRoleAndNavigate(userId: String) {
         db.collection("users").document(userId).get()
             .addOnSuccessListener { document ->
+                progressDialog.dismiss()
+
                 if (document.exists()) {
                     val isTeacher = document.getBoolean("isTeacher") ?: false
 
@@ -93,17 +102,19 @@ class LoginActivity : AppCompatActivity() {
                     } else {
                         HomeActivity::class.java
                     }
-                    Toast.makeText(this, "Login Successful!", Toast.LENGTH_SHORT).show()
+
+                    Toast.makeText(this, "Welcome back!", Toast.LENGTH_SHORT).show()
 
                     val intent = Intent(this, destinationActivity)
                     startActivity(intent)
                     finish() // Close LoginActivity
                 } else {
-                    Toast.makeText(this, "User data not found in database.", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(this, "Account details not found. Please contact support.", Toast.LENGTH_LONG).show()
                 }
             }
             .addOnFailureListener {
-                Toast.makeText(this, "Error fetching user data: ${it.message}", Toast.LENGTH_SHORT).show()
+                progressDialog.dismiss()
+                Toast.makeText(this, "Failed to load account details. Please try again.", Toast.LENGTH_LONG).show()
             }
     }
 }
