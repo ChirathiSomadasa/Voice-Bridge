@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    face_empty_template.xml — Vector drawable
+    An empty face: oval outline + ears + nose bridge + nostril dots.
+    Eyes, eyebrows and mouth slots are intentionally LEFT EMPTY
+    so the child's chosen parts appear in those positions via
+    the overlaid ImageViews in the ConstraintLayout.
+-->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="280dp"
+    android:height="320dp"
+    android:viewportWidth="280"
+    android:viewportHeight="320">
+
+    <!-- ── Face oval ────────────────────────────────────────────────── -->
+    <path
+        android:pathData="M140,10
+                          C210,10 265,70 265,165
+                          C265,255 210,310 140,310
+                          C70,310 15,255 15,165
+                          C15,70 70,10 140,10 Z"
+        android:fillColor="#FDEBD0"
+        android:strokeColor="#D4956A"
+        android:strokeWidth="4"/>
+
+    <!-- ── Left ear ──────────────────────────────────────────────────── -->
+    <path
+        android:pathData="M18,140 C2,140 2,200 18,200"
+        android:fillColor="#FDEBD0"
+        android:strokeColor="#D4956A"
+        android:strokeWidth="3.5"/>
+
+    <!-- ── Right ear ─────────────────────────────────────────────────── -->
+    <path
+        android:pathData="M262,140 C278,140 278,200 262,200"
+        android:fillColor="#FDEBD0"
+        android:strokeColor="#D4956A"
+        android:strokeWidth="3.5"/>
+
+    <!-- ── Nose bridge (vertical line, subtle) ───────────────────────── -->
+    <path
+        android:pathData="M140,148 L140,178"
+        android:strokeColor="#C9956A"
+        android:strokeWidth="2.5"
+        android:strokeLineCap="round"/>
+
+    <!-- ── Left nostril ───────────────────────────────────────────────── -->
+    <path
+        android:pathData="M124,178 C120,170 115,175 118,181 C121,187 128,184 124,178 Z"
+        android:fillColor="#C9956A"/>
+
+    <!-- ── Right nostril ──────────────────────────────────────────────── -->
+    <path
+        android:pathData="M156,178 C160,170 165,175 162,181 C159,187 152,184 156,178 Z"
+        android:fillColor="#C9956A"/>
+
+    <!-- ── Eyebrow guide dots (very faint — show where brows go) ──────── -->
+    <!-- Left eyebrow hint -->
+    <path
+        android:pathData="M80,88 L120,82"
+        android:strokeColor="#E8C9A0"
+        android:strokeWidth="2"
+        android:strokeLineCap="round"/>
+    <!-- Right eyebrow hint -->
+    <path
+        android:pathData="M160,82 L200,88"
+        android:strokeColor="#E8C9A0"
+        android:strokeWidth="2"
+        android:strokeLineCap="round"/>
+
+    <!-- ── Eye socket outlines (very faint circles — show where eyes go) ─ -->
+    <!-- Left eye socket -->
+    <path
+        android:pathData="M82,118 C82,106 118,106 118,118 C118,130 82,130 82,118 Z"
+        android:fillColor="#F5DEC0"
+        android:strokeColor="#E8C9A0"
+        android:strokeWidth="1.5"/>
+    <!-- Right eye socket -->
+    <path
+        android:pathData="M162,118 C162,106 198,106 198,118 C198,130 162,130 162,118 Z"
+        android:fillColor="#F5DEC0"
+        android:strokeColor="#E8C9A0"
+        android:strokeWidth="1.5"/>
+
+    <!-- ── Mouth placeholder line (very faint) ───────────────────────── -->
+    <path
+        android:pathData="M105,228 C120,236 160,236 175,228"
+        android:strokeColor="#E8C9A0"
+        android:strokeWidth="2"
+        android:strokeLineCap="round"/>
+
+</vector>
