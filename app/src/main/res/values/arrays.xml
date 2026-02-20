@@ -1,6 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
+    <!-- ============================================================ -->
+    <!-- EXISTING: Basic Mood Match Arrays (Ages 6-7) -->
+    <!-- ============================================================ -->
+
     <array name="mood_age6_lvl0_correct">
         <item>@drawable/mood_lvl0_shared_happy</item>
         <item>@drawable/mood_lvl0_shared_sad</item>
@@ -39,6 +43,9 @@
         <item>@drawable/mood_lvl0_shared_bored</item>
     </array>
 
+    <!-- ============================================================ -->
+    <!-- EXISTING: Advanced Mood Match Arrays (Ages 8-10) -->
+    <!-- ============================================================ -->
 
     <array name="mood_age8_lvl0_correct">
         <item>@drawable/mood_lvl0_shared_happy</item>
@@ -72,47 +79,240 @@
         <item>@drawable/mood_lvl1_age8_disgusted</item>
     </array>
 
+    <!-- ============================================================ -->
+    <!-- NEW: Face Building Arrays (Ages 6-7 Mini-Game) -->
+    <!-- ============================================================ -->
+
+    <!-- Eyes Options -->
+    <array name="face_eyes_happy">
+        <item>@drawable/face_eyes_happy_wide</item>
+        <item>@drawable/face_eyes_happy_crescent</item>
+    </array>
+
+    <array name="face_eyes_sad">
+        <item>@drawable/face_eyes_sad_droopy</item>
+        <item>@drawable/face_eyes_sad_teary</item>
+    </array>
+
+    <array name="face_eyes_angry">
+        <item>@drawable/face_eyes_angry_narrow</item>
+        <item>@drawable/face_eyes_angry_slanted</item>
+    </array>
+
+    <array name="face_eyes_surprised">
+        <item>@drawable/face_eyes_surprised_wide</item>
+        <item>@drawable/face_eyes_surprised_round</item>
+    </array>
+
+    <array name="face_eyes_scared">
+        <item>@drawable/face_eyes_scared_wide</item>
+        <item>@drawable/face_eyes_scared_worried</item>
+    </array>
+
+    <!-- Mouth Options -->
+    <array name="face_mouth_happy">
+        <item>@drawable/face_mouth_happy_smile</item>
+        <item>@drawable/face_mouth_happy_laugh</item>
+    </array>
+
+    <array name="face_mouth_sad">
+        <item>@drawable/face_mouth_sad_frown</item>
+        <item>@drawable/face_mouth_sad_downturn</item>
+    </array>
+
+    <array name="face_mouth_angry">
+        <item>@drawable/face_mouth_angry_grimace</item>
+        <item>@drawable/face_mouth_angry_teeth</item>
+    </array>
+
+    <array name="face_mouth_surprised">
+        <item>@drawable/face_mouth_surprised_o</item>
+        <item>@drawable/face_mouth_surprised_gasp</item>
+    </array>
+
+    <array name="face_mouth_scared">
+        <item>@drawable/face_mouth_scared_wavy</item>
+        <item>@drawable/face_mouth_scared_open</item>
+    </array>
+
+    <!-- Eyebrow Options -->
+    <array name="face_eyebrows_happy">
+        <item>@drawable/face_eyebrows_happy_raised</item>
+    </array>
+
+    <array name="face_eyebrows_sad">
+        <item>@drawable/face_eyebrows_sad_droopy</item>
+    </array>
+
+    <array name="face_eyebrows_angry">
+        <item>@drawable/face_eyebrows_angry_furrowed</item>
+    </array>
+
+    <array name="face_eyebrows_surprised">
+        <item>@drawable/face_eyebrows_surprised_high</item>
+    </array>
+
+    <array name="face_eyebrows_scared">
+        <item>@drawable/face_eyebrows_scared_raised</item>
+    </array>
+
+    <!-- Face Building Challenges -->
+    <string-array name="face_building_challenges">
+        <item>happy</item>
+        <item>sad</item>
+        <item>angry</item>
+        <item>surprised</item>
+        <item>scared</item>
+    </string-array>
+
+    <!-- ============================================================ -->
+    <!-- NEW: Story Sequence Arrays (Ages 8-10 Mini-Game) -->
+    <!-- ============================================================ -->
+
+    <!-- Story 1: Birthday Party -->
+    <array name="story_birthday_images">
+        <item>@drawable/story_birthday_panel1_invite</item>
+        <item>@drawable/story_birthday_panel2_party</item>
+        <item>@drawable/story_birthday_panel3_cake</item>
+    </array>
+
+    <string-array name="story_birthday_prompts">
+        <item>You get an invitation to your friend\'s party!</item>
+        <item>At the party, everyone is playing games!</item>
+        <item>Time for birthday cake!</item>
+    </string-array>
+
+    <array name="story_birthday_correct_emotions">
+        <item>@drawable/mood_lvl0_shared_happy</item>
+        <item>@drawable/mood_lvl0_shared_happy</item>
+        <item>@drawable/mood_lvl0_shared_happy</item>
+    </array>
+
+    <!-- Story 2: Lost Toy -->
+    <array name="story_lost_toy_images">
+        <item>@drawable/story_lost_toy_panel1_playing</item>
+        <item>@drawable/story_lost_toy_panel2_searching</item>
+        <item>@drawable/story_lost_toy_panel3_found</item>
+    </array>
+
+    <string-array name="story_lost_toy_prompts">
+        <item>You\'re playing with your favorite toy</item>
+        <item>Oh no! You can\'t find it anywhere!</item>
+        <item>You found it under the bed!</item>
+    </string-array>
+
+    <array name="story_lost_toy_correct_emotions">
+        <item>@drawable/mood_lvl0_shared_happy</item>
+        <item>@drawable/mood_lvl0_shared_sad</item>
+        <item>@drawable/mood_lvl0_shared_happy</item>
+    </array>
+
+    <!-- Story 3: New Pet -->
+    <array name="story_new_pet_images">
+        <item>@drawable/story_new_pet_panel1_pet_store</item>
+        <item>@drawable/story_new_pet_panel2_bringing_home</item>
+        <item>@drawable/story_new_pet_panel3_playing</item>
+    </array>
+
+    <string-array name="story_new_pet_prompts">
+        <item>Mom says you can get a pet!</item>
+        <item>You\'re bringing your new puppy home!</item>
+        <item>Playing with your new best friend!</item>
+    </string-array>
+
+    <array name="story_new_pet_correct_emotions">
+        <item>@drawable/mood_lvl0_age8_surprise</item>
+        <item>@drawable/mood_lvl0_shared_happy</item>
+        <item>@drawable/mood_lvl0_shared_happy</item>
+    </array>
+
+    <!-- Story 4: Broken Toy -->
+    <array name="story_broken_toy_images">
+        <item>@drawable/story_broken_toy_panel1_playing</item>
+        <item>@drawable/story_broken_toy_panel2_breaks</item>
+        <item>@drawable/story_broken_toy_panel3_fixing</item>
+    </array>
+
+    <string-array name="story_broken_toy_prompts">
+        <item>You\'re playing with your Teddy</item>
+        <item>The Teddy breaks it\'s leg!</item>
+        <item>Mom helps you fix it together!</item>
+    </string-array>
+
+    <array name="story_broken_toy_correct_emotions">
+        <item>@drawable/mood_lvl0_shared_happy</item>
+        <item>@drawable/mood_lvl0_shared_sad</item>
+        <item>@drawable/mood_lvl0_shared_happy</item>
+    </array>
+
+    <!-- Story 5: First Day School -->
+    <array name="story_school_images">
+        <item>@drawable/story_school_panel1_morning</item>
+        <item>@drawable/story_school_panel2_classroom</item>
+        <item>@drawable/story_school_panel3_friends</item>
+    </array>
+
+    <string-array name="story_school_prompts">
+        <item>It\'s your first day at a new school</item>
+        <item>You walk into the big classroom</item>
+        <item>Kids come over to play with you!</item>
+    </string-array>
+
+    <array name="story_school_correct_emotions">
+        <item>@drawable/mood_lvl1_age8_anxious</item>
+        <item>@drawable/mood_lvl1_shared_scared</item>
+        <item>@drawable/mood_lvl0_shared_happy</item>
+    </array>
+
+    <!-- Story List (for random selection) -->
+    <string-array name="available_stories">
+        <item>birthday</item>
+        <item>lost_toy</item>
+        <item>new_pet</item>
+        <item>broken_toy</item>
+        <item>school</item>
+    </string-array>
+
+    <!-- ============================================================ -->
+    <!-- Distractor Options for Mini-Games -->
+    <!-- ============================================================ -->
+
+    <array name="face_building_distractors">
+        <item>@drawable/mood_lvl0_shared_happy</item>
+        <item>@drawable/mood_lvl0_shared_sad</item>
+        <item>@drawable/mood_lvl0_shared_angry</item>
+        <item>@drawable/mood_lvl0_shared_bored</item>
+    </array>
+
+    <array name="story_emotion_options_pool">
+        <item>@drawable/mood_lvl0_shared_happy</item>
+        <item>@drawable/mood_lvl0_shared_sad</item>
+        <item>@drawable/mood_lvl0_shared_angry</item>
+        <item>@drawable/mood_lvl1_shared_scared</item>
+        <item>@drawable/mood_lvl0_age8_surprise</item>
+        <item>@drawable/mood_lvl1_age8_anxious</item>
+    </array>
+
+    <!-- ============================================================ -->
+    <!-- Sequence Arrays (Existing) -->
+    <!-- ============================================================ -->
+
     <array name="seq_rtn0_sub1">
         <item>@drawable/seq_rtn0_sub1_1_wakeup</item>
         <item>@drawable/seq_rtn0_sub1_2_bed</item>
         <item>@drawable/seq_rtn0_sub1_3_drink</item>
     </array>
+
     <array name="seq_rtn0_sub2">
         <item>@drawable/seq_rtn0_sub2_1_brush</item>
         <item>@drawable/seq_rtn0_sub2_2_wash</item>
         <item>@drawable/seq_rtn0_sub2_3_dry</item>
     </array>
+
     <array name="seq_rtn0_sub3">
         <item>@drawable/seq_rtn0_sub3_1_change</item>
         <item>@drawable/seq_rtn0_sub3_2_cream</item>
         <item>@drawable/seq_rtn0_sub3_3_wash</item>
     </array>
-
-<!--    <array name="seq_routine1_school_steps">-->
-<!--        <item>@drawable/seq_rtn1_1_wear_uniform</item>-->
-<!--        <item>@drawable/seq_rtn1_2_wear_shoes</item>-->
-<!--        <item>@drawable/seq_rtn1_3_take_bag</item>-->
-<!--        <item>@drawable/seq_rtn1_4_school_bus</item>-->
-<!--    </array>-->
-
-<!--    <array name="seq_global_shoes">-->
-<!--        <item>@drawable/seq_global_shoes_1_socks</item>-->
-<!--        <item>@drawable/seq_global_shoes_2_shoes_on</item>-->
-<!--        <item>@drawable/seq_global_shoes_3_tie_laces</item>-->
-<!--    </array>-->
-
-
-<!--    <array name="rhy_song1_flashcards">-->
-<!--        <item>@drawable/rhy_song1_star</item>-->
-<!--        <item>@drawable/rhy_song1_diamond</item>-->
-<!--        <item>@drawable/rhy_song1_sky</item>-->
-<!--    </array>-->
-
-<!--    <array name="rhy_song2_flashcards">-->
-<!--        <item>@drawable/rhy_song2_boat</item>-->
-<!--        <item>@drawable/rhy_song2_stream</item>-->
-<!--        <item>@drawable/rhy_song2_dream</item>-->
-<!--        <item>@drawable/rhy_song2_crocodile</item>-->
-<!--    </array>-->
 
 </resources>
