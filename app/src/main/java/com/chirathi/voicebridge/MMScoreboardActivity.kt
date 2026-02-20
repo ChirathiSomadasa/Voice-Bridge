@@ -171,9 +171,9 @@ class MMScoreboardActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
 
     private fun getPerformanceResult(alpha: Float): Pair<String, Int> {
         return when {
-            alpha > 8.0f -> Pair("Outstanding! ⭐⭐⭐", R.color.gold)
-            alpha > 5.0f -> Pair("Great Job! ⭐⭐", R.color.light_green)
-            alpha > 2.0f -> Pair("Good Effort! ⭐", R.color.light_blue)
+            alpha > 8.0f -> Pair("Outstanding!", R.color.gold)
+            alpha > 5.0f -> Pair("Great Job!", R.color.light_green)
+            alpha > 2.0f -> Pair("Good Effort!", R.color.light_blue)
             else -> Pair("Keep Practicing!", R.color.dark_orange)
         }
     }
