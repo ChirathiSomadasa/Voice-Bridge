@@ -163,7 +163,7 @@ class MoodMatchSevenDownActivity : AppCompatActivity(),
         Log.d(TAG, "🎮 Launching mini-game type=${currentPrediction.minigameType} diff=${currentPrediction.minigameDifficulty}")
 
         // Clamp type to valid range — model can output values > 1
-        val safeType = currentPrediction.minigameType.coerceIn(0, 1)
+        val safeType = (0..1).random()
         val intent = Intent(this, MiniGameMoodMatchActivity::class.java).apply {
             putExtra(MiniGameMoodMatchActivity.EXTRA_TYPE, safeType)
             putExtra(MiniGameMoodMatchActivity.EXTRA_DIFF, currentPrediction.minigameDifficulty)

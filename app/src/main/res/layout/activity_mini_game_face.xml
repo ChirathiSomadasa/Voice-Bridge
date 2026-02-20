@@ -1,0 +1,328 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/white"
+    android:fillViewport="true">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:gravity="center_horizontal">
+
+        <!-- ── Header ─────────────────────────────────────────────────── -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="@color/dark_orange"
+            android:orientation="vertical"
+            android:paddingTop="40dp"
+            android:paddingBottom="14dp"
+            android:paddingHorizontal="20dp"
+            android:gravity="center">
+
+            <TextView
+                android:id="@+id/fbTitle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Build an ANGRY face!"
+                android:textColor="@color/white"
+                android:textSize="26sp"
+                android:textStyle="bold"
+                android:gravity="center"
+                android:shadowColor="#44000000"
+                android:shadowDx="1"
+                android:shadowDy="1"
+                android:shadowRadius="3"/>
+
+            <TextView
+                android:id="@+id/fbInstruction"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="6dp"
+                android:text="Choose the eyes:"
+                android:textColor="#FFE8CC"
+                android:textSize="18sp"
+                android:gravity="center"/>
+
+            <TextView
+                android:id="@+id/fbProgress"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:text="Step 1 of 3"
+                android:textColor="#FFD9A0"
+                android:textSize="14sp"/>
+        </LinearLayout>
+
+        <!-- ── Face Preview ───────────────────────────────────────────── -->
+        <!--
+            Strategy: fixed 280×320dp ConstraintLayout.
+            The BASE fills the entire area (face oval, nose, ears).
+
+            Each PART has a FIXED height that's large enough to visually
+            fill its region of the face, and is positioned by constraining
+            its TOP edge to a percentage guideline. Width is always full (0dp).
+
+            Part sizes chosen to match the face_empty_template proportions:
+              Eyebrows : top at 18%, height 52dp  → covers brow region
+              Eyes     : top at 30%, height 80dp  → covers eye socket region
+              Mouth    : top at 61%, height 72dp  → covers mouth region
+
+            scaleType="fitXY" makes each part fill its slot completely.
+            No scaleX/scaleY needed.
+        -->
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:id="@+id/fbPreviewArea"
+            android:layout_width="280dp"
+            android:layout_height="320dp"
+            android:layout_marginTop="16dp"
+            android:layout_marginBottom="4dp">
+
+            <!-- Positioning guidelines (percent of 320dp height) -->
+            <androidx.constraintlayout.widget.Guideline
+                android:id="@+id/glEyebrowTop"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                app:layout_constraintGuide_percent="0.18"/>
+
+            <androidx.constraintlayout.widget.Guideline
+                android:id="@+id/glEyeTop"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                app:layout_constraintGuide_percent="0.30"/>
+
+            <androidx.constraintlayout.widget.Guideline
+                android:id="@+id/glMouthTop"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                app:layout_constraintGuide_percent="0.61"/>
+
+            <!-- Base face: nose, ears, oval outline, guide slots -->
+            <ImageView
+                android:id="@+id/fbPreviewBase"
+                android:layout_width="0dp"
+                android:layout_height="0dp"
+                android:scaleType="fitXY"
+                android:src="@drawable/face_empty_template"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"/>
+
+            <!--
+                EYEBROWS
+                Top anchored to glEyebrowTop (18% = ~58dp from top).
+                Height fixed at 52dp — enough to show both brow curves clearly.
+                Width = full face width (0dp start→end).
+            -->
+            <ImageView
+                android:id="@+id/fbPreviewBrows"
+                android:layout_width="0dp"
+                android:layout_height="52dp"
+                android:scaleType="fitCenter"
+                android:visibility="invisible"
+                app:layout_constraintTop_toBottomOf="@id/glEyebrowTop"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"/>
+
+            <!--
+                EYES
+                Top anchored to glEyeTop (30% = ~96dp from top).
+                Height fixed at 80dp — large enough for both eyes side by side.
+            -->
+            <ImageView
+                android:id="@+id/fbPreviewEyes"
+                android:layout_width="0dp"
+                android:layout_height="80dp"
+                android:scaleType="fitCenter"
+                android:visibility="invisible"
+                app:layout_constraintTop_toBottomOf="@id/glEyeTop"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"/>
+
+            <!--
+                MOUTH
+                Top anchored to glMouthTop (61% = ~195dp from top).
+                Height fixed at 72dp — wide smile / frown fits well.
+            -->
+            <ImageView
+                android:id="@+id/fbPreviewMouth"
+                android:layout_width="0dp"
+                android:layout_height="72dp"
+                android:scaleType="fitCenter"
+                android:visibility="invisible"
+                app:layout_constraintTop_toBottomOf="@id/glMouthTop"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"/>
+
+        </androidx.constraintlayout.widget.ConstraintLayout>
+
+        <!-- ── 3 Option Images + Labels ───────────────────────────────── -->
+        <LinearLayout
+            android:id="@+id/fbSelectionRow"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center"
+            android:paddingHorizontal="8dp"
+            android:paddingTop="8dp"
+            android:paddingBottom="8dp">
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="vertical"
+                android:gravity="center"
+                android:padding="4dp">
+
+                <ImageView
+                    android:id="@+id/fbOpt1"
+                    android:layout_width="88dp"
+                    android:layout_height="88dp"
+                    android:scaleType="fitCenter"
+                    android:background="@drawable/option_border"
+                    android:padding="6dp"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:src="@drawable/panda_confused"/>
+
+                <TextView
+                    android:id="@+id/fbOptLabel1"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp"
+                    android:text=""
+                    android:textSize="22sp"
+                    android:textStyle="bold"
+                    android:gravity="center"/>
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="vertical"
+                android:gravity="center"
+                android:padding="4dp">
+
+                <ImageView
+                    android:id="@+id/fbOpt2"
+                    android:layout_width="88dp"
+                    android:layout_height="88dp"
+                    android:scaleType="fitCenter"
+                    android:background="@drawable/option_border"
+                    android:padding="6dp"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:src="@drawable/panda_confused"/>
+
+                <TextView
+                    android:id="@+id/fbOptLabel2"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp"
+                    android:text=""
+                    android:textSize="22sp"
+                    android:textStyle="bold"
+                    android:gravity="center"/>
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="vertical"
+                android:gravity="center"
+                android:padding="4dp">
+
+                <ImageView
+                    android:id="@+id/fbOpt3"
+                    android:layout_width="88dp"
+                    android:layout_height="88dp"
+                    android:scaleType="fitCenter"
+                    android:background="@drawable/option_border"
+                    android:padding="6dp"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:src="@drawable/panda_confused"/>
+
+                <TextView
+                    android:id="@+id/fbOptLabel3"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp"
+                    android:text=""
+                    android:textSize="22sp"
+                    android:textStyle="bold"
+                    android:gravity="center"/>
+            </LinearLayout>
+        </LinearLayout>
+
+        <!-- ── Review Area ────────────────────────────────────────────── -->
+        <LinearLayout
+            android:id="@+id/fbReviewArea"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:gravity="center"
+            android:paddingHorizontal="16dp"
+            android:paddingTop="8dp"
+            android:visibility="gone">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="The correct face looks like this:"
+                android:textSize="16sp"
+                android:textColor="#5D4037"
+                android:layout_marginBottom="8dp"/>
+
+            <ImageView
+                android:id="@+id/fbRevealFace"
+                android:layout_width="130dp"
+                android:layout_height="130dp"
+                android:scaleType="fitCenter"
+                android:src="@drawable/panda_confused"/>
+        </LinearLayout>
+
+        <!-- ── Feedback ───────────────────────────────────────────────── -->
+        <TextView
+            android:id="@+id/fbFeedback"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginHorizontal="20dp"
+            android:layout_marginTop="10dp"
+            android:padding="12dp"
+            android:background="#FFF8F0"
+            android:text=""
+            android:textSize="17sp"
+            android:lineSpacingExtra="4dp"
+            android:gravity="center"
+            android:visibility="gone"/>
+
+        <!-- ── Done Button ─────────────────────────────────────────────── -->
+        <Button
+            android:id="@+id/fbBtnDone"
+            android:layout_width="200dp"
+            android:layout_height="56dp"
+            android:layout_marginTop="14dp"
+            android:layout_marginBottom="24dp"
+            android:text="Back to Game ➜"
+            android:textSize="17sp"
+            android:textColor="@color/white"
+            android:textStyle="bold"
+            android:textAllCaps="false"
+            android:backgroundTint="@color/green"
+            android:stateListAnimator="@null"
+            android:visibility="gone"/>
+
+    </LinearLayout>
+</ScrollView>

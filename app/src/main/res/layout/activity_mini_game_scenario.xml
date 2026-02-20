@@ -1,0 +1,254 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Scenario Feelings Mini-Game Layout
+    ────────────────────────────────────
+    Top: header with title
+    Middle: scenario illustration image
+    Middle: scenario text prompt
+    Bottom: 2×2 grid of emotion FACE images with labels underneath
+    After answer: feedback text + Back to Game button
+-->
+<ScrollView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/white"
+    android:fillViewport="true">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:gravity="center_horizontal">
+
+        <!-- ── Header ─────────────────────────────────────────────────── -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="@color/dark_orange"
+            android:orientation="vertical"
+            android:paddingTop="40dp"
+            android:paddingBottom="14dp"
+            android:paddingHorizontal="20dp"
+            android:gravity="center">
+
+            <TextView
+                android:id="@+id/scTitle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="How would you feel? 🤔"
+                android:textColor="@color/white"
+                android:textSize="26sp"
+                android:textStyle="bold"
+                android:gravity="center"
+                android:shadowColor="#44000000"
+                android:shadowDx="1" android:shadowDy="1" android:shadowRadius="3"/>
+        </LinearLayout>
+
+        <!-- ── Scenario Image ─────────────────────────────────────────── -->
+        <ImageView
+            android:id="@+id/scImage"
+            android:layout_width="220dp"
+            android:layout_height="180dp"
+            android:layout_marginTop="18dp"
+            android:scaleType="fitCenter"
+            android:src="@drawable/panda_confused"/>
+
+        <!-- ── Scenario Prompt Text ───────────────────────────────────── -->
+        <TextView
+            android:id="@+id/scPrompt"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginHorizontal="20dp"
+            android:layout_marginTop="12dp"
+            android:background="#FFF3E0"
+            android:padding="14dp"
+            android:text="It's your birthday! You are going to cut the cake! 🎂\nWhat are you feeling?"
+            android:textColor="#5D4037"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            android:gravity="center"
+            android:lineSpacingExtra="4dp"/>
+
+        <!-- ── 2×2 Emotion Face Image Grid ───────────────────────────── -->
+        <!-- Row 1 -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center"
+            android:paddingHorizontal="12dp"
+            android:paddingTop="16dp">
+
+            <!-- Option 1 -->
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="vertical"
+                android:gravity="center"
+                android:padding="6dp">
+
+                <ImageView
+                    android:id="@+id/scOpt1"
+                    android:layout_width="110dp"
+                    android:layout_height="110dp"
+                    android:scaleType="fitCenter"
+                    android:background="@drawable/option_border"
+                    android:padding="6dp"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:src="@drawable/panda_confused"/>
+
+                <TextView
+                    android:id="@+id/scLabel1"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="5dp"
+                    android:text="Happy"
+                    android:textSize="17sp"
+                    android:textStyle="bold"
+                    android:textColor="#5D4037"
+                    android:gravity="center"/>
+            </LinearLayout>
+
+            <!-- Option 2 -->
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="vertical"
+                android:gravity="center"
+                android:padding="6dp">
+
+                <ImageView
+                    android:id="@+id/scOpt2"
+                    android:layout_width="110dp"
+                    android:layout_height="110dp"
+                    android:scaleType="fitCenter"
+                    android:background="@drawable/option_border"
+                    android:padding="6dp"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:src="@drawable/panda_confused"/>
+
+                <TextView
+                    android:id="@+id/scLabel2"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="5dp"
+                    android:text="Sad"
+                    android:textSize="17sp"
+                    android:textStyle="bold"
+                    android:textColor="#5D4037"
+                    android:gravity="center"/>
+            </LinearLayout>
+        </LinearLayout>
+
+        <!-- Row 2 -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center"
+            android:paddingHorizontal="12dp"
+            android:paddingTop="4dp">
+
+            <!-- Option 3 -->
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="vertical"
+                android:gravity="center"
+                android:padding="6dp">
+
+                <ImageView
+                    android:id="@+id/scOpt3"
+                    android:layout_width="110dp"
+                    android:layout_height="110dp"
+                    android:scaleType="fitCenter"
+                    android:background="@drawable/option_border"
+                    android:padding="6dp"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:src="@drawable/panda_confused"/>
+
+                <TextView
+                    android:id="@+id/scLabel3"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="5dp"
+                    android:text="Angry"
+                    android:textSize="17sp"
+                    android:textStyle="bold"
+                    android:textColor="#5D4037"
+                    android:gravity="center"/>
+            </LinearLayout>
+
+            <!-- Option 4 -->
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="vertical"
+                android:gravity="center"
+                android:padding="6dp">
+
+                <ImageView
+                    android:id="@+id/scOpt4"
+                    android:layout_width="110dp"
+                    android:layout_height="110dp"
+                    android:scaleType="fitCenter"
+                    android:background="@drawable/option_border"
+                    android:padding="6dp"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:src="@drawable/panda_confused"/>
+
+                <TextView
+                    android:id="@+id/scLabel4"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="5dp"
+                    android:text="Scared"
+                    android:textSize="17sp"
+                    android:textStyle="bold"
+                    android:textColor="#5D4037"
+                    android:gravity="center"/>
+            </LinearLayout>
+        </LinearLayout>
+
+        <!-- ── Feedback ────────────────────────────────────────────────── -->
+        <TextView
+            android:id="@+id/scFeedback"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginHorizontal="20dp"
+            android:layout_marginTop="14dp"
+            android:padding="14dp"
+            android:background="#FFF8F0"
+            android:text=""
+            android:textSize="18sp"
+            android:textStyle="bold"
+            android:gravity="center"
+            android:visibility="invisible"/>
+
+        <!-- ── Done Button ─────────────────────────────────────────────── -->
+        <Button
+            android:id="@+id/scBtnDone"
+            android:layout_width="200dp"
+            android:layout_height="56dp"
+            android:layout_marginTop="14dp"
+            android:layout_marginBottom="24dp"
+            android:text="Back to Game ➜"
+            android:textSize="17sp"
+            android:textColor="@color/white"
+            android:textStyle="bold"
+            android:textAllCaps="false"
+            android:backgroundTint="@color/green"
+            android:stateListAnimator="@null"
+            android:visibility="gone"/>
+
+    </LinearLayout>
+</ScrollView>
