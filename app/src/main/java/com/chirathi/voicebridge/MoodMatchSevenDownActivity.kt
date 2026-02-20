@@ -1,257 +1,228 @@
 package com.chirathi.voicebridge
 
+import android.app.Activity
 import android.content.Intent
 import android.media.MediaPlayer
 import android.net.Uri
 import android.os.Bundle
-import android.os.Handler
-import android.os.Looper
 import android.speech.tts.TextToSpeech
-import android.speech.tts.Voice
 import android.util.Log
 import android.view.View
-import android.widget.Button
-import android.widget.ImageView
-import android.widget.LinearLayout
-import android.widget.TextView
-import android.widget.Toast
-import android.widget.VideoView
+import android.widget.*
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import java.util.Locale
-import kotlin.math.ln
-import kotlin.math.max
 import kotlin.random.Random
 
+/**
+ * MoodMatchSevenDownActivity — v9.2 + MiniGame integration
+ *
+ * MINIGAME TRIGGER RULES
+ * ──────────────────────
+ * The mini-game launches AT MOST ONCE per 5-round session.
+ * It is a re-engagement break, not a reward.
+ *
+ * It fires when ALL of these are true:
+ *   1. Model says minigameTrigger == true
+ *      (model fires this when engagement < 0.40 OR frustration 0.50–0.80)
+ *   2. Child shows distraction signals in this round:
+ *         • wrongAttempts >= 2 on current round, OR
+ *         • consecutiveWrong >= 2 across rounds
+ *   3. Not already launched this session (minigameLaunchedThisSession == false)
+ *   4. At least round 2 (so child has warmed up first)
+ *
+ * Delay of 800 ms after showing the "correct button" hint so the child
+ * sees the feedback before the screen transitions.
+ */
 class MoodMatchSevenDownActivity : AppCompatActivity(),
     FeedbackDialogFragment.FeedbackCompletionListener, TextToSpeech.OnInitListener {
 
-    // --- AI MODEL & METRICS ---
+    // ── Model ─────────────────────────────────────────────────────────────────
     private lateinit var gameMaster: GameMasterModel
-    private var currentLevel = 0 // 0=Basic, 1=Context, 2=Scenario
-    private var currentMotivationId = 0 // 0=Stars, 1=Quote, 2=Anim
-    private var currentFriendActionId = 0 // NEW: Capture Friend Action from AI
+    private var currentPrediction: Prediction = Prediction.defaults()
 
-    private var totalAlpha = 0.0f
-    private var totalResponseTime = 0.0f
-    private var totalTaps = 0
-    private var roundsProcessed = 0
+    // ── Session tracking ──────────────────────────────────────────────────────
+    private val AGE_GROUP = 6
+    private var roundStartTime: Long = 0
+    private var consecutiveCorrect = 0
+    private var consecutiveWrong = 0
+    private var totalJitter = 0f
+    private var jitterSamples = 0
+    private var tapCount = 0
 
-    // Data Collection for Model
-    private var startTimeMillis: Long = 0
-    private var tapCount = 0 // Counts rapid taps (Frustration proxy)
-    private val AGE_GROUP = 6.0f // Hardcoded for "SevenDown" activity
+    // ── Mini-game guard ───────────────────────────────────────────────────────
+    // Once this flips true it stays true for the whole 5-round session.
+    private var minigameLaunchedThisSession = false
 
-    // --- UI COMPONENTS ---
-    private lateinit var videoView: VideoView
+    // ── UI ────────────────────────────────────────────────────────────────────
+    private lateinit var videoView:    VideoView
     private lateinit var emotionImage: ImageView
-    private lateinit var btnOption1: Button
-    private lateinit var btnOption2: Button
+    private lateinit var btnOption1:   Button
+    private lateinit var btnOption2:   Button
     private lateinit var soundOption1: LinearLayout
     private lateinit var soundOption2: LinearLayout
-    private lateinit var btnNext: Button
-    private lateinit var tvScore: TextView
-    private lateinit var tvRound: TextView
-    private lateinit var topGameImage1: ImageView
-    private lateinit var pandaImage: ImageView
-    private lateinit var guessText: TextView
+    private lateinit var btnNext:      Button
+    private lateinit var tvScore:      TextView
+    private lateinit var tvRound:      TextView
+    private lateinit var topGameImage1:ImageView
+    private lateinit var pandaImage:   ImageView
+    private lateinit var guessText:    TextView
 
-    // --- GAME STATE ---
-    private var currentEmotion = "" // The correct answer text (e.g. "Happy")
-    private var currentEmotionDisplay = "" // Formatted emotion for display
-    private var distractorEmotion = "" // The wrong answer text
-    private var correctOption = 1 // 1 or 2
-    private var score = 0
-    private var correctAnswersCount = 0
-    private var currentRound = 1
-    private val totalRounds = 5
-    private var isAnswerSelected = false
-    private var isVideoFinished = false
-    private var isVideoPlaying = false
-    private var nextButtonVisible = false
+    // ── Game state ────────────────────────────────────────────────────────────
+    private var currentEmotion        = ""
+    private var currentEmotionDisplay = ""
+    private var correctOption         = 1
+    private var score                 = 0
+    private var correctAnswersCount   = 0
+    private var currentRound          = 1
+    private val totalRounds           = 5
+    private var isAnswerSelected      = false
+    private var isVideoFinished       = false
+    private var isVideoPlaying        = false
+    private var nextButtonVisible     = false
+    private val usedImages            = mutableSetOf<String>()
+    private var wrongAttempts         = 0
+    private val maxAttemptsPerRound   = 3
 
-    // --- NEW: TRACK USED IMAGES AND ATTEMPTS ---
-    private val usedImages = mutableSetOf<String>() // Track used images to avoid repetition
-    private var wrongAttempts = 0 // Track wrong attempts in current round
-    private var maxAttemptsPerRound = 3 // Maximum wrong attempts allowed before moving on
-    private var isShowingHint = false // Track if we're showing a hint
-    private var originalDifficultyLevel = 0 // Store original difficulty
-
-    // --- TEXT TO SPEECH ---
+    // ── TTS & Sound ───────────────────────────────────────────────────────────
     private lateinit var tts: TextToSpeech
     private var isTtsInitialized = false
-    private var ttsInitializationFailed = false
-
-    // --- SOUND EFFECTS ---
-    private lateinit var correctSoundPlayer: MediaPlayer
+    private var correctSoundPlayer: MediaPlayer? = null
 
     companion object {
         private const val TAG = "MoodMatchActivity"
     }
 
+    // =========================================================================
+    // Lifecycle
+    // =========================================================================
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_mood_match_seven_down)
 
-        clearPerformanceMetrics()
-
-        // 1. Initialize Helper Classes
-        tts = TextToSpeech(this, this)
         gameMaster = GameMasterModel(this)
+        Log.d(TAG, "✅ GameMaster initialized  modelLoaded=${gameMaster.modelLoaded}")
 
-        // Initialize sound effects
-        correctSoundPlayer = MediaPlayer.create(this, R.raw.correct_sound)
+        tts = TextToSpeech(this, this)
+        try { correctSoundPlayer = MediaPlayer.create(this, R.raw.correct_sound) }
+        catch (e: Exception) { Log.w(TAG, "Sound init failed: ${e.message}") }
 
-        // 2. Initialize Views
         initializeViews()
-
-        // 3. Setup Intro Video (Bear asking "How does he feel?")
         setupVideoPlayer()
-        videoView.setOnCompletionListener {
-            onVideoFinished()
-        }
-
-        // 4. Start video first
         videoView.start()
         isVideoPlaying = true
-
-        // 5. Setup game immediately (emotion image and options will be visible)
         setupGame()
     }
-    private fun clearPerformanceMetrics() {
-        val prefs = getSharedPreferences("GamePerformance", MODE_PRIVATE)
-        prefs.edit().clear().apply()
+
+    override fun onDestroy() {
+        super.onDestroy()
+        if (::tts.isInitialized) { tts.stop(); tts.shutdown() }
+        correctSoundPlayer?.release()
+        gameMaster.close()
     }
 
-    // --- TTS INITIALIZATION ---
-    override fun onInit(status: Int) {
-        if (status == TextToSpeech.SUCCESS) {
-            val result = tts.setLanguage(Locale.US)
-            if (result == TextToSpeech.LANG_MISSING_DATA || result == TextToSpeech.LANG_NOT_SUPPORTED) {
-                Log.e(TAG, "TTS Language not supported!")
-                ttsInitializationFailed = true
-            } else {
-                isTtsInitialized = true
+    // =========================================================================
+    // Mini-game result — no bonus points, just resume
+    // =========================================================================
 
-                try {
-                    // 1. Voice Selection Strategy:
-                    // First look for "child" specifically.
-                    // If not found, look for a FEMALE voice (they pitch-shift better to child voices).
-                    val availableVoices = tts.voices
-                    val targetVoice = availableVoices?.find { voice ->
-                        voice.name.contains("child", ignoreCase = true) ||
-                                voice.name.contains("kids", ignoreCase = true)
-                    } ?: availableVoices?.find { voice ->
-                        // Fallback: Find a female voice (often 'en-us-x-sfg' or similar features)
-                        !voice.name.contains("male", ignoreCase = true) &&
-                                voice.name.contains("en-us", ignoreCase = true)
-                    }
-
-                    targetVoice?.let {
-                        tts.voice = it
-                        Log.d(TAG, "Selected voice: ${it.name}")
-                    }
-
-                    // 2. Child Simulation Settings:
-                    // Pitch: 1.6f - 1.8f simulates a young child best
-                    // Rate: 0.9f ensures they speak clearly and not too fast
-                    tts.setPitch(1.8f)
-                    tts.setSpeechRate(0.9f)
-
-                } catch (e: Exception) {
-                    Log.e(TAG, "Error setting TTS voice: ${e.message}")
-                }
-
-                Log.d(TAG, "TTS Initialized successfully")
-            }
-        } else {
-            Log.e(TAG, "TTS Initialization Failed!")
-            ttsInitializationFailed = true
+    @Deprecated("Using deprecated startActivityForResult")
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+        if (requestCode == MiniGameMoodMatchActivity.REQUEST_CODE) {
+            // Mini-game done — next button is already showing, child taps to continue
+            Log.d(TAG, "🎮 Mini-game returned — resuming session")
         }
     }
 
+    // =========================================================================
+    // Mini-game trigger
+    // =========================================================================
+
+    /**
+     * Decides whether to launch the mini-game right now.
+     *
+     * Called from checkAnswer() only when the child has used at least 2 wrong
+     * attempts, meaning real distraction signals are present.
+     */
+    private fun shouldLaunchMiniGame(): Boolean {
+        if (minigameLaunchedThisSession) return false   // already used this session
+        if (currentRound < 2)            return false   // too early, child hasn't warmed up
+        if (!currentPrediction.minigameTrigger) return false  // model doesn't recommend it
+
+        // Confirm distraction: 2+ wrong attempts THIS round OR 2+ consecutive wrong rounds
+        val distractedThisRound   = wrongAttempts >= 2
+        val distractedAcrossRounds= consecutiveWrong >= 2
+
+        return distractedThisRound || distractedAcrossRounds
+    }
+
+    @Suppress("DEPRECATION")
+    private fun launchMiniGame() {
+        minigameLaunchedThisSession = true
+        Log.d(TAG, "🎮 Launching mini-game type=${currentPrediction.minigameType} diff=${currentPrediction.minigameDifficulty}")
+
+        // Clamp type to valid range — model can output values > 1
+        val safeType = currentPrediction.minigameType.coerceIn(0, 1)
+        val intent = Intent(this, MiniGameMoodMatchActivity::class.java).apply {
+            putExtra(MiniGameMoodMatchActivity.EXTRA_TYPE, safeType)
+            putExtra(MiniGameMoodMatchActivity.EXTRA_DIFF, currentPrediction.minigameDifficulty)
+            putExtra(MiniGameMoodMatchActivity.EXTRA_AGE,  AGE_GROUP)
+        }
+        startActivityForResult(intent, MiniGameMoodMatchActivity.REQUEST_CODE)
+        overridePendingTransition(android.R.anim.slide_in_left, android.R.anim.slide_out_right)
+    }
+
+    // =========================================================================
+    // Init
+    // =========================================================================
+
     private fun initializeViews() {
-        videoView = findViewById(R.id.videoView)
-        emotionImage = findViewById(R.id.emotionImage)
-        btnOption1 = findViewById(R.id.btnOption1)
-        btnOption2 = findViewById(R.id.btnOption2)
-        soundOption1 = findViewById(R.id.soundOption1)
-        soundOption2 = findViewById(R.id.soundOption2)
-        btnNext = findViewById(R.id.btnNext)
-        tvScore = findViewById(R.id.tvScore)
-        tvRound = findViewById(R.id.tvRound)
-        topGameImage1 = findViewById(R.id.topGameImage1)
-        pandaImage = findViewById(R.id.pandaImage)
-        guessText = findViewById(R.id.guessText)
+        videoView      = findViewById(R.id.videoView)
+        emotionImage   = findViewById(R.id.emotionImage)
+        btnOption1     = findViewById(R.id.btnOption1)
+        btnOption2     = findViewById(R.id.btnOption2)
+        soundOption1   = findViewById(R.id.soundOption1)
+        soundOption2   = findViewById(R.id.soundOption2)
+        btnNext        = findViewById(R.id.btnNext)
+        tvScore        = findViewById(R.id.tvScore)
+        tvRound        = findViewById(R.id.tvRound)
+        topGameImage1  = findViewById(R.id.topGameImage1)
+        pandaImage     = findViewById(R.id.pandaImage)
+        guessText      = findViewById(R.id.guessText)
 
-        // Header elements (visible only after video)
         topGameImage1.visibility = View.INVISIBLE
-        pandaImage.visibility = View.INVISIBLE
-        guessText.visibility = View.INVISIBLE
-
-        // Game elements (always visible)
-        emotionImage.visibility = View.VISIBLE
-        btnOption1.visibility = View.VISIBLE
-        btnOption2.visibility = View.VISIBLE
-        soundOption1.visibility = View.VISIBLE
-        soundOption2.visibility = View.VISIBLE
-        tvScore.visibility = View.VISIBLE
-        tvRound.visibility = View.VISIBLE
+        pandaImage.visibility    = View.INVISIBLE
+        guessText.visibility     = View.INVISIBLE
     }
 
     private fun setupVideoPlayer() {
         try {
-            val videoPath = "android.resource://" + packageName + "/" + R.raw.animated_bear_asks_about_emotion
-            val uri = Uri.parse(videoPath)
+            val uri = Uri.parse("android.resource://$packageName/${R.raw.animated_bear_asks_about_emotion}")
             videoView.setVideoURI(uri)
-            videoView.setOnPreparedListener { mp ->
-                mp.isLooping = false
-            }
-            videoView.setOnErrorListener { _, _, _ ->
-                Log.e(TAG, "Video playback error")
-                isVideoPlaying = false
-                videoView.visibility = View.GONE
-                // If video fails, start game immediately
-                runOnUiThread {
-                    showHeaderAfterVideo()
-                }
-                true
-            }
+            videoView.setOnPreparedListener { it.isLooping = false }
+            videoView.setOnCompletionListener { onVideoFinished() }
         } catch (e: Exception) {
-            Log.e(TAG, "Video setup error: ${e.message}")
+            Log.e(TAG, "Video error: ${e.message}")
             videoView.visibility = View.GONE
             isVideoPlaying = false
-            // If video setup fails, start game immediately
-            runOnUiThread {
-                showHeaderAfterVideo()
-            }
+            showHeaderAfterVideo()
         }
     }
 
     private fun onVideoFinished() {
         if (isVideoFinished) return
-        isVideoFinished = true
-        isVideoPlaying = false
-
-        Log.d(TAG, "Video finished, showing header")
-
-        // Fade out video
+        isVideoFinished = true; isVideoPlaying = false
         videoView.animate().alpha(0f).setDuration(500).withEndAction {
             videoView.visibility = View.GONE
-            // Show header after video is gone
             showHeaderAfterVideo()
         }.start()
     }
 
     private fun showHeaderAfterVideo() {
-        Log.d(TAG, "Showing header after video")
-
-        // Show header elements only
-        val headerViews = listOf(topGameImage1, pandaImage, guessText)
-        headerViews.forEach { view ->
-            view.visibility = View.VISIBLE
-            view.alpha = 0f
-            view.animate().alpha(1f).setDuration(800).start()
+        listOf(topGameImage1, pandaImage, guessText).forEach { v ->
+            v.visibility = View.VISIBLE; v.alpha = 0f
+            v.animate().alpha(1f).setDuration(800).start()
         }
     }
 
@@ -261,583 +232,283 @@ class MoodMatchSevenDownActivity : AppCompatActivity(),
     }
 
     private fun setupClickListeners() {
-        // Option Buttons
         btnOption1.setOnClickListener {
-            if (!isAnswerSelected && !nextButtonVisible) {
-                Log.d(TAG, "Option 1 clicked, text: ${btnOption1.text}")
-                checkAnswer(1)
-            }
+            if (!isAnswerSelected && !nextButtonVisible)
+                checkAnswer(1, System.currentTimeMillis() - roundStartTime)
         }
         btnOption2.setOnClickListener {
-            if (!isAnswerSelected && !nextButtonVisible) {
-                Log.d(TAG, "Option 2 clicked, text: ${btnOption2.text}")
-                checkAnswer(2)
-            }
+            if (!isAnswerSelected && !nextButtonVisible)
+                checkAnswer(2, System.currentTimeMillis() - roundStartTime)
         }
-
-        // TTS Buttons (Speaker Icons)
-        soundOption1.setOnClickListener {
-            if (!nextButtonVisible) {
-                val text = btnOption1.text.toString()
-                Log.d(TAG, "Speaking option 1: $text")
-                speakText(text)
-            }
-        }
-        soundOption2.setOnClickListener {
-            if (!nextButtonVisible) {
-                val text = btnOption2.text.toString()
-                Log.d(TAG, "Speaking option 2: $text")
-                speakText(text)
-            }
-        }
-
-        // Next Button
-        btnNext.setOnClickListener {
-            goToNextRound()
-        }
+        soundOption1.setOnClickListener { if (!nextButtonVisible) speakText(btnOption1.text.toString()) }
+        soundOption2.setOnClickListener { if (!nextButtonVisible) speakText(btnOption2.text.toString()) }
+        btnNext.setOnClickListener { goToNextRound() }
     }
 
-    // --- TRACK TAPS FOR "JITTER/FRUSTRATION" METRIC ---
     override fun onUserInteraction() {
         super.onUserInteraction()
-        if (!isAnswerSelected && !nextButtonVisible) {
-            tapCount++
-            Log.d(TAG, "Tap count increased: $tapCount")
-        }
+        if (!isAnswerSelected && !nextButtonVisible) { tapCount++; jitterSamples++ }
     }
 
-    // --- CORE GAME LOOP ---
-    private fun startNewRound() {
-        Log.d(TAG, "Starting new round $currentRound")
-        isAnswerSelected = false
-        isShowingHint = false
-        wrongAttempts = 0
-        nextButtonVisible = false
+    // =========================================================================
+    // Round
+    // =========================================================================
 
-        // Hide Next button and enable other buttons
+    private fun startNewRound() {
+        Log.d(TAG, "=== ROUND $currentRound/$totalRounds ===")
+
+        isAnswerSelected  = false
+        wrongAttempts     = 0
+        nextButtonVisible = false
+        roundStartTime    = System.currentTimeMillis()
+        tapCount          = 0
+
         btnNext.visibility = View.GONE
         enableGameButtons(true)
+        val green = ContextCompat.getColor(this, R.color.green)
+        btnOption1.setBackgroundColor(green)
+        btnOption2.setBackgroundColor(green)
 
-        // Reset button colors - Use proper color resource
-        val greenColor = ContextCompat.getColor(this, R.color.green)
-        btnOption1.setBackgroundColor(greenColor)
-        btnOption2.setBackgroundColor(greenColor)
-
-        // Reset metrics for this specific round
-        startTimeMillis = System.currentTimeMillis()
-        tapCount = 0
-
-        try {
-            // 1. SELECT DATASET BASED ON AI MODEL DECISION (currentLevel)
-            // If level is 0 -> Basic, 1 -> Contextual, 2 -> Scenario
-            val correctArrayId = when(currentLevel) {
-                0 -> R.array.mood_age6_lvl0_correct
-                1 -> R.array.mood_age6_lvl1_correct
-                2 -> R.array.mood_age6_lvl2_scenarios
-                else -> R.array.mood_age6_lvl0_correct
-            }
-
-            Log.d(TAG, "Using array ID: $correctArrayId for level: $currentLevel")
-
-            // Load distractors (Wrong answers)
-            val distractorsArrayId = when(currentLevel) {
-                0 -> R.array.mood_age6_lvl0_distractors
-                1 -> R.array.mood_age6_lvl0_distractors
-                2 -> R.array.mood_age6_lvl0_distractors
-                else -> R.array.mood_age6_lvl0_distractors
-            }
-
-            val possibleCorrectAnswers = resources.getStringArray(correctArrayId)
-            val possibleDistractors = resources.getStringArray(distractorsArrayId)
-
-            Log.d(TAG, "Found ${possibleCorrectAnswers.size} possible correct answers")
-            Log.d(TAG, "Found ${possibleDistractors.size} possible distractors")
-
-            // 2. PICK CORRECT ANSWER - AVOID REPETITION WITH IMPROVED LOGIC
-            if (possibleCorrectAnswers.isEmpty()) {
-                Log.e(TAG, "No correct answers in array!")
-                Toast.makeText(this, "Game data error. Please restart.", Toast.LENGTH_SHORT).show()
-                return
-            }
-
-            // Create a pool of available answers (emotion names, not file paths)
-            val availableEmotions = mutableListOf<String>()
-
-            for (fullPath in possibleCorrectAnswers) {
-                val emotionName = extractEmotionName(fullPath)
-                if (!usedImages.contains(emotionName)) {
-                    availableEmotions.add(emotionName)
-                }
-            }
-
-            // If all emotions have been used, reset the used set
-            val selectionPool = if (availableEmotions.isNotEmpty()) {
-                availableEmotions
-            } else {
-                usedImages.clear() // Reset if we've used all emotions
-                possibleCorrectAnswers.map { extractEmotionName(it) }
-            }
-
-            // Select a random emotion
-            currentEmotion = selectionPool.random()
-            usedImages.add(currentEmotion) // Mark emotion as used
-
-            Log.d(TAG, "Selected emotion: $currentEmotion")
-            Log.d(TAG, "Used emotions count: ${usedImages.size}")
-
-            // Find corresponding image for the selected emotion
-            val rawSelection = findImageForEmotion(currentEmotion, possibleCorrectAnswers)
-
-            // For scenario level (level 2), we need to get the corresponding answer from lvl2_answers
-            if (currentLevel == 2) {
-                val scenarioIndex = possibleCorrectAnswers.indexOf(rawSelection)
-                val answerArray = resources.getStringArray(R.array.mood_age6_lvl2_answers)
-                if (scenarioIndex < answerArray.size) {
-                    currentEmotion = extractEmotionName(answerArray[scenarioIndex])
-                }
-                // Note: currentEmotion is already set from selectionPool
-            }
-
-            // Get formatted emotion for display (capitalized)
-            currentEmotionDisplay = formatEmotionText(currentEmotion)
-
-            // Extract resource name WITHOUT file extension
-            val correctImageRes = extractResourceName(rawSelection, removeExtension = true)
-
-            Log.d(TAG, "Current emotion: $currentEmotion, Display: $currentEmotionDisplay, Image resource: $correctImageRes")
-
-            // 3. SET IMAGE
-            setEmotionImage(correctImageRes)
-
-            // 4. PICK WRONG ANSWER (Ensure it's not same as correct)
-            if (possibleDistractors.isEmpty()) {
-                Log.e(TAG, "No distractors in array!")
-                Toast.makeText(this, "Game data error. Please restart.", Toast.LENGTH_SHORT).show()
-                return
-            }
-
-            var rawDistractor = possibleDistractors.random()
-            var distractorEmotionName = extractEmotionName(rawDistractor)
-
-            // Loop until we find a distinct wrong answer
-            var attempts = 0
-            while (distractorEmotionName.equals(currentEmotion, ignoreCase = true) && attempts < 10) {
-                rawDistractor = possibleDistractors.random()
-                distractorEmotionName = extractEmotionName(rawDistractor)
-                attempts++
-                Log.d(TAG, "Distractor attempt $attempts: $distractorEmotionName")
-            }
-
-            this.distractorEmotion = distractorEmotionName
-            val distractorEmotionDisplay = formatEmotionText(distractorEmotionName)
-
-            Log.d(TAG, "Selected distractor: $distractorEmotionName, Display: $distractorEmotionDisplay")
-
-            // 5. RANDOMIZE POSITIONS
-            correctOption = Random.nextInt(1, 3) // 1 or 2
-
-            // Set button texts with formatted emotions (not hardcoded)
-            if (correctOption == 1) {
-                btnOption1.text = currentEmotionDisplay
-                btnOption2.text = distractorEmotionDisplay
-            } else {
-                btnOption1.text = distractorEmotionDisplay
-                btnOption2.text = currentEmotionDisplay
-            }
-
-            Log.d(TAG, "Correct option: $correctOption")
-            Log.d(TAG, "Button1: ${btnOption1.text}, Button2: ${btnOption2.text}")
-
-            // Update round display
-            tvRound.text = "Round: $currentRound/$totalRounds"
-
-        } catch (e: Exception) {
-            Log.e(TAG, "Error in startNewRound: ${e.message}", e)
-            Toast.makeText(this, "Error loading game data: ${e.message}", Toast.LENGTH_SHORT).show()
+        // Build features for this round
+        val accuracy    = liveAccuracy()
+        val engagement  = if (accuracy > 0.7f) 0.8f else 0.5f
+        val frustration = when {
+            consecutiveWrong >= 2 -> 0.7f
+            consecutiveWrong == 1 -> 0.45f
+            else                  -> 0.2f
         }
-    }
+        val jitter = if (jitterSamples > 0) totalJitter / jitterSamples else 0.10f
 
-    // Helper function to find image for selected emotion
-    private fun findImageForEmotion(emotion: String, possibleCorrectAnswers: Array<String>): String {
-        // First try to find exact match
-        for (fullPath in possibleCorrectAnswers) {
-            if (extractEmotionName(fullPath).equals(emotion, ignoreCase = true)) {
-                return fullPath
-            }
+        currentPrediction = gameMaster.predictSafe(
+            childId             = 0,
+            age                 = AGE_GROUP.toFloat(),
+            accuracy            = accuracy,
+            engagement          = engagement,
+            frustration         = frustration,
+            jitter              = jitter,
+            rt                  = 3000f,
+            consecutiveCorrect  = consecutiveCorrect.toFloat(),
+            consecutiveWrong    = consecutiveWrong.toFloat()
+        )
+
+        Log.d(TAG, "🤖 PREDICTION (fromModel=${currentPrediction.fromModel}):")
+        Log.d(TAG, "   emotionLevel      = ${currentPrediction.emotionLevel}")
+        Log.d(TAG, "   minigameTrigger   = ${currentPrediction.minigameTrigger}")
+        Log.d(TAG, "   minigameType      = ${currentPrediction.minigameType}")
+        Log.d(TAG, "   nextAccuracy      = ${currentPrediction.nextAccuracy}")
+        Log.d(TAG, "   frustrationRisk   = ${currentPrediction.frustrationRisk}")
+        Log.d(TAG, "   minigameLaunched? = $minigameLaunchedThisSession")
+
+        val arrayId = when (currentPrediction.emotionLevel) {
+            1    -> R.array.mood_age6_lvl1_correct
+            2    -> R.array.mood_age6_lvl2_scenarios
+            else -> R.array.mood_age6_lvl0_correct
         }
 
-        // If not found, return the first one (fallback)
-        return possibleCorrectAnswers.first()
-    }
+        val possibleCorrect     = resources.getStringArray(arrayId)
+        val possibleDistractors = resources.getStringArray(R.array.mood_age6_lvl0_distractors)
 
-    private fun enableGameButtons(enable: Boolean) {
-        btnOption1.isEnabled = enable
-        btnOption2.isEnabled = enable
-        soundOption1.isEnabled = enable
-        soundOption2.isEnabled = enable
+        val available = possibleCorrect.map { extractEmotionName(it) }.filter { it !in usedImages }
+        if (available.isEmpty()) usedImages.clear()
+        val pool = if (available.isNotEmpty()) available else possibleCorrect.map { extractEmotionName(it) }
 
-        // Visual feedback for disabled state
-        if (!enable) {
-            btnOption1.alpha = 0.5f
-            btnOption2.alpha = 0.5f
-            soundOption1.alpha = 0.5f
-            soundOption2.alpha = 0.5f
+        currentEmotion = pool.random()
+        usedImages.add(currentEmotion)
+
+        val rawSelection = findImageForEmotion(currentEmotion, possibleCorrect)
+
+        if (currentPrediction.emotionLevel == 2) {
+            val idx = possibleCorrect.indexOf(rawSelection)
+            val answers = resources.getStringArray(R.array.mood_age6_lvl2_answers)
+            if (idx < answers.size) currentEmotion = extractEmotionName(answers[idx])
+        }
+
+        currentEmotionDisplay = formatEmotionText(currentEmotion)
+        setEmotionImage(extractResourceName(rawSelection, removeExtension = true))
+
+        var rawDistractor  = possibleDistractors.random()
+        var distractorName = extractEmotionName(rawDistractor)
+        var att = 0
+        while (distractorName.equals(currentEmotion, ignoreCase = true) && att < 10) {
+            rawDistractor  = possibleDistractors.random()
+            distractorName = extractEmotionName(rawDistractor)
+            att++
+        }
+        val distractorDisplay = formatEmotionText(distractorName)
+
+        correctOption = Random.nextInt(1, 3)
+        if (correctOption == 1) {
+            btnOption1.text = currentEmotionDisplay; btnOption2.text = distractorDisplay
         } else {
-            btnOption1.alpha = 1.0f
-            btnOption2.alpha = 1.0f
-            soundOption1.alpha = 1.0f
-            soundOption2.alpha = 1.0f
+            btnOption1.text = distractorDisplay;     btnOption2.text = currentEmotionDisplay
         }
+
+        tvRound.text = "Round: $currentRound/$totalRounds"
+        Log.d(TAG, "Level=${currentPrediction.emotionLevel} emotion=$currentEmotion correctOption=$correctOption")
     }
 
-    // Helper: Formats emotion text (capitalizes first letter)
-    private fun formatEmotionText(emotion: String): String {
-        return if (emotion.isNotEmpty()) {
-            // Remove any file extension if present
-            val cleanEmotion = emotion.replace(".png", "").replace(".jpg", "").replace(".jpeg", "")
-            cleanEmotion.replaceFirstChar { if (it.isLowerCase()) it.titlecase(Locale.ROOT) else it.toString() }
-        } else {
-            "Emotion"
-        }
-    }
+    private fun liveAccuracy() = if (currentRound > 1) {
+        correctAnswersCount.toFloat() / (currentRound - 1)
+    } else 0.5f
 
-    // Helper: Extracts resource name with option to remove file extension
-    private fun extractResourceName(fullPath: String, removeExtension: Boolean = false): String {
-        var resourceName = fullPath.substringAfterLast("/")
-        if (removeExtension) {
-            // Remove file extension if present
-            resourceName = resourceName.substringBeforeLast(".")
-        }
-        return resourceName
-    }
+    // =========================================================================
+    // Answer checking
+    // =========================================================================
 
-    private fun extractEmotionName(fullPath: String): String {
-        var resName = extractResourceName(fullPath, removeExtension = true)
-        Log.d(TAG, "Extracting emotion from resource name: $resName")
-
-        // Split by "_" and take the last part, but handle special cases
-        val parts = resName.split("_")
-
-        // Handle different naming patterns
-        val emotion = when {
-            // For patterns like mood_lvl0_shared_happy -> take "happy"
-            parts.size >= 2 -> parts.last()
-            // For patterns like happy -> take as is
-            else -> resName
-        }
-
-        Log.d(TAG, "Extracted emotion: $emotion from parts: $parts")
-        return emotion
-    }
-
-    private fun setEmotionImage(resourceName: String) {
-        Log.d(TAG, "Setting emotion image: $resourceName")
-
-        // First try to find the exact resource
-        var resourceId = resources.getIdentifier(resourceName, "drawable", packageName)
-
-        // If not found, try without any potential prefixes
-        if (resourceId == 0) {
-            // Try to extract just the emotion name
-            val emotionName = resourceName.split("_").lastOrNull()
-            emotionName?.let {
-                resourceId = resources.getIdentifier(it, "drawable", packageName)
-            }
-        }
-
-        // If still not found, try common naming patterns
-        if (resourceId == 0) {
-            // Try with "mood_" prefix
-            resourceId = resources.getIdentifier("mood_$resourceName", "drawable", packageName)
-        }
-
-        if (resourceId != 0) {
-            emotionImage.setImageResource(resourceId)
-            Log.d(TAG, "Image resource ID found: $resourceId for $resourceName")
-        } else {
-            // Fallback image if not found
-            Log.e(TAG, "Image not found: $resourceName, using fallback")
-            emotionImage.setImageResource(R.drawable.panda_confused)
-        }
-
-        // Make sure image is visible
-        emotionImage.visibility = View.VISIBLE
-        emotionImage.alpha = 1.0f
-    }
-
-    private fun checkAnswer(selectedOption: Int) {
-        Log.d(TAG, "Checking answer. Selected: $selectedOption, Correct: $correctOption")
+    private fun checkAnswer(selectedOption: Int, responseTime: Long) {
         isAnswerSelected = true
+        val isCorrect = (selectedOption == correctOption)
 
-        try {
-            // --- 1. CALCULATE METRICS ---
-            val endTime = System.currentTimeMillis()
-            // Convert to seconds for the formula, guard against 0
-            val responseTimeMs = (endTime - startTimeMillis).toFloat()
-            val responseTimeSec = max(1.0f, responseTimeMs / 1000f)
+        if (isCorrect) {
+            score += 10; correctAnswersCount++
+            consecutiveCorrect++; consecutiveWrong = 0
+            tvScore.text = "Score: $score"
+            playCorrectSound()
+            wrongAttempts = 0
+            showNextButton()
+            Log.d(TAG, "✅ CORRECT! Score: $score")
 
-            val isCorrect = (selectedOption == correctOption)
-            val accuracyVal = if (isCorrect) 1.0f else 0.0f
+        } else {
+            wrongAttempts++; consecutiveWrong++; consecutiveCorrect = 0
+            Log.d(TAG, "❌ WRONG — attempt $wrongAttempts/$maxAttemptsPerRound")
 
-            Log.d(TAG, "Response time: ${responseTimeMs}ms, Accuracy: $accuracyVal, Tap count: $tapCount")
+            when (wrongAttempts) {
+                1 -> {
+                    speakText("Try again")
+                    isAnswerSelected = false
+                    roundStartTime = System.currentTimeMillis()
+                }
+                2 -> {
+                    // Second wrong: give hint + check if mini-game should launch
+                    speakText("It's $currentEmotionDisplay")
+                    showCorrectButtonAnimation()
+                    isAnswerSelected = false
+                    roundStartTime = System.currentTimeMillis()
 
-            // Calculate Alpha (Achievement Index)
-            // Formula: (Accuracy * 10 * AgeConstant) / log(RT + Attempts)
-            // Note: We use ln (natural log) + 1 to avoid divide by zero
-            val ageFactor = 1.0f + ((AGE_GROUP - 6) * 0.1f) // 1.0 for age 6
-            val alpha = (accuracyVal * 10f * ageFactor) / ln(responseTimeSec + 1.0f)
-
-            Log.d(TAG, "Calculated Alpha: $alpha, Age factor: $ageFactor")
-
-            totalAlpha += alpha
-            totalResponseTime += responseTimeMs
-            totalTaps += tapCount
-            roundsProcessed++
-
-            val avgAlpha = if (roundsProcessed > 0) totalAlpha / roundsProcessed else 0.0f
-            val avgResponseTime = if (roundsProcessed > 0) totalResponseTime / roundsProcessed else 0.0f
-            val avgTaps = if (roundsProcessed > 0) totalTaps / roundsProcessed else 0
-
-            val prefs = getSharedPreferences("GamePerformance", MODE_PRIVATE)
-            prefs.edit()
-                .putFloat("avgAlpha", avgAlpha)
-                .putFloat("avgResponseTime", avgResponseTime)
-                .putInt("avgTaps", avgTaps)
-                .apply()
-
-            Log.d(TAG, "Performance Metrics - Avg Alpha: $avgAlpha, Avg RT: $avgResponseTime, Avg Taps: $avgTaps")
-
-            // --- 2. AI MODEL INFERENCE ---
-            // Input Vector: [Age, Hesitation, RapidTaps, Jitter, RT, Accuracy, Weight, Alpha]
-            // Note: Jitter/Hesitation are simulated/placeholders here until touch listener is fully mapped
-            val inputVector = floatArrayOf(
-                AGE_GROUP,           // Age
-                1500.0f,             // Hesitation (avg default)
-                tapCount.toFloat(),  // Rapid Taps (from user interaction)
-                0.08f,               // Jitter (baseline)
-                responseTimeMs,      // RT in ms
-                accuracyVal,         // Accuracy
-                0.5f,                // Weight (Difficulty)
-                alpha                // Alpha
-            )
-
-            Log.d(TAG, "Input vector for AI: ${inputVector.joinToString()}")
-
-            // Get Decision from TFLite Model (only on correct answer for efficiency)
-            if (isCorrect) {
-                val decision = gameMaster.predict(inputVector)
-
-                Log.d(TAG, "AI Decision: Level=${decision.emotionLevel}, Motivation=${decision.motivationId}, FriendAction=${decision.friendAction}")
-
-                // APPLY AI DECISIONS
-                currentLevel = decision.emotionLevel // Updates difficulty for NEXT round
-                currentMotivationId = decision.motivationId // Updates reward type for Scoreboard
-                currentFriendActionId = decision.friendAction // CAPTURE Friend Action
-
-                Log.d(TAG, "AI Decision -> Next Level: $currentLevel, Reward: $currentMotivationId, FriendAction: $currentFriendActionId, Alpha: $alpha")
-            }
-
-            // --- 3. UI FEEDBACK ---
-            if (isCorrect) {
-                val roundScore = (alpha * 10).toInt()
-                score += roundScore
-                correctAnswersCount++
-                tvScore.text = "Score: $score"
-
-                playCorrectSound()
-
-                Log.d(TAG, "Correct answer! Alpha: $alpha, Score added: $roundScore, Total: $score")
-
-                // Show Next button ONLY on correct answer
-                showNextButton()
-                wrongAttempts = 0 // Reset wrong attempts
-
-            } else {
-                // Wrong answer handling
-                wrongAttempts++
-
-                Log.d(TAG, "Wrong answer. Attempt $wrongAttempts of $maxAttemptsPerRound")
-
-                when (wrongAttempts) {
-                    1 -> {
-                        // First wrong attempt - Simple prompt
-                        speakText("Try again")
-
-                        // Reset for another attempt
-                        isAnswerSelected = false
-                        tapCount = 0 // Reset tap count for new attempt
-                        startTimeMillis = System.currentTimeMillis() // Reset timer
-                    }
-                    2 -> {
-                        // Second wrong attempt - Show answer with animation
-                        speakText("It's $currentEmotionDisplay")
-                        showCorrectButtonAnimation()
-
-                        // Reset for another attempt
-                        isAnswerSelected = false
-                        tapCount = 0 // Reset tap count for new attempt
-                        startTimeMillis = System.currentTimeMillis() // Reset timer
-                    }
-                    3 -> {
-                        // Third wrong attempt - Move on with motivational message
-                        // Show Next button immediately
-                        showNextButton()
-
-                        // Speak simple motivational message
-                        speakText("Good try! Next one")
-
-                        // Reset difficulty for next round (make it easier)
-                        if (currentLevel > 0) {
-                            currentLevel--
-                        }
+                    // ── Mini-game trigger on distraction ──────────────────────
+                    if (shouldLaunchMiniGame()) {
+                        Log.d(TAG, "🎮 Distraction detected at attempt 2 — launching mini-game")
+                        // Set flag NOW before the delay — blocks attempt 3 from also triggering
+                        minigameLaunchedThisSession = true
+                        btnOption1.postDelayed({ launchMiniGame() }, 900)
                     }
                 }
-            }
-
-        } catch (e: Exception) {
-            Log.e(TAG, "Error in checkAnswer: ${e.message}", e)
-            // Fallback behavior if AI model fails
-            if (selectedOption == correctOption) {
-                playCorrectSound()
-                showNextButton()
-            } else {
-                wrongAttempts++
-                if (wrongAttempts >= maxAttemptsPerRound) {
+                3 -> {
                     showNextButton()
                     speakText("Good try! Next one")
-                } else {
-                    isAnswerSelected = false
-                    startTimeMillis = System.currentTimeMillis()
+
+                    // ── Mini-game trigger on 3rd wrong — only fires if attempt 2 did NOT trigger ───
+                    if (shouldLaunchMiniGame()) {
+                        Log.d(TAG, "🎮 Distraction detected at attempt 3 — launching mini-game")
+                        minigameLaunchedThisSession = true
+                        btnOption1.postDelayed({ launchMiniGame() }, 800)
+                    }
                 }
             }
         }
     }
 
     private fun playCorrectSound() {
-        try {
-            if (correctSoundPlayer.isPlaying) {
-                correctSoundPlayer.seekTo(0)
-            }
-            correctSoundPlayer.start()
-        } catch (e: Exception) {
-            Log.e(TAG, "Error playing correct sound: ${e.message}")
-        }
+        try { correctSoundPlayer?.let { if (it.isPlaying) it.seekTo(0); it.start() } }
+        catch (e: Exception) { Log.w(TAG, "Sound error: ${e.message}") }
     }
 
     private fun showNextButton() {
         nextButtonVisible = true
         btnNext.visibility = View.VISIBLE
-        enableGameButtons(false) // Disable other buttons when Next button is visible
+        enableGameButtons(false)
     }
 
     private fun showCorrectButtonAnimation() {
-        val correctButton = if (correctOption == 1) btnOption1 else btnOption2
-
-        // Simple pulse animation on the correct button
-        correctButton.animate()
-            .scaleX(1.15f)
-            .scaleY(1.15f)
-            .setDuration(300)
-            .withEndAction {
-                correctButton.animate()
-                    .scaleX(1.0f)
-                    .scaleY(1.0f)
-                    .setDuration(300)
-                    .start()
-            }
+        val btn = if (correctOption == 1) btnOption1 else btnOption2
+        btn.animate().scaleX(1.15f).scaleY(1.15f).setDuration(300)
+            .withEndAction { btn.animate().scaleX(1f).scaleY(1f).setDuration(300).start() }
             .start()
     }
 
-    private fun speakText(text: String) {
-        if (!isTtsInitialized) {
-            Log.w(TAG, "TTS not initialized yet, skipping speech")
-            return
-        }
-
-        try {
-            // Use simple, clear speech for children
-            tts.setPitch(1.1f) // Slightly higher pitch
-            tts.setSpeechRate(0.85f) // Slower for better comprehension
-
-            tts.speak(text, TextToSpeech.QUEUE_FLUSH, null, "")
-            Log.d(TAG, "Speaking text: $text")
-        } catch (e: Exception) {
-            Log.e(TAG, "TTS error: ${e.message}")
-        }
+    private fun enableGameButtons(enable: Boolean) {
+        val a = if (enable) 1.0f else 0.5f
+        listOf(btnOption1, btnOption2).forEach { it.isEnabled = enable; it.alpha = a }
+        listOf(soundOption1, soundOption2).forEach { it.isEnabled = enable; it.alpha = a }
     }
 
+    // =========================================================================
+    // Navigation
+    // =========================================================================
+
     private fun goToNextRound() {
-        Log.d(TAG, "Going to next round. Current: $currentRound, Total: $totalRounds")
         currentRound++
-        if (currentRound > totalRounds) {
-            showFeedbackPopup()
-        } else {
-            startNewRound()
-        }
+        if (currentRound > totalRounds) showFeedbackPopup() else startNewRound()
     }
 
     private fun showFeedbackPopup() {
-        Log.d(TAG, "Showing feedback popup. Correct: $correctAnswersCount/$totalRounds")
-        val isGoodFeedback = correctAnswersCount >= 4
-
-        val feedbackDialog = FeedbackDialogFragment.newInstance(
-            isGood = isGoodFeedback,
-            correctAnswers = correctAnswersCount,
-            totalRounds = totalRounds,
-            score = score
-        )
-        // Show the dialog
-        feedbackDialog.show(supportFragmentManager, "feedback_dialog")
+        FeedbackDialogFragment.newInstance(
+            correctAnswersCount >= 4, correctAnswersCount, totalRounds, score
+        ).show(supportFragmentManager, "feedback")
     }
 
-    // Callback when "See Scoreboard" is clicked in the popup
     override fun onFeedbackCompleted(correctAnswers: Int, totalRounds: Int, score: Int) {
-        Log.d(TAG, "Feedback completed, navigating to scoreboard")
         navigateToScoreboard(correctAnswers, totalRounds, score)
     }
 
     private fun navigateToScoreboard(correctAnswers: Int, totalRounds: Int, score: Int) {
-        try {
-            val prefs = getSharedPreferences("GamePerformance", MODE_PRIVATE)
-            val avgAlpha = prefs.getFloat("avgAlpha", 0.0f)
-            val avgResponseTime = prefs.getFloat("avgResponseTime", 0.0f)
-            val avgTaps = prefs.getInt("avgTaps", 0)
+        startActivity(Intent(this, MMScoreboardActivity::class.java).apply {
+            putExtra("CORRECT_ANSWERS", correctAnswers)
+            putExtra("TOTAL_ROUNDS",    totalRounds)
+            putExtra("SCORE",           score)
+            putExtra("MOTIVATION_ID",   currentPrediction.motivation)
+            putExtra("UNLOCK_GIFT",     currentPrediction.friendAction > 0)
+            putExtra("GAME_MODE",       "seven_down")
+        })
+        finish()
+    }
 
-            val intent = Intent(this, MMScoreboardActivity::class.java)
-            intent.putExtra("CORRECT_ANSWERS", correctAnswers)
-            intent.putExtra("TOTAL_ROUNDS", totalRounds)
-            intent.putExtra("SCORE", score)
+    // =========================================================================
+    // Helpers
+    // =========================================================================
 
-            // PASS AI DECISIONS
-            intent.putExtra("MOTIVATION_ID", currentMotivationId)
+    private fun findImageForEmotion(emotion: String, pool: Array<String>): String =
+        pool.firstOrNull { extractEmotionName(it).equals(emotion, ignoreCase = true) } ?: pool.first()
 
-            intent.putExtra("AVG_ALPHA", avgAlpha)
-            intent.putExtra("AVG_RESPONSE_TIME", avgResponseTime)
-            intent.putExtra("AVG_TAPS", avgTaps)
+    private fun formatEmotionText(emotion: String): String {
+        val clean = emotion.replace(".png", "").replace(".jpg", "")
+        return clean.replaceFirstChar { if (it.isLowerCase()) it.titlecase(Locale.ROOT) else it.toString() }
+    }
 
-            // MODEL LOGIC: Unlock gift if Action > 0 (Meaning AI detected frustration OR high success)
-            val shouldUnlockGift = currentFriendActionId > 0
-            intent.putExtra("UNLOCK_GIFT", shouldUnlockGift)
+    private fun extractResourceName(fullPath: String, removeExtension: Boolean = false): String {
+        var name = fullPath.substringAfterLast("/")
+        if (removeExtension) name = name.substringBeforeLast(".")
+        return name
+    }
 
-            intent.putExtra("GAME_MODE", "seven_down")
+    private fun extractEmotionName(fullPath: String): String {
+        val res   = extractResourceName(fullPath, removeExtension = true)
+        val parts = res.split("_")
+        return if (parts.size >= 2) parts.last() else res
+    }
 
-            intent.flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
-            startActivity(intent)
-            finish()
-        } catch (e: Exception) {
-            Log.e(TAG, "Error navigating to scoreboard: ${e.message}")
-            Toast.makeText(this, "Error loading scoreboard", Toast.LENGTH_SHORT).show()
+    private fun setEmotionImage(resourceName: String) {
+        var resId = resources.getIdentifier(resourceName, "drawable", packageName)
+        if (resId == 0) {
+            val last = resourceName.split("_").lastOrNull()
+            last?.let { resId = resources.getIdentifier(it, "drawable", packageName) }
+        }
+        if (resId == 0) resId = resources.getIdentifier("mood_$resourceName", "drawable", packageName)
+        emotionImage.setImageResource(if (resId != 0) resId else R.drawable.panda_confused)
+        emotionImage.visibility = View.VISIBLE
+        emotionImage.alpha = 1.0f
+    }
+
+    override fun onInit(status: Int) {
+        if (status == TextToSpeech.SUCCESS) {
+            tts.setLanguage(Locale.US)
+            tts.setPitch(1.8f)
+            tts.setSpeechRate(0.9f)
+            isTtsInitialized = true
         }
     }
 
-    override fun onDestroy() {
-        if (::tts.isInitialized) {
-            tts.stop()
-            tts.shutdown()
-        }
-        if (::correctSoundPlayer.isInitialized) {
-            correctSoundPlayer.release()
-        }
-        super.onDestroy()
+    private fun speakText(text: String) {
+        if (isTtsInitialized) tts.speak(text, TextToSpeech.QUEUE_FLUSH, null, "")
     }
 }
