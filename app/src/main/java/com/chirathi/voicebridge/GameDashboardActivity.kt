@@ -1,6 +1,7 @@
 package com.chirathi.voicebridge
 
 import android.content.Intent
+import android.content.SharedPreferences
 import android.util.Log
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
@@ -14,6 +15,7 @@ import com.google.firebase.firestore.firestore
 class GameDashboardActivity : AppCompatActivity() {
 
     private lateinit var auth: FirebaseAuth
+    private lateinit var prefs: SharedPreferences
     private val db = Firebase.firestore
     private val TAG = "GameDashboardDebug"
 
@@ -22,31 +24,24 @@ class GameDashboardActivity : AppCompatActivity() {
         setContentView(R.layout.activity_game_dashboard)
 
         auth = FirebaseAuth.getInstance()
+        prefs = getSharedPreferences("voicebridge_prefs", MODE_PRIVATE)
 
         val moodMatchBtn = findViewById<Button>(R.id.btn_game1)
-        val myDayBtn = findViewById<Button>(R.id.btn_level2)
-        val singTimeBtn = findViewById<Button>(R.id.btn_level3)
-        val backBtn = findViewById<ImageView>(R.id.backGame)
+        val myDayBtn     = findViewById<Button>(R.id.btn_level2)
+        val singTimeBtn  = findViewById<Button>(R.id.btn_level3)
+        val backBtn      = findViewById<ImageView>(R.id.backGame)
 
-        // Mood Match button click - navigate to PandaIntroActivity
-        moodMatchBtn.setOnClickListener {
-            val intent = Intent(this, PandaIntroActivity::class.java)
-            startActivity(intent)
-        }
+        moodMatchBtn.setOnClickListener { handleMoodMatchClick() }
 
-        // My Day button click - navigate to RoutineSelectionActivity
         myDayBtn.setOnClickListener {
-            val intent = Intent(this, RoutineSelectionActivity::class.java)
-            startActivity(intent)
+            startActivity(Intent(this, RoutineSelectionActivity::class.java))
             overridePendingTransition(R.drawable.slide_in_right, R.drawable.slide_out_left)
         }
 
         singTimeBtn.setOnClickListener {
-            val intent = Intent(this, SongSelectionActivity::class.java)
-            startActivity(intent)
+            startActivity(Intent(this, SongSelectionActivity::class.java))
         }
 
-        // Back button click
         backBtn.setOnClickListener {
             val intent = Intent(this, HomeActivity::class.java)
             intent.flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
@@ -55,103 +50,74 @@ class GameDashboardActivity : AppCompatActivity() {
         }
     }
 
-    private fun checkAgeAndNavigate() {
+    /**
+     * First time ever → show PandaIntroActivity (which will then navigate to the game).
+     * Every time after → skip intro and go straight to MoodMatchSevenDownActivity.
+     */
+    private fun handleMoodMatchClick() {
+        val uid = auth.currentUser?.uid ?: return
+        val introKey = "panda_intro_shown_$uid"
+        val hasSeenIntro = prefs.getBoolean(introKey, false)
+
+        if (!hasSeenIntro) {
+            // Mark as seen so it never shows again for this user
+            prefs.edit().putBoolean(introKey, true).apply()
+            // PandaIntroActivity must navigate to MoodMatchSevenDownActivity when done
+            // (pass age via intent from there, or fetch age inside PandaIntroActivity)
+            fetchAgeAndLaunch(viaPandaIntro = true)
+        } else {
+            fetchAgeAndLaunch(viaPandaIntro = false)
+        }
+    }
+
+    /**
+     * Fetches the child's age from Firestore, then launches either PandaIntroActivity
+     * (first time) or MoodMatchSevenDownActivity directly (returning user).
+     *
+     * Both age groups now go to MoodMatchSevenDownActivity.
+     * Age is passed as an extra so the activity can adapt its UI.
+     */
+    private fun fetchAgeAndLaunch(viaPandaIntro: Boolean) {
         val currentUser = auth.currentUser
         if (currentUser == null) {
-            Toast.makeText(this, "Please login again", Toast.LENGTH_SHORT).show()
-            val intent = Intent(this, LoginActivity::class.java)
-            startActivity(intent)
+            startActivity(Intent(this, LoginActivity::class.java))
             finish()
             return
         }
 
-        // Show loading
-        Toast.makeText(this, "Loading...", Toast.LENGTH_SHORT).show()
-
-        Log.d(TAG, "Checking age for user: ${currentUser.uid}")
-        Log.d(TAG, "User email: ${currentUser.email}")
-
         db.collection("users").document(currentUser.uid).get()
             .addOnSuccessListener { document ->
-                Log.d(TAG, "Document retrieved: ${document.exists()}")
+                val ageString = document.getString("age")
+                val age = ageString?.toIntOrNull() ?: 6   // default to 6 if missing
 
-                if (document.exists()) {
-                    // Get all document data for debugging
-                    val allData = document.data
-                    Log.d(TAG, "All document data: $allData")
+                Log.d(TAG, "Age fetched: $age  viaPandaIntro=$viaPandaIntro")
 
-                    // Get age as String (matching ChildRegistrationActivity)
-                    val ageString = document.getString("age")
-                    Log.d(TAG, "Age string from document: '$ageString'")
-                    Log.d(TAG, "Age string is null: ${ageString == null}")
-                    Log.d(TAG, "Age string is empty: ${ageString?.isEmpty()}")
-
-                    // Also check other fields to confirm document structure
-                    val firstName = document.getString("firstName")
-                    val email = document.getString("email")
-                    Log.d(TAG, "First name: $firstName")
-                    Log.d(TAG, "Email: $email")
-
-                    if (ageString != null && ageString.isNotEmpty()) {
-                        try {
-                            val age = ageString.toInt()
-                            Log.d(TAG, "Age converted to int: $age")
-
-                            // Navigate based on age group
-                            when (age) {
-                                in 6..7 -> {
-                                    Log.d(TAG, "Navigating to ActivitySequenceUnderActivity (age: $age)")
-                                    // Age 6-7: Navigate to ActivitySequenceUnderActivity
-                                    val intent = Intent(this, ActivitySequenceUnderActivity::class.java)
-                                    startActivity(intent)
-                                }
-                                in 8..10 -> {
-                                    Log.d(TAG, "Navigating to ActivitySequenceOverActivity (age: $age)")
-                                    // Age 8-10: Navigate to ActivitySequenceOverActivity
-                                    val intent = Intent(this, ActivitySequenceOverActivity::class.java)
-                                    startActivity(intent)
-                                }
-                                else -> {
-                                    Log.d(TAG, "Age $age is outside 6-10 range")
-                                    Toast.makeText(this, "Age $age is outside 6-10 range. Defaulting to simpler activity.", Toast.LENGTH_SHORT).show()
-                                    // Default to simpler activity for safety
-                                    val intent = Intent(this, ActivitySequenceUnderActivity::class.java)
-                                    startActivity(intent)
-                                }
-                            }
-                        } catch (e: NumberFormatException) {
-                            Log.e(TAG, "Invalid age format: $ageString", e)
-                            // Age is not a valid number
-                            Toast.makeText(this, "Invalid age format: $ageString", Toast.LENGTH_SHORT).show()
-                            // Default to simpler activity
-                            val intent = Intent(this, ActivitySequenceUnderActivity::class.java)
-                            startActivity(intent)
-                        }
-                    } else {
-                        Log.d(TAG, "Age not found or empty in document")
-                        // Age not found in document
-                        Toast.makeText(this, "Age information not found in profile", Toast.LENGTH_SHORT).show()
-                        // Default to simpler activity
-                        val intent = Intent(this, ActivitySequenceUnderActivity::class.java)
-                        startActivity(intent)
-                    }
-                } else {
-                    Log.d(TAG, "Document doesn't exist for user")
-                    // Document doesn't exist
-                    Toast.makeText(this, "User profile not found. Please complete registration.", Toast.LENGTH_SHORT).show()
-                    // Go to login
-                    val intent = Intent(this, LoginActivity::class.java)
+                if (viaPandaIntro) {
+                    // Let PandaIntroActivity carry the age so it can pass it onward
+                    val intent = Intent(this, PandaIntroActivity::class.java)
+                    intent.putExtra("AGE_GROUP", age)
                     startActivity(intent)
-                    finish()
+                } else {
+                    launchMoodMatch(age)
                 }
             }
-            .addOnFailureListener { exception ->
-                Log.e(TAG, "Failed to load user data", exception)
-                // Firestore fetch failed
-                Toast.makeText(this, "Error loading profile: ${exception.message}", Toast.LENGTH_SHORT).show()
-                // Default to simpler activity
-                val intent = Intent(this, ActivitySequenceUnderActivity::class.java)
-                startActivity(intent)
+            .addOnFailureListener { e ->
+                Log.e(TAG, "Firestore error: ${e.message}")
+                Toast.makeText(this, "Error loading profile", Toast.LENGTH_SHORT).show()
+                // Fallback: launch with default age
+                if (viaPandaIntro) {
+                    startActivity(Intent(this, PandaIntroActivity::class.java).apply {
+                        putExtra("AGE_GROUP", 6)
+                    })
+                } else {
+                    launchMoodMatch(6)
+                }
             }
+    }
+
+    fun launchMoodMatch(age: Int) {
+        val intent = Intent(this, MoodMatchSevenDownActivity::class.java)
+        intent.putExtra("AGE_GROUP", age)
+        startActivity(intent)
     }
 }
