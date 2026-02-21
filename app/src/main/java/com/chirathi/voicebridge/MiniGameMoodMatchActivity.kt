@@ -81,9 +81,9 @@ class MiniGameMoodMatchActivity : AppCompatActivity(), TextToSpeech.OnInitListen
             "scared"   to listOf("face_eyebrows_scared_raised")
         ),
         "mouth" to mapOf(
-            "happy"    to listOf("face_mouth_happy_smile",    "face_mouth_happy_grin",    "face_mouth_happy_laugh"),
-            "sad"      to listOf("face_mouth_sad_frown",      "face_mouth_sad_downturn",  "face_mouth_sad_pout"),
-            "angry"    to listOf("face_mouth_angry_grimace",  "face_mouth_angry_teeth",   "face_mouth_angry_line"),
+            "happy"    to listOf("face_mouth_happy_smile",    "face_mouth_happy_laugh"),
+            "sad"      to listOf("face_mouth_sad_frown",      "face_mouth_sad_downturn"),
+            "angry"    to listOf("face_mouth_angry_grimace",  "face_mouth_angry_teeth"),
             "scared"   to listOf("face_mouth_scared_wavy",   "face_mouth_scared_open")
         )
     )
