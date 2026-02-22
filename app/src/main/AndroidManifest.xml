@@ -16,6 +16,14 @@
         android:theme="@style/Theme.VoiceBridge"
         tools:targetApi="31">
         <activity
+            android:name=".StickerGalleryActivity"
+            android:exported="false"
+            android:theme="@style/Theme.VoiceBridge" />
+        <activity
+            android:name=".MiniGamesActivitySequence"
+            android:exported="false"
+            android:theme="@style/Theme.VoiceBridge" />
+        <activity
             android:name=".FeedbackPopupDialog"
             android:exported="false"
             android:theme="@style/Theme.VoiceBridge" />
