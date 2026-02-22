@@ -37,14 +37,12 @@ class ASequenceScoreboardActivity : AppCompatActivity() {
     private var userAge: Int = 6
 
     // Dynamic staircase configuration
-    private var totalSteps = 1 // Default to 1 stair for low score
+    private var totalSteps = 1
     private var starFinalStep = 0
     private lateinit var starCharacter: ImageView
     private val stepBlocks = mutableListOf<ImageView>()
-    // Keeping the list definition to avoid errors, but they won't be used visually
     private val stepLabels = mutableListOf<TextView>()
 
-    // Different motivational quotes for different levels
     private val motivationalQuotes = mapOf(
         1 to listOf("Good start","You can do it","Keep trying","We are working together"),
         3 to listOf(
@@ -79,7 +77,6 @@ class ASequenceScoreboardActivity : AppCompatActivity() {
     private lateinit var starBounceSound: MediaPlayer
     private lateinit var completionSound: MediaPlayer
 
-    // Stair positioning variables
     private val blockWidth = 140
     private val blockHeight = 40
     private val blockSpacing = 20
@@ -93,7 +90,6 @@ class ASequenceScoreboardActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_asequence_scoreboard)
 
-        // TEMPORARY DEBUG: Log all intent extras
         val extras = intent.extras
         if (extras != null) {
             Log.d(TAG, "=== ALL INTENT EXTRAS ===")
@@ -103,59 +99,42 @@ class ASequenceScoreboardActivity : AppCompatActivity() {
             Log.d(TAG, "========================")
         }
 
-        // Get therapeutic data from intent
         getIntentData()
 
-        Log.d(TAG, "Therapeutic Summary: Alpha=$finalAlpha, Bubbles=$poppedBubbles/$totalBubbles")
+        Log.d(TAG, "Therapeutic Summary: Alpha=$finalAlpha, Bubbles=$poppedBubbles/$totalBubbles, Age=$userAge")
 
-        // Initialize sound effects
         initializeSounds()
-
-        // Initialize views
         initializeViews()
-
-        // Calculate how many stairs to show based on score
         calculateStairCount()
-
-        // Calculate star's final position based on alpha
         calculateStarProgress()
-
-        // Build therapeutic staircase
         buildStaircase()
-
-        // Hide extra stairs
         hideExtraStairs()
-
-        // Start therapeutic animation sequence
         startTherapeuticAnimationSequence()
-
-        // Setup button listeners
         setupButtonListeners()
     }
 
     private fun getIntentData() {
-        finalAlpha = intent.getFloatExtra("FINAL_ALPHA", 0f)
-        poppedBubbles = intent.getIntExtra("POPPED_BUBBLES", 0)
-        totalBubbles = intent.getIntExtra("TOTAL_BUBBLES", 5)
-        correctCount = intent.getIntExtra("CORRECT_COUNT", 0)
-        errorCount = intent.getIntExtra("ERROR_COUNT", 0)
+        finalAlpha           = intent.getFloatExtra("FINAL_ALPHA", 0f)
+        poppedBubbles        = intent.getIntExtra("POPPED_BUBBLES", 0)
+        totalBubbles         = intent.getIntExtra("TOTAL_BUBBLES", 5)
+        correctCount         = intent.getIntExtra("CORRECT_COUNT", 0)
+        errorCount           = intent.getIntExtra("ERROR_COUNT", 0)
         completedSubroutines = intent.getIntExtra("COMPLETED_SUBROUTINES", 0)
-        previousAlpha = intent.getFloatExtra("PREVIOUS_ALPHA", 0f)
-        previousCorrect = intent.getIntExtra("PREVIOUS_CORRECT", 0)
-        previousSubroutine = intent.getIntExtra("PREVIOUS_SUBROUTINE", -1)
-        previousError = intent.getStringExtra("PREVIOUS_ERROR") ?: "none"
-        userSelectedRoutine = intent.getIntExtra("USER_SELECTED_ROUTINE", 0)
-        userAge = intent.getIntExtra("USER_AGE", 6)
+        previousAlpha        = intent.getFloatExtra("PREVIOUS_ALPHA", 0f)
+        previousCorrect      = intent.getIntExtra("PREVIOUS_CORRECT", 0)
+        previousSubroutine   = intent.getIntExtra("PREVIOUS_SUBROUTINE", -1)
+        previousError        = intent.getStringExtra("PREVIOUS_ERROR") ?: "none"
+        userSelectedRoutine  = intent.getIntExtra("USER_SELECTED_ROUTINE", 0)
+        userAge              = intent.getIntExtra("USER_AGE", 6)
 
-        Log.d(TAG, "Received from intent - FinalAlpha: $finalAlpha, ErrorCount: $errorCount")
+        Log.d(TAG, "Received from intent - FinalAlpha: $finalAlpha, ErrorCount: $errorCount, UserAge: $userAge")
     }
 
     private fun initializeSounds() {
-        blockDropSound = MediaPlayer.create(this, R.raw.block_drop)
+        blockDropSound  = MediaPlayer.create(this, R.raw.block_drop)
         starBounceSound = MediaPlayer.create(this, R.raw.star_bounce)
         completionSound = MediaPlayer.create(this, R.raw.completion_sound)
 
-        // Adjust volumes for therapeutic experience
         blockDropSound.setVolume(0.3f, 0.3f)
         starBounceSound.setVolume(0.5f, 0.5f)
         completionSound.setVolume(0.7f, 0.7f)
@@ -164,12 +143,11 @@ class ASequenceScoreboardActivity : AppCompatActivity() {
     private fun initializeViews() {
         staircaseContainer = findViewById(R.id.staircaseContainer)
         therapeuticMessage = findViewById(R.id.therapeuticMessage)
-        btnContinue = findViewById(R.id.btnContinue)
-        btnHome = findViewById(R.id.btnHome)
-        starCharacter = findViewById(R.id.starCharacter)
-        motivationalQuote = findViewById(R.id.motivationalQuote)
+        btnContinue        = findViewById(R.id.btnContinue)
+        btnHome            = findViewById(R.id.btnHome)
+        starCharacter      = findViewById(R.id.starCharacter)
+        motivationalQuote  = findViewById(R.id.motivationalQuote)
 
-        // Initialize all possible step blocks and labels
         stepBlocks.apply {
             add(findViewById(R.id.stepBlock1))
             add(findViewById(R.id.stepBlock2))
@@ -186,75 +164,52 @@ class ASequenceScoreboardActivity : AppCompatActivity() {
             add(findViewById(R.id.stepLabel5))
         }
 
-        // Initialize animation list
         blockDropAnimators = mutableListOf()
     }
 
     private fun calculateStairCount() {
-        // Get performance data from intent
         val avgResponseTime = intent.getLongExtra("AVG_RESPONSE_TIME", 0L)
-        val attempts = intent.getIntExtra("ATTEMPTS_COUNT", 0)
-        val errors = intent.getIntExtra("ERROR_COUNT", 0)
+        val attempts        = intent.getIntExtra("ATTEMPTS_COUNT", 0)
+        val errors          = intent.getIntExtra("ERROR_COUNT", 0)
 
         Log.d(TAG, "Stair calculation - Alpha: $finalAlpha, Time: ${avgResponseTime}ms, Attempts: $attempts, Errors: $errors")
 
-        // FIXED: More realistic staircase logic
         totalSteps = when {
-            // 5 STAIRS: EXCELLENT - First try success or very high performance
             (attempts == 1 && errors == 0 && finalAlpha >= 7.0f) -> {
-                Log.d(TAG, "Condition: 5 stairs - First try mastery")
-                5
+                Log.d(TAG, "Condition: 5 stairs - First try mastery"); 5
             }
             (finalAlpha >= 8.0f && errors <= 1) -> {
-                Log.d(TAG, "Condition: 5 stairs - Excellent performance")
-                5
+                Log.d(TAG, "Condition: 5 stairs - Excellent performance"); 5
             }
-
-            // 3 STAIRS: MODERATE - Made good progress
             (finalAlpha >= 5.0f && errors <= 2) -> {
-                Log.d(TAG, "Condition: 3 stairs - Good progress")
-                3
+                Log.d(TAG, "Condition: 3 stairs - Good progress"); 3
             }
             (finalAlpha >= 3.0f && attempts <= 2 && errors <= 3) -> {
-                Log.d(TAG, "Condition: 3 stairs - Completed with some help")
-                3
+                Log.d(TAG, "Condition: 3 stairs - Completed with some help"); 3
             }
-
-            // 1 STAIR: NEEDS PRACTICE - Struggled or low performance
             else -> {
-                Log.d(TAG, "Condition: 1 stair - Needs more practice")
-                1
+                Log.d(TAG, "Condition: 1 stair - Needs more practice"); 1
             }
         }
 
-        // Debug evaluation
-        Log.d(TAG, "=== DEBUG EVALUATION ===")
-        Log.d(TAG, "Attempts == 1 && errors == 0 && finalAlpha >= 7.0: ${attempts == 1 && errors == 0 && finalAlpha >= 7.0f}")
-        Log.d(TAG, "finalAlpha >= 8.0 && errors <= 1: ${finalAlpha >= 8.0f && errors <= 1}")
-        Log.d(TAG, "finalAlpha >= 5.0 && errors <= 2: ${finalAlpha >= 5.0f && errors <= 2}")
-        Log.d(TAG, "finalAlpha >= 3.0 && attempts <= 2 && errors <= 3: ${finalAlpha >= 3.0f && attempts <= 2 && errors <= 3}")
-        Log.d(TAG, "========================")
-
-        // Safety check: Ensure totalSteps is valid
         totalSteps = totalSteps.coerceIn(1, 5)
-
         starFinalStep = totalSteps - 1
         Log.d(TAG, "Final decision: $totalSteps steps, Star at step: $starFinalStep")
     }
 
     private fun buildStaircase() {
-        val themeColor = when(totalSteps) {
-            1 -> Color.parseColor("#FF6B8B") // Pink
-            3 -> Color.parseColor("#FF9800") // Orange
-            else -> Color.parseColor("#4CAF50") // Green
+        val themeColor = when (totalSteps) {
+            1    -> Color.parseColor("#FF6B8B")
+            3    -> Color.parseColor("#FF9800")
+            else -> Color.parseColor("#4CAF50")
         }
 
         for (i in 0 until totalSteps) {
             val block = stepBlocks[i]
             block.setColorFilter(themeColor)
-            block.alpha = 0f
-            block.translationY = -1000f // Fall from top
-            block.visibility = View.VISIBLE
+            block.alpha        = 0f
+            block.translationY = -1000f
+            block.visibility   = View.VISIBLE
             stepLabels[i].visibility = View.INVISIBLE
         }
     }
@@ -265,20 +220,15 @@ class ASequenceScoreboardActivity : AppCompatActivity() {
 
     private fun updateTherapeuticMessage() {
         val message = when (totalSteps) {
-            1 -> "Great start!"
-            3 -> "Good job!"
-            5 -> "Excellent work!"
+            1    -> "Great start!"
+            3    -> "Good job!"
+            5    -> "Excellent work!"
             else -> "Well done!"
         }
-        therapeuticMessage.text = message
-        therapeuticMessage.alpha = 0f
+        therapeuticMessage.text       = message
+        therapeuticMessage.alpha      = 0f
         therapeuticMessage.visibility = View.VISIBLE
-
-        // Animate the therapeutic message
-        therapeuticMessage.animate()
-            .alpha(1f)
-            .setDuration(800)
-            .start()
+        therapeuticMessage.animate().alpha(1f).setDuration(800).start()
     }
 
     private fun hideExtraStairs() {
@@ -290,57 +240,39 @@ class ASequenceScoreboardActivity : AppCompatActivity() {
 
     private fun startTherapeuticAnimationSequence() {
         updateTherapeuticMessage()
-        Handler(Looper.getMainLooper()).postDelayed({
-            dropBlocksSequence()
-        }, 1000)
+        Handler(Looper.getMainLooper()).postDelayed({ dropBlocksSequence() }, 1000)
     }
 
     private fun dropBlocksSequence() {
         blockDropAnimators.clear()
-
         for (i in 0 until totalSteps) {
-            Handler().postDelayed({
-                animateBlockDrop(i)
-            }, i * 400L)
+            Handler().postDelayed({ animateBlockDrop(i) }, i * 400L)
         }
-
-        Handler().postDelayed({
-            introduceStar()
-        }, (totalSteps * 400L) + 600)
+        Handler().postDelayed({ introduceStar() }, (totalSteps * 400L) + 600)
     }
 
     private fun animateBlockDrop(stepIndex: Int) {
-        val block = stepBlocks[stepIndex]
-
-        // Reduced from 600f to 200f to move the whole staircase higher up
-        val baseY = 200f
+        val block   = stepBlocks[stepIndex]
+        val baseY   = 200f
         val targetY = baseY - (stepIndex * (blockHeight + verticalSpacing)).toFloat()
         val targetX = 20f + (stepIndex * blockSpacing).toFloat()
 
-        val dropAnim = ObjectAnimator.ofFloat(block, "translationY", -1000f, targetY)
-        dropAnim.duration = 800
-        dropAnim.interpolator = BounceInterpolator()
-
-        val slideAnim = ObjectAnimator.ofFloat(block, "translationX", targetX)
-        slideAnim.duration = 600
-
-        val fadeInAnim = ObjectAnimator.ofFloat(block, "alpha", 0f, 1f)
-        fadeInAnim.duration = 400
+        val dropAnim  = ObjectAnimator.ofFloat(block, "translationY", -1000f, targetY).apply {
+            duration = 800; interpolator = BounceInterpolator()
+        }
+        val slideAnim = ObjectAnimator.ofFloat(block, "translationX", targetX).apply { duration = 600 }
+        val fadeAnim  = ObjectAnimator.ofFloat(block, "alpha", 0f, 1f).apply { duration = 400 }
 
         val animSet = AnimatorSet()
-        animSet.playTogether(dropAnim, slideAnim, fadeInAnim)
-
+        animSet.playTogether(dropAnim, slideAnim, fadeAnim)
         animSet.addListener(object : AnimatorListenerAdapter() {
             override fun onAnimationStart(animation: Animator) {
-                blockDropSound.seekTo(0)
-                blockDropSound.setVolume(0.4f, 0.4f)
-                blockDropSound.start()
+                blockDropSound.seekTo(0); blockDropSound.setVolume(0.4f, 0.4f); blockDropSound.start()
             }
             override fun onAnimationEnd(animation: Animator) {
-                val bounceAnim = ObjectAnimator.ofFloat(block, "translationY", targetY - 5, targetY)
-                bounceAnim.duration = 300
-                bounceAnim.interpolator = BounceInterpolator()
-                bounceAnim.start()
+                ObjectAnimator.ofFloat(block, "translationY", targetY - 5, targetY).apply {
+                    duration = 300; interpolator = BounceInterpolator()
+                }.start()
             }
         })
         animSet.start()
@@ -350,207 +282,179 @@ class ASequenceScoreboardActivity : AppCompatActivity() {
     private fun introduceStar() {
         if (starFinalStep < 0 || starFinalStep >= stepBlocks.size) return
         val targetBlock = stepBlocks[starFinalStep]
-
-        // Position the star
         val finalX = targetBlock.x + (targetBlock.width / 4)
         val finalY = targetBlock.y - starCharacter.height - 40f
 
-        starCharacter.x = finalX
-        starCharacter.y = finalY
+        starCharacter.x          = finalX
+        starCharacter.y          = finalY
         starCharacter.visibility = View.VISIBLE
-        starCharacter.alpha = 0f
+        starCharacter.alpha      = 0f
 
-        // Ensure motivational quote is properly initialized
-        motivationalQuote.alpha = 0f
+        motivationalQuote.alpha      = 0f
         motivationalQuote.visibility = View.VISIBLE
 
-        // Animation Phase A: Appear and Swirl in place
-        val appearAnim = AnimatorSet()
-        appearAnim.playTogether(
-            ObjectAnimator.ofFloat(starCharacter, "alpha", 0f, 1f),
-            ObjectAnimator.ofFloat(starCharacter, "scaleX", 0f, 1.2f),
-            ObjectAnimator.ofFloat(starCharacter, "scaleY", 0f, 1.2f),
-            ObjectAnimator.ofFloat(starCharacter, "rotation", 0f, 720f)
-        )
-        appearAnim.duration = 1000
-        appearAnim.interpolator = DecelerateInterpolator()
+        val appearAnim = AnimatorSet().apply {
+            playTogether(
+                ObjectAnimator.ofFloat(starCharacter, "alpha",    0f, 1f),
+                ObjectAnimator.ofFloat(starCharacter, "scaleX",   0f, 1.2f),
+                ObjectAnimator.ofFloat(starCharacter, "scaleY",   0f, 1.2f),
+                ObjectAnimator.ofFloat(starCharacter, "rotation", 0f, 720f)
+            )
+            duration = 1000; interpolator = DecelerateInterpolator()
+        }
+        val bounceAnim = ObjectAnimator.ofFloat(starCharacter, "y", finalY, finalY - 50f, finalY).apply {
+            duration = 600; repeatCount = 1; interpolator = AccelerateDecelerateInterpolator()
+        }
 
-        // Animation Phase B: Bounce Twice in place
-        val bounceAnim = ObjectAnimator.ofFloat(starCharacter, "y", finalY, finalY - 50f, finalY)
-        bounceAnim.duration = 600
-        bounceAnim.repeatCount = 1
-        bounceAnim.interpolator = AccelerateDecelerateInterpolator()
-
-        val fullSequence = AnimatorSet()
-        fullSequence.playSequentially(appearAnim, bounceAnim)
-
-        fullSequence.addListener(object : AnimatorListenerAdapter() {
-            override fun onAnimationStart(animation: Animator) {
-                starBounceSound.seekTo(0)
-                starBounceSound.start()
-            }
-
-            override fun onAnimationEnd(animation: Animator) {
-                // Show quote immediately after star animation
-                Handler(Looper.getMainLooper()).postDelayed({
-                    showQuoteForStep(starFinalStep)
-                }, 300)
-
-                // Finalize state
-                settleStar()
-            }
-        })
-
-        fullSequence.start()
-    }
-
-    private fun settleStar() {
-        if (starFinalStep >= 0 && starFinalStep < stepBlocks.size) {
-            // Highlight all reached steps with a sparkle
-            for (i in 0..starFinalStep) {
-                Handler(Looper.getMainLooper()).postDelayed({
-                    val block = stepBlocks[i]
-                    val sparkleAnim = AnimatorSet()
-                    sparkleAnim.playTogether(
-                        ObjectAnimator.ofFloat(block, "scaleX", 1f, 1.1f),
-                        ObjectAnimator.ofFloat(block, "scaleY", 1f, 1.1f)
-                    )
-                    sparkleAnim.duration = 200
-
-                    val resetAnim = AnimatorSet()
-                    resetAnim.playTogether(
-                        ObjectAnimator.ofFloat(block, "scaleX", 1.1f, 1f),
-                        ObjectAnimator.ofFloat(block, "scaleY", 1.1f, 1f)
-                    )
-                    resetAnim.duration = 200
-
-                    val sequence = AnimatorSet()
-                    sequence.playSequentially(sparkleAnim, resetAnim)
-                    sequence.start()
-                }, i * 150L)
-            }
-
-            // Play completion sound
-            completionSound.seekTo(0)
-            completionSound.start()
-
-            // Start the idle breathing animation
-            startStarGlow()
-
-            // Allow user to leave
-            enableNavigationButtons()
+        AnimatorSet().apply {
+            playSequentially(appearAnim, bounceAnim)
+            addListener(object : AnimatorListenerAdapter() {
+                override fun onAnimationStart(animation: Animator) {
+                    starBounceSound.seekTo(0); starBounceSound.start()
+                }
+                override fun onAnimationEnd(animation: Animator) {
+                    Handler(Looper.getMainLooper()).postDelayed({ showQuoteForStep(starFinalStep) }, 300)
+                    settleStar()
+                }
+            })
+            start()
         }
     }
 
+    private fun settleStar() {
+        if (starFinalStep < 0 || starFinalStep >= stepBlocks.size) return
+        for (i in 0..starFinalStep) {
+            Handler(Looper.getMainLooper()).postDelayed({
+                val block = stepBlocks[i]
+                AnimatorSet().apply {
+                    playSequentially(
+                        AnimatorSet().apply {
+                            playTogether(
+                                ObjectAnimator.ofFloat(block, "scaleX", 1f, 1.1f),
+                                ObjectAnimator.ofFloat(block, "scaleY", 1f, 1.1f)
+                            ); duration = 200
+                        },
+                        AnimatorSet().apply {
+                            playTogether(
+                                ObjectAnimator.ofFloat(block, "scaleX", 1.1f, 1f),
+                                ObjectAnimator.ofFloat(block, "scaleY", 1.1f, 1f)
+                            ); duration = 200
+                        }
+                    )
+                    start()
+                }
+            }, i * 150L)
+        }
+        completionSound.seekTo(0); completionSound.start()
+        startStarGlow()
+        enableNavigationButtons()
+    }
+
     private fun showQuoteForStep(step: Int) {
-        val quotes = motivationalQuotes[totalSteps] ?: return
-
-        // Use step index to get the appropriate quote
+        val quotes     = motivationalQuotes[totalSteps] ?: return
         val quoteIndex = min(step, quotes.size - 1)
-        motivationalQuote.text = quotes[quoteIndex]
+        motivationalQuote.text       = quotes[quoteIndex]
         motivationalQuote.visibility = View.VISIBLE
-        motivationalQuote.alpha = 0f
+        motivationalQuote.alpha      = 0f
 
-        // Wait for layout to complete before positioning
         motivationalQuote.post {
-            // Position the quote above the star
             val quoteHeight = motivationalQuote.measuredHeight
-            val quoteWidth = motivationalQuote.measuredWidth
-            val starWidth = starCharacter.width
-
-            // Center the quote horizontally relative to the star
-            val centerX = starCharacter.x + (starWidth / 2) - (quoteWidth / 2)
-
-            // Position the quote above the star with some spacing
-            val quotePosY = starCharacter.y - quoteHeight - 20f
-
-            motivationalQuote.x = centerX
-            motivationalQuote.y = quotePosY
-
-            Log.d(TAG, "Quote positioning - Star: (${starCharacter.x}, ${starCharacter.y}), Quote: ($centerX, $quotePosY)")
-
-            val fadeIn = ObjectAnimator.ofFloat(motivationalQuote, "alpha", 0f, 1f)
-            fadeIn.duration = 800
-            fadeIn.start()
-
-            Log.d(TAG, "Showing quote: '${quotes[quoteIndex]}' at step $step (totalSteps: $totalSteps)")
+            val quoteWidth  = motivationalQuote.measuredWidth
+            motivationalQuote.x = starCharacter.x + (starCharacter.width  / 2) - (quoteWidth  / 2)
+            motivationalQuote.y = starCharacter.y - quoteHeight - 20f
+            ObjectAnimator.ofFloat(motivationalQuote, "alpha", 0f, 1f).apply { duration = 800; start() }
         }
     }
 
     private fun startStarGlow() {
-        // Continuous glowing animation
-        starGlowAnimator = ObjectAnimator.ofFloat(starCharacter, "scaleX", 1.2f, 1.3f, 1.2f)
-        starGlowAnimator?.duration = 1000
-        starGlowAnimator?.repeatCount = ValueAnimator.INFINITE
-        starGlowAnimator?.repeatMode = ValueAnimator.REVERSE
-        starGlowAnimator?.start()
-
-        val glowY = ObjectAnimator.ofFloat(starCharacter, "scaleY", 1.2f, 1.3f, 1.2f)
-        glowY.duration = 1000
-        glowY.repeatCount = ValueAnimator.INFINITE
-        glowY.repeatMode = ValueAnimator.REVERSE
-        glowY.start()
+        starGlowAnimator = ObjectAnimator.ofFloat(starCharacter, "scaleX", 1.2f, 1.3f, 1.2f).apply {
+            duration = 1000; repeatCount = ValueAnimator.INFINITE; repeatMode = ValueAnimator.REVERSE; start()
+        }
+        ObjectAnimator.ofFloat(starCharacter, "scaleY", 1.2f, 1.3f, 1.2f).apply {
+            duration = 1000; repeatCount = ValueAnimator.INFINITE; repeatMode = ValueAnimator.REVERSE; start()
+        }
     }
 
     private fun enableNavigationButtons() {
-        val continueFade = ObjectAnimator.ofFloat(btnContinue, "alpha", 0f, 1f)
-        continueFade.duration = 500
-        continueFade.start()
-
-        val homeFade = ObjectAnimator.ofFloat(btnHome, "alpha", 0f, 1f)
-        homeFade.duration = 500
-        homeFade.start()
-
+        ObjectAnimator.ofFloat(btnContinue, "alpha", 0f, 1f).apply { duration = 500; start() }
+        ObjectAnimator.ofFloat(btnHome,     "alpha", 0f, 1f).apply { duration = 500; start() }
         btnContinue.isEnabled = true
-        btnHome.isEnabled = true
+        btnHome.isEnabled     = true
     }
 
+    // =========================================================================
+    // Button listeners — route Continue to correct activity based on userAge
+    // =========================================================================
+
     private fun setupButtonListeners() {
-        btnContinue.alpha = 0f
-        btnHome.alpha = 0f
+        btnContinue.alpha     = 0f
+        btnHome.alpha         = 0f
         btnContinue.isEnabled = false
-        btnHome.isEnabled = false
+        btnHome.isEnabled     = false
 
         btnContinue.setOnClickListener {
-            val pressAnim = ObjectAnimator.ofPropertyValuesHolder(
+            ObjectAnimator.ofPropertyValuesHolder(
                 btnContinue,
                 android.animation.PropertyValuesHolder.ofFloat("scaleX", 1f, 0.95f, 1f),
                 android.animation.PropertyValuesHolder.ofFloat("scaleY", 1f, 0.95f, 1f)
-            )
-            pressAnim.duration = 200
-            pressAnim.addListener(object : AnimatorListenerAdapter() {
-                override fun onAnimationEnd(animation: Animator) {
-                    val intent = Intent(this@ASequenceScoreboardActivity, ActivitySequenceUnderActivity::class.java)
-                    intent.putExtra("PREVIOUS_ALPHA", finalAlpha)
-                    intent.putExtra("PREVIOUS_CORRECT", correctCount)
-                    intent.putExtra("PREVIOUS_SUBROUTINE", previousSubroutine)
-                    intent.putExtra("PREVIOUS_ERROR", previousError)
-                    intent.putExtra("SELECTED_ROUTINE_ID", userSelectedRoutine)
-                    intent.putExtra("USER_AGE", userAge)
-                    startActivity(intent)
-                    finish()
-                }
-            })
-            pressAnim.start()
+            ).apply {
+                duration = 200
+                addListener(object : AnimatorListenerAdapter() {
+                    override fun onAnimationEnd(animation: Animator) {
+                        navigateToGame()
+                    }
+                })
+                start()
+            }
         }
 
         btnHome.setOnClickListener {
-            val pressAnim = ObjectAnimator.ofPropertyValuesHolder(
+            ObjectAnimator.ofPropertyValuesHolder(
                 btnHome,
                 android.animation.PropertyValuesHolder.ofFloat("scaleX", 1f, 0.95f, 1f),
                 android.animation.PropertyValuesHolder.ofFloat("scaleY", 1f, 0.95f, 1f)
-            )
-            pressAnim.duration = 200
-            pressAnim.addListener(object : AnimatorListenerAdapter() {
-                override fun onAnimationEnd(animation: Animator) {
-                    val intent = Intent(this@ASequenceScoreboardActivity, RoutineSelectionActivity::class.java)
-                    startActivity(intent)
-                    finish()
-                }
-            })
-            pressAnim.start()
+            ).apply {
+                duration = 200
+                addListener(object : AnimatorListenerAdapter() {
+                    override fun onAnimationEnd(animation: Animator) {
+                        startActivity(Intent(this@ASequenceScoreboardActivity, RoutineSelectionActivity::class.java))
+                        finish()
+                    }
+                })
+                start()
+            }
         }
     }
+
+    /**
+     * Routes the "Play Again" tap to the correct game activity based on age:
+     *   Age 6-7  → ActivitySequenceUnderActivity  (tap-to-order)
+     *   Age 8-10 → ActivitySequenceOverActivity   (drag-and-drop)
+     *   Other    → ActivitySequenceUnderActivity  (fallback)
+     */
+    private fun navigateToGame() {
+        val targetActivity = if (userAge in 8..10) {
+            ActivitySequenceOverActivity::class.java
+        } else {
+            ActivitySequenceUnderActivity::class.java
+        }
+
+        Log.d(TAG, "Continue tapped — userAge=$userAge → navigating to ${targetActivity.simpleName}")
+
+        startActivity(Intent(this, targetActivity).apply {
+            putExtra("PREVIOUS_ALPHA",      finalAlpha)
+            putExtra("PREVIOUS_CORRECT",    correctCount)
+            putExtra("PREVIOUS_SUBROUTINE", previousSubroutine)
+            putExtra("PREVIOUS_ERROR",      previousError)
+            putExtra("SELECTED_ROUTINE_ID", userSelectedRoutine)
+            putExtra("USER_AGE",            userAge)
+        })
+        finish()
+    }
+
+    // =========================================================================
+    // Lifecycle
+    // =========================================================================
 
     override fun onPause() {
         super.onPause()
