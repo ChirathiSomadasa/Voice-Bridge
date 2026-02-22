@@ -12,15 +12,15 @@
     <!-- Bubble Progress Bar (Top floating bubbles) -->
     <LinearLayout
         android:id="@+id/bubbleContainer"
-        android:layout_width="match_parent"
-        android:layout_height="60dp"
-        android:orientation="horizontal"
-        android:gravity="center"
-        android:padding="8dp"
+        android:layout_width="411dp"
+        android:layout_height="39dp"
         android:background="@drawable/bubble_container_bg"
-        app:layout_constraintTop_toTopOf="parent"
+        android:gravity="center"
+        android:orientation="horizontal"
+        android:padding="8dp"
+        app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent">
+        app:layout_constraintTop_toTopOf="parent">
 
         <!-- Bubbles will be added programmatically -->
     </LinearLayout>
@@ -28,14 +28,14 @@
     <!-- Top Game Image without overlay text -->
     <ImageView
         android:id="@+id/topGameImage"
-        android:layout_width="match_parent"
-        android:layout_height="200dp"
+        android:layout_width="425dp"
+        android:layout_height="234dp"
+        android:alpha="0.9"
         android:scaleType="fitXY"
         android:src="@drawable/activity_sequence"
-        android:alpha="0.9"
-        app:layout_constraintTop_toBottomOf="@id/bubbleContainer"
+        app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent" />
+        app:layout_constraintTop_toBottomOf="@id/bubbleContainer" />
 
     <TextView
         android:id="@+id/game_title"
