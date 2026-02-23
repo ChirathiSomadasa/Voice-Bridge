@@ -24,26 +24,24 @@ import java.util.Locale
 
 class MMScoreboardActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
 
-    // Views
-    private lateinit var btnPlayAgain: Button
-    private lateinit var btnDashboard: Button
-    private lateinit var btnUnlockGift: CardView
-    private lateinit var giftBoxIcon: ImageView
-    private lateinit var titleWon: TextView
-    private lateinit var performanceText: TextView
-    private lateinit var starLeft: ImageView
-    private lateinit var starMiddle: ImageView
-    private lateinit var starRight: ImageView
+    private lateinit var btnPlayAgain:   Button
+    private lateinit var btnDashboard:   Button
+    private lateinit var btnUnlockGift:  CardView
+    private lateinit var giftBoxIcon:    ImageView
+    private lateinit var titleWon:       TextView
+    private lateinit var performanceText:TextView
+    private lateinit var starLeft:       ImageView
+    private lateinit var starMiddle:     ImageView
+    private lateinit var starRight:      ImageView
 
-    // Data
+    // Game result data
     private var correctAnswers = 0
-    private var motivationId = 0
-    private var unlockGift = false
-    private var alphaScore = 0f
-    private var avgResponseTime = 0f
-    private var avgTaps = 0
+    private var totalRounds    = 5
+    private var score          = 0
+    private var ageGroup       = 6
+    private var motivationId   = 0
+    private var unlockGift     = false
 
-    // Tools
     private lateinit var tts: TextToSpeech
     private var isTtsReady = false
     private var mediaPlayer: MediaPlayer? = null
@@ -53,112 +51,89 @@ class MMScoreboardActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
         enableEdgeToEdge()
         setContentView(R.layout.activity_mmscoreboard)
 
-        // Debug logging
-        val receivedCorrect = intent.getIntExtra("CORRECT_ANSWERS", -1)
-        val receivedMotivation = intent.getIntExtra("MOTIVATION_ID", -1)
-        Log.e("MMScoreboard", "DEBUG DATA: Correct=$receivedCorrect, Motivation=$receivedMotivation")
-
-        // 1. Get Data Passed from Game
         correctAnswers = intent.getIntExtra("CORRECT_ANSWERS", 0)
-        motivationId = intent.getIntExtra("MOTIVATION_ID", 0)
-        unlockGift = intent.getBooleanExtra("UNLOCK_GIFT", false)
+        totalRounds    = intent.getIntExtra("TOTAL_ROUNDS", 5)
+        score          = intent.getIntExtra("SCORE", 0)
+        ageGroup       = intent.getIntExtra("AGE_GROUP", 6)
+        motivationId   = intent.getIntExtra("MOTIVATION_ID", 0)
+        unlockGift     = intent.getBooleanExtra("UNLOCK_GIFT", false)
 
-        // Load performance metrics from Intent
-        alphaScore = intent.getFloatExtra("AVG_ALPHA", 0.0f)
-        avgResponseTime = intent.getFloatExtra("AVG_RESPONSE_TIME", 0.0f)
-        avgTaps = intent.getIntExtra("AVG_TAPS", 0)
+        Log.d("MMScoreboard", "correct=$correctAnswers total=$totalRounds score=$score age=$ageGroup")
 
-        Log.e("MMScoreboard", "Performance Metrics - Alpha: $alphaScore, " +
-                "Response Time: $avgResponseTime, Taps: $avgTaps")
-
-        // 2. Init Tools
         tts = TextToSpeech(this, this)
         initViews()
-
-        // 3. EXECUTE LOGIC with PERFORMANCE metrics
-        setupUIWithPerformance()
-
+        setupUI()
         setupButtons()
 
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main)) { v, insets ->
-            val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
-            v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
+            val sb = insets.getInsets(WindowInsetsCompat.Type.systemBars())
+            v.setPadding(sb.left, sb.top, sb.right, sb.bottom)
             insets
         }
     }
 
     private fun initViews() {
-        titleWon = findViewById(R.id.titleWon)
-        performanceText = findViewById(R.id.performanceText)
-        btnPlayAgain = findViewById(R.id.btnPlayAgain)
-        btnDashboard = findViewById(R.id.btnDashboard)
-        btnUnlockGift = findViewById(R.id.btnUnlockGift)
-        giftBoxIcon = findViewById(R.id.giftBoxIcon)
-        starLeft = findViewById(R.id.starLeft)
-        starMiddle = findViewById(R.id.starMiddle)
-        starRight = findViewById(R.id.starRight)
+        titleWon       = findViewById(R.id.titleWon)
+        performanceText= findViewById(R.id.performanceText)
+        btnPlayAgain   = findViewById(R.id.btnPlayAgain)
+        btnDashboard   = findViewById(R.id.btnDashboard)
+        btnUnlockGift  = findViewById(R.id.btnUnlockGift)
+        giftBoxIcon    = findViewById(R.id.giftBoxIcon)
+        starLeft       = findViewById(R.id.starLeft)
+        starMiddle     = findViewById(R.id.starMiddle)
+        starRight      = findViewById(R.id.starRight)
     }
 
-    private fun calculateStarsFromPerformance(alpha: Float, responseTime: Float, taps: Int): Int {
-        // Higher alpha = better performance
-        // Lower response time = faster/better
-        // Lower taps = less frustration
+    // =========================================================================
+    // Stars & text — driven purely by correctAnswers
+    // =========================================================================
 
-        var starScore = 0
-
-        // Alpha-based scoring (achievement index)
-        when {
-            alpha > 8.0f -> starScore += 3  // Excellent performance
-            alpha > 5.0f -> starScore += 2  // Good performance
-            alpha > 2.0f -> starScore += 1  // Okay performance
-        }
-
-        // Response time scoring (faster is better)
-        when {
-            responseTime < 1500 -> starScore += 2  // Very fast
-            responseTime < 2500 -> starScore += 1  // Average speed
-            // > 2500 gets no bonus
-        }
-
-        // Frustration scoring (fewer taps is better)
-        when {
-            taps <= 2 -> starScore += 2    // Very calm
-            taps <= 4 -> starScore += 1    // Somewhat calm
-            // > 4 taps gets no bonus
-        }
-
-        // Convert to 1-3 star scale
-        return when {
-            starScore >= 5 -> 3  // 3 stars for excellent performance
-            starScore >= 3 -> 2  // 2 stars for good performance
-            starScore >= 1 -> 1  // 1 star for basic performance
-            else -> 0            // 0 stars for poor performance
-        }
+    /** 5/5 → 3 stars | 3-4/5 → 2 stars | 1-2/5 → 1 star | 0/5 → 0 stars */
+    private fun starsFromCorrect(correct: Int, total: Int): Int = when {
+        correct == total              -> 3
+        correct >= (total * 0.6f)    -> 2
+        correct >= 1                 -> 1
+        else                         -> 0
     }
 
-    private fun setupUIWithPerformance() {
-        // A. Calculate stars based on PERFORMANCE metrics
-        val performanceStars = calculateStarsFromPerformance(alphaScore, avgResponseTime, avgTaps)
+    private fun titleFromCorrect(correct: Int, total: Int): Pair<String, Int> = when {
+        correct == total           -> Pair("Outstanding!", R.color.gold)
+        correct >= (total * 0.6f)  -> Pair("Great Job!",  R.color.light_green)
+        correct >= 1               -> Pair("Good Effort!", R.color.light_blue)
+        else                       -> Pair("Keep Practicing!", R.color.dark_orange)
+    }
 
-        // B. Set Emotive Title based on PERFORMANCE
-        val (mainTitle, colorRes) = getPerformanceResult(alphaScore)
-        titleWon.text = mainTitle
+    private fun messageFromCorrect(correct: Int, total: Int): String = when {
+        correct == total          -> "Amazing! You got all $total right! You're a superstar!"
+        correct >= (total * 0.6f) -> "Well done! You got $correct out of $total. Keep it up!"
+        correct >= 1              -> "You got $correct right! Practice makes perfect!"
+        else                      -> "That's okay! Every try helps you learn. Let's go again!"
+    }
+
+    // =========================================================================
+    // Setup
+    // =========================================================================
+
+    private fun setupUI() {
+        val stars = starsFromCorrect(correctAnswers, totalRounds)
+        val (title, colorRes) = titleFromCorrect(correctAnswers, totalRounds)
+        val message = messageFromCorrect(correctAnswers, totalRounds)
+
+        titleWon.text = title
         titleWon.setTextColor(resources.getColor(colorRes, theme))
 
-        // C. Use performance stars
-        animateStars(performanceStars)
+        animateStars(stars)
 
-        // D. EXECUTE MOTIVATION STRATEGY (The AI Decision)
         Handler(Looper.getMainLooper()).postDelayed({
             when (motivationId) {
-                0 -> runStrategyStars(performanceStars)
-                1 -> runStrategyPerformanceQuote()
-                2 -> runStrategyAnimation()
-                else -> runStrategyStars(performanceStars)
+                2    -> { playCelebrationSound(); animateTitleExcitement() }
+                else -> { /* default: just show message */ }
             }
+            performanceText.text = message
+            speakText(message)
         }, 500)
 
-        // E. Gift Logic (Model Driven)
+        // Gift
         if (unlockGift) {
             btnUnlockGift.visibility = View.VISIBLE
             btnUnlockGift.alpha = 0f
@@ -167,67 +142,6 @@ class MMScoreboardActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
         } else {
             btnUnlockGift.visibility = View.GONE
         }
-    }
-
-    private fun getPerformanceResult(alpha: Float): Pair<String, Int> {
-        return when {
-            alpha > 8.0f -> Pair("Outstanding!", R.color.gold)
-            alpha > 5.0f -> Pair("Great Job!", R.color.light_green)
-            alpha > 2.0f -> Pair("Good Effort!", R.color.light_blue)
-            else -> Pair("Keep Practicing!", R.color.dark_orange)
-        }
-    }
-
-    // --- UPDATED STRATEGIES FOR PERFORMANCE ---
-
-    // --- STRATEGY 0: STARS (Calm) ---
-    private fun runStrategyStars(starCount: Int) {
-        val text = "You earned $starCount stars!"
-        performanceText.text = text
-        speakText(text)
-    }
-
-    // --- STRATEGY 1: QUOTE (Social) - UPDATED FOR PERFORMANCE ---
-    private fun runStrategyPerformanceQuote() {
-        val quote = getPerformanceQuote(alphaScore, avgResponseTime, avgTaps)
-        performanceText.text = quote
-        speakText(quote)
-    }
-
-    // --- STRATEGY 2: ANIMATION (High Energy) ---
-    private fun runStrategyAnimation() {
-        performanceText.text = "Hooray! You did it!"
-        animateTitleExcitement() // Bouncing Title
-        playCelebrationSound()   // Sound Effect
-        speakText("Hooray! You did it!")
-    }
-
-    private fun getPerformanceQuote(alpha: Float, responseTime: Float, taps: Int): String {
-        val feedback = StringBuilder()
-
-        // Alpha feedback (achievement index)
-        feedback.append(when {
-            alpha > 8.0f -> "You are a Super Star!"
-            alpha > 5.0f -> "You did it! Hooray! "
-            alpha > 2.0f -> "You are doing great! "
-            else -> "Nice try! "
-        })
-
-        // Response time feedback
-        feedback.append(when {
-            responseTime < 1500 -> "You're so quick! "
-            responseTime < 2500 -> "Good speed! "
-            else -> "Take your time next round! "
-        })
-
-        // Tap frustration feedback
-        feedback.append(when {
-            taps <= 2 -> "Perfect control!"
-            taps <= 4 -> "Staying focused!"
-            else -> "Try gentle taps next time!"
-        })
-
-        return feedback.toString()
     }
 
     private fun animateStars(starsToShow: Int) {
@@ -251,73 +165,68 @@ class MMScoreboardActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
 
     private fun animateTitleExcitement() {
         val anim = ObjectAnimator.ofFloat(titleWon, "translationY", 0f, -20f, 0f)
-        anim.duration = 500
-        anim.repeatCount = 3
-        anim.start()
+        anim.duration = 500; anim.repeatCount = 3; anim.start()
     }
 
     private fun startGiftPulse() {
         val anim = ObjectAnimator.ofFloat(giftBoxIcon, "scaleX", 1f, 1.1f, 1f)
         anim.repeatCount = ValueAnimator.INFINITE
         anim.repeatMode = ValueAnimator.REVERSE
-        anim.duration = 1000
-        anim.start()
+        anim.duration = 1000; anim.start()
     }
 
     private fun playCelebrationSound() {
-        try {
-            mediaPlayer = MediaPlayer.create(this, R.raw.correct_sound)
-            mediaPlayer?.start()
-        } catch (e: Exception) { e.printStackTrace() }
+        try { mediaPlayer = MediaPlayer.create(this, R.raw.correct_sound); mediaPlayer?.start() }
+        catch (e: Exception) { e.printStackTrace() }
     }
+
+    // =========================================================================
+    // Buttons
+    // =========================================================================
 
     private fun setupButtons() {
         btnPlayAgain.setOnClickListener {
-            val intent = Intent(this, MoodMatchSevenDownActivity::class.java)
-
-            // Clear any flags from previous intent
-            intent.flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or
-                    Intent.FLAG_ACTIVITY_NEW_TASK or
-                    Intent.FLAG_ACTIVITY_CLEAR_TASK
-
-            startActivity(intent)
-            finish() // Close scoreboard
+            // Pass the SAME age group back so the game restores the correct mode
+            startActivity(Intent(this, MoodMatchSevenDownActivity::class.java).apply {
+                putExtra("AGE_GROUP", ageGroup)
+                flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_NEW_TASK
+            })
+            finish()
         }
+
         btnDashboard.setOnClickListener {
             try {
-                val intent = Intent(this, GameDashboardActivity::class.java)
-                // Clear all activities and start fresh at dashboard
-                intent.flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or
-                        Intent.FLAG_ACTIVITY_NEW_TASK or
-                        Intent.FLAG_ACTIVITY_CLEAR_TASK
-                startActivity(intent)
+                startActivity(Intent(this, GameDashboardActivity::class.java).apply {
+                    flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or
+                            Intent.FLAG_ACTIVITY_NEW_TASK or
+                            Intent.FLAG_ACTIVITY_CLEAR_TASK
+                })
                 finish()
             } catch (e: Exception) {
-                Log.e("MMScoreboard", "Error navigating to GameDashboardActivity: ${e.message}")
-                // Fallback: Just close the app gracefully
+                Log.e("MMScoreboard", "Dashboard nav error: ${e.message}")
                 finishAffinity()
             }
         }
+
         btnUnlockGift.setOnClickListener {
-            val intent = Intent(this, AllCorrectGrandPrizeActivity::class.java)
-            startActivityForResult(intent, 100)
+            startActivityForResult(Intent(this, AllCorrectGrandPrizeActivity::class.java), 100)
         }
     }
 
+    // =========================================================================
     // TTS
+    // =========================================================================
+
     override fun onInit(status: Int) {
         if (status == TextToSpeech.SUCCESS) {
-            tts.setLanguage(Locale.US)
-            tts.setPitch(1.6f)
-            tts.setSpeechRate(0.9f)
+            tts.setLanguage(Locale.US); tts.setPitch(1.6f); tts.setSpeechRate(0.9f)
             isTtsReady = true
         }
     }
 
     private fun speakText(text: String) {
         if (isTtsReady) {
-            // Remove emojis for TTS
-            val clean = text.replace(Regex("[^a-zA-Z0-9 ]"), "")
+            val clean = text.replace(Regex("[^a-zA-Z0-9 !.,'?]"), "")
             tts.speak(clean, TextToSpeech.QUEUE_FLUSH, null, "")
         }
     }
