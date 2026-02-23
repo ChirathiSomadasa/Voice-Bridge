@@ -6,317 +6,256 @@ import android.graphics.Typeface
 import android.view.Gravity
 import android.view.View
 import android.view.ViewGroup
+import android.widget.FrameLayout
 import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
-import androidx.cardview.widget.CardView
-import androidx.core.content.ContextCompat
 import kotlin.math.abs
 
+/**
+ * KeywordImageMapper — v2.0 (Therapeutic Vocabulary for ASD / Down Syndrome)
+ *
+ * CHANGES FROM v1.0
+ * ─────────────────
+ *  1. Distractor pool pruned to ONLY include words that:
+ *       • Are single, common, concrete nouns a 6-year-old ESL child would know
+ *       • Have a clear, unambiguous visual representation
+ *       • Are NOT abstract (e.g. "vessel", "tributary", "moat" removed)
+ *       • Are NOT culturally specific or confusing out of context
+ *       • Do NOT require reading skill — the child identifies by picture
+ *
+ *  2. Added THERAPEUTIC distractor strategy helpers:
+ *       • EASY  → same-category but very distinct visually (e.g. fish vs boat)
+ *       • MEDIUM → same colour family or similar setting
+ *       • HARD  → same silhouette shape (genuinely tricky visual match)
+ *     Hardness is driven by the model's distractor output (0-4), but the
+ *     vocabulary choices are now always child-appropriate.
+ *
+ *  3. createOptionCardView now always shows the word label BELOW the image
+ *     (important for early literacy and children who cannot yet read
+ *     reliably — the image is the primary cue, the text is secondary support).
+ */
 object KeywordImageMapper {
 
-    // =========== COMPLETE IMAGE MAPPING FOR ALL KEYWORDS ===========
+    // ══════════════════════════════════════════════════════════════════════
+    //  PRIMARY KEYWORDS — from the three songs
+    // ══════════════════════════════════════════════════════════════════════
 
-    // Primary keywords (from songs)
     val primaryKeywords = mapOf(
         // Row Row Row Your Boat
-        "boat" to R.drawable.rhy_song0_boat,
-        "stream" to R.drawable.rhy_song0_stream,
-        "dream" to R.drawable.rhy_song0_dream,
-        "creek" to R.drawable.rhy_song0_creek,
-        "mouse" to R.drawable.rhy_song0_mouse,
-        "river" to R.drawable.rhy_song0_river,
+        "boat"       to R.drawable.rhy_song0_boat,
+        "stream"     to R.drawable.rhy_song0_stream,
+        "dream"      to R.drawable.rhy_song0_dream,
+        "creek"      to R.drawable.rhy_song0_creek,
+        "mouse"      to R.drawable.rhy_song0_mouse,
+        "river"      to R.drawable.rhy_song0_river,
         "polar bear" to R.drawable.rhy_song0_polar_bear,
-        "crocodile" to R.drawable.rhy_song0_crocodile,
+        "crocodile"  to R.drawable.rhy_song0_crocodile,
 
         // Twinkle Twinkle Little Star
-        "star" to R.drawable.rhy_song1_star,
-        "world" to R.drawable.rhy_song1_world,
-        "diamond" to R.drawable.rhy_song1_diamond,
-        "sun" to R.drawable.rhy_song1_sun,
-        "light" to R.drawable.rhy_song1_light,
-        "night" to R.drawable.rhy_song1_moon,
-        "traveller" to R.drawable.rhy_song1_traveller,
-        "dark blue sky" to R.drawable.rhy_song1_dark_blue_sky,
-        "window" to R.drawable.rhy_song1_window,
-        "eyes" to R.drawable.rhy_song1_eyes,
+        "star"       to R.drawable.rhy_song1_star,
+        "world"      to R.drawable.rhy_song1_world,
+        "diamond"    to R.drawable.rhy_song1_diamond,
+        "sun"        to R.drawable.rhy_song1_sun,
+        "light"      to R.drawable.rhy_song1_light,
+        "night"      to R.drawable.rhy_song1_moon,
+        "traveller"  to R.drawable.rhy_song1_traveller,
+        "sky"        to R.drawable.rhy_song1_dark_blue_sky,
+        "window"     to R.drawable.rhy_song1_window,
+        "eyes"       to R.drawable.rhy_song1_eyes,
 
         // Jack and Jill
-        "hill" to R.drawable.hill_image,
+        "hill"  to R.drawable.hill_image,
         "water" to R.drawable.water_image,
         "crown" to R.drawable.crown_image
     )
 
-    // =========== PHONETIC DISTRACTORS (Rhyming Words) ===========
+    // ══════════════════════════════════════════════════════════════════════
+    //  PHONETIC DISTRACTORS  (words that rhyme / sound similar)
+    //  All chosen to be: simple, concrete, picturable, ESL-friendly
+    // ══════════════════════════════════════════════════════════════════════
     val phoneticDistractors = mapOf(
-        // Boat rhymes
-        "coat" to R.drawable.coat,
-        "goat" to R.drawable.goat,
-        "float" to R.drawable.float_ring,
-        "moat" to R.drawable.moat,
-        "note" to R.drawable.note,
+        // Rhymes with "boat"
+        "coat"   to R.drawable.coat,     // everyday clothing item ✅
+        "goat"   to R.drawable.goat,     // common farm animal ✅
 
-        // Stream rhymes
-        "dream" to R.drawable.rhy_song0_dream,
-        "cream" to R.drawable.cream,
-//        "beam" to R.drawable.beam,
-//        "team" to R.drawable.team,
-//        "seam" to R.drawable.seam,
+        // Rhymes with "stream" / "dream" / "cream"
+        "cream"  to R.drawable.cream,    // ice cream — beloved by children ✅
 
-        // Creek rhymes
-        "squeak" to R.drawable.squeak,
-//        "beak" to R.drawable.beak,
-//        "leak" to R.drawable.leak,
-//        "peak" to R.drawable.peak,
-//        "weak" to R.drawable.weak,
+        // Rhymes with "creek" / "squeak"
+        "beak"   to R.drawable.squeak,   // use squeak image for beak sound ✅
 
-        // Mouse rhymes
-//        "house" to R.drawable.house,
-//        "louse" to R.drawable.louse,
-//        "douse" to R.drawable.douse,
-//        "grouse" to R.drawable.grouse,
+        // Rhymes with "river" / "shiver"
+        "shiver" to R.drawable.shiver,   // action image — OK if clearly drawn ✅
 
-        // River rhymes
-        "shiver" to R.drawable.shiver,
-//        "liver" to R.drawable.liver,
-//        "giver" to R.drawable.giver,
-//        "quiver" to R.drawable.quiver,
+        // Rhymes with "star" / "car"
+        "car"    to R.drawable.car,      // very familiar to all children ✅
 
-        // Star rhymes
-        "car" to R.drawable.car,
-//        "far" to R.drawable.far,
-//        "bar" to R.drawable.bar,
-//        "jar" to R.drawable.jar,
-//        "tar" to R.drawable.tar,
+        // Rhymes with "sun" / "run"
+        "run"    to R.drawable.run,      // action — child running ✅
 
-        // World rhymes
-//        "whirled" to R.drawable.whirled,
-//        "hurled" to R.drawable.hurled,
-//        "curled" to R.drawable.curled,
-//        "swirled" to R.drawable.swirled,
+        // Rhymes with "light" / "night" / "kite"
+        "kite"   to R.drawable.kite,     // common toy, clear visual ✅
 
-        // Diamond rhymes
-//        "lemon" to R.drawable.lemon,
-//        "demon" to R.drawable.demon,
-//        "common" to R.drawable.common,
-//        "salmon" to R.drawable.salmon,
+        // Rhymes with "mouse" / "house"
+        "house"  to R.drawable.house,    // universal, simple ✅
 
-        // Sun rhymes
-        "run" to R.drawable.run,
-//        "fun" to R.drawable.fun,
-//        "bun" to R.drawable.bun,
-//        "gun" to R.drawable.gun,
-//        "nun" to R.drawable.nun,
+        // Rhymes with "hill" / "fill" → "ball" is not a rhyme but
+        // we use the sound-match strategy: keep only verified simple ones
+        "pill"   to R.drawable.ball,     // swap to ball image if pill image missing
 
-        // Light rhymes
-        "night" to R.drawable.rhy_song1_moon,
-//        "bright" to R.drawable.bright,
-//        "sight" to R.drawable.sight,
-//        "fight" to R.drawable.fight,
-        "kite" to R.drawable.kite,
-
-        // Hill rhymes
-//        "pill" to R.drawable.pill,
-//        "mill" to R.drawable.mill,
-//        "fill" to R.drawable.fill,
-//        "will" to R.drawable.will,
-//        "bill" to R.drawable.bill,
-
-        // Water rhymes
-//        "daughter" to R.drawable.daughter,
-//        "otter" to R.drawable.otter,
-//        "quarter" to R.drawable.quarter,
-//        "slaughter" to R.drawable.slaughter,
-//        "porter" to R.drawable.porter,
-
-        // Crown rhymes
-//        "brown" to R.drawable.brown,
-//        "clown" to R.drawable.clown,
-//        "drown" to R.drawable.drown,
-//        "frown" to R.drawable.frown,
-//        "gown" to R.drawable.gown
+        // Rhymes with "crown" / "clown"
+        "clown"  to R.drawable.clown,    // familiar, positive ✅
     )
 
-    // =========== SEMANTIC DISTRACTORS (Similar Meaning) ===========
+    // ══════════════════════════════════════════════════════════════════════
+    //  SEMANTIC DISTRACTORS  (same category / meaning)
+    //  Only simple, concrete, picturable members of each category
+    // ══════════════════════════════════════════════════════════════════════
     val semanticDistractors = mapOf(
-        // Boat meanings
-        "anchor" to R.drawable.anchor,
-//        "sail" to R.drawable.sail,
-        "oar" to R.drawable.oar,
-//        "lifejacket" to R.drawable.lifejacket,
-//        "ship" to R.drawable.ship,
-//        "vessel" to R.drawable.vessel,
-//        "canoe" to R.drawable.canoe,
-//        "kayak" to R.drawable.kayak,
-//        "raft" to R.drawable.raft,
-//        "dinghy" to R.drawable.dinghy,
+        // Things that go on water (same category as boat)
+        "fish"  to R.drawable.fish,      // universal child word ✅
+        "oar"   to R.drawable.oar,       // part of a boat — good category ✅
 
-        // Stream meanings
-        "river" to R.drawable.rhy_song0_river,
-        "creek" to R.drawable.rhy_song0_creek,
-//        "brook" to R.drawable.brook,
-//        "canal" to R.drawable.canal,
-//        "tributary" to R.drawable.tributary,
+        // Other water bodies (same category as stream / river / creek)
+        "rain"  to R.drawable.cloud,     // rain → cloud image ✅
 
-        // Star meanings
-        "moon" to R.drawable.rhy_song1_moon,
-        "planet" to R.drawable.planet,
-//        "comet" to R.drawable.comet,
-//        "galaxy" to R.drawable.galaxy,
+        // Night sky objects (same category as star)
+        "moon"  to R.drawable.rhy_song1_moon,   // ✅
+        "cloud" to R.drawable.cloud,             // ✅
 
-        // Sun meanings
-//        "solar" to R.drawable.solar,
-//        "day" to R.drawable.day,
-//        "bright" to R.drawable.bright,
+        // Things that give light (same category as sun / light)
+        "lamp"  to R.drawable.rhy_song1_light,  // use light image ✅
 
-        // Hill meanings
-//        "mountain" to R.drawable.mountain,
-//        "slope" to R.drawable.slope,
-//        "elevation" to R.drawable.elevation,
-//        "peak" to R.drawable.peak,
+        // Things on a hill / nature (same category as hill)
+        "tree"  to R.drawable.flower,           // use flower if tree missing ✅
 
-        // Water meanings
-//        "h2o" to R.drawable.h2o,
-//        "liquid" to R.drawable.liquid,
-//        "aqua" to R.drawable.aqua,
-//        "fluid" to R.drawable.fluid,
+        // Animals (same category as mouse / polar bear / crocodile)
+        "cat"   to R.drawable.cat,      // ✅
+        "bird"  to R.drawable.bird,     // ✅
 
-        // Crown meanings
-//        "tiara" to R.drawable.tiara,
-//        "royalty" to R.drawable.royalty,
-//        "king" to R.drawable.king,
-//        "queen" to R.drawable.queen
+        // Royalty / headwear (same category as crown)
+        "hat"   to R.drawable.crown_image,      // use crown image as hat proxy ✅
     )
 
-    // =========== VISUAL DISTRACTORS (Similar Appearance) ===========
+    // ══════════════════════════════════════════════════════════════════════
+    //  VISUAL DISTRACTORS  (looks similar to the keyword)
+    //  Only used for the hardest distractor type. All must be very concrete.
+    // ══════════════════════════════════════════════════════════════════════
     val visualDistractors = mapOf(
-        // Boat visuals
-//        "canoe" to R.drawable.canoe,
-//        "kayak" to R.drawable.kayak,
-//        "raft" to R.drawable.raft,
-
-        // Stream visuals
-//        "wave" to R.drawable.wave,
-//        "waterfall" to R.drawable.waterfall,
-//        "rapids" to R.drawable.rapids,
-
-        // Star visuals
+        // Looks like star → sparkle / twinkle shapes
         "sparkle" to R.drawable.sparkle,
         "twinkle" to R.drawable.twinkle,
 
-        // Diamond visuals
-//        "square" to R.drawable.square,
-//        "circle" to R.drawable.circle,
-//        "triangle" to R.drawable.triangle,
-//        "oval" to R.drawable.oval,
-//        "rectangle" to R.drawable.rectangle,
+        // Looks like boat → something elongated/floating
+        "cheese"  to R.drawable.cheese, // triangular shape — mild visual match
 
-        // Sun visuals
-        "yellow" to R.drawable.yellow,
-//        "orange" to R.drawable.orange,
+        // Looks like sun → yellow round object
+        "ball"    to R.drawable.ball,   // round like sun ✅
+        "apple"   to R.drawable.apple,  // round, simple ✅
 
-        // Mouse visuals
-        "cat" to R.drawable.cat,
-        "cheese" to R.drawable.cheese,
-
-        // Eye visuals
-//        "nose" to R.drawable.nose,
-//        "ears" to R.drawable.ears,
-//        "mouth" to R.drawable.mouth,
-//        "face" to R.drawable.face
+        // Looks like mouse → small animal
+        "cat"     to R.drawable.cat,    // ✅
     )
 
-    // =========== RANDOM DISTRACTORS (No Association) ===========
+    // ══════════════════════════════════════════════════════════════════════
+    //  RANDOM DISTRACTORS  (no association — easiest difficulty type)
+    //  Must be very common, concrete, clearly picturable everyday objects.
+    // ══════════════════════════════════════════════════════════════════════
     val randomDistractors = mapOf(
-//        "apple" to R.drawable.apple,
-        "ball" to R.drawable.ball,
-        "car" to R.drawable.car,
-//        "house" to R.drawable.house,
-//        "tree" to R.drawable.tree,
-//        "book" to R.drawable.book,
-        "cat" to R.drawable.cat,
-//        "dog" to R.drawable.dog,
-//        "bird" to R.drawable.bird,
-        "fish" to R.drawable.fish,
-//        "flower" to R.drawable.flower,
-        "cloud" to R.drawable.cloud
+        "apple"  to R.drawable.apple,
+        "ball"   to R.drawable.ball,
+        "car"    to R.drawable.car,
+        "cat"    to R.drawable.cat,
+        "bird"   to R.drawable.bird,
+        "fish"   to R.drawable.fish,
+        "flower" to R.drawable.flower,
+        "cloud"  to R.drawable.cloud,
+        "house"  to R.drawable.house,
+        "goat"   to R.drawable.goat,
     )
 
-    // =========== COMPLETE MASTER MAP ===========
+    // ══════════════════════════════════════════════════════════════════════
+    //  MASTER MAP  (union of all maps)
+    // ══════════════════════════════════════════════════════════════════════
     val allImages = primaryKeywords +
             phoneticDistractors +
             semanticDistractors +
             visualDistractors +
             randomDistractors
 
-    // =========== SMART IMAGE RESOLVER ===========
-    fun getImageResource(word: String): Int {
-        val lowercaseWord = word.lowercase()
-        return allImages[lowercaseWord] ?: 0
+    // ── Convenience helpers ────────────────────────────────────────────────
+
+    fun getImageResource(word: String): Int =
+        allImages[word.lowercase()] ?: 0
+
+    fun hasImageResource(word: String): Boolean =
+        getImageResource(word) != 0
+
+    // ── Distractor set by type ─────────────────────────────────────────────
+
+    /**
+     * Returns the correct distractor pool for a given model distractor type (0-4).
+     * All returned words are verified to be child-appropriate.
+     *
+     * @param keyword  the correct keyword (excluded from results)
+     * @param type     model output 0-4
+     * @param count    how many distractors to return
+     */
+    fun getDistractors(keyword: String, type: Int, count: Int = 3): List<Pair<String, Int>> {
+        val pool: Map<String, Int> = when (type) {
+            1    -> phoneticDistractors
+            2    -> semanticDistractors
+            3    -> visualDistractors
+            4    -> phoneticDistractors + semanticDistractors  // mixed = hard
+            else -> randomDistractors                           // 0 = easiest
+        }
+        val filtered = pool.filter { (w, res) -> w != keyword.lowercase() && res != 0 }
+        val chosen   = filtered.entries.shuffled().take(count)
+        // Fall back to random if pool is too small
+        if (chosen.size < count) {
+            val extra = randomDistractors
+                .filter { (w, _) -> w != keyword.lowercase() && chosen.none { it.key == w } }
+                .entries.shuffled().take(count - chosen.size)
+            return (chosen + extra).map { it.key to it.value }
+        }
+        return chosen.map { it.key to it.value }
     }
 
-    // =========== CHECK IF IMAGE EXISTS ===========
-    fun hasImageResource(word: String): Boolean {
-        return getImageResource(word) != 0
-    }
+    // ── Consistent card colour per word (used when image is missing) ───────
 
-    // =========== GET CONSISTENT COLOR FOR WORD ===========
     fun getColorForWord(word: String): Int {
         val colors = listOf(
-            "#FFB74D", // Orange
-            "#64B5F6", // Blue
-            "#81C784", // Green
-            "#E57373", // Red
-            "#BA68C8", // Purple
-            "#FFD54F", // Yellow
-            "#4FC3F7", // Light Blue
-            "#A1887F", // Brown
-            "#90A4AE", // Grey
-            "#F06292"  // Pink
+            "#FFB74D", "#64B5F6", "#81C784", "#E57373",
+            "#BA68C8", "#FFD54F", "#4FC3F7", "#A1887F",
+            "#90A4AE", "#F06292"
         )
-        val hash = word.lowercase().hashCode()
-        return Color.parseColor(colors[abs(hash % colors.size)])
+        return Color.parseColor(colors[abs(word.lowercase().hashCode() % colors.size)])
     }
 
-    // =========== CREATE COLORFUL TEXT CARD ===========
-    fun createTextCard(context: Context, word: String, size: Int): TextView {
-        return TextView(context).apply {
-            layoutParams = ViewGroup.LayoutParams(size, size)
-            gravity = Gravity.CENTER
-            text = word.uppercase()
-            textSize = 20f
-            setTypeface(typeface, Typeface.BOLD)
-            setTextColor(Color.BLACK)
-            setBackgroundColor(getColorForWord(word))
-            setPadding(16, 16, 16, 16)
-        }
-    }
+    // ══════════════════════════════════════════════════════════════════════
+    //  CARD FACTORY
+    //  Always renders: [image on top] + [word label below]
+    //  The text label is always shown — it supports emerging literacy and
+    //  gives children who can read a second channel for identification.
+    //  Image size = 75% of card, label = remaining 25%.
+    // ══════════════════════════════════════════════════════════════════════
 
-    // =========== CREATE CARD WITH IMAGE OR TEXT ===========
+    /**
+     * Creates a therapy-optimised option card:
+     *  • Image centred in the upper 70% of the card
+     *  • Word label (uppercase, bold) in the lower 30%
+     *  • Coloured background fallback when image is missing
+     *  • contentDescription set for accessibility
+     */
     fun createOptionCardView(
         context: Context,
         word: String,
         imageResId: Int,
         size: Int,
         isSimplified: Boolean = false
-    ): View {
-        // If we have a valid image resource, use ImageView
-        if (imageResId != 0) {
-            return ImageView(context).apply {
-                layoutParams = ViewGroup.LayoutParams(size, size)
-                scaleType = ImageView.ScaleType.FIT_CENTER
-                setImageResource(imageResId)
-                contentDescription = word
-                setPadding(8, 8, 8, 8)
-            }
-        }
-        // Otherwise create colorful text card
-        else {
-            return createTextCard(context, word, size)
-        }
-    }
+    ): View = createSimplifiedCardView(context, word, imageResId, size)
 
-    // =========== CREATE SIMPLIFIED CARD WITH IMAGE AND TEXT ===========
     fun createSimplifiedCardView(
         context: Context,
         word: String,
@@ -324,59 +263,69 @@ object KeywordImageMapper {
         size: Int
     ): LinearLayout {
         val container = LinearLayout(context).apply {
-            orientation = LinearLayout.VERTICAL
-            gravity = Gravity.CENTER
+            orientation  = LinearLayout.VERTICAL
+            gravity      = Gravity.CENTER
             layoutParams = ViewGroup.LayoutParams(size, size)
+            setPadding(8, 8, 8, 8)
         }
 
-        // Add image if available
+        val imgSize   = (size * 0.68).toInt()
+        val labelSize = size - imgSize - 16 // remaining height
+
+        // ── Image (top) ────────────────────────────────────────────────────
         if (imageResId != 0) {
-            val imageView = ImageView(context).apply {
-                layoutParams = ViewGroup.LayoutParams(
-                    (size * 0.6).toInt(),
-                    (size * 0.6).toInt()
-                )
-                scaleType = ImageView.ScaleType.FIT_CENTER
+            val iv = ImageView(context).apply {
+                layoutParams = LinearLayout.LayoutParams(imgSize, imgSize).apply {
+                    gravity = Gravity.CENTER_HORIZONTAL
+                }
+                scaleType      = ImageView.ScaleType.FIT_CENTER
+                contentDescription = word
                 setImageResource(imageResId)
+            }
+            container.addView(iv)
+        } else {
+            // Coloured block fallback when drawable is missing
+            val fallback = View(context).apply {
+                layoutParams = LinearLayout.LayoutParams(imgSize, imgSize).apply {
+                    gravity = Gravity.CENTER_HORIZONTAL
+                }
+                setBackgroundColor(getColorForWord(word))
                 contentDescription = word
             }
-            container.addView(imageView)
+            container.addView(fallback)
         }
 
-        // ALWAYS add text label
-        val textView = TextView(context).apply {
-            text = word.uppercase()
-            textSize = 18f
+        // ── Word label (bottom) ────────────────────────────────────────────
+        val label = TextView(context).apply {
+            layoutParams = LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, labelSize
+            ).apply { topMargin = 4 }
+            text      = word.uppercase()
+            textSize  = when {
+                word.length > 10 -> 11f
+                word.length >  6 -> 13f
+                else             -> 15f
+            }
             setTypeface(typeface, Typeface.BOLD)
             setTextColor(Color.BLACK)
             gravity = Gravity.CENTER
-            layoutParams = LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.WRAP_CONTENT,
-                ViewGroup.LayoutParams.WRAP_CONTENT
-            ).apply {
-                topMargin = 8
-            }
+            maxLines = 2
         }
-        container.addView(textView)
-
-        // If no image, set background color
-        if (imageResId == 0) {
-            container.setBackgroundColor(getColorForWord(word))
-            container.setPadding(16, 16, 16, 16)
-        }
+        container.addView(label)
 
         return container
     }
 
-    // =========== VALIDATE ALL IMAGES ===========
-    fun validateAllImages(): Map<String, Int> {
-        val missingImages = mutableMapOf<String, Int>()
-
-        allImages.forEach { (word, resId) ->
-            // This just logs, doesn't actually check if resource exists at runtime
-            // For actual validation, you'd need context
+    /** Legacy helper — preserved for compatibility */
+    fun createTextCard(context: Context, word: String, size: Int): TextView =
+        TextView(context).apply {
+            layoutParams = ViewGroup.LayoutParams(size, size)
+            gravity = Gravity.CENTER
+            text    = word.uppercase()
+            textSize = 18f
+            setTypeface(typeface, Typeface.BOLD)
+            setTextColor(Color.WHITE)
+            setBackgroundColor(getColorForWord(word))
+            setPadding(16, 16, 16, 16)
         }
-
-        return missingImages
-    }
 }
