@@ -11,8 +11,8 @@
 
     <androidx.constraintlayout.widget.ConstraintLayout
         android:id="@+id/headerLayout"
-        android:layout_width="411dp"
-        android:layout_height="192dp"
+        android:layout_width="412dp"
+        android:layout_height="201dp"
         android:background="@drawable/header_cloud_background"
         android:paddingTop="40dp"
         app:layout_constraintEnd_toEndOf="parent"
@@ -21,8 +21,8 @@
 
         <ImageView
             android:id="@+id/pandaImage"
-            android:layout_width="140dp"
-            android:layout_height="171dp"
+            android:layout_width="128dp"
+            android:layout_height="169dp"
             android:layout_marginStart="-18dp"
             android:layout_marginTop="-15dp"
             android:contentDescription="Panda Mascot"
@@ -34,38 +34,40 @@
             app:layout_constraintVertical_bias="0.0" />
 
         <!-- Word to Find -->
+
+        <!-- Score Card -->
+
         <LinearLayout
             android:id="@+id/wordContainer"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_marginTop="-2dp"
+            android:layout_marginTop="0dp"
             android:gravity="center_vertical"
             android:orientation="vertical"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toStartOf="@+id/scoreCard"
-            app:layout_constraintHorizontal_bias="0.0"
+            app:layout_constraintHorizontal_bias="1.0"
             app:layout_constraintStart_toEndOf="@id/pandaImage"
             app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintVertical_bias="0.01">
+            app:layout_constraintVertical_bias="0.0">
 
             <TextView
                 android:id="@+id/wordTitle"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="4dp"
-                android:fontFamily="sans-serif-condensed"
+                android:fontFamily="sans-serif-condensed-bold"
                 android:shadowColor="#40000000"
                 android:shadowDx="2"
                 android:shadowDy="2"
                 android:shadowRadius="4"
                 android:text="BOAT"
-                android:textColor="@android:color/white"
-                android:textSize="30sp"
+                android:textColor="@color/white"
+                android:textSize="27sp"
                 android:textStyle="bold" />
 
         </LinearLayout>
 
-        <!-- Score Card -->
         <com.google.android.material.card.MaterialCardView
             android:id="@+id/scoreCard"
             android:layout_width="100dp"
@@ -118,42 +120,33 @@
         </com.google.android.material.card.MaterialCardView>
 
         <!-- 🏆 LEVEL BADGE - Below Score Card -->
-        <androidx.cardview.widget.CardView
+        <!-- 🏆 LEVEL BADGE - Below Score Card -->
+        <LinearLayout
             android:id="@+id/levelBadge"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="10dp"
-            android:elevation="8dp"
-            app:cardBackgroundColor="@android:color/transparent"
-            app:cardElevation="0dp"
-            app:cardCornerRadius="0dp"
+            android:background="@drawable/level_flag_background"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:paddingStart="20dp"
+            android:paddingTop="8dp"
+            android:paddingEnd="20dp"
+            android:paddingBottom="8dp"
             app:layout_constraintEnd_toEndOf="@id/scoreCard"
             app:layout_constraintStart_toStartOf="@id/scoreCard"
             app:layout_constraintTop_toBottomOf="@id/scoreCard">
 
-            <LinearLayout
-                android:layout_width="match_parent"
+            <TextView
+                android:id="@+id/levelIndicator"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:background="@drawable/level_flag_background"
-                android:gravity="center_vertical"
-                android:orientation="horizontal"
-                android:paddingStart="20dp"
-                android:paddingTop="8dp"
-                android:paddingEnd="20dp"
-                android:paddingBottom="8dp">
+                android:text="Beginner"
+                android:textColor="@android:color/white"
+                android:textSize="16sp"
+                android:textStyle="bold" />
 
-                <TextView
-                    android:id="@+id/levelIndicator"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Beginner"
-                    android:textColor="@android:color/white"
-                    android:textSize="16sp"
-                    android:textStyle="bold" />
-
-            </LinearLayout>
-
-        </androidx.cardview.widget.CardView>
+        </LinearLayout>
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 
@@ -176,27 +169,6 @@
         <!-- Progress dots will be added dynamically -->
 
     </LinearLayout>
-
-    <!-- 🎯 STRATEGY TOAST - Fades in/out (FIXED) -->
-    <TextView
-        android:id="@+id/strategyIndicator"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="12dp"
-        android:alpha="0"
-        android:elevation="10dp"
-        android:paddingStart="24dp"
-        android:paddingTop="10dp"
-        android:paddingEnd="24dp"
-        android:paddingBottom="10dp"
-        android:text="🎯 Focus: Balanced"
-        android:textColor="@android:color/white"
-        android:textSize="15sp"
-        android:textStyle="bold"
-        android:visibility="gone"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/progressContainer" />
 
     <!-- Instructions -->
     <TextView
