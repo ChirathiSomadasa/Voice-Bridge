@@ -22,28 +22,10 @@ import kotlinx.coroutines.withContext
 
 class SpeechLevel2TaskActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
 
-    data class WordItem(val word: String, val imageResId: Int)
-
-    private val fullWordList = listOf(
-        WordItem("ball", R.drawable.ball), WordItem("cat", R.drawable.cat),
-        WordItem("spoon", R.drawable.spoon), WordItem("rabbit", R.drawable.rabbit),
-        WordItem("chair", R.drawable.chair), WordItem("tap", R.drawable.tap),
-        WordItem("leaf", R.drawable.leaf), WordItem("shoe", R.drawable.shoe),
-        WordItem("bottle", R.drawable.bottle), WordItem("goat", R.drawable.goat),
-        WordItem("sun", R.drawable.sun), WordItem("star", R.drawable.star),
-        WordItem("bed", R.drawable.bed), WordItem("duck", R.drawable.duck),
-        WordItem("lamp", R.drawable.lamp), WordItem("waterfall", R.drawable.waterfall),
-        WordItem("tree", R.drawable.tree), WordItem("bird", R.drawable.bird),
-        WordItem("flower", R.drawable.flower), WordItem("apple", R.drawable.apple),
-        WordItem("book", R.drawable.book), WordItem("computer", R.drawable.computer),
-        WordItem("zoo", R.drawable.zoo), WordItem("banana", R.drawable.banana),
-        WordItem("house", R.drawable.house)
-    )
-
-    private var currentBatchIndex = 0
-    private var currentBatchList = listOf<WordItem>()
+    private var currentBatchList = listOf<TherapyDataPool.WordItem>()
     private var currentIndex = 0
     private lateinit var wordScores: IntArray
+    private var isLevelCompleted = false
 
     private lateinit var tvWord: TextView
     private lateinit var ivWordImage: ImageView
@@ -55,6 +37,8 @@ class SpeechLevel2TaskActivity : AppCompatActivity(), TextToSpeech.OnInitListene
     private lateinit var processingDialog: ProcessingDialog
     private lateinit var successDialog: SuccessDialog
     private lateinit var soundManager: SoundManager
+    private lateinit var btnBack: ImageView
+
 
     private var tts: TextToSpeech? = null
     private var isTtsReady = false
@@ -71,40 +55,42 @@ class SpeechLevel2TaskActivity : AppCompatActivity(), TextToSpeech.OnInitListene
         soundManager = SoundManager(this)
 
         auth = FirebaseAuth.getInstance()
-        currentUserId = auth.currentUser?.uid ?: ""
+        currentUserId = auth.currentUser?.uid ?: "guest_user"
         wav2Vec2Scorer = Wav2Vec2Scorer(this)
-
-        if (intent.hasExtra("BATCH_INDEX")) {
-            currentBatchIndex = intent.getIntExtra("BATCH_INDEX", 0)
-        } else {
-            if (currentUserId.isNotEmpty()) {
-                val prefs = getSharedPreferences("VoiceBridgePrefs", Context.MODE_PRIVATE)
-                currentBatchIndex = prefs.getInt("SAVED_BATCH_LEVEL_2_$currentUserId", 0)
-            }
-        }
-        setupCurrentBatch()
 
         tvWord = findViewById(R.id.tvWord)
         ivWordImage = findViewById(R.id.ivWordImage)
         llPlaySound = findViewById(R.id.llPlaySound)
         llSpeakSound = findViewById(R.id.llSpeakSound)
         btnNext = findViewById(R.id.btnNext)
+        btnBack = findViewById(R.id.btnBack)
 
         checkPermissions()
         tts = TextToSpeech(this, this)
 
+        // Load the unique, non-repeating random word batch for this specific user
+        loadUserSpecificWordBatch()
+
         btnNext.isEnabled = false
-        displayCurrentWord()
+
+        if (!isLevelCompleted) {
+            displayCurrentWord()
+        }
+
+        btnBack.setOnClickListener {
+            soundManager.playClickSound()
+            finish()
+        }
 
         llPlaySound.setOnClickListener {
-            soundManager.playClickSound() // Play UI pop sound
-            if (isTtsReady) speakWord(tvWord.text.toString())
+            soundManager.playClickSound()
+            if (isTtsReady && !isLevelCompleted) speakWord(tvWord.text.toString())
         }
 
         llSpeakSound.setOnClickListener {
-            soundManager.playClickSound() // Play UI pop sound
+            soundManager.playClickSound()
             if (ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED) {
-                assessWordPronunciation()
+                if (!isLevelCompleted) assessWordPronunciation()
             } else {
                 Toast.makeText(this, "Microphone permission required", Toast.LENGTH_SHORT).show()
                 checkPermissions()
@@ -114,22 +100,34 @@ class SpeechLevel2TaskActivity : AppCompatActivity(), TextToSpeech.OnInitListene
         btnNext.setOnClickListener {
             moveToNextWord()
         }
+
     }
 
-    private fun setupCurrentBatch() {
-        val startIndex = currentBatchIndex * 5
-        var endIndex = startIndex + 5
-        if (endIndex > fullWordList.size) {
-            endIndex = fullWordList.size
+    private fun loadUserSpecificWordBatch() {
+        val prefs = getSharedPreferences("VoiceBridgePrefs", Context.MODE_PRIVATE)
+
+        val allBatches = TherapyDataPool.articulationWords.chunked(5)
+        val totalBatches = allBatches.size
+
+        var orderString = prefs.getString("WORD_ORDER_$currentUserId", null)
+
+        var userOrderList = orderString?.split(",")?.mapNotNull { it.toIntOrNull() } ?: emptyList()
+
+        if (orderString == null || userOrderList.size != totalBatches) {
+            val shuffledIndices = (0 until totalBatches).shuffled()
+            orderString = shuffledIndices.joinToString(",")
+            prefs.edit().putString("WORD_ORDER_$currentUserId", orderString).apply()
+            userOrderList = shuffledIndices
         }
-        if (startIndex >= fullWordList.size) {
-            currentBatchIndex = 0
-            setupCurrentBatch()
-            return
-        }
-        currentBatchList = fullWordList.subList(startIndex, endIndex)
+
+        val currentProgressIndex = prefs.getInt("SAVED_BATCH_LEVEL_2_$currentUserId", 0)
+
+        val actualBatchIndexToLoad = userOrderList[currentProgressIndex % totalBatches]
+
+        currentBatchList = allBatches[actualBatchIndexToLoad]
         wordScores = IntArray(currentBatchList.size) { 0 }
         currentIndex = 0
+        isLevelCompleted = false
     }
 
     private fun checkPermissions() {
@@ -152,16 +150,14 @@ class SpeechLevel2TaskActivity : AppCompatActivity(), TextToSpeech.OnInitListene
 
     private fun assessWordPronunciation() {
         val currentWordItem = currentBatchList[currentIndex]
-        val targetWord = currentWordItem.word
+        val targetWord = currentWordItem.text
 
         listeningDialog = ListeningDialog(this)
         listeningDialog.show()
 
         executor.execute {
-            // 1. Audio Recording
             val audioData = wav2Vec2Scorer.recordAudio(3000)
 
-            // 2. Dismiss Listening and Show Processing
             runOnUiThread {
                 if (::listeningDialog.isInitialized && listeningDialog.isShowing) {
                     listeningDialog.dismiss()
@@ -171,7 +167,6 @@ class SpeechLevel2TaskActivity : AppCompatActivity(), TextToSpeech.OnInitListene
             }
 
             if (audioData != null) {
-                // 3. Get Score
                 val (pronunciationType, score) = wav2Vec2Scorer.predict(audioData, targetWord)
 
                 val category = when {
@@ -180,16 +175,11 @@ class SpeechLevel2TaskActivity : AppCompatActivity(), TextToSpeech.OnInitListene
                     else -> "bad"
                 }
 
-                // Save Result to Firebase
                 saveToHistory(targetWord, score, 2, pronunciationType)
 
-                // 4. Launch Coroutine for API call while Processing Dialog is showing
                 CoroutineScope(Dispatchers.IO).launch {
-
-                    //  // Call the suspend function from FeedbackGenerator
                     val aiFeedbackText = FeedbackGenerator.getDynamicFeedback(score, category)
 
-                    // 5. Switch back to Main Thread to update UI
                     withContext(Dispatchers.Main) {
                         if (::processingDialog.isInitialized && processingDialog.isShowing) {
                             processingDialog.dismiss()
@@ -217,7 +207,7 @@ class SpeechLevel2TaskActivity : AppCompatActivity(), TextToSpeech.OnInitListene
     }
 
     private fun saveToHistory(content: String, score: Int, level: Int, pronunciationType: String) {
-        if (currentUserId.isEmpty()) return
+        if (currentUserId.isEmpty() || currentUserId == "guest_user") return
 
         val category = when {
             score >= 75 -> "good"
@@ -242,9 +232,11 @@ class SpeechLevel2TaskActivity : AppCompatActivity(), TextToSpeech.OnInitListene
     }
 
     private fun displayCurrentWord() {
-        val item = currentBatchList[currentIndex]
-        tvWord.text = item.word
-        ivWordImage.setImageResource(item.imageResId)
+        if (currentBatchList.isNotEmpty()) {
+            val item = currentBatchList[currentIndex]
+            tvWord.text = item.text
+            ivWordImage.setImageResource(item.imageResId)
+        }
     }
 
     private fun moveToNextWord() {
@@ -265,17 +257,17 @@ class SpeechLevel2TaskActivity : AppCompatActivity(), TextToSpeech.OnInitListene
 
     private fun finishLevel() {
         val progress = calculateProgress()
-        val nextBatchStartIndex = (currentBatchIndex + 1) * 5
-        val hasMoreWords = nextBatchStartIndex < fullWordList.size
 
         if (progress >= 75) {
-            val nextBatch = currentBatchIndex + 1
-            if (hasMoreWords && currentUserId.isNotEmpty()) {
-                val prefs = getSharedPreferences("VoiceBridgePrefs", Context.MODE_PRIVATE)
-                prefs.edit().putInt("SAVED_BATCH_LEVEL_2_$currentUserId", nextBatch).apply()
+            val prefs = getSharedPreferences("VoiceBridgePrefs", Context.MODE_PRIVATE)
+            val currentProgressIndex = prefs.getInt("SAVED_BATCH_LEVEL_2_$currentUserId", 0)
 
-                // Firebase Sync
-                val updateMap = hashMapOf("level2_batch" to nextBatch)
+            // Increment the completed batch count
+            val nextProgressIndex = currentProgressIndex + 1
+            prefs.edit().putInt("SAVED_BATCH_LEVEL_2_$currentUserId", nextProgressIndex).apply()
+
+            if (currentUserId != "guest_user") {
+                val updateMap = hashMapOf("level2_batch" to nextProgressIndex)
                 FirebaseFirestore.getInstance().collection("student_progress")
                     .document(currentUserId)
                     .set(updateMap, SetOptions.merge())
@@ -284,17 +276,22 @@ class SpeechLevel2TaskActivity : AppCompatActivity(), TextToSpeech.OnInitListene
             successDialog = SuccessDialog(this)
             successDialog.show()
             successDialog.setOnDismissListener {
-                goToProgress(progress, hasMoreWords)
+
+                goToProgress(progress, true)
             }
         } else {
-            goToProgress(progress, hasMoreWords)
+
+            goToProgress(progress, false)
         }
     }
 
     private fun goToProgress(score: Int, canContinue: Boolean) {
+        val prefs = getSharedPreferences("VoiceBridgePrefs", Context.MODE_PRIVATE)
+        val currentProgressIndex = prefs.getInt("SAVED_BATCH_LEVEL_2_$currentUserId", 0)
+
         val intent = Intent(this, WordProgressActivity::class.java)
         intent.putExtra("PROGRESS_SCORE", score)
-        intent.putExtra("BATCH_INDEX", currentBatchIndex)
+        intent.putExtra("BATCH_INDEX", currentProgressIndex)
         intent.putExtra("CAN_CONTINUE", canContinue)
         startActivity(intent)
         finish()
@@ -303,7 +300,6 @@ class SpeechLevel2TaskActivity : AppCompatActivity(), TextToSpeech.OnInitListene
     override fun onDestroy() {
         tts?.stop()
         tts?.shutdown()
-        // Release Sound Pool to avoid memory leaks
         soundManager.release()
         super.onDestroy()
     }

@@ -24,11 +24,11 @@ class SpeechLevel1TaskActivity : AppCompatActivity(), TextToSpeech.OnInitListene
 
     // 1. FULL ALPHABET
     private val fullGraphemeList = listOf(
-        "M", "A", "B", "T", "S",  // Batch 0
-        "L", "R", "P", "F", "C",  // Batch 1
-        "H", "N", "D", "G", "K",  // Batch 2
-        "W", "Y", "J", "V", "Z",  // Batch 3
-        "Q", "X", "E", "I", "O", "U" // Batch 4
+        "J", "Y", "B", "W", "S",  // Batch 0
+        "H", "F", "C", "I", "P",  // Batch 1
+        "L", "N", "D", "G", "K",  // Batch 2
+        "T", "R", "M", "V", "Z",  // Batch 3
+        "Q", "X", "E", "A", "O", "U" // Batch 4
     )
 
     private val pronunciationMap = mapOf(
@@ -53,6 +53,7 @@ class SpeechLevel1TaskActivity : AppCompatActivity(), TextToSpeech.OnInitListene
     private lateinit var processingDialog: ProcessingDialog
     private lateinit var successDialog: SuccessDialog
     private lateinit var soundManager: SoundManager
+    private lateinit var btnBack: ImageView
 
     private var tts: TextToSpeech? = null
     private var isTtsReady = false
@@ -90,12 +91,18 @@ class SpeechLevel1TaskActivity : AppCompatActivity(), TextToSpeech.OnInitListene
         llPlaySound = findViewById(R.id.llPlaySound)
         llSpeakSound = findViewById(R.id.llSpeakSound)
         btnNext = findViewById(R.id.btnNext)
+        btnBack = findViewById(R.id.btnBack)
 
         checkPermissions()
         tts = TextToSpeech(this, this)
 
         btnNext.isEnabled = false
         displayCurrentLetter()
+
+        btnBack.setOnClickListener {
+            soundManager.playClickSound()
+            finish()
+        }
 
         llPlaySound.setOnClickListener {
             soundManager.playClickSound() // Play UI pop sound
@@ -115,6 +122,7 @@ class SpeechLevel1TaskActivity : AppCompatActivity(), TextToSpeech.OnInitListene
         btnNext.setOnClickListener {
             moveToNextLetter()
         }
+
     }
 
     private fun setupCurrentBatch() {
@@ -268,17 +276,13 @@ class SpeechLevel1TaskActivity : AppCompatActivity(), TextToSpeech.OnInitListene
 
     private fun finishLevel() {
         val progressScore = calculateProgress()
-        val nextBatchStartIndex = (currentBatchIndex + 1) * 5
-        val hasMoreLetters = nextBatchStartIndex < fullGraphemeList.size
 
         if (progressScore >= 75) {
             val nextBatch = currentBatchIndex + 1
-            if (hasMoreLetters && currentUserId.isNotEmpty()) {
-                // 1. Local Save
+            if (currentUserId.isNotEmpty()) {
                 val prefs = getSharedPreferences("VoiceBridgePrefs", Context.MODE_PRIVATE)
                 prefs.edit().putInt("SAVED_BATCH_LEVEL_1_$currentUserId", nextBatch).apply()
 
-                // 2. Firebase Sync
                 val updateMap = hashMapOf("level1_batch" to nextBatch)
                 FirebaseFirestore.getInstance().collection("student_progress")
                     .document(currentUserId)
@@ -288,10 +292,12 @@ class SpeechLevel1TaskActivity : AppCompatActivity(), TextToSpeech.OnInitListene
             successDialog = SuccessDialog(this)
             successDialog.show()
             successDialog.setOnDismissListener {
-                goToProgress(progressScore, hasMoreLetters)
+
+                goToProgress(progressScore, true)
             }
         } else {
-            goToProgress(progressScore, hasMoreLetters)
+
+            goToProgress(progressScore, false)
         }
     }
 
