@@ -150,20 +150,35 @@ class ParentReportActivity : AppCompatActivity() {
     }
 
     private fun updateProgressUI(batch1: Int, batch2: Int, batch3: Int) {
+        // Level 1: 26 Letters Total
         val progress1 = (batch1 * 5).coerceAtMost(26)
         pbLevel1.max = 26
         pbLevel1.progress = progress1
-        tvLevel1Progress.text = "Level 1: Letters ($progress1/26)"
+        if (progress1 >= 26) {
+            tvLevel1Progress.text = "Level 1: Letters (26/26) - Mastered!"
+        } else {
+            tvLevel1Progress.text = "Level 1: Letters ($progress1/26)"
+        }
 
-        val progress2 = (batch2 * 5).coerceAtMost(25)
-        pbLevel2.max = 25
+        // Level 2: 40 Words Total (8 batches * 5 words)
+        val progress2 = (batch2 * 5).coerceAtMost(40)
+        pbLevel2.max = 40
         pbLevel2.progress = progress2
-        tvLevel2Progress.text = "Level 2: Words ($progress2/25)"
+        if (batch2 >= 8) {
+            tvLevel2Progress.text = "Level 2: Words (40/40) - Mastered!"
+        } else {
+            tvLevel2Progress.text = "Level 2: Words ($progress2/40)"
+        }
 
+        // Level 3: 30 Sentences Total (10 stories * 3 sentences)
         val progress3 = (batch3 * 3).coerceAtMost(30)
         pbLevel3.max = 30
         pbLevel3.progress = progress3
-        tvLevel3Progress.text = "Level 3: Sentences ($progress3/30)"
+        if (batch3 >= 10) {
+            tvLevel3Progress.text = "Level 3: Sentences (30/30) - Mastered!"
+        } else {
+            tvLevel3Progress.text = "Level 3: Sentences ($progress3/30)"
+        }
 
         if (progress1 == 0 && progress2 == 0 && progress3 == 0) {
             tvCourseNote.visibility = View.VISIBLE
@@ -194,8 +209,7 @@ class ParentReportActivity : AppCompatActivity() {
         val tvScore = view.findViewById<TextView>(R.id.tvScore)
         val tvLabel = view.findViewById<TextView>(R.id.tvLabel)
 
-        // The 'view' passed here IS the CardView itself due to the <include> tag.
-        // We cast it directly instead of using findViewById to look inside itself.
+        // The 'view' passed here IS the CardView itself due to the <include> tag
         val mainCard = view as androidx.cardview.widget.CardView
 
         tvScore.text = "$score%"
@@ -270,18 +284,18 @@ class ParentReportActivity : AppCompatActivity() {
     // --- 4. PDF GENERATION ---
     private fun generatePDF(): File? {
         val pdfDocument = PdfDocument()
-        val pageInfo = PdfDocument.PageInfo.Builder(595, 842, 1).create() // A4 Size
+        val pageInfo = PdfDocument.PageInfo.Builder(595, 842, 1).create() // Standard A4 Size
         val page = pdfDocument.startPage(pageInfo)
         val canvas: Canvas = page.canvas
         val paint = Paint()
 
-        // Fonts
+        // Define typography for different sections
         val titleFont = Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
         val headerFont = Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
         val normalFont = Typeface.create(Typeface.DEFAULT, Typeface.NORMAL)
 
         // --- 1. DRAW HEADER BACKGROUND ---
-        paint.color = Color.parseColor("#4CAF50") // Green banner
+        paint.color = Color.parseColor("#4CAF50") // Thematic green banner
         paint.style = Paint.Style.FILL
         canvas.drawRect(0f, 0f, 595f, 100f, paint)
 
@@ -291,12 +305,13 @@ class ParentReportActivity : AppCompatActivity() {
         paint.typeface = titleFont
         canvas.drawText("Voice Bridge - Speech Progress Report", 40f, 60f, paint)
 
+        // Append the current date to the report
         val reportDate = SimpleDateFormat("MMMM dd, yyyy", Locale.getDefault()).format(Date())
         paint.textSize = 14f
         paint.typeface = normalFont
         canvas.drawText("Date: $reportDate", 40f, 85f, paint)
 
-        // --- 3. DRAW OVERALL PERFORMANCE ---
+        // --- 3. DRAW OVERALL PERFORMANCE METRICS ---
         var currentY = 150f
         paint.color = Color.BLACK
         paint.textSize = 18f
@@ -307,6 +322,7 @@ class ParentReportActivity : AppCompatActivity() {
         paint.textSize = 14f
         paint.typeface = normalFont
 
+        // Render calculated average scores for all three levels
         canvas.drawText("Level 1 (Letters Accuracy):  $scoreL1%", 40f, currentY, paint)
         currentY += 25f
         canvas.drawText("Level 2 (Words Accuracy):   $scoreL2%", 40f, currentY, paint)
@@ -315,42 +331,42 @@ class ParentReportActivity : AppCompatActivity() {
 
         // --- 4. DRAW WEAKNESS ANALYSIS TABLE ---
         currentY += 50f
-        paint.color = Color.parseColor("#D32F2F") // Red section title
+        paint.color = Color.parseColor("#D32F2F") // Alert red for weaknesses section
         paint.textSize = 18f
         paint.typeface = headerFont
         canvas.drawText("Areas for Improvement (Recent Sessions)", 40f, currentY, paint)
 
         currentY += 20f
 
+        // Handle case where the student has no recent bad scores
         if (insightList.isEmpty()) {
             paint.color = Color.parseColor("#4CAF50")
             paint.textSize = 14f
             paint.typeface = normalFont
             canvas.drawText("Excellent! No significant weaknesses detected recently.", 40f, currentY + 20f, paint)
         } else {
-            // Draw Table Header
-            paint.color = Color.parseColor("#F5F5F5") // Light gray header bg
+            // Draw Table Header Background
+            paint.color = Color.parseColor("#F5F5F5") // Light gray header background
             paint.style = Paint.Style.FILL
             canvas.drawRect(40f, currentY, 555f, currentY + 30f, paint)
 
+            // Draw Table Header Text
             paint.color = Color.BLACK
             paint.typeface = headerFont
             paint.textSize = 12f
 
-            // NEW X-COORDINATES FOR BETTER SPACING
             canvas.drawText("Target Item", 50f, currentY + 20f, paint)
-            canvas.drawText("Score", 290f, currentY + 20f, paint) // Score placed at X=290
-            canvas.drawText("Clinical Diagnosis / Suggestion", 350f, currentY + 20f, paint) // Diagnosis at X=350
+            canvas.drawText("Score", 290f, currentY + 20f, paint)
+            canvas.drawText("Clinical Diagnosis / Suggestion", 350f, currentY + 20f, paint)
 
             currentY += 30f
             paint.typeface = normalFont
 
-            // Draw Table Rows
+            // Iterate through the top 15 most recent weaknesses to generate table rows
             for (item in insightList.take(15)) {
-
                 paint.color = Color.BLACK
 
-                // 1. Target Item (Column 1) - Wrap text if > 35 chars
+                // Render Column 1: Target Item (With Text Wrapping Logic)
                 var targetText = item.content
                 val maxCharsCol1 = 35
                 var lineOffsetTarget = 0f
@@ -367,16 +383,16 @@ class ParentReportActivity : AppCompatActivity() {
                     canvas.drawText(targetText, 50f, currentY + 20f, paint)
                 }
 
-                // 2. Score (Column 2)
+                // Render Column 2: Accuracy Score (Color Coded)
                 if (item.score < 50) {
-                    paint.color = Color.parseColor("#D32F2F")
+                    paint.color = Color.parseColor("#D32F2F") // Critical Red
                 } else {
-                    paint.color = Color.parseColor("#F57C00")
+                    paint.color = Color.parseColor("#F57C00") // Moderate Orange
                 }
                 paint.typeface = headerFont
-                canvas.drawText("${item.score}%", 290f, currentY + 20f, paint) // Score aligned here
+                canvas.drawText("${item.score}%", 290f, currentY + 20f, paint)
 
-                // 3. Clinical Diagnosis (Column 3) - Wrap text if > 35 chars
+                // Render Column 3: Clinical Diagnosis (With Text Wrapping Logic)
                 paint.color = Color.BLACK
                 paint.typeface = normalFont
                 var diagText = item.diagnosis
@@ -395,35 +411,75 @@ class ParentReportActivity : AppCompatActivity() {
                     canvas.drawText(diagText, 350f, currentY + 20f, paint)
                 }
 
-                // Calculate required row height
+                // Calculate dynamic row height based on text wrapping
                 val rowHeight = 35f + maxOf(lineOffsetTarget, lineOffsetDiag)
 
-                // Draw bottom border for the row
+                // Draw row separator line
                 paint.color = Color.parseColor("#E0E0E0")
                 paint.strokeWidth = 1f
                 canvas.drawLine(40f, currentY + rowHeight, 555f, currentY + rowHeight, paint)
 
-                currentY += rowHeight // Move down for next row
+                currentY += rowHeight
             }
         }
 
-        // Draw Footer
+        // --- 5. DRAW FOOTER ---
         paint.color = Color.GRAY
         paint.textSize = 10f
         canvas.drawText("Generated by Voice Bridge AI Speech Therapy Assistant", 40f, 800f, paint)
 
+        // Finalize the PDF page rendering
         pdfDocument.finishPage(page)
 
+        // --- 6. SMART SAVING LOGIC (PRIVATE + PUBLIC EXPORT) ---
         val fileName = "VoiceBridge_Report_${System.currentTimeMillis()}.pdf"
-        val file = File(getExternalFilesDir(Environment.DIRECTORY_DOCUMENTS), fileName)
+
+        // Step 1: Save the file to App's Private Directory first.
+        // This guarantees compatibility with the Android FileProvider for sharing via Intent.
+        val privateDir = getExternalFilesDir(Environment.DIRECTORY_DOCUMENTS)
+        if (privateDir != null && !privateDir.exists()) privateDir.mkdirs()
+        val localFile = File(privateDir, fileName)
 
         try {
-            pdfDocument.writeTo(FileOutputStream(file))
+            // Write the generated PDF bytes to the private file
+            FileOutputStream(localFile).use { pdfDocument.writeTo(it) }
             pdfDocument.close()
-            return file
+
+            // Step 2: Silently copy the generated PDF to the user's public 'Downloads' folder.
+            // This allows parents to easily view the downloaded report without file manager restrictions.
+            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q) {
+                // Scoped Storage implementation for Android 10+ using MediaStore API
+                val contentValues = android.content.ContentValues().apply {
+                    put(android.provider.MediaStore.MediaColumns.DISPLAY_NAME, fileName)
+                    put(android.provider.MediaStore.MediaColumns.MIME_TYPE, "application/pdf")
+                    put(android.provider.MediaStore.MediaColumns.RELATIVE_PATH, Environment.DIRECTORY_DOWNLOADS + "/VoiceBridgeReports")
+                }
+
+                val uri = contentResolver.insert(android.provider.MediaStore.Downloads.EXTERNAL_CONTENT_URI, contentValues)
+                if (uri != null) {
+                    contentResolver.openOutputStream(uri)?.use { outputStream ->
+                        localFile.inputStream().copyTo(outputStream)
+                    }
+                    Toast.makeText(this, "Saved to Downloads/VoiceBridgeReports folder", Toast.LENGTH_LONG).show()
+                }
+            } else {
+                // Legacy file saving mechanism for Android 9 and below
+                val downloadsDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
+                val appDir = File(downloadsDir, "VoiceBridgeReports")
+                if (!appDir.exists()) appDir.mkdirs()
+
+                val publicFile = File(appDir, fileName)
+                localFile.inputStream().copyTo(FileOutputStream(publicFile))
+                Toast.makeText(this, "Saved to Downloads/VoiceBridgeReports folder", Toast.LENGTH_LONG).show()
+            }
+
+            // Step 3: Return the Private File object to be consumed by the Share Intent
+            return localFile
+
         } catch (e: Exception) {
             e.printStackTrace()
             pdfDocument.close()
+            Toast.makeText(this, "Failed to save PDF", Toast.LENGTH_SHORT).show()
             return null
         }
     }
