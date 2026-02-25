@@ -20,7 +20,7 @@ import java.util.concurrent.TimeUnit
 class Wav2Vec2Scorer(private val context: Context) {
 
     // Hugging Face Space URL
-    private val SERVER_URL = ""
+    private val SERVER_URL = "https://chirathisomadasa-voice-bridge-server.hf.space/predict"
 
     // OkHttpClient with increased timeouts to handle slow network or server "cold starts"
     private val client = OkHttpClient.Builder()
