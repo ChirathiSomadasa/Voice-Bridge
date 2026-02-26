@@ -162,7 +162,7 @@ class SpeechLevel3TaskActivity : AppCompatActivity(), TextToSpeech.OnInitListene
         listeningDialog.show()
 
         executor.execute {
-            val audioData = wav2Vec2Scorer.recordAudio(6000)
+            val audioData = wav2Vec2Scorer.recordAudio(10000)
 
             runOnUiThread {
                 if (::listeningDialog.isInitialized && listeningDialog.isShowing) {
