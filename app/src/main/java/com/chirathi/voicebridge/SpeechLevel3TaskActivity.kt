@@ -1,36 +1,34 @@
 package com.chirathi.voicebridge
 
 import android.Manifest
+import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
-import android.os.*
+import android.os.Bundle
 import android.speech.tts.TextToSpeech
 import android.widget.*
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.SetOptions
 import java.util.*
+import java.util.concurrent.Executors
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 class SpeechLevel3TaskActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
 
+    // Helper data class to map the Data Pool stories to the UI
     data class SentenceItem(val sentence: String, val imageResourceId: Int)
 
-    private val sentenceList = listOf(
-        SentenceItem("The big dog ran fast in the park", R.drawable.dog_level3),
-        SentenceItem("The pretty bird flew up to the sky", R.drawable.bird_level3),
-        SentenceItem("Ben builds big blue blocks", R.drawable.blue_box_level3),
-        SentenceItem("Sam saw a sunfish swimming", R.drawable.fish_level3),
-        SentenceItem("Kate keeps her kite in the kit", R.drawable.kite_level3),
-        SentenceItem("The little lion likes to play", R.drawable.lion_level3),
-        SentenceItem("The rabbit runs around the rock", R.drawable.rabbit_level3),
-        SentenceItem("The sun is bright and warm today", R.drawable.sun_level3),
-        SentenceItem("She gets the green grapes", R.drawable.grapes_level3),
-        SentenceItem("John rides a race car really fast", R.drawable.car_level3)
-    )
-
+    private var currentBatchList = listOf<SentenceItem>()
     private var currentIndex = 0
-
-    private val sentenceScores = IntArray(sentenceList.size) { 0 }
+    private lateinit var sentenceScores: IntArray
+    private var isLevelCompleted = false
 
     private lateinit var tvSentence: TextView
     private lateinit var ivSentenceImage: ImageView
@@ -40,39 +38,63 @@ class SpeechLevel3TaskActivity : AppCompatActivity(), TextToSpeech.OnInitListene
 
     private lateinit var listeningDialog: ListeningDialog
     private lateinit var processingDialog: ProcessingDialog
+    private lateinit var successDialog: SuccessDialog
+    private lateinit var soundManager: SoundManager
+    private lateinit var btnBack: ImageView
 
     private var tts: TextToSpeech? = null
     private var isTtsReady = false
-
-    private val pronunciationAssesment = PronunciationAssesment()
+    private lateinit var auth: FirebaseAuth
+    private var currentUserId: String = ""
+    private lateinit var wav2Vec2Scorer: Wav2Vec2Scorer
+    private val executor = Executors.newSingleThreadExecutor()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_speech_level3_task)
+
+        soundManager = SoundManager(this)
+
+        auth = FirebaseAuth.getInstance()
+        currentUserId = auth.currentUser?.uid ?: "guest_user"
+        wav2Vec2Scorer = Wav2Vec2Scorer(this)
 
         tvSentence = findViewById(R.id.tvSentence)
         ivSentenceImage = findViewById(R.id.ivSentenceImage)
         llPlaySound = findViewById(R.id.llPlaySound)
         llSpeakSound = findViewById(R.id.llSpeakSound)
         btnNext = findViewById(R.id.btnNext)
+        btnBack = findViewById(R.id.btnBack)
+
 
         checkPermissions()
         tts = TextToSpeech(this, this)
 
+        // Load the unique, non-repeating random Story batch
+        loadUserSpecificStoryBatch()
+
         btnNext.isEnabled = false
-        displayCurrentSentence()
+
+        if (!isLevelCompleted) {
+            displayCurrentSentence()
+        }
+
+        btnBack.setOnClickListener {
+            soundManager.playClickSound()
+            finish()
+        }
 
         llPlaySound.setOnClickListener {
-            if (isTtsReady) speakSentence(tvSentence.text.toString())
+            soundManager.playClickSound()
+            if (isTtsReady && !isLevelCompleted) speakSentence(tvSentence.text.toString())
         }
 
         llSpeakSound.setOnClickListener {
-            if (ContextCompat.checkSelfPermission(
-                    this, Manifest.permission.RECORD_AUDIO
-                ) == PackageManager.PERMISSION_GRANTED
-            ) {
-                assessSentencePronunciation()
+            soundManager.playClickSound()
+            if (ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED) {
+                if (!isLevelCompleted) assessSentencePronunciation()
             } else {
+                Toast.makeText(this, "Microphone permission required", Toast.LENGTH_SHORT).show()
                 checkPermissions()
             }
         }
@@ -80,16 +102,43 @@ class SpeechLevel3TaskActivity : AppCompatActivity(), TextToSpeech.OnInitListene
         btnNext.setOnClickListener {
             moveToNextSentence()
         }
+
+    }
+
+    private fun loadUserSpecificStoryBatch() {
+        val prefs = getSharedPreferences("VoiceBridgePrefs", Context.MODE_PRIVATE)
+
+        val allStories = TherapyDataPool.articulationStories
+        val totalStories = allStories.size
+
+        var orderString = prefs.getString("STORY_ORDER_$currentUserId", null)
+
+        var userOrderList = orderString?.split(",")?.mapNotNull { it.toIntOrNull() } ?: emptyList()
+
+        if (orderString == null || userOrderList.size != totalStories) {
+            val shuffledIndices = (0 until totalStories).shuffled()
+            orderString = shuffledIndices.joinToString(",")
+            prefs.edit().putString("STORY_ORDER_$currentUserId", orderString).apply()
+            userOrderList = shuffledIndices
+        }
+
+        val currentProgressIndex = prefs.getInt("SAVED_BATCH_LEVEL_3_$currentUserId", 0)
+
+        val actualStoryIndexToLoad = userOrderList[currentProgressIndex % totalStories]
+        val selectedStory = allStories[actualStoryIndexToLoad]
+
+        currentBatchList = selectedStory.sentences.indices.map { i ->
+            SentenceItem(selectedStory.sentences[i], selectedStory.imageResIds[i])
+        }
+
+        sentenceScores = IntArray(currentBatchList.size) { 0 }
+        currentIndex = 0
+        isLevelCompleted = false
     }
 
     private fun checkPermissions() {
-        if (ContextCompat.checkSelfPermission(
-                this, Manifest.permission.RECORD_AUDIO
-            ) != PackageManager.PERMISSION_GRANTED
-        ) {
-            ActivityCompat.requestPermissions(
-                this, arrayOf(Manifest.permission.RECORD_AUDIO), 100
-            )
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.RECORD_AUDIO), 100)
         }
     }
 
@@ -107,61 +156,97 @@ class SpeechLevel3TaskActivity : AppCompatActivity(), TextToSpeech.OnInitListene
     }
 
     private fun assessSentencePronunciation() {
-        val referenceSentence = sentenceList[currentIndex].sentence
+        val targetSentence = currentBatchList[currentIndex].sentence
 
         listeningDialog = ListeningDialog(this)
         listeningDialog.show()
 
-        pronunciationAssesment.assess(
-            referenceText = referenceSentence,
-            onResult = { result ->
-                runOnUiThread {
+        executor.execute {
+            val audioData = wav2Vec2Scorer.recordAudio(10000)
+
+            runOnUiThread {
+                if (::listeningDialog.isInitialized && listeningDialog.isShowing) {
                     listeningDialog.dismiss()
-                    processingDialog = ProcessingDialog(this)
-                    processingDialog.show()
+                }
+                processingDialog = ProcessingDialog(this@SpeechLevel3TaskActivity)
+                processingDialog.show()
+            }
+
+            if (audioData != null) {
+                val (pronunciationType, score) = wav2Vec2Scorer.predict(audioData, targetSentence)
+
+                val category = when {
+                    score >= 75 -> "good"
+                    score >= 50 -> "moderate"
+                    else -> "bad"
                 }
 
-                Handler(Looper.getMainLooper()).postDelayed({
+                saveToHistory(targetSentence, score, 3, pronunciationType)
 
-                    val score = result.accuracyScore.toInt()
-                    sentenceScores[currentIndex] = score
+                CoroutineScope(Dispatchers.IO).launch {
+                    val aiFeedbackText = FeedbackGenerator.getDynamicFeedback(score, category)
 
-                    val type = when {
-                        score >= 75 -> "GOOD_PRONUNCIATION"
-                        score >= 50 -> "MODERATE_PRONUNCIATION"
-                        else -> "POOR_PRONUNCIATION"
+                    withContext(Dispatchers.Main) {
+                        if (::processingDialog.isInitialized && processingDialog.isShowing) {
+                            processingDialog.dismiss()
+                        }
+
+                        sentenceScores[currentIndex] = score
+
+                        FeedbackDialog(this@SpeechLevel3TaskActivity).show(
+                            score = score,
+                            category = category,
+                            feedbackMessage = aiFeedbackText
+                        )
+                        btnNext.isEnabled = true
                     }
-
-                    processingDialog.dismiss()
-
-                    FeedbackDialog(this).show(
-                        score = score,
-                        level = 3,
-                        word = referenceSentence,
-                        pronunciationType = type
-                    )
-
-                    btnNext.isEnabled = true
-
-                }, 1000)
-            },
-            onError = {
+                }
+            } else {
                 runOnUiThread {
-                    listeningDialog.dismiss()
-                    Toast.makeText(this, it, Toast.LENGTH_LONG).show()
+                    if (::processingDialog.isInitialized && processingDialog.isShowing) {
+                        processingDialog.dismiss()
+                    }
+                    Toast.makeText(this@SpeechLevel3TaskActivity, "Recording Failed.", Toast.LENGTH_SHORT).show()
                 }
             }
+        }
+    }
+
+    private fun saveToHistory(content: String, score: Int, level: Int, pronunciationType: String) {
+        if (currentUserId.isEmpty() || currentUserId == "guest_user") return
+
+        val category = when {
+            score >= 75 -> "good"
+            score >= 50 -> "moderate"
+            else -> "poor"
+        }
+
+        val feedbackMap = hashMapOf(
+            "userId" to currentUserId,
+            "content" to content,
+            "score" to score,
+            "level" to level,
+            "type" to pronunciationType,
+            "category" to category,
+            "item_type" to "sentence",
+            "timestamp" to com.google.firebase.Timestamp.now()
         )
+
+        FirebaseFirestore.getInstance().collection("pronunciation_feedback")
+            .add(feedbackMap)
+            .addOnFailureListener { e -> e.printStackTrace() }
     }
 
     private fun displayCurrentSentence() {
-        val item = sentenceList[currentIndex]
-        tvSentence.text = item.sentence
-        ivSentenceImage.setImageResource(item.imageResourceId)
+        if (currentBatchList.isNotEmpty()) {
+            val item = currentBatchList[currentIndex]
+            tvSentence.text = item.sentence
+            ivSentenceImage.setImageResource(item.imageResourceId)
+        }
     }
 
     private fun moveToNextSentence() {
-        if (currentIndex < sentenceList.size - 1) {
+        if (currentIndex < currentBatchList.size - 1) {
             currentIndex++
             displayCurrentSentence()
             btnNext.isEnabled = false
@@ -171,19 +256,56 @@ class SpeechLevel3TaskActivity : AppCompatActivity(), TextToSpeech.OnInitListene
     }
 
     private fun calculateProgress(): Int {
-        return sentenceScores.sum() / sentenceScores.size
+        val totalMaxScore = currentBatchList.size * 100
+        val earnedScore = sentenceScores.sum()
+        return ((earnedScore.toFloat() / totalMaxScore.toFloat()) * 100).toInt()
     }
 
     private fun finishLevel() {
         val progress = calculateProgress()
+
+        if (progress >= 75) {
+            val prefs = getSharedPreferences("VoiceBridgePrefs", Context.MODE_PRIVATE)
+            val currentProgressIndex = prefs.getInt("SAVED_BATCH_LEVEL_3_$currentUserId", 0)
+
+            val nextProgressIndex = currentProgressIndex + 1
+            prefs.edit().putInt("SAVED_BATCH_LEVEL_3_$currentUserId", nextProgressIndex).apply()
+
+            if (currentUserId != "guest_user") {
+                val updateMap = hashMapOf("level3_batch" to nextProgressIndex)
+                FirebaseFirestore.getInstance().collection("student_progress")
+                    .document(currentUserId)
+                    .set(updateMap, SetOptions.merge())
+            }
+
+            successDialog = SuccessDialog(this)
+            successDialog.show()
+            successDialog.setOnDismissListener {
+
+                goToProgress(progress, true)
+            }
+        } else {
+
+            goToProgress(progress, false)
+        }
+    }
+
+    private fun goToProgress(score: Int, canContinue: Boolean) {
+        val prefs = getSharedPreferences("VoiceBridgePrefs", Context.MODE_PRIVATE)
+        val currentProgressIndex = prefs.getInt("SAVED_BATCH_LEVEL_3_$currentUserId", 0)
+
         val intent = Intent(this, SentencesProgressActivity::class.java)
-        intent.putExtra("PROGRESS_SCORE", progress)
+        intent.putExtra("PROGRESS_SCORE", score)
+        intent.putExtra("BATCH_INDEX", currentProgressIndex)
+        intent.putExtra("CAN_CONTINUE", canContinue)
         startActivity(intent)
         finish()
     }
 
     override fun onDestroy() {
+        tts?.stop()
         tts?.shutdown()
+        soundManager.release()
         super.onDestroy()
     }
 }
