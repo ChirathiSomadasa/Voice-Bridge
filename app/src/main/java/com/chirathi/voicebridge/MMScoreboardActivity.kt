@@ -20,6 +20,8 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.cardview.widget.CardView
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
+import androidx.lifecycle.lifecycleScope
+import kotlinx.coroutines.launch
 import java.util.Locale
 
 class MMScoreboardActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
@@ -46,6 +48,11 @@ class MMScoreboardActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
     private var isTtsReady = false
     private var mediaPlayer: MediaPlayer? = null
 
+    // AI feedback
+    private var pendingSpeak: String? = null
+
+    companion object { private const val TAG = "MMScoreboard" }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
@@ -58,12 +65,14 @@ class MMScoreboardActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
         motivationId   = intent.getIntExtra("MOTIVATION_ID", 0)
         unlockGift     = intent.getBooleanExtra("UNLOCK_GIFT", false)
 
-        Log.d("MMScoreboard", "correct=$correctAnswers total=$totalRounds score=$score age=$ageGroup")
+        Log.d(TAG, "correct=$correctAnswers total=$totalRounds ageGroup=$ageGroup")
 
         tts = TextToSpeech(this, this)
         initViews()
-        setupUI()
         setupButtons()
+
+        // ── Trigger AI feedback then build the rest of the UI ─────────────────
+        setupUIWithAIFeedback()
 
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main)) { v, insets ->
             val sb = insets.getInsets(WindowInsetsCompat.Type.systemBars())
@@ -73,67 +82,36 @@ class MMScoreboardActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
     }
 
     private fun initViews() {
-        titleWon       = findViewById(R.id.titleWon)
-        performanceText= findViewById(R.id.performanceText)
-        btnPlayAgain   = findViewById(R.id.btnPlayAgain)
-        btnDashboard   = findViewById(R.id.btnDashboard)
-        btnUnlockGift  = findViewById(R.id.btnUnlockGift)
-        giftBoxIcon    = findViewById(R.id.giftBoxIcon)
-        starLeft       = findViewById(R.id.starLeft)
-        starMiddle     = findViewById(R.id.starMiddle)
-        starRight      = findViewById(R.id.starRight)
+        titleWon        = findViewById(R.id.titleWon)
+        performanceText = findViewById(R.id.performanceText)
+        btnPlayAgain    = findViewById(R.id.btnPlayAgain)
+        btnDashboard    = findViewById(R.id.btnDashboard)
+        btnUnlockGift   = findViewById(R.id.btnUnlockGift)
+        giftBoxIcon     = findViewById(R.id.giftBoxIcon)
+        starLeft        = findViewById(R.id.starLeft)
+        starMiddle      = findViewById(R.id.starMiddle)
+        starRight       = findViewById(R.id.starRight)
     }
 
     // =========================================================================
-    // Stars & text — driven purely by correctAnswers
+    // AI-driven UI setup
     // =========================================================================
 
-    /** 5/5 → 3 stars | 3-4/5 → 2 stars | 1-2/5 → 1 star | 0/5 → 0 stars */
-    private fun starsFromCorrect(correct: Int, total: Int): Int = when {
-        correct == total              -> 3
-        correct >= (total * 0.6f)    -> 2
-        correct >= 1                 -> 1
-        else                         -> 0
-    }
-
-    private fun titleFromCorrect(correct: Int, total: Int): Pair<String, Int> = when {
-        correct == total           -> Pair("Outstanding!", R.color.gold)
-        correct >= (total * 0.6f)  -> Pair("Great Job!",  R.color.light_green)
-        correct >= 1               -> Pair("Good Effort!", R.color.light_blue)
-        else                       -> Pair("Keep Practicing!", R.color.dark_orange)
-    }
-
-    private fun messageFromCorrect(correct: Int, total: Int): String = when {
-        correct == total          -> "Amazing! You got all $total right! You're a superstar!"
-        correct >= (total * 0.6f) -> "Well done! You got $correct out of $total. Keep it up!"
-        correct >= 1              -> "You got $correct right! Practice makes perfect!"
-        else                      -> "That's okay! Every try helps you learn. Let's go again!"
-    }
-
-    // =========================================================================
-    // Setup
-    // =========================================================================
-
-    private fun setupUI() {
+    /**
+     * Stars are kept (they're symbolic shapes, not numbers) but the text
+     * surfaces — titleWon and performanceText — are now AI-generated.
+     *
+     * No score, ratio, or count ever appears on screen.
+     */
+    private fun setupUIWithAIFeedback() {
+        // Show stars immediately (visual, not numeric)
         val stars = starsFromCorrect(correctAnswers, totalRounds)
-        val (title, colorRes) = titleFromCorrect(correctAnswers, totalRounds)
-        val message = messageFromCorrect(correctAnswers, totalRounds)
-
-        titleWon.text = title
-        titleWon.setTextColor(resources.getColor(colorRes, theme))
-
         animateStars(stars)
 
-        Handler(Looper.getMainLooper()).postDelayed({
-            when (motivationId) {
-                2    -> { playCelebrationSound(); animateTitleExcitement() }
-                else -> { /* default: just show message */ }
-            }
-            performanceText.text = message
-            speakText(message)
-        }, 500)
+        // Celebration sound for high performance
+        if (stars == 3) { playCelebrationSound(); animateTitleExcitement() }
 
-        // Gift
+        // Gift visibility
         if (unlockGift) {
             btnUnlockGift.visibility = View.VISIBLE
             btnUnlockGift.alpha = 0f
@@ -142,6 +120,78 @@ class MMScoreboardActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
         } else {
             btnUnlockGift.visibility = View.GONE
         }
+
+        // Loading placeholder — no number, just warmth
+        titleWon.text       = "Great work today!"
+        performanceText.text = "Getting your message…"
+
+        // Classify performance for AI prompt
+        val level = TherapeuticFeedbackGenerator.classify(
+            correctCount = correctAnswers,
+            errorCount   = totalRounds - correctAnswers,
+            attempts     = totalRounds
+        )
+
+        val session = SessionContext(
+            activityType     = TherapeuticFeedbackGenerator.ActivityType.MOOD_MATCHING,
+            performanceLevel = level,
+            childAge         = ageGroup,
+            errorCount       = totalRounds - correctAnswers,
+            correctCount     = correctAnswers,
+            attempts         = totalRounds
+        )
+
+        lifecycleScope.launch {
+            val feedback = TherapeuticFeedbackGenerator.generate(
+                context = this@MMScoreboardActivity,
+                session = session
+            )
+            applyFeedback(feedback)
+        }
+    }
+
+    private fun applyFeedback(feedback: TherapeuticFeedback) {
+        runOnUiThread {
+            // Headline title (coloured by performance tier but contains no number)
+            titleWon.text = feedback.headline
+            titleWon.setTextColor(resources.getColor(titleColorRes(correctAnswers, totalRounds), theme))
+            titleWon.alpha = 0f
+            titleWon.animate().alpha(1f).setDuration(700).start()
+
+            // Body message
+            val fullText = "${feedback.message}\n\n${feedback.encouragement}"
+            performanceText.text  = fullText
+            performanceText.alpha = 0f
+            Handler(Looper.getMainLooper()).postDelayed({
+                performanceText.animate().alpha(1f).setDuration(600).start()
+            }, 400)
+
+            // Speak the message when TTS is ready
+            val spokenText = "${feedback.headline}. ${feedback.message} ${feedback.encouragement}"
+            if (isTtsReady) speakText(spokenText) else pendingSpeak = spokenText
+
+            Log.d(TAG, "AI feedback applied (fromAI=${feedback.fromAI}): ${feedback.headline}")
+        }
+    }
+
+    // =========================================================================
+    // Stars — symbolic only, no number labels
+    // =========================================================================
+
+    /** Maps performance to star count (shape indicator, not a score display). */
+    private fun starsFromCorrect(correct: Int, total: Int): Int = when {
+        correct == total           -> 3
+        correct >= (total * 0.6f)  -> 2
+        correct >= 1               -> 1
+        else                       -> 0
+    }
+
+    /** Returns the colour resource for the headline — matches existing system colours. */
+    private fun titleColorRes(correct: Int, total: Int): Int = when {
+        correct == total           -> R.color.gold
+        correct >= (total * 0.6f)  -> R.color.light_green
+        correct >= 1               -> R.color.light_blue
+        else                       -> R.color.dark_orange
     }
 
     private fun animateStars(starsToShow: Int) {
@@ -170,8 +220,7 @@ class MMScoreboardActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
 
     private fun startGiftPulse() {
         val anim = ObjectAnimator.ofFloat(giftBoxIcon, "scaleX", 1f, 1.1f, 1f)
-        anim.repeatCount = ValueAnimator.INFINITE
-        anim.repeatMode = ValueAnimator.REVERSE
+        anim.repeatCount = ValueAnimator.INFINITE; anim.repeatMode = ValueAnimator.REVERSE
         anim.duration = 1000; anim.start()
     }
 
@@ -186,7 +235,6 @@ class MMScoreboardActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
 
     private fun setupButtons() {
         btnPlayAgain.setOnClickListener {
-            // Pass the SAME age group back so the game restores the correct mode
             startActivity(Intent(this, MoodMatchSevenDownActivity::class.java).apply {
                 putExtra("AGE_GROUP", ageGroup)
                 flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_NEW_TASK
@@ -198,13 +246,11 @@ class MMScoreboardActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
             try {
                 startActivity(Intent(this, GameDashboardActivity::class.java).apply {
                     flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or
-                            Intent.FLAG_ACTIVITY_NEW_TASK or
-                            Intent.FLAG_ACTIVITY_CLEAR_TASK
+                            Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
                 })
                 finish()
             } catch (e: Exception) {
-                Log.e("MMScoreboard", "Dashboard nav error: ${e.message}")
-                finishAffinity()
+                Log.e(TAG, "Dashboard nav error: ${e.message}"); finishAffinity()
             }
         }
 
@@ -221,6 +267,7 @@ class MMScoreboardActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
         if (status == TextToSpeech.SUCCESS) {
             tts.setLanguage(Locale.US); tts.setPitch(1.6f); tts.setSpeechRate(0.9f)
             isTtsReady = true
+            pendingSpeak?.let { speakText(it); pendingSpeak = null }
         }
     }
 

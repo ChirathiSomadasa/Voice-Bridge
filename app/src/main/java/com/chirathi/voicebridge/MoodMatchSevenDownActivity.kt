@@ -369,13 +369,13 @@ class MoodMatchSevenDownActivity : AppCompatActivity(), TextToSpeech.OnInitListe
             highlightButton(selectedOption, correct = true)
             darkenAllButtons(keepCorrectBright = true)
             showNextButton()
-            Log.d(TAG, "✅ CORRECT attempt=${wrongAttempts + 1} +${points}pts score=$score")
+            Log.d(TAG, "CORRECT attempt=${wrongAttempts + 1} +${points}pts score=$score")
 
         } else {
             wrongAttempts++
             consecutiveWrong++
             consecutiveCorrect = 0
-            Log.d(TAG, "❌ WRONG attempt $wrongAttempts")
+            Log.d(TAG, "WRONG attempt $wrongAttempts")
 
             // Colour the tapped button red immediately
             highlightButton(selectedOption, correct = false)
@@ -629,7 +629,7 @@ class MoodMatchSevenDownActivity : AppCompatActivity(), TextToSpeech.OnInitListe
             val last = resourceName.split("_").lastOrNull()
             last?.let { resId = resources.getIdentifier(it, "drawable", packageName) }
         }
-        if (resId == 0) Log.w(TAG, "⚠️ No drawable found for '$resourceName'")
+        if (resId == 0) Log.w(TAG, "No drawable found for '$resourceName'")
         emotionImage.setImageResource(if (resId != 0) resId else R.drawable.panda_confused)
         emotionImage.visibility = View.VISIBLE
         emotionImage.alpha = 1.0f

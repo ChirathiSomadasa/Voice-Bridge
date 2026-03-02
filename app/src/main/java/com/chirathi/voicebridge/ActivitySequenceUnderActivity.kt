@@ -81,8 +81,6 @@ class ActivitySequenceUnderActivity : AppCompatActivity() {
     private var isGameComplete       = false
     private val completedSubRoutines = mutableSetOf<Pair<Int,Int>>()
 
-    // Track if mini-game has already been triggered this round
-    private var miniGameTriggeredThisRound = false
 
     // ── Timer ─────────────────────────────────────────────────────────────────
     private var gameStartTime  = 0L
@@ -136,7 +134,7 @@ class ActivitySequenceUnderActivity : AppCompatActivity() {
         loadCompletedSubRoutines()
 
         gameMaster = GameMasterModel(this)
-        Log.d(TAG, "✅ GameMaster initialized  modelLoaded=${gameMaster.modelLoaded}")
+        Log.d(TAG, "GameMaster initialized  modelLoaded=${gameMaster.modelLoaded}")
 
         initViews()
         initTts()
@@ -163,7 +161,7 @@ class ActivitySequenceUnderActivity : AppCompatActivity() {
             Log.d(TAG, "Mini-game returned: passed=$passed score=$score")
 
             if (passed) sessionMetrics.correctCount++
-            miniGameTriggeredThisRound = false
+
 
             if (verticalContainer.visibility != View.VISIBLE) {
                 transitionToVerticalLayout()
@@ -240,7 +238,7 @@ class ActivitySequenceUnderActivity : AppCompatActivity() {
             frustration = 0.2f
         )
 
-        Log.d(TAG, "🤖 Initial prediction: subRoutine=${currentPrediction.subRoutine} " +
+        Log.d(TAG, "Initial prediction: subRoutine=${currentPrediction.subRoutine} " +
                 "fromModel=${currentPrediction.fromModel}")
 
         selectSubRoutine()
@@ -292,8 +290,6 @@ class ActivitySequenceUnderActivity : AppCompatActivity() {
             gameTitle.text = "$routineName: $subDesc"
             val instr = when {
                 isInitialPhase                         -> "Look and remember the correct order"
-                currentPrediction.whatsMissingTrigger  -> "One step is hidden — can you find it?"
-                currentPrediction.connectDotsTrigger   -> "Connect the dots in order!"
                 else                                   -> "Tap in the right order"
             }
             tvInstruction.text = instr
@@ -302,11 +298,7 @@ class ActivitySequenceUnderActivity : AppCompatActivity() {
     }
 
     private fun updateHintIndicator() {
-        runOnUiThread {
-            val show = currentPrediction.whatsMissingTrigger || currentPrediction.connectDotsTrigger
-            hintIndicator.visibility = if (show) View.VISIBLE else View.GONE
-            if (show) hintIndicator.setImageResource(R.drawable.ic_eye_hint)
-        }
+        runOnUiThread { hintIndicator.visibility = View.GONE }
     }
 
     // =========================================================================
@@ -318,50 +310,6 @@ class ActivitySequenceUnderActivity : AppCompatActivity() {
     //  blocked launch.  Now minigameTrigger is the PRIMARY gate.
     // =========================================================================
 
-    private fun maybeLaunchMiniGame() {
-        if (miniGameTriggeredThisRound) return
-
-        // PRIMARY gate: use the general minigame trigger from the model
-        val shouldTrigger = currentPrediction.minigameTrigger          // ← was missing
-                || currentPrediction.whatsMissingTrigger
-                || currentPrediction.connectDotsTrigger
-
-        if (!shouldTrigger) {
-            Log.d(TAG, "maybeLaunchMiniGame: all triggers false — skipping")
-            return
-        }
-
-        miniGameTriggeredThisRound = true
-
-        // Resolve which mini-game to show:
-        //  1. Specific trigger takes priority.
-        //  2. If only the general trigger fired, alternate by error count parity
-        //     so the child gets variety (even errors → What's Missing,
-        //     odd errors → Connect the Mesh).
-        val gameType = when {
-            currentPrediction.whatsMissingTrigger -> MiniGamesActivitySequence.TYPE_WHATS_MISSING
-            currentPrediction.connectDotsTrigger  -> MiniGamesActivitySequence.TYPE_CONNECT_DOTS
-            else -> if (sessionMetrics.errorCount % 2 == 0)
-                MiniGamesActivitySequence.TYPE_WHATS_MISSING
-            else
-                MiniGamesActivitySequence.TYPE_CONNECT_DOTS
-        }
-
-        Log.d(TAG, "Launching mini-game: type=$gameType " +
-                "(minigameTrigger=${currentPrediction.minigameTrigger} " +
-                "whatsMissing=${currentPrediction.whatsMissingTrigger} " +
-                "connectDots=${currentPrediction.connectDotsTrigger})")
-
-        startActivityForResult(
-            Intent(this, MiniGamesActivitySequence::class.java).apply {
-                putExtra(MiniGamesActivitySequence.EXTRA_TYPE,           gameType)
-                putExtra(MiniGamesActivitySequence.EXTRA_ROUTINE_ID,     currentRoutineId)
-                putExtra(MiniGamesActivitySequence.EXTRA_SUB_ROUTINE_ID, currentSubRoutineId)
-                putExtra(MiniGamesActivitySequence.EXTRA_USER_AGE,       userAge)
-            },
-            MiniGamesActivitySequence.REQUEST_CODE
-        )
-    }
 
     // =========================================================================
     // Views
@@ -386,6 +334,13 @@ class ActivitySequenceUnderActivity : AppCompatActivity() {
         btnStart.setOnClickListener { startGame() }
         btnUndo.setOnClickListener  { undoLastSelection() }
         btnClear.setOnClickListener { clearAllSelections() }
+
+        findViewById<ImageView>(R.id.backBtn).setOnClickListener {
+            startActivity(Intent(this, RoutineSelectionActivity::class.java).apply {
+                flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
+            })
+            finish()
+        }
 
         setupInitialView()
     }
@@ -508,7 +463,6 @@ class ActivitySequenceUnderActivity : AppCompatActivity() {
         startTimer()
         transitionToVerticalLayout()
 
-        Handler(Looper.getMainLooper()).postDelayed({ maybeLaunchMiniGame() }, 500)
     }
 
     private fun updateInstructionForGameplay() {
@@ -640,19 +594,16 @@ class ActivitySequenceUnderActivity : AppCompatActivity() {
             if (selectedOrder == currentCorrectOrder) {
                 sessionMetrics.correctCount++
                 correctAnswers = 3
-                Log.d(TAG, "✅ CORRECT!")
+                Log.d(TAG, "CORRECT!")
                 popBubble()
             } else {
                 sessionMetrics.errorCount++
-                Log.d(TAG, "❌ WRONG (errors=${sessionMetrics.errorCount})")
+                Log.d(TAG, "WRONG (errors=${sessionMetrics.errorCount})")
                 Toast.makeText(this, "Try again!", Toast.LENGTH_SHORT).show()
 
                 updateInstructionForGameplay()
 
-                Handler(Looper.getMainLooper()).postDelayed({
-                    maybeLaunchMiniGame()
-                    if (!miniGameTriggeredThisRound) resetForRetry()
-                }, 1500)
+                Handler(Looper.getMainLooper()).postDelayed({ resetForRetry() }, 1500)
             }
         }, 500)
     }

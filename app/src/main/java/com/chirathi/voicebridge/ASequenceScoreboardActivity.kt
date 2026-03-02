@@ -19,7 +19,8 @@ import android.widget.ImageView
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.constraintlayout.widget.ConstraintLayout
-import kotlin.math.min
+import androidx.lifecycle.lifecycleScope
+import kotlinx.coroutines.launch
 
 class ASequenceScoreboardActivity : AppCompatActivity() {
 
@@ -35,6 +36,10 @@ class ASequenceScoreboardActivity : AppCompatActivity() {
     private var previousError: String = "none"
     private var userSelectedRoutine: Int = 0
     private var userAge: Int = 6
+    private var attemptsCount: Int = 0
+
+    // ── NEW: sticker flag read from intent ────────────────────────────────────
+    private var shouldAwardSticker: Boolean = false
 
     // Dynamic staircase configuration
     private var totalSteps = 1
@@ -42,23 +47,6 @@ class ASequenceScoreboardActivity : AppCompatActivity() {
     private lateinit var starCharacter: ImageView
     private val stepBlocks = mutableListOf<ImageView>()
     private val stepLabels = mutableListOf<TextView>()
-
-    private val motivationalQuotes = mapOf(
-        1 to listOf("Good start","You can do it","Keep trying","We are working together"),
-        3 to listOf(
-            "Good job",
-            "Good trying",
-            "I like your focus",
-            "Getting closer now",
-            "We are almost there",
-        ),
-        5 to listOf(
-            "You did it",
-            "Well done",
-            "You are a hero",
-            "A great job today",
-        )
-    )
 
     // UI Elements
     private lateinit var staircaseContainer: ConstraintLayout
@@ -82,6 +70,10 @@ class ASequenceScoreboardActivity : AppCompatActivity() {
     private val blockSpacing = 20
     private val verticalSpacing = 15
 
+    // AI feedback state
+    private var aiFeedback: TherapeuticFeedback? = null
+    private var feedbackReady = false
+
     companion object {
         private const val TAG = "ScoreboardActivity"
     }
@@ -93,15 +85,12 @@ class ASequenceScoreboardActivity : AppCompatActivity() {
         val extras = intent.extras
         if (extras != null) {
             Log.d(TAG, "=== ALL INTENT EXTRAS ===")
-            for (key in extras.keySet()) {
-                Log.d(TAG, "$key = ${extras[key]}")
-            }
+            for (key in extras.keySet()) Log.d(TAG, "$key = ${extras[key]}")
             Log.d(TAG, "========================")
         }
 
         getIntentData()
-
-        Log.d(TAG, "Therapeutic Summary: Alpha=$finalAlpha, Bubbles=$poppedBubbles/$totalBubbles, Age=$userAge")
+        Log.d(TAG, "Scoreboard: finalAlpha=$finalAlpha correct=$correctCount errors=$errorCount attempts=$attemptsCount awardSticker=$shouldAwardSticker")
 
         initializeSounds()
         initializeViews()
@@ -109,9 +98,15 @@ class ASequenceScoreboardActivity : AppCompatActivity() {
         calculateStarProgress()
         buildStaircase()
         hideExtraStairs()
+
+        fetchAIFeedback()
         startTherapeuticAnimationSequence()
         setupButtonListeners()
     }
+
+    // =========================================================================
+    // Intent data
+    // =========================================================================
 
     private fun getIntentData() {
         finalAlpha           = intent.getFloatExtra("FINAL_ALPHA", 0f)
@@ -126,76 +121,49 @@ class ASequenceScoreboardActivity : AppCompatActivity() {
         previousError        = intent.getStringExtra("PREVIOUS_ERROR") ?: "none"
         userSelectedRoutine  = intent.getIntExtra("USER_SELECTED_ROUTINE", 0)
         userAge              = intent.getIntExtra("USER_AGE", 6)
-
-        Log.d(TAG, "Received from intent - FinalAlpha: $finalAlpha, ErrorCount: $errorCount, UserAge: $userAge")
+        attemptsCount        = intent.getIntExtra("ATTEMPTS_COUNT", 0)
+        // ── Read the sticker flag ─────────────────────────────────────────────
+        shouldAwardSticker   = intent.getBooleanExtra("SHOULD_AWARD_STICKER", false)
     }
 
-    private fun initializeSounds() {
-        blockDropSound  = MediaPlayer.create(this, R.raw.block_drop)
-        starBounceSound = MediaPlayer.create(this, R.raw.star_bounce)
-        completionSound = MediaPlayer.create(this, R.raw.completion_sound)
+    // =========================================================================
+    // =========================================================================
+    // Performance tier — single source of truth
+    //
+    //  BEST     → errors == 0, attempts <= 2  (perfect first try)
+    //             → 5 stairs (green) + sticker auto-unlocks after animation
+    //  HIGH     → errors <= 1, attempts <= 3
+    //             → 5 stairs (green), no sticker
+    //  MODERATE → errors <= 3, attempts <= 5
+    //             → 3 stairs (orange)
+    //  LOW      → everything else
+    //             → 1 stair (red)
+    // =========================================================================
 
-        blockDropSound.setVolume(0.3f, 0.3f)
-        starBounceSound.setVolume(0.5f, 0.5f)
-        completionSound.setVolume(0.7f, 0.7f)
-    }
+    private enum class Tier { BEST, HIGH, MODERATE, LOW }
 
-    private fun initializeViews() {
-        staircaseContainer = findViewById(R.id.staircaseContainer)
-        therapeuticMessage = findViewById(R.id.therapeuticMessage)
-        btnContinue        = findViewById(R.id.btnContinue)
-        btnHome            = findViewById(R.id.btnHome)
-        starCharacter      = findViewById(R.id.starCharacter)
-        motivationalQuote  = findViewById(R.id.motivationalQuote)
-
-        stepBlocks.apply {
-            add(findViewById(R.id.stepBlock1))
-            add(findViewById(R.id.stepBlock2))
-            add(findViewById(R.id.stepBlock3))
-            add(findViewById(R.id.stepBlock4))
-            add(findViewById(R.id.stepBlock5))
+    private fun performanceTier(): Tier {
+        val attempts = attemptsCount.coerceAtLeast(1)
+        return when {
+            errorCount == 0 && attempts <= 2 -> Tier.BEST
+            errorCount <= 1 && attempts <= 3 -> Tier.HIGH
+            errorCount <= 3 && attempts <= 5 -> Tier.MODERATE
+            else                             -> Tier.LOW
         }
-
-        stepLabels.apply {
-            add(findViewById(R.id.stepLabel1))
-            add(findViewById(R.id.stepLabel2))
-            add(findViewById(R.id.stepLabel3))
-            add(findViewById(R.id.stepLabel4))
-            add(findViewById(R.id.stepLabel5))
-        }
-
-        blockDropAnimators = mutableListOf()
     }
 
     private fun calculateStairCount() {
-        val avgResponseTime = intent.getLongExtra("AVG_RESPONSE_TIME", 0L)
-        val attempts        = intent.getIntExtra("ATTEMPTS_COUNT", 0)
-        val errors          = intent.getIntExtra("ERROR_COUNT", 0)
-
-        Log.d(TAG, "Stair calculation - Alpha: $finalAlpha, Time: ${avgResponseTime}ms, Attempts: $attempts, Errors: $errors")
-
-        totalSteps = when {
-            (attempts == 1 && errors == 0 && finalAlpha >= 7.0f) -> {
-                Log.d(TAG, "Condition: 5 stairs - First try mastery"); 5
-            }
-            (finalAlpha >= 8.0f && errors <= 1) -> {
-                Log.d(TAG, "Condition: 5 stairs - Excellent performance"); 5
-            }
-            (finalAlpha >= 5.0f && errors <= 2) -> {
-                Log.d(TAG, "Condition: 3 stairs - Good progress"); 3
-            }
-            (finalAlpha >= 3.0f && attempts <= 2 && errors <= 3) -> {
-                Log.d(TAG, "Condition: 3 stairs - Completed with some help"); 3
-            }
-            else -> {
-                Log.d(TAG, "Condition: 1 stair - Needs more practice"); 1
-            }
+        totalSteps = when (performanceTier()) {
+            Tier.BEST, Tier.HIGH -> 5
+            Tier.MODERATE        -> 3
+            Tier.LOW             -> 1
         }
-
-        totalSteps = totalSteps.coerceIn(1, 5)
+        totalSteps    = totalSteps.coerceIn(1, 5)
         starFinalStep = totalSteps - 1
-        Log.d(TAG, "Final decision: $totalSteps steps, Star at step: $starFinalStep")
+        Log.d(TAG, "Tier=${performanceTier()} stairs=$totalSteps alpha=$finalAlpha errors=$errorCount attempts=$attemptsCount")
     }
+
+    private fun calculateStarProgress() { starFinalStep = totalSteps - 1 }
 
     private fun buildStaircase() {
         val themeColor = when (totalSteps) {
@@ -203,7 +171,6 @@ class ASequenceScoreboardActivity : AppCompatActivity() {
             3    -> Color.parseColor("#FF9800")
             else -> Color.parseColor("#4CAF50")
         }
-
         for (i in 0 until totalSteps) {
             val block = stepBlocks[i]
             block.setColorFilter(themeColor)
@@ -214,23 +181,6 @@ class ASequenceScoreboardActivity : AppCompatActivity() {
         }
     }
 
-    private fun calculateStarProgress() {
-        starFinalStep = totalSteps - 1
-    }
-
-    private fun updateTherapeuticMessage() {
-        val message = when (totalSteps) {
-            1    -> "Great start!"
-            3    -> "Good job!"
-            5    -> "Excellent work!"
-            else -> "Well done!"
-        }
-        therapeuticMessage.text       = message
-        therapeuticMessage.alpha      = 0f
-        therapeuticMessage.visibility = View.VISIBLE
-        therapeuticMessage.animate().alpha(1f).setDuration(800).start()
-    }
-
     private fun hideExtraStairs() {
         for (i in totalSteps until stepBlocks.size) {
             stepBlocks[i].visibility = View.GONE
@@ -238,16 +188,148 @@ class ASequenceScoreboardActivity : AppCompatActivity() {
         }
     }
 
+    // =========================================================================
+    // Views
+    // =========================================================================
+
+    private fun initializeViews() {
+        staircaseContainer = findViewById(R.id.staircaseContainer)
+        therapeuticMessage = findViewById(R.id.therapeuticMessage)
+        btnContinue        = findViewById(R.id.btnContinue)
+        btnHome            = findViewById(R.id.btnHome)
+        starCharacter      = findViewById(R.id.starCharacter)
+        motivationalQuote  = findViewById(R.id.motivationalQuote)
+
+        stepBlocks.apply {
+            add(findViewById(R.id.stepBlock1)); add(findViewById(R.id.stepBlock2))
+            add(findViewById(R.id.stepBlock3)); add(findViewById(R.id.stepBlock4))
+            add(findViewById(R.id.stepBlock5))
+        }
+        stepLabels.apply {
+            add(findViewById(R.id.stepLabel1)); add(findViewById(R.id.stepLabel2))
+            add(findViewById(R.id.stepLabel3)); add(findViewById(R.id.stepLabel4))
+            add(findViewById(R.id.stepLabel5))
+        }
+        blockDropAnimators = mutableListOf()
+    }
+
+    // =========================================================================
+    // AI feedback
+    // =========================================================================
+
+    private fun fetchAIFeedback() {
+        therapeuticMessage.text = "Well done"
+
+        // DIAG 1 - Check API key
+        val apiKey = getString(R.string.groq_api_key)
+        Log.d(TAG, "DIAG 1 - API key: isBlank=${apiKey.isBlank()}, length=${apiKey.length}, starts=${apiKey.take(8)}")
+
+        // DIAG 2 - Check performance classification inputs
+        val level = TherapeuticFeedbackGenerator.classify(
+            correctCount = correctCount,
+            errorCount   = errorCount,
+            attempts     = attemptsCount.coerceAtLeast(correctCount + errorCount),
+            finalAlpha   = finalAlpha
+        )
+        Log.d(TAG, "DIAG 2 - Performance level classified as: $level (correct=$correctCount, errors=$errorCount, attempts=$attemptsCount, alpha=$finalAlpha)")
+
+        val routineName = when (userSelectedRoutine) {
+            0    -> "Morning Routine"
+            1    -> "Bedtime Routine"
+            2    -> "School Routine"
+            else -> "Daily Routine"
+        }
+
+        val session = SessionContext(
+            activityType     = TherapeuticFeedbackGenerator.ActivityType.SEQUENCE_ORDERING,
+            performanceLevel = level,
+            childAge         = userAge,
+            errorCount       = errorCount,
+            correctCount     = correctCount,
+            attempts         = attemptsCount.coerceAtLeast(correctCount + errorCount),
+            routineName      = routineName,
+            previousAlpha    = previousAlpha,
+            sessionNumber    = completedSubroutines
+        )
+        Log.d(TAG, "DIAG 3 - SessionContext built: age=$userAge, routine=$routineName, session=$completedSubroutines")
+
+        // DIAG 4 - Check coroutine is launching
+        Log.d(TAG, "DIAG 4 - Launching coroutine for AI feedback...")
+
+        lifecycleScope.launch {
+            Log.d(TAG, "DIAG 5 - Inside coroutine, calling TherapeuticFeedbackGenerator.generate()")
+            try {
+                val feedback = TherapeuticFeedbackGenerator.generate(
+                    context = this@ASequenceScoreboardActivity,
+                    session = session
+                )
+                Log.d(TAG, "DIAG 6 - generate() returned: fromAI=${feedback.fromAI}, headline='${feedback.headline}'")
+                Log.d(TAG, "DIAG 6 - message='${feedback.message}', encouragement='${feedback.encouragement}'")
+
+                aiFeedback    = feedback
+                feedbackReady = true
+                applyFeedbackToUI(feedback)
+                Log.d(TAG, "AI feedback (fromAI=${feedback.fromAI}): ${feedback.headline}")
+
+            } catch (e: Exception) {
+                Log.e(TAG, "DIAG ERROR - Exception during AI feedback generation: ${e::class.simpleName}: ${e.message}", e)
+            }
+        }
+    }
+
+    private fun applyFeedbackToUI(feedback: TherapeuticFeedback) {
+        runOnUiThread {
+            // Update headline
+            therapeuticMessage.text  = feedback.headline
+            therapeuticMessage.alpha = 0f
+            therapeuticMessage.visibility = View.VISIBLE
+            therapeuticMessage.animate().alpha(1f).setDuration(800).start()
+
+            // If star is already visible, reposition the quote next to it
+            // If star hasn't appeared yet, showQuoteForStar() will pick up
+            // aiFeedback when it runs during the animation sequence
+            if (starCharacter.visibility == View.VISIBLE) {
+                showQuoteForStar()
+            } else {
+                // Star not yet shown — just store text, showQuoteForStar() will use it
+                motivationalQuote.text = "${feedback.message}\n\n${feedback.encouragement}"
+            }
+        }
+    }
+
+    // =========================================================================
+    // Animation sequence
+    // =========================================================================
+
+    private fun updateTherapeuticMessage() {
+        aiFeedback?.let { therapeuticMessage.text = it.headline }
+        therapeuticMessage.alpha      = 0f
+        therapeuticMessage.visibility = View.VISIBLE
+        therapeuticMessage.animate().alpha(1f).setDuration(800).start()
+    }
+
     private fun startTherapeuticAnimationSequence() {
         updateTherapeuticMessage()
         Handler(Looper.getMainLooper()).postDelayed({ dropBlocksSequence() }, 1000)
-    }
 
+        // Safety net: if render pressure stalls animations and neither
+        // navigateToStickerScreen() nor enableNavigationButtons() fires,
+        // force the correct outcome after a generous deadline.
+        val maxWait = 1000L + (totalSteps * 400L) + 600L + 2500L + 3000L
+        Handler(Looper.getMainLooper()).postDelayed({
+            if (!btnContinue.isEnabled && !isFinishing) {
+                Log.w(TAG, "Fallback timer fired")
+                if (shouldAwardSticker && performanceTier() == Tier.BEST) {
+                    navigateToStickerScreen()
+                } else {
+                    enableNavigationButtons()
+                }
+            }
+        }, maxWait.coerceAtLeast(10000L))
+    }
     private fun dropBlocksSequence() {
         blockDropAnimators.clear()
-        for (i in 0 until totalSteps) {
-            Handler().postDelayed({ animateBlockDrop(i) }, i * 400L)
-        }
+        for (i in 0 until totalSteps) Handler().postDelayed({ animateBlockDrop(i) }, i * 400L)
         Handler().postDelayed({ introduceStar() }, (totalSteps * 400L) + 600)
     }
 
@@ -313,7 +395,7 @@ class ASequenceScoreboardActivity : AppCompatActivity() {
                     starBounceSound.seekTo(0); starBounceSound.start()
                 }
                 override fun onAnimationEnd(animation: Animator) {
-                    Handler(Looper.getMainLooper()).postDelayed({ showQuoteForStep(starFinalStep) }, 300)
+                    showQuoteForStar()
                     settleStar()
                 }
             })
@@ -321,8 +403,84 @@ class ASequenceScoreboardActivity : AppCompatActivity() {
         }
     }
 
+    private fun showQuoteForStar() {
+        val displayText = aiFeedback?.let {
+            "${it.message}\n\n${it.encouragement}"
+        } ?: "Loading your message…"
+
+        motivationalQuote.text       = displayText
+        motivationalQuote.visibility = View.VISIBLE
+        motivationalQuote.alpha      = 0f
+
+        motivationalQuote.post {
+            // ── Get star position in SCREEN coordinates ───────────────────────
+            val starScreenPos = IntArray(2)
+            starCharacter.getLocationOnScreen(starScreenPos)
+
+            // ── Get motivationalQuote's parent position in SCREEN coordinates ─
+            val parentScreenPos = IntArray(2)
+            (motivationalQuote.parent as View).getLocationOnScreen(parentScreenPos)
+
+            // ── Convert star screen coords into quote's parent space ──────────
+            val starLeftInParent = (starScreenPos[0] - parentScreenPos[0]).toFloat()
+            val starTopInParent  = (starScreenPos[1] - parentScreenPos[1]).toFloat()
+            val starRightInParent = starLeftInParent + starCharacter.width
+            val starMidYInParent  = starTopInParent + (starCharacter.height / 2f)
+
+            val quoteW = motivationalQuote.measuredWidth.toFloat()
+            val quoteH = motivationalQuote.measuredHeight.toFloat()
+            val screenW = resources.displayMetrics.widthPixels.toFloat()
+            val margin = 24f
+
+            var targetX: Float
+            var targetY: Float
+
+            when (totalSteps) {
+                1 -> {
+                    // RED — right of star, clamped to screen
+                    targetX = starRightInParent + margin
+                    targetY = starMidYInParent - (quoteH / 2f)
+                    // If it goes off right edge, flip to left
+                    if (targetX + quoteW > screenW - margin) {
+                        targetX = starLeftInParent - quoteW - margin
+                    }
+                }
+                3 -> {
+                    // ORANGE — above star, horizontally centered on star
+                    targetX = starLeftInParent + (starCharacter.width / 2f) - (quoteW / 2f)
+                    targetY = starTopInParent - quoteH - margin
+                    // If it goes off top, show below instead
+                    if (targetY < parentScreenPos[1].toFloat()) {
+                        targetY = starTopInParent + starCharacter.height + margin
+                    }
+                }
+                else -> {
+                    // GREEN — left of star, clamped to screen
+                    targetX = starLeftInParent - quoteW - margin
+                    targetY = starMidYInParent - (quoteH / 2f)
+                    // If it goes off left edge, flip to right
+                    if (targetX < margin) {
+                        targetX = starRightInParent + margin
+                    }
+                }
+            }
+
+            // ── Clamp vertically so text never exits screen ───────────────────
+            val parentH = (motivationalQuote.parent as View).height.toFloat()
+            targetY = targetY.coerceIn(margin, parentH - quoteH - margin)
+
+            motivationalQuote.x = targetX
+            motivationalQuote.y = targetY
+
+            ObjectAnimator.ofFloat(motivationalQuote, "alpha", 0f, 1f)
+                .apply { duration = 800; start() }
+        }
+    }
+
     private fun settleStar() {
         if (starFinalStep < 0 || starFinalStep >= stepBlocks.size) return
+
+        // Pulse each step block
         for (i in 0..starFinalStep) {
             Handler(Looper.getMainLooper()).postDelayed({
                 val block = stepBlocks[i]
@@ -340,29 +498,25 @@ class ASequenceScoreboardActivity : AppCompatActivity() {
                                 ObjectAnimator.ofFloat(block, "scaleY", 1.1f, 1f)
                             ); duration = 200
                         }
-                    )
-                    start()
+                    ); start()
                 }
             }, i * 150L)
         }
+
         completionSound.seekTo(0); completionSound.start()
         startStarGlow()
-        enableNavigationButtons()
-    }
 
-    private fun showQuoteForStep(step: Int) {
-        val quotes     = motivationalQuotes[totalSteps] ?: return
-        val quoteIndex = min(step, quotes.size - 1)
-        motivationalQuote.text       = quotes[quoteIndex]
-        motivationalQuote.visibility = View.VISIBLE
-        motivationalQuote.alpha      = 0f
-
-        motivationalQuote.post {
-            val quoteHeight = motivationalQuote.measuredHeight
-            val quoteWidth  = motivationalQuote.measuredWidth
-            motivationalQuote.x = starCharacter.x + (starCharacter.width  / 2) - (quoteWidth  / 2)
-            motivationalQuote.y = starCharacter.y - quoteHeight - 20f
-            ObjectAnimator.ofFloat(motivationalQuote, "alpha", 0f, 1f).apply { duration = 800; start() }
+        // ── Auto-navigate after animation settles ────────────────────────────
+        //  BEST performance + sticker to award → go straight to sticker screen
+        //  after a short celebratory pause (1.5 s) so child can see the stairs.
+        //  All other tiers → show Continue / Home buttons as before.
+        val settleDelay = (starFinalStep * 150L) + 800L  // wait for pulse + glow
+        if (shouldAwardSticker && performanceTier() == Tier.BEST) {
+            Handler(Looper.getMainLooper()).postDelayed({
+                navigateToStickerScreen()
+            }, settleDelay + 1500L)
+        } else {
+            enableNavigationButtons()
         }
     }
 
@@ -383,7 +537,11 @@ class ASequenceScoreboardActivity : AppCompatActivity() {
     }
 
     // =========================================================================
-    // Button listeners — route Continue to correct activity based on userAge
+    // Button listeners — FIXED
+    //
+    //  Root cause: SHOULD_AWARD_STICKER was received but never read, so
+    //  UnlockStickerActivity was never launched.  Both Continue and Home now
+    //  route through navigateNext() which checks the flag first.
     // =========================================================================
 
     private fun setupButtonListeners() {
@@ -401,7 +559,7 @@ class ASequenceScoreboardActivity : AppCompatActivity() {
                 duration = 200
                 addListener(object : AnimatorListenerAdapter() {
                     override fun onAnimationEnd(animation: Animator) {
-                        navigateToGame()
+                        navigateNext { navigateToGame() }
                     }
                 })
                 start()
@@ -417,8 +575,10 @@ class ASequenceScoreboardActivity : AppCompatActivity() {
                 duration = 200
                 addListener(object : AnimatorListenerAdapter() {
                     override fun onAnimationEnd(animation: Animator) {
-                        startActivity(Intent(this@ASequenceScoreboardActivity, RoutineSelectionActivity::class.java))
-                        finish()
+                        navigateNext {
+                            startActivity(Intent(this@ASequenceScoreboardActivity, RoutineSelectionActivity::class.java))
+                            finish()
+                        }
                     }
                 })
                 start()
@@ -427,20 +587,56 @@ class ASequenceScoreboardActivity : AppCompatActivity() {
     }
 
     /**
-     * Routes the "Play Again" tap to the correct game activity based on age:
-     *   Age 6-7  → ActivitySequenceUnderActivity  (tap-to-order)
-     *   Age 8-10 → ActivitySequenceOverActivity   (drag-and-drop)
-     *   Other    → ActivitySequenceUnderActivity  (fallback)
+     * Stops all running animators and pending Handler callbacks, then
+     * navigates to the sticker unlock screen.
+     *
+     * Must cancel before finish() — leaving INFINITE ValueAnimators alive
+     * blocks the activity destroy and causes an ANR.
      */
+    private fun navigateToStickerScreen() {
+        if (isFinishing) return          // guard against double-call from fallback
+
+        // 1. Cancel all animators
+        starGlowAnimator?.cancel()
+        starBounceAnimator?.cancel()
+        blockDropAnimators.forEach { it.cancel() }
+        // Also stop any per-block INFINITE scale animators started by startStarGlow()
+        stepBlocks.forEach { it.animate().cancel() }
+        starCharacter.animate().cancel()
+
+        // 2. Release media players so they don't block the thread
+        try { blockDropSound.stop() } catch (_: Exception) {}
+        try { starBounceSound.stop() } catch (_: Exception) {}
+        try { completionSound.stop() } catch (_: Exception) {}
+
+        // 3. Navigate
+        startActivity(Intent(this, UnlockStickerActivity::class.java).apply {
+            putExtra("FINAL_ALPHA",           finalAlpha)
+            putExtra("POPPED_BUBBLES",        poppedBubbles)
+            putExtra("TOTAL_BUBBLES",         totalBubbles)
+            putExtra("CORRECT_COUNT",         correctCount)
+            putExtra("ERROR_COUNT",           errorCount)
+            putExtra("PREVIOUS_ALPHA",        previousAlpha)
+            putExtra("PREVIOUS_CORRECT",      previousCorrect)
+            putExtra("PREVIOUS_SUBROUTINE",   previousSubroutine)
+            putExtra("PREVIOUS_ERROR",        previousError)
+            putExtra("USER_SELECTED_ROUTINE", userSelectedRoutine)
+            putExtra("USER_AGE",              userAge)
+        })
+        finish()
+    }
+
+    /**
+     * Used by Continue / Home buttons for non-BEST tiers (no sticker).
+     */
+    private fun navigateNext(destination: () -> Unit) {
+        destination()
+    }
+
     private fun navigateToGame() {
-        val targetActivity = if (userAge in 8..10) {
-            ActivitySequenceOverActivity::class.java
-        } else {
-            ActivitySequenceUnderActivity::class.java
-        }
-
-        Log.d(TAG, "Continue tapped — userAge=$userAge → navigating to ${targetActivity.simpleName}")
-
+        val targetActivity = if (userAge in 8..10) ActivitySequenceOverActivity::class.java
+        else ActivitySequenceUnderActivity::class.java
+        Log.d(TAG, "Continue → ${targetActivity.simpleName}")
         startActivity(Intent(this, targetActivity).apply {
             putExtra("PREVIOUS_ALPHA",      finalAlpha)
             putExtra("PREVIOUS_CORRECT",    correctCount)
@@ -453,23 +649,32 @@ class ASequenceScoreboardActivity : AppCompatActivity() {
     }
 
     // =========================================================================
+    // Sounds init
+    // =========================================================================
+
+    private fun initializeSounds() {
+        blockDropSound  = MediaPlayer.create(this, R.raw.block_drop)
+        starBounceSound = MediaPlayer.create(this, R.raw.star_bounce)
+        completionSound = MediaPlayer.create(this, R.raw.completion_sound)
+        blockDropSound.setVolume(0.3f, 0.3f)
+        starBounceSound.setVolume(0.5f, 0.5f)
+        completionSound.setVolume(0.7f, 0.7f)
+    }
+
+    // =========================================================================
     // Lifecycle
     // =========================================================================
 
     override fun onPause() {
         super.onPause()
-        starGlowAnimator?.pause()
-        starBounceAnimator?.pause()
+        starGlowAnimator?.pause(); starBounceAnimator?.pause()
         blockDropAnimators.forEach { it.pause() }
-        blockDropSound.pause()
-        starBounceSound.pause()
-        completionSound.pause()
+        blockDropSound.pause(); starBounceSound.pause(); completionSound.pause()
     }
 
     override fun onResume() {
         super.onResume()
-        starGlowAnimator?.resume()
-        starBounceAnimator?.resume()
+        starGlowAnimator?.resume(); starBounceAnimator?.resume()
         blockDropAnimators.forEach { it.resume() }
     }
 
@@ -478,8 +683,8 @@ class ASequenceScoreboardActivity : AppCompatActivity() {
         starGlowAnimator?.cancel()
         starBounceAnimator?.cancel()
         blockDropAnimators.forEach { it.cancel() }
-        blockDropSound.release()
-        starBounceSound.release()
-        completionSound.release()
+        try { blockDropSound.release() } catch (_: Exception) {}
+        try { starBounceSound.release() } catch (_: Exception) {}
+        try { completionSound.release() } catch (_: Exception) {}
     }
 }

@@ -456,12 +456,12 @@ class RhythmSummaryActivity : AppCompatActivity() {
         if (isCorrect) {
             selectedCard.setCardBackgroundColor(Color.parseColor("#C8E6C9"))
             feedbackIcon.setImageResource(R.drawable.correct_answer)
-            feedbackText.text = "Well done! ⭐"
+            feedbackText.text = "Well done!"
             feedbackText.setTextColor(Color.parseColor("#388E3C"))
         } else {
             selectedCard.setCardBackgroundColor(Color.parseColor("#FFCDD2"))
             feedbackIcon.setImageResource(R.drawable.delete)
-            feedbackText.text = "Try again! 💪"
+            feedbackText.text = "Try again!"
             feedbackText.setTextColor(Color.parseColor("#D32F2F"))
         }
         feedbackIcon.visibility    = View.VISIBLE

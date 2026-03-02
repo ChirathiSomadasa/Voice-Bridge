@@ -21,11 +21,10 @@ import androidx.appcompat.app.AppCompatActivity
 import java.util.Locale
 
 /**
- * ActivitySequenceOverActivity — drag-and-drop sequence game for ages 8-10.
+ * ActivitySequenceOverActivity — v2.0
  *
- *  Mini-game fix (same as Under activity):
- *   maybeLaunchMiniGame() now uses currentPrediction.minigameTrigger as the
- *   PRIMARY gate instead of only checking whatsMissingTrigger / connectDotsTrigger.
+ * Uses XML layout (activity_sequence_over.xml) — same visual style as
+ * ActivitySequenceUnderActivity. All UI logic unchanged.
  */
 class ActivitySequenceOverActivity : AppCompatActivity() {
 
@@ -57,7 +56,7 @@ class ActivitySequenceOverActivity : AppCompatActivity() {
     // ── Mini-game state ────────────────────────────────────────────────────
     private var miniGameTriggeredThisRound = false
 
-    // ── Routine data — SHORT simple sentences ─────────────────────────────
+    // ── Routine data ───────────────────────────────────────────────────────
     private val routineSentences = mapOf(
         0 to mapOf(
             0 to listOf(
@@ -78,28 +77,41 @@ class ActivitySequenceOverActivity : AppCompatActivity() {
         )
     )
 
-    // ── UI ─────────────────────────────────────────────────────────────────
-    private lateinit var rootScroll : ScrollView
-    private lateinit var rootLayout : LinearLayout
-    private lateinit var timerTextView: TextView
-    private lateinit var titleText  : TextView
-    private lateinit var instrText  : TextView
+    // ── UI views (from XML) ────────────────────────────────────────────────
+    private lateinit var timerTextView:            TextView
+    private lateinit var gameTitleText:            TextView
+    private lateinit var tvInstruction:            TextView
+    private lateinit var btnStart:                 Button
+    private lateinit var horizontalImagesContainer: LinearLayout
+    private lateinit var dropZonesContainer:       LinearLayout
+    private lateinit var verticalImagesContainer:  LinearLayout
 
+    private lateinit var previewText1: TextView
+    private lateinit var previewText2: TextView
+    private lateinit var previewText3: TextView
+
+    private lateinit var dropZone1:  LinearLayout
+    private lateinit var dropZone2:  LinearLayout
+    private lateinit var dropZone3:  LinearLayout
+    private lateinit var dropText1:  TextView
+    private lateinit var dropText2:  TextView
+    private lateinit var dropText3:  TextView
+
+    // ── Timer ──────────────────────────────────────────────────────────────
     private val timerHandler = Handler(Looper.getMainLooper())
     private lateinit var timerRunnable: Runnable
     private var isTimerRunning = false
 
-    // Drag-drop state
+    // ── Drag-drop state ────────────────────────────────────────────────────
     private data class SentenceItem(val id: String, val text: String)
-    private var correctOrder     = listOf<SentenceItem>()
-    private var shuffledOrder    = listOf<SentenceItem>()
-    private val dropZoneContents = mutableMapOf<Int, String?>()
-    private val draggableCards   = mutableListOf<View>()
-    private val dropZones        = mutableListOf<LinearLayout>()
+    private var correctOrder          = listOf<SentenceItem>()
+    private var shuffledOrder         = listOf<SentenceItem>()
+    private val dropZoneContents      = mutableMapOf<Int, String?>()
+    private val draggableCards        = mutableListOf<View>()
+    private val dropZoneViews         = mutableListOf<LinearLayout>()
+    private val dropTextViews         = mutableListOf<TextView>()
 
-    companion object {
-        private const val TAG = "ActivityOverage"
-    }
+    companion object { private const val TAG = "ActivityOverage" }
 
     // ======================================================================
     // Lifecycle
@@ -107,16 +119,18 @@ class ActivitySequenceOverActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        setContentView(R.layout.activity_activity_sequence_over)   // ← XML layout
 
         userAge          = intent.getIntExtra("USER_AGE", 8)
         currentRoutineId = intent.getIntExtra("SELECTED_ROUTINE_ID", 0)
         prefs            = getSharedPreferences(BUBBLE_PREFS, Context.MODE_PRIVATE)
 
         gameMaster = GameMasterModel(this)
+        initViews()
         initTts()
         loadCompletedSubRoutines()
-        buildLayout()
         setupTimer()
+        setupBackButton()
         sessionStart()
     }
 
@@ -133,61 +147,45 @@ class ActivitySequenceOverActivity : AppCompatActivity() {
         if (requestCode == MiniGamesActivitySequence.REQUEST_CODE && resultCode == Activity.RESULT_OK) {
             val passed = data?.getBooleanExtra(MiniGamesActivitySequence.RESULT_PASSED, false) ?: false
             if (passed) correctCount++
-            miniGameTriggeredThisRound = false
+//            miniGameTriggeredThisRound = false
         }
     }
 
     // ======================================================================
-    // Layout
+    // View binding
     // ======================================================================
 
-    private fun buildLayout() {
-        rootScroll = ScrollView(this).apply {
-            layoutParams = ViewGroup.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT)
-            setBackgroundColor(Color.parseColor("#EEF2FF"))
-        }
+    private fun initViews() {
+        timerTextView             = findViewById(R.id.timerTextView)
+        gameTitleText             = findViewById(R.id.game_title)
+        tvInstruction             = findViewById(R.id.tv_instruction)
+        btnStart                  = findViewById(R.id.btn_start)
+        horizontalImagesContainer = findViewById(R.id.horizontal_images_container)
+        dropZonesContainer        = findViewById(R.id.drop_zones_container)
+        verticalImagesContainer   = findViewById(R.id.vertical_images_container)
 
-        rootLayout = LinearLayout(this).apply {
-            orientation = LinearLayout.VERTICAL
-            setPadding(32, 48, 32, 48)
-            gravity = Gravity.CENTER_HORIZONTAL
-        }
+        previewText1 = findViewById(R.id.preview_text_1)
+        previewText2 = findViewById(R.id.preview_text_2)
+        previewText3 = findViewById(R.id.preview_text_3)
 
-        titleText = TextView(this).apply {
-            textSize = 22f
-            gravity  = Gravity.CENTER
-            setTextColor(Color.parseColor("#3F51B5"))
-            typeface = Typeface.DEFAULT_BOLD
-            layoutParams = LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT
-            ).also { it.bottomMargin = 8 }
-        }
-        rootLayout.addView(titleText)
+        dropZone1 = findViewById(R.id.drop_zone_1)
+        dropZone2 = findViewById(R.id.drop_zone_2)
+        dropZone3 = findViewById(R.id.drop_zone_3)
+        dropText1 = findViewById(R.id.drop_text_1)
+        dropText2 = findViewById(R.id.drop_text_2)
+        dropText3 = findViewById(R.id.drop_text_3)
 
-        instrText = TextView(this).apply {
-            textSize = 16f
-            gravity  = Gravity.CENTER
-            setTextColor(Color.parseColor("#555555"))
-            layoutParams = LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT
-            ).also { it.bottomMargin = 16 }
-        }
-        rootLayout.addView(instrText)
+        dropZoneViews.addAll(listOf(dropZone1, dropZone2, dropZone3))
+        dropTextViews.addAll(listOf(dropText1, dropText2, dropText3))
+    }
 
-        timerTextView = TextView(this).apply {
-            text     = "00:00"
-            textSize = 18f
-            gravity  = Gravity.CENTER
-            setTextColor(Color.parseColor("#888888"))
-            layoutParams = LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT
-            ).also { it.bottomMargin = 16 }
+    private fun setupBackButton() {
+        findViewById<View>(R.id.backBtn).setOnClickListener {
+            startActivity(Intent(this, RoutineSelectionActivity::class.java).apply {
+                flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
+            })
+            finish()
         }
-        rootLayout.addView(timerTextView)
-
-        rootScroll.addView(rootLayout)
-        setContentView(rootScroll)
     }
 
     // ======================================================================
@@ -210,9 +208,7 @@ class ActivitySequenceOverActivity : AppCompatActivity() {
         val available = (0..2).filter {
             !completedSubRoutines.contains(Pair(currentRoutineId, it))
         }.toMutableList()
-
         if (available.isEmpty()) { resetAllProgress(); currentSubRoutineId = 0; return }
-
         val modelRec        = currentPrediction.subRoutine.coerceIn(0, 2)
         currentSubRoutineId = if (modelRec < available.size) available[modelRec] else available.last()
     }
@@ -223,7 +219,7 @@ class ActivitySequenceOverActivity : AppCompatActivity() {
     }
 
     // ======================================================================
-    // Phase 1 — Show correct order
+    // Phase 1 — Show correct order via XML preview cards
     // ======================================================================
 
     private fun showCorrectOrderPhase() {
@@ -232,72 +228,37 @@ class ActivitySequenceOverActivity : AppCompatActivity() {
 
         correctOrder = sentences.map { (id, text) -> SentenceItem(id, text) }
 
-        val routineName = when (currentRoutineId) {
+        gameTitleText.text = when (currentRoutineId) {
             0 -> "Morning Routine"; 1 -> "Bedtime Routine"; 2 -> "School Routine"
             else -> "Daily Routine"
         }
-        titleText.text = routineName
-        instrText.text = "Read and remember the order!"
+        tvInstruction.text = "Read and remember the order!"
         speak("Look at the steps. Remember the order!")
 
-        while (rootLayout.childCount > 3) rootLayout.removeViewAt(3)
-
-        for ((index, step) in correctOrder.withIndex()) {
-            rootLayout.addView(buildSentenceDisplayCard(index + 1, step.text,
-                Color.parseColor("#C8E6C9"), Color.parseColor("#2E7D32")))
+        // Fill the three XML preview cards
+        val texts = listOf(previewText1, previewText2, previewText3)
+        correctOrder.forEachIndexed { i, step ->
+            if (i < texts.size) texts[i].text = step.text
         }
 
-        val startBtn = Button(this).apply {
-            text     = "I'm Ready! Let's Go! 🚀"
-            textSize = 18f
-            setBackgroundResource(R.drawable.rounded_button_background)
-            setTextColor(Color.WHITE)
-            layoutParams = LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT
-            ).also { it.topMargin = 32 }
-        }
-        startBtn.setOnClickListener { startDragDropPhase() }
-        rootLayout.addView(startBtn)
-    }
+        // Show phase 1, hide phase 2
+        horizontalImagesContainer.visibility = View.VISIBLE
+        dropZonesContainer.visibility        = View.GONE
+        verticalImagesContainer.visibility   = View.GONE
+        btnStart.visibility                  = View.VISIBLE
+        timerTextView.visibility             = View.GONE
 
-    private fun buildSentenceDisplayCard(number: Int, text: String, bgColor: Int, numColor: Int): LinearLayout {
-        return LinearLayout(this).apply {
-            orientation = LinearLayout.HORIZONTAL
-            gravity     = Gravity.CENTER_VERTICAL
-            setPadding(24, 24, 24, 24)
-            setBackgroundColor(bgColor)
-            layoutParams = LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT
-            ).also { it.topMargin = 12; it.bottomMargin = 4 }
-
-            addView(TextView(this@ActivitySequenceOverActivity).apply {
-                this.text = "$number"
-                textSize  = 28f
-                setTextColor(numColor)
-                typeface  = Typeface.DEFAULT_BOLD
-                gravity   = Gravity.CENTER
-                layoutParams = LinearLayout.LayoutParams(70, ViewGroup.LayoutParams.WRAP_CONTENT)
-            })
-            addView(TextView(this@ActivitySequenceOverActivity).apply {
-                this.text = text
-                textSize  = 18f
-                typeface  = Typeface.DEFAULT_BOLD
-                setTextColor(Color.parseColor("#333333"))
-                layoutParams = LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f)
-                    .also { it.marginStart = 16 }
-            })
-        }
+        btnStart.setOnClickListener { startDragDropPhase() }
     }
 
     // ======================================================================
-    // Phase 2 — Drag and drop (long-press only)
+    // Phase 2 — Drag and drop using XML containers
     // ======================================================================
 
     private fun startDragDropPhase() {
         shuffledOrder = correctOrder.shuffled()
         dropZoneContents.clear()
         draggableCards.clear()
-        dropZones.clear()
         errorCount    = 0
         correctCount  = 0
         attemptsCount = 0
@@ -305,82 +266,45 @@ class ActivitySequenceOverActivity : AppCompatActivity() {
         miniGameTriggeredThisRound = false
         startTimer()
 
-        instrText.text = "Hold and drag each step to the right box!"
+        tvInstruction.text = "Hold and drag each step to the right box!"
         speak("Hold a step and drag it to the right box!")
 
-        while (rootLayout.childCount > 3) rootLayout.removeViewAt(3)
+        // Hide phase 1, show phase 2
+        horizontalImagesContainer.visibility = View.GONE
+        btnStart.visibility                  = View.GONE
+        dropZonesContainer.visibility        = View.VISIBLE
+        verticalImagesContainer.visibility   = View.VISIBLE
+        timerTextView.visibility             = View.VISIBLE
+
+        // Reset drop zones
+        dropZoneContents[0] = null
+        dropZoneContents[1] = null
+        dropZoneContents[2] = null
+        dropTextViews.forEach { tv ->
+            tv.text      = "Drop here…"
+            tv.setTextColor(Color.parseColor("#90A4AE"))
+            tv.typeface  = Typeface.DEFAULT
+        }
+        dropZoneViews.forEachIndexed { i, zone ->
+            zone.setBackgroundResource(R.drawable.order_display_bg)
+            zone.setOnDragListener { view, event ->
+                handleDrop(view as LinearLayout, i, event, dropTextViews[i])
+            }
+        }
+
+        // Add draggable cards to vertical container (keep the label, remove old cards)
+        while (verticalImagesContainer.childCount > 1)
+            verticalImagesContainer.removeViewAt(1)
 
         updatePrediction()
-
-        val zonesLabel = TextView(this).apply {
-            text     = "Put steps in order:"
-            textSize = 15f
-            setTextColor(Color.parseColor("#333333"))
-            typeface = Typeface.DEFAULT_BOLD
-            layoutParams = LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT
-            ).also { it.topMargin = 16; it.bottomMargin = 8 }
-        }
-        rootLayout.addView(zonesLabel)
-
-        for (i in correctOrder.indices) {
-            dropZoneContents[i] = null
-            val zone = buildDropZone(i)
-            dropZones.add(zone)
-            rootLayout.addView(zone)
-        }
-
-        val cardsLabel = TextView(this).apply {
-            text     = "Drag these steps:"
-            textSize = 15f
-            setTextColor(Color.parseColor("#333333"))
-            typeface = Typeface.DEFAULT_BOLD
-            layoutParams = LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT
-            ).also { it.topMargin = 28; it.bottomMargin = 8 }
-        }
-        rootLayout.addView(cardsLabel)
 
         for (step in shuffledOrder) {
             val card = buildDraggableCard(step)
             draggableCards.add(card)
-            rootLayout.addView(card)
+            verticalImagesContainer.addView(card)
         }
 
         Handler(Looper.getMainLooper()).postDelayed({ maybeLaunchMiniGame() }, 600)
-    }
-
-    private fun buildDropZone(index: Int): LinearLayout {
-        return LinearLayout(this).apply {
-            orientation = LinearLayout.HORIZONTAL
-            gravity     = Gravity.CENTER_VERTICAL
-            setPadding(20, 20, 20, 20)
-            setBackgroundColor(Color.parseColor("#E3F2FD"))
-            layoutParams = LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT, 110
-            ).also { it.topMargin = 10 }
-            tag = index
-
-            addView(TextView(this@ActivitySequenceOverActivity).apply {
-                text     = "${index + 1}"
-                textSize = 24f
-                setTextColor(Color.parseColor("#1565C0"))
-                typeface = Typeface.DEFAULT_BOLD
-                gravity  = Gravity.CENTER
-                layoutParams = LinearLayout.LayoutParams(60, ViewGroup.LayoutParams.MATCH_PARENT)
-            })
-            addView(TextView(this@ActivitySequenceOverActivity).apply {
-                text     = "Drop here…"
-                textSize = 15f
-                setTextColor(Color.parseColor("#90A4AE"))
-                gravity  = Gravity.CENTER_VERTICAL
-                layoutParams = LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.MATCH_PARENT, 1f)
-                    .also { it.marginStart = 12 }
-                tag = "placeholder"
-            })
-
-            setOnDragListener { view, event -> handleDrop(view as LinearLayout, index, event) }
-        }
     }
 
     private fun buildDraggableCard(step: SentenceItem): View {
@@ -392,7 +316,7 @@ class ActivitySequenceOverActivity : AppCompatActivity() {
             layoutParams = LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT
             ).also { it.topMargin = 10 }
-            tag = step.id
+            tag       = step.id
             elevation = 6f
 
             addView(TextView(this@ActivitySequenceOverActivity).apply {
@@ -407,12 +331,12 @@ class ActivitySequenceOverActivity : AppCompatActivity() {
                 textSize = 16f
                 typeface = Typeface.DEFAULT_BOLD
                 setTextColor(Color.parseColor("#333333"))
-                layoutParams = LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f)
-                    .also { it.marginStart = 12 }
+                layoutParams = LinearLayout.LayoutParams(
+                    0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f
+                ).also { it.marginStart = 12 }
             })
         }
 
-        // Long-press only — card stays visible during drag
         card.setOnLongClickListener { view ->
             tapTimes.add(System.currentTimeMillis())
             val clipData   = ClipData.newPlainText("sentenceId", step.id)
@@ -420,17 +344,22 @@ class ActivitySequenceOverActivity : AppCompatActivity() {
             view.startDragAndDrop(clipData, dragShadow, view, 0)
             true
         }
-
         return card
     }
 
-    private fun handleDrop(zone: LinearLayout, zoneIndex: Int, event: DragEvent): Boolean {
+    private fun handleDrop(
+        zone: LinearLayout, zoneIndex: Int, event: DragEvent, dropText: TextView
+    ): Boolean {
         return when (event.action) {
             DragEvent.ACTION_DRAG_STARTED -> true
-            DragEvent.ACTION_DRAG_ENTERED -> { zone.setBackgroundColor(Color.parseColor("#BBDEFB")); true }
-            DragEvent.ACTION_DRAG_EXITED  -> { zone.setBackgroundColor(Color.parseColor("#E3F2FD")); true }
+            DragEvent.ACTION_DRAG_ENTERED -> {
+                zone.setBackgroundColor(Color.parseColor("#BBDEFB")); true
+            }
+            DragEvent.ACTION_DRAG_EXITED -> {
+                zone.setBackgroundResource(R.drawable.order_display_bg); true
+            }
             DragEvent.ACTION_DROP -> {
-                zone.setBackgroundColor(Color.parseColor("#E3F2FD"))
+                zone.setBackgroundResource(R.drawable.order_display_bg)
                 val droppedView = event.localState as? View ?: return true
                 val droppedId   = droppedView.tag as? String ?: return true
                 val expectedId  = correctOrder.getOrNull(zoneIndex)?.id ?: return true
@@ -442,7 +371,9 @@ class ActivitySequenceOverActivity : AppCompatActivity() {
                     droppedView.visibility = View.GONE
                     dropZoneContents[zoneIndex] = droppedId
                     zone.setBackgroundColor(Color.parseColor("#C8E6C9"))
-                    updateDropZoneText(zone, correctOrder[zoneIndex].text)
+                    dropText.text      = correctOrder[zoneIndex].text
+                    dropText.setTextColor(Color.parseColor("#2E7D32"))
+                    dropText.typeface  = Typeface.DEFAULT_BOLD
                     speak("Well done!")
 
                     if (dropZoneContents.values.all { it != null }) {
@@ -452,14 +383,15 @@ class ActivitySequenceOverActivity : AppCompatActivity() {
                     errorCount++
                     zone.setBackgroundColor(Color.parseColor("#FFCDD2"))
                     Handler(Looper.getMainLooper()).postDelayed({
-                        zone.setBackgroundColor(Color.parseColor("#E3F2FD"))
+                        zone.setBackgroundResource(R.drawable.order_display_bg)
                     }, 600)
                     speak("Try again!")
-
                     updatePrediction()
-                    if (currentPrediction.whatsMissingTrigger) showInlineHint(zoneIndex)
-
-                    // Attempt mini-game after each error
+                    if (currentPrediction.whatsMissingTrigger) {
+                        Toast.makeText(this,
+                            "Hint: Box ${zoneIndex + 1} → \"${correctOrder[zoneIndex].text}\"",
+                            Toast.LENGTH_LONG).show()
+                    }
                     Handler(Looper.getMainLooper()).postDelayed({ maybeLaunchMiniGame() }, 800)
                 }
                 true
@@ -467,20 +399,6 @@ class ActivitySequenceOverActivity : AppCompatActivity() {
             DragEvent.ACTION_DRAG_ENDED -> true
             else -> false
         }
-    }
-
-    private fun updateDropZoneText(zone: LinearLayout, newText: String) {
-        zone.findViewWithTag<TextView>("placeholder")?.apply {
-            text     = newText
-            setTextColor(Color.parseColor("#2E7D32"))
-            typeface = Typeface.DEFAULT_BOLD
-        }
-    }
-
-    private fun showInlineHint(zoneIndex: Int) {
-        Toast.makeText(this,
-            "Hint: Box ${zoneIndex + 1} → \"${correctOrder[zoneIndex].text}\"",
-            Toast.LENGTH_LONG).show()
     }
 
     private fun updatePrediction() {
@@ -497,45 +415,24 @@ class ActivitySequenceOverActivity : AppCompatActivity() {
     }
 
     // ======================================================================
-    // Mini-game launcher — FIXED
-    //
-    //  Root cause: model returns minigameTrigger=true but
-    //  whatsMissingTrigger=false AND connectDotsTrigger=false.
-    //  Old code only checked the two specific triggers → always blocked.
-    //  Now minigameTrigger is the PRIMARY gate.
+    // Mini-game launcher
     // ======================================================================
 
     private fun maybeLaunchMiniGame() {
         if (miniGameTriggeredThisRound) return
-
-        val shouldTrigger = currentPrediction.minigameTrigger          // ← primary gate
+        val shouldTrigger = currentPrediction.minigameTrigger
                 || currentPrediction.whatsMissingTrigger
-                || currentPrediction.connectDotsTrigger
-
-        if (!shouldTrigger) {
-            Log.d(TAG, "maybeLaunchMiniGame: all triggers false — skipping")
-            return
-        }
-
+        if (!shouldTrigger) return
         miniGameTriggeredThisRound = true
 
         val gameType = when {
             currentPrediction.whatsMissingTrigger -> MiniGamesActivitySequence.TYPE_WHATS_MISSING
-            currentPrediction.connectDotsTrigger  -> MiniGamesActivitySequence.TYPE_CONNECT_DOTS
-            else -> if (errorCount % 2 == 0)
-                MiniGamesActivitySequence.TYPE_WHATS_MISSING
-            else
-                MiniGamesActivitySequence.TYPE_CONNECT_DOTS
+            else -> MiniGamesActivitySequence.TYPE_WHATS_MISSING
         }
-
-        Log.d(TAG, "Launching mini-game: type=$gameType " +
-                "(minigameTrigger=${currentPrediction.minigameTrigger} " +
-                "whatsMissing=${currentPrediction.whatsMissingTrigger} " +
-                "connectDots=${currentPrediction.connectDotsTrigger})")
 
         startActivityForResult(
             Intent(this, MiniGamesActivitySequence::class.java).apply {
-                putExtra(MiniGamesActivitySequence.EXTRA_TYPE,           gameType)
+                putExtra(MiniGamesActivitySequence.EXTRA_TYPE,           MiniGamesActivitySequence.TYPE_WHATS_MISSING)
                 putExtra(MiniGamesActivitySequence.EXTRA_ROUTINE_ID,     currentRoutineId)
                 putExtra(MiniGamesActivitySequence.EXTRA_SUB_ROUTINE_ID, currentSubRoutineId)
                 putExtra(MiniGamesActivitySequence.EXTRA_USER_AGE,       userAge)
@@ -551,10 +448,9 @@ class ActivitySequenceOverActivity : AppCompatActivity() {
     private fun onGameSuccess() {
         stopTimer()
         speak("Amazing! You got the right order!")
-
         markSubRoutineCompleted()
 
-        val accuracy = if (attemptsCount > 0) correctCount.toFloat() / attemptsCount else 0f
+        val accuracy   = if (attemptsCount > 0) correctCount.toFloat() / attemptsCount else 0f
         val finalAlpha = gameMaster.calculateAlpha(
             accuracy     = accuracy,
             responseTime = elapsedTime.toFloat(),
@@ -614,8 +510,9 @@ class ActivitySequenceOverActivity : AppCompatActivity() {
     }
 
     private fun startTimer() {
-        gameStartTime = System.currentTimeMillis()
+        gameStartTime  = System.currentTimeMillis()
         isTimerRunning = true
+        timerTextView.visibility = View.VISIBLE
         timerHandler.post(timerRunnable)
     }
 
@@ -626,7 +523,7 @@ class ActivitySequenceOverActivity : AppCompatActivity() {
     }
 
     // ======================================================================
-    // Helpers
+    // TTS / helpers
     // ======================================================================
 
     private fun speak(text: String) {

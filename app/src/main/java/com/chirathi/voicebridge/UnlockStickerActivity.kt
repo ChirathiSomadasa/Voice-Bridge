@@ -173,7 +173,7 @@ class UnlockStickerActivity : AppCompatActivity() {
 
     private fun showPoolExhaustedState() {
         giftBox.visibility = View.GONE
-        titleText.text     = "🎊 You have ALL the stickers! You're amazing!"
+        titleText.text     = "You have ALL the stickers! You're amazing!"
         titleText.visibility = View.VISIBLE
         unlockedText.text    = "Nothing new today — keep playing!"
         unlockedText.visibility = View.VISIBLE
@@ -291,7 +291,7 @@ class UnlockStickerActivity : AppCompatActivity() {
         val needFor1 = (3 - totalNow).coerceAtLeast(0)
         val needFor2 = (6 - totalNow).coerceAtLeast(0)
 
-        unlockedText.text    = "NEW STICKER UNLOCKED! 🌟"
+        unlockedText.text    = "NEW STICKER UNLOCKED!"
         unlockedText.alpha   = 0f; unlockedText.visibility = View.VISIBLE; unlockedText.translationY = 200f
 
         titleText.text = when {
@@ -327,7 +327,7 @@ class UnlockStickerActivity : AppCompatActivity() {
 
     private fun collectSticker() {
         collectButton.isEnabled = false
-        Toast.makeText(this, "Sticker Collected! 🎉", Toast.LENGTH_SHORT).show()
+        Toast.makeText(this, "Sticker Collected!", Toast.LENGTH_SHORT).show()
 
         val shrinkAnim = ObjectAnimator.ofPropertyValuesHolder(
             stickerReveal,

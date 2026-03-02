@@ -19,6 +19,8 @@ import androidx.core.content.ContextCompat
 import com.google.firebase.Firebase
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.firestore
+import android.widget.ImageView
+import android.widget.FrameLayout
 
 /**
  * RoutineSelectionActivity — updated.
@@ -28,7 +30,7 @@ import com.google.firebase.firestore.firestore
  *      not the tap guide (ASGuide_BelowActivity). Separate session flag used.
  *   2. Unlocked routines shown in PINK (matching Morning Routine style),
  *      not blue.
- *   3. "My Stickers ⭐" button preserved.
+ *   3. "My Stickers" button preserved.
  *   4. Sticker count display and routine unlock logic unchanged.
  */
 class RoutineSelectionActivity : AppCompatActivity() {
@@ -48,6 +50,18 @@ class RoutineSelectionActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_routine_selection)
 
+        // In onCreate(), after setContentView:
+        findViewById<ImageView>(R.id.backBtn).setOnClickListener {
+            startActivity(Intent(this, GameDashboardActivity::class.java).apply {
+                flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
+            })
+            finish()
+        }
+
+        findViewById<FrameLayout>(R.id.stickerChip).setOnClickListener {
+            startActivity(Intent(this, StickerGalleryActivity::class.java))
+        }
+
         sharedPrefs = getSharedPreferences("unlocked_routines", Context.MODE_PRIVATE)
 
         morningRoutineLayout   = findViewById(R.id.morningRoutineLayout)
@@ -60,7 +74,7 @@ class RoutineSelectionActivity : AppCompatActivity() {
         StickerManager.updateRoutineUnlocks(this)
         checkRoutineUnlock()
 
-        addStickerGalleryButton()
+//        addStickerGalleryButton()
         setupClickListeners()
     }
 
@@ -75,31 +89,31 @@ class RoutineSelectionActivity : AppCompatActivity() {
     // Sticker gallery button
     // ─────────────────────────────────────────────────────────────────────────
 
-    private fun addStickerGalleryButton() {
-        if (mainContainer.findViewWithTag<View>("sticker_btn") != null) return
-
-        val btn = androidx.appcompat.widget.AppCompatButton(this).apply {
-            text = "⭐ My Stickers"
-            textSize = 16f
-            tag = "sticker_btn"
-            setTextColor(ContextCompat.getColor(this@RoutineSelectionActivity, android.R.color.white))
-            setBackgroundResource(R.drawable.rounded_button_background)
-            setOnClickListener {
-                startActivity(Intent(this@RoutineSelectionActivity, StickerGalleryActivity::class.java))
-            }
-        }
-
-        val lp = androidx.constraintlayout.widget.ConstraintLayout.LayoutParams(
-            androidx.constraintlayout.widget.ConstraintLayout.LayoutParams.WRAP_CONTENT,
-            androidx.constraintlayout.widget.ConstraintLayout.LayoutParams.WRAP_CONTENT
-        ).apply {
-            topToTop    = ConstraintLayout.LayoutParams.PARENT_ID
-            endToEnd    = ConstraintLayout.LayoutParams.PARENT_ID
-            topMargin   = 48
-            rightMargin = 24
-        }
-        mainContainer.addView(btn, lp)
-    }
+//    private fun addStickerGalleryButton() {
+//        if (mainContainer.findViewWithTag<View>("sticker_btn") != null) return
+//
+//        val btn = androidx.appcompat.widget.AppCompatButton(this).apply {
+//            text = "My Stickers"
+//            textSize = 16f
+//            tag = "sticker_btn"
+//            setTextColor(ContextCompat.getColor(this@RoutineSelectionActivity, android.R.color.white))
+//            setBackgroundResource(R.drawable.rounded_button_background)
+//            setOnClickListener {
+//                startActivity(Intent(this@RoutineSelectionActivity, StickerGalleryActivity::class.java))
+//            }
+//        }
+//
+//        val lp = androidx.constraintlayout.widget.ConstraintLayout.LayoutParams(
+//            androidx.constraintlayout.widget.ConstraintLayout.LayoutParams.WRAP_CONTENT,
+//            androidx.constraintlayout.widget.ConstraintLayout.LayoutParams.WRAP_CONTENT
+//        ).apply {
+//            topToTop    = ConstraintLayout.LayoutParams.PARENT_ID
+//            endToEnd    = ConstraintLayout.LayoutParams.PARENT_ID
+//            topMargin   = 48
+//            rightMargin = 24
+//        }
+//        mainContainer.addView(btn, lp)
+//    }
 
     // ─────────────────────────────────────────────────────────────────────────
     // Routine unlock — pink tint for unlocked routines

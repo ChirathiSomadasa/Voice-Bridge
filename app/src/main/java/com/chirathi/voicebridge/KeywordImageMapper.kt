@@ -69,99 +69,98 @@ object KeywordImageMapper {
         "water" to R.drawable.water_image,
         "crown" to R.drawable.crown_image
     )
-
-    // ══════════════════════════════════════════════════════════════════════
     //  PHONETIC DISTRACTORS  (words that rhyme / sound similar)
-    //  All chosen to be: simple, concrete, picturable, ESL-friendly
-    // ══════════════════════════════════════════════════════════════════════
     val phoneticDistractors = mapOf(
         // Rhymes with "boat"
-        "coat"   to R.drawable.coat,     // everyday clothing item ✅
-        "goat"   to R.drawable.goat,     // common farm animal ✅
+        "coat"   to R.drawable.coat,
+        "goat"   to R.drawable.goat,
+        "note"   to R.drawable.gen_note,
 
         // Rhymes with "stream" / "dream" / "cream"
-        "cream"  to R.drawable.cream,    // ice cream — beloved by children ✅
+        "cream"  to R.drawable.cream,
+        "creme"  to R.drawable.gen_cream,
 
         // Rhymes with "creek" / "squeak"
-        "beak"   to R.drawable.squeak,   // use squeak image for beak sound ✅
+        "beak"   to R.drawable.squeak,
 
         // Rhymes with "river" / "shiver"
-        "shiver" to R.drawable.shiver,   // action image — OK if clearly drawn ✅
+        "shiver" to R.drawable.shiver,
 
         // Rhymes with "star" / "car"
-        "car"    to R.drawable.car,      // very familiar to all children ✅
+        "car"    to R.drawable.gen_car,
 
         // Rhymes with "sun" / "run"
-        "run"    to R.drawable.run,      // action — child running ✅
+        "bun"    to R.drawable.gen_bun,
 
         // Rhymes with "light" / "night" / "kite"
-        "kite"   to R.drawable.kite,     // common toy, clear visual ✅
+        "kite"   to R.drawable.gen_kite,
 
         // Rhymes with "mouse" / "house"
-        "house"  to R.drawable.house,    // universal, simple ✅
+        "house"  to R.drawable.house,
 
-        // Rhymes with "hill" / "fill" → "ball" is not a rhyme but
-        // we use the sound-match strategy: keep only verified simple ones
-        "pill"   to R.drawable.ball,     // swap to ball image if pill image missing
+        // Rhymes with "hill"
+        "pill"   to R.drawable.gen_pill,
 
         // Rhymes with "crown" / "clown"
-        "clown"  to R.drawable.clown,    // familiar, positive ✅
+        "clown"  to R.drawable.clown,
     )
 
-    // ══════════════════════════════════════════════════════════════════════
     //  SEMANTIC DISTRACTORS  (same category / meaning)
-    //  Only simple, concrete, picturable members of each category
-    // ══════════════════════════════════════════════════════════════════════
     val semanticDistractors = mapOf(
-        // Things that go on water (same category as boat)
-        "fish"  to R.drawable.fish,      // universal child word ✅
-        "oar"   to R.drawable.oar,       // part of a boat — good category ✅
+        "fish"  to R.drawable.gen_fish,
+        "oar"   to R.drawable.oar,
+        "frog"   to R.drawable.gen_frog,
 
-        // Other water bodies (same category as stream / river / creek)
-        "rain"  to R.drawable.cloud,     // rain → cloud image ✅
+        // Other water bodies
+        "rain"  to R.drawable.gen_rain,
+        "water"  to R.drawable.gen_water,
+        "wave"  to R.drawable.gen_wave,
 
         // Night sky objects (same category as star)
-        "moon"  to R.drawable.rhy_song1_moon,   // ✅
-        "cloud" to R.drawable.cloud,             // ✅
+        "moon"  to R.drawable.rhy_song1_moon,
+        "cloud" to R.drawable.cloud,
+        "rainbow" to R.drawable.gen_rainbow,
+        "kite" to R.drawable.gen_kite,
 
         // Things that give light (same category as sun / light)
-        "lamp"  to R.drawable.rhy_song1_light,  // use light image ✅
+        "lamp"  to R.drawable.rhy_song1_light,
+        "light"  to R.drawable.gen_light,
+        "torch"  to R.drawable.gen_torch,
+        "diamond"  to R.drawable.gen_diamond,
+
 
         // Things on a hill / nature (same category as hill)
-        "tree"  to R.drawable.flower,           // use flower if tree missing ✅
+        "tree"  to R.drawable.gen_tree,
+        "leaf"  to R.drawable.gen_leaf,
 
         // Animals (same category as mouse / polar bear / crocodile)
-        "cat"   to R.drawable.cat,      // ✅
-        "bird"  to R.drawable.bird,     // ✅
+        "cat"   to R.drawable.cat,
+        "bird"  to R.drawable.bird,
 
         // Royalty / headwear (same category as crown)
-        "hat"   to R.drawable.crown_image,      // use crown image as hat proxy ✅
+        "hat"   to R.drawable.crown_image,
+        "crown"   to R.drawable.gen_crown,
     )
 
-    // ══════════════════════════════════════════════════════════════════════
     //  VISUAL DISTRACTORS  (looks similar to the keyword)
-    //  Only used for the hardest distractor type. All must be very concrete.
-    // ══════════════════════════════════════════════════════════════════════
     val visualDistractors = mapOf(
         // Looks like star → sparkle / twinkle shapes
         "sparkle" to R.drawable.sparkle,
         "twinkle" to R.drawable.twinkle,
 
         // Looks like boat → something elongated/floating
-        "cheese"  to R.drawable.cheese, // triangular shape — mild visual match
+        "cheese"  to R.drawable.cheese,
 
         // Looks like sun → yellow round object
-        "ball"    to R.drawable.ball,   // round like sun ✅
-        "apple"   to R.drawable.apple,  // round, simple ✅
+        "ball"    to R.drawable.ball,
+        "apple"   to R.drawable.apple,
 
         // Looks like mouse → small animal
-        "cat"     to R.drawable.cat,    // ✅
+        "cat"     to R.drawable.cat,
+        "bun"     to R.drawable.gen_bun,
     )
 
-    // ══════════════════════════════════════════════════════════════════════
     //  RANDOM DISTRACTORS  (no association — easiest difficulty type)
-    //  Must be very common, concrete, clearly picturable everyday objects.
-    // ══════════════════════════════════════════════════════════════════════
     val randomDistractors = mapOf(
         "apple"  to R.drawable.apple,
         "ball"   to R.drawable.ball,
@@ -173,6 +172,10 @@ object KeywordImageMapper {
         "cloud"  to R.drawable.cloud,
         "house"  to R.drawable.house,
         "goat"   to R.drawable.goat,
+        "window"   to R.drawable.gen_window,
+        "traveller"   to R.drawable.gen_traveller,
+        "rocket"   to R.drawable.gen_rocket,
+        "girl"   to R.drawable.gen_rocket,
     )
 
     // ══════════════════════════════════════════════════════════════════════

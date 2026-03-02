@@ -11,42 +11,42 @@ import android.content.SharedPreferences
  *  • Sticker count drives routine unlocking:
  *      ≥ 3 stickers → routine_1 (Bedtime/Local-Time) unlocked
  *      ≥ 6 stickers → routine_2 (School) unlocked
- *  • The sticker pool is defined here; add drawables as needed.
  *
- *  Usage:
- *    val mgr  = StickerManager(context)
- *    val info = mgr.awardNextSticker()   // null if pool exhausted
- *    mgr.updateRoutineUnlocks()
+ *  Sticker name mapping (by drawable number):
+ *   1 → Knight        2 → Astronaut     3 → Robot
+ *   4 → Explorer      5 → Sorcerer      6 → Dinosaur
+ *   7 → Dragon        8 → Pilot         12 → Alien
+ *   13 → Ocean Diver
  */
 object StickerManager {
 
     // ── Prefs keys ────────────────────────────────────────────────────────────
-    private const val PREFS_STICKERS        = "sticker_progress"
-    private const val KEY_EARNED_IDS        = "earned_sticker_ids"
-    private const val KEY_STICKER_COUNT     = "stickers_collected"
-    private const val PREFS_ROUTINES        = "unlocked_routines"
-    private const val KEY_ROUTINE_1         = "routine_1"
-    private const val KEY_ROUTINE_2         = "routine_2"
+    private const val PREFS_STICKERS    = "sticker_progress"
+    private const val KEY_EARNED_IDS    = "earned_sticker_ids"
+    private const val KEY_STICKER_COUNT = "stickers_collected"
+    private const val PREFS_ROUTINES    = "unlocked_routines"
+    private const val KEY_ROUTINE_1     = "routine_1"
+    private const val KEY_ROUTINE_2     = "routine_2"
 
-    // ── Sticker pool ─────────────────────────────────────────────────────────
+    // ── Sticker pool ──────────────────────────────────────────────────────────
     data class StickerInfo(
         val id          : String,
         val drawableRes : Int,
         val name        : String,
-        val category    : String   // "comfort"|"achievement"|"celebration"|"encouragement"
+        val category    : String   // "adventure"|"achievement"|"fantasy"|"discovery"
     )
 
     val STICKER_POOL: List<StickerInfo> = listOf(
-        StickerInfo("sticker_comfort_1",       R.drawable.sticker_unlock_three,     "Cozy Star",       "comfort"),
-        StickerInfo("sticker_achievement_1",   R.drawable.sticker_unlock_four,      "Champion Star",   "achievement"),
-        StickerInfo("sticker_encouragement_1", R.drawable.sticker_unlock_twelve,    "Brave Star",      "encouragement"),
-        StickerInfo("sticker_celebration_1",   R.drawable.sticker_unlock_thirteen,  "Party Star",      "celebration"),
-        StickerInfo("sticker_comfort_2",       R.drawable.sticker,                  "Friendly Star",   "comfort"),
-        StickerInfo("sticker_achievement_2",   R.drawable.sticker_unlock_three,     "Gold Star",       "achievement"),
-        StickerInfo("sticker_celebration_2",   R.drawable.sticker_unlock_four,      "Rainbow Star",    "celebration"),
-        StickerInfo("sticker_encouragement_2", R.drawable.sticker_unlock_twelve,    "Super Star",      "encouragement"),
-        StickerInfo("sticker_comfort_3",       R.drawable.sticker_unlock_thirteen,  "Shining Star",    "comfort"),
-        StickerInfo("sticker_achievement_3",   R.drawable.sticker,                  "Hero Star",       "achievement"),
+        StickerInfo("sticker_1",  R.drawable.sticker,      "Knight",      "adventure"),
+        StickerInfo("sticker_2",  R.drawable.sticker_unlock_two,      "Astronaut",   "discovery"),
+        StickerInfo("sticker_3",  R.drawable.sticker_unlock_three,    "Robot",       "achievement"),
+        StickerInfo("sticker_4",  R.drawable.sticker_unlock_four,     "Explorer",    "discovery"),
+        StickerInfo("sticker_5",  R.drawable.sticker_unlock_five,     "Sorcerer",    "fantasy"),
+        StickerInfo("sticker_6",  R.drawable.sticker_unlock_six,      "Dinosaur",    "adventure"),
+        StickerInfo("sticker_7",  R.drawable.sticker_unlock_seven,    "Dragon",      "fantasy"),
+        StickerInfo("sticker_8",  R.drawable.sticker_unlock_eight,    "Pilot",       "discovery"),
+        StickerInfo("sticker_12", R.drawable.sticker_unlock_twelve,   "Alien",       "discovery"),
+        StickerInfo("sticker_13", R.drawable.sticker_unlock_thirteen, "Ocean Diver", "adventure")
     )
 
     // ── Helpers ───────────────────────────────────────────────────────────────

@@ -41,8 +41,8 @@
     <!-- Sticker Reveal -->
     <ImageView
         android:id="@+id/stickerReveal"
-        android:layout_width="450dp"
-        android:layout_height="450dp"
+        android:layout_width="420dp"
+        android:layout_height="420dp"
         android:layout_gravity="center"
         android:src="@drawable/sticker"
         android:visibility="invisible"
@@ -54,7 +54,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="center_horizontal"
-        android:layout_marginTop="130dp"
+        android:layout_marginTop="110dp"
         android:text="NEW STICKER UNLOCKED!"
         android:textSize="28sp"
         android:textStyle="bold"
@@ -90,7 +90,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="center_horizontal"
-        android:layout_marginTop="500dp"
+        android:layout_marginTop="510dp"
         android:text="Collect 2 More to \nUnlock New Routine!"
         android:textSize="20sp"
         android:textStyle="bold"

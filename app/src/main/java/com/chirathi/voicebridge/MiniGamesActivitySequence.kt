@@ -42,7 +42,6 @@ class MiniGamesActivitySequence : AppCompatActivity() {
         const val RESULT_SCORE         = "MINI_GAME_SCORE"
         const val REQUEST_CODE         = 888
         const val TYPE_WHATS_MISSING   = 0
-        const val TYPE_CONNECT_DOTS    = 1
     }
 
     private data class Step(val id: String, val drawableRes: Int, val label: String)
@@ -115,11 +114,7 @@ class MiniGamesActivitySequence : AppCompatActivity() {
         initTts()
 
         btnSkipMiniGame.setOnClickListener { finishWithResult(false, 0) }
-
-        when (miniGameType) {
-            TYPE_WHATS_MISSING -> setupWhatsMissing()
-            else               -> setupConnectMesh()
-        }
+        setupWhatsMissing()
     }
 
     override fun onDestroy() { tts?.stop(); tts?.shutdown(); super.onDestroy() }
@@ -165,7 +160,7 @@ class MiniGamesActivitySequence : AppCompatActivity() {
     // =========================================================================
 
     private fun setupWhatsMissing() {
-        miniGameTitle.text       = "What's Missing? 🤔"
+        miniGameTitle.text       = "What's Missing?"
         miniGameInstruction.text = "One step is hiding! Can you find it?"
         optionSectionLabel.text  = "Tap the missing step:"
         progressSection.visibility = View.GONE
@@ -220,252 +215,15 @@ class MiniGamesActivitySequence : AppCompatActivity() {
         allFrames.forEach { it.isClickable = false }
         if (chosen.id == correct.id) {
             speak("Yes! That's right! Great job!")
-            showFeedback("🎉", "That's it! Well done!", "#4CAF50") { finishWithResult(true, 100) }
+            showFeedback("", "That's it! Well done!", "#4CAF50") { finishWithResult(true, 100) }
         } else {
             mistakeCount++
             speak("Not quite. Try again!")
-            showFeedback("💪", "Try again!", "#FF6B6B") {
+            showFeedback("", "Try again!", "#FF6B6B") {
                 feedbackOverlay.visibility = View.GONE
                 allFrames.forEach { it.isClickable = true }
             }
         }
-    }
-
-    // =========================================================================
-    // GAME 1 — Connect the Mesh
-    //
-    //  Steps shown in a triangle arrangement inside a FrameLayout.
-    //  Dashed grey lines connect all pairs initially (mesh look).
-    //  Child taps steps in correct order 1 → 2 → 3.
-    //  Each correct tap: the line from previous node to this node turns solid green.
-    //  Wrong tap: red flash + shake animation.
-    // =========================================================================
-
-    private fun setupConnectMesh() {
-        miniGameTitle.text       = "Connect the Steps! 🔗"
-        miniGameInstruction.text = "Tap the steps in order: 1 → 2 → 3"
-
-        // Hide XML elements we're replacing
-        sequenceRow.visibility        = View.GONE
-        optionsGrid.visibility        = View.GONE
-        optionSectionLabel.visibility = View.GONE
-        progressSection.visibility    = View.VISIBLE
-        progressDotText.text          = "1"
-
-        speak("Connect the steps! Tap number 1 first, then 2, then 3!")
-
-        // ── Build mesh container ──────────────────────────────────────────
-        val meshFrame = FrameLayout(this).apply {
-            layoutParams = LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.MATCH_PARENT, dpToPx(380)
-            ).also { it.topMargin = dpToPx(12); it.bottomMargin = dpToPx(8) }
-            setBackgroundColor(Color.parseColor("#FFF9C4"))
-        }
-
-        // Shuffle steps so order isn't obvious from position
-        val shuffled    = steps.shuffled()
-        val nodeSize    = dpToPx(110)
-
-        // Triangle positions (left-top, right-top, bottom-center)
-        val positions = listOf(
-            Pair(dpToPx(30),  dpToPx(30)),
-            Pair(dpToPx(220), dpToPx(30)),
-            Pair(dpToPx(125), dpToPx(230))
-        )
-
-        // Node views
-        val nodeViews      = mutableListOf<FrameLayout>()
-        val nodeOrderNums  = mutableListOf<Int>()          // correct order number (1-indexed)
-
-        // ── Canvas overlay for lines ──────────────────────────────────────
-        val canvas = MeshLineView(this)
-        canvas.layoutParams = FrameLayout.LayoutParams(
-            FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.MATCH_PARENT)
-
-        // ── Build 3 nodes ─────────────────────────────────────────────────
-        for ((i, step) in shuffled.withIndex()) {
-            val (x, y) = positions[i]
-            val correctNum = steps.indexOfFirst { it.id == step.id } + 1
-            nodeOrderNums.add(correctNum)
-
-            val nodeCard = FrameLayout(this).apply {
-                layoutParams = FrameLayout.LayoutParams(nodeSize, nodeSize).also {
-                    it.leftMargin = x; it.topMargin = y
-                }
-                setBackgroundResource(R.drawable.rounded_card_background)
-                elevation = 6f
-                tag = correctNum
-            }
-
-            val img = ImageView(this).apply {
-                setImageResource(step.drawableRes)
-                scaleType = ImageView.ScaleType.CENTER_INSIDE
-                layoutParams = FrameLayout.LayoutParams(
-                    FrameLayout.LayoutParams.MATCH_PARENT,
-                    FrameLayout.LayoutParams.MATCH_PARENT)
-                setPadding(12, 12, 12, 12)
-            }
-
-            val badge = TextView(this).apply {
-                text      = "$correctNum"
-                textSize  = 16f
-                setTextColor(Color.WHITE)
-                setBackgroundResource(R.drawable.circle_badge)
-                gravity   = Gravity.CENTER
-                layoutParams = FrameLayout.LayoutParams(dpToPx(32), dpToPx(32)).also {
-                    it.gravity = android.view.Gravity.TOP or android.view.Gravity.END
-                    it.topMargin = dpToPx(6); it.rightMargin = dpToPx(6)
-                }
-            }
-
-            nodeCard.addView(img)
-            nodeCard.addView(badge)
-            meshFrame.addView(nodeCard)
-            nodeViews.add(nodeCard)
-        }
-
-        meshFrame.addView(canvas)
-
-        // Register node centre-points for line drawing (after layout)
-        meshFrame.post {
-            val centres = nodeViews.map { node ->
-                val lp = node.layoutParams as FrameLayout.LayoutParams
-                PointF(
-                    (lp.leftMargin + node.width / 2).toFloat(),
-                    (lp.topMargin  + node.height / 2).toFloat()
-                )
-            }
-            // Draw all dashed background lines (mesh)
-            canvas.setMeshPoints(centres)
-            canvas.invalidate()
-        }
-
-        // ── Tap-to-connect logic ──────────────────────────────────────────
-        var nextExpected  = 1
-        var prevNodeIndex = -1     // index in nodeViews of the last-confirmed node
-
-        for ((i, nodeCard) in nodeViews.withIndex()) {
-            val orderNum = nodeOrderNums[i]
-            nodeCard.setOnClickListener { card ->
-                if (orderNum == nextExpected) {
-                    // ✅ Correct
-                    card.animate().scaleX(1.18f).scaleY(1.18f).setDuration(160)
-                        .withEndAction { card.animate().scaleX(1f).scaleY(1f).setDuration(160).start() }
-                        .start()
-                    card.setBackgroundColor(Color.parseColor("#C8E6C9"))
-                    card.isClickable = false
-                    speak(shuffled[i].label)
-
-                    // Activate line from prev to this node
-                    if (prevNodeIndex >= 0) {
-                        meshFrame.post {
-                            val lp0 = nodeViews[prevNodeIndex].layoutParams as FrameLayout.LayoutParams
-                            val lp1 = nodeViews[i].layoutParams as FrameLayout.LayoutParams
-                            canvas.addSolidLine(
-                                PointF((lp0.leftMargin + nodeViews[prevNodeIndex].width / 2f),
-                                    (lp0.topMargin  + nodeViews[prevNodeIndex].height / 2f)),
-                                PointF((lp1.leftMargin + nodeViews[i].width / 2f),
-                                    (lp1.topMargin  + nodeViews[i].height / 2f))
-                            )
-                            canvas.invalidate()
-                        }
-                    }
-                    prevNodeIndex = i
-                    nextExpected++
-                    progressDotText.text = "$nextExpected"
-
-                    if (nextExpected > steps.size) {
-                        Handler(Looper.getMainLooper()).postDelayed({
-                            speak("Amazing! You connected all the steps!")
-                            showFeedback("🎉", "All connected! Amazing!", "#4CAF50") {
-                                finishWithResult(true, maxOf(0, 100 - mistakeCount * 15))
-                            }
-                        }, 400)
-                    }
-                } else {
-                    // ❌ Wrong node
-                    mistakeCount++
-                    speak("Not yet! Tap number $nextExpected first.")
-                    card.animate().translationX(-14f).setDuration(70)
-                        .withEndAction {
-                            card.animate().translationX(14f).setDuration(70)
-                                .withEndAction {
-                                    card.animate().translationX(0f).setDuration(70).start()
-                                }.start()
-                        }.start()
-                    card.setBackgroundColor(Color.parseColor("#FFCDD2"))
-                    Handler(Looper.getMainLooper()).postDelayed({
-                        card.setBackgroundResource(R.drawable.rounded_card_background)
-                    }, 500)
-                }
-            }
-        }
-
-        // ── Insert mesh into scroll root ──────────────────────────────────
-        val scrollChild = (findViewById<ScrollView>(R.id.miniGameScrollView))
-            .getChildAt(0) as LinearLayout
-        // Insert after progressSection (index varies), so add after instruction card
-        val insertIdx = scrollChild.indexOfChild(progressSection) + 1
-        scrollChild.addView(meshFrame, insertIdx)
-    }
-
-    // =========================================================================
-    // Custom View — draws the mesh lines
-    // =========================================================================
-
-    inner class MeshLineView(ctx: Context) : View(ctx) {
-        private val meshPoints  = mutableListOf<PointF>()
-        private val solidLines  = mutableListOf<Pair<PointF, PointF>>()
-
-        private val dashedPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-            color       = Color.parseColor("#BDBDBD")
-            strokeWidth = 4f
-            style       = Paint.Style.STROKE
-            pathEffect  = DashPathEffect(floatArrayOf(18f, 12f), 0f)
-        }
-        private val solidPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-            color       = Color.parseColor("#4CAF50")
-            strokeWidth = 7f
-            style       = Paint.Style.STROKE
-        }
-        private val glowPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-            color       = Color.parseColor("#804CAF50")
-            strokeWidth = 14f
-            style       = Paint.Style.STROKE
-        }
-
-        fun setMeshPoints(pts: List<PointF>) { meshPoints.clear(); meshPoints.addAll(pts) }
-        fun addSolidLine(a: PointF, b: PointF) { solidLines.add(Pair(a, b)) }
-
-        override fun onDraw(canvas: Canvas) {
-            super.onDraw(canvas)
-
-            // Draw all dashed background lines between every pair of nodes
-            for (i in meshPoints.indices) {
-                for (j in i + 1 until meshPoints.size) {
-                    val alreadySolid = solidLines.any { (a, b) ->
-                        (similar(a, meshPoints[i]) && similar(b, meshPoints[j])) ||
-                                (similar(a, meshPoints[j]) && similar(b, meshPoints[i]))
-                    }
-                    if (!alreadySolid) {
-                        canvas.drawLine(
-                            meshPoints[i].x, meshPoints[i].y,
-                            meshPoints[j].x, meshPoints[j].y,
-                            dashedPaint
-                        )
-                    }
-                }
-            }
-
-            // Draw confirmed solid green lines with glow
-            for ((a, b) in solidLines) {
-                canvas.drawLine(a.x, a.y, b.x, b.y, glowPaint)
-                canvas.drawLine(a.x, a.y, b.x, b.y, solidPaint)
-            }
-        }
-
-        private fun similar(a: PointF, b: PointF) =
-            Math.abs(a.x - b.x) < 5f && Math.abs(a.y - b.y) < 5f
     }
 
     // =========================================================================

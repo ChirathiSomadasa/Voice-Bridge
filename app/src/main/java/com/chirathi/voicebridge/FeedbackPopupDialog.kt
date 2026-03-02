@@ -2,25 +2,34 @@ package com.chirathi.voicebridge
 
 import android.app.Dialog
 import android.content.Context
-import android.media.MediaPlayer
-import android.net.Uri
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
 import android.util.Log
+import android.view.MotionEvent
 import android.view.Window
 import android.widget.ProgressBar
 import android.widget.TextView
 import android.widget.VideoView
+import android.net.Uri
 
 /**
- * FeedbackPopupDialog — replaces FeedbackDialogFragment.
+ * FeedbackPopupDialog
  *
- * Usage:
- *   FeedbackPopupDialog(context, isGood, correct, total, score) {
- *       // called when popup auto-closes (8 s) or user taps it
- *       navigateToScoreboard()
- *   }.show()
+ * FIX: "Tap anywhere to continue" was silently broken because:
+ *
+ *   1. window?.decorView?.setOnClickListener  — the decor view is at the
+ *      BOTTOM of the view hierarchy.  VideoView (and any other child view)
+ *      consumes the MotionEvent before it can bubble down to the decor,
+ *      so the click listener was never called.
+ *
+ *   2. VideoView intercepts all touch events by default and never passes
+ *      them to its parent.
+ *
+ * Correct fix: override dispatchTouchEvent() on the Dialog itself.
+ * dispatchTouchEvent() is called BEFORE any child view sees the event,
+ * so it reliably catches every finger-down no matter where on the screen
+ * the user taps — VideoView included.
  */
 class FeedbackPopupDialog(
     context: Context,
@@ -37,17 +46,37 @@ class FeedbackPopupDialog(
     private lateinit var titleText:   TextView
     private lateinit var progressBar: ProgressBar
 
-    private val handler         = Handler(Looper.getMainLooper())
+    private val handler          = Handler(Looper.getMainLooper())
     private val feedbackDuration = 8_000L
     private var progressRunnable: Runnable? = null
-    private var isDone = false
+    private var isDone           = false
+
+    // ── Intercept every touch at the Dialog level ─────────────────────────────
+    //
+    // dispatchTouchEvent() is the very first method called when a touch event
+    // enters a Window.  It runs before any child view's onTouchEvent, so
+    // VideoView cannot swallow it here.
+    //
+    // We only act on ACTION_DOWN (the initial finger press) so a single tap
+    // triggers exactly once — no double-fire from ACTION_UP.
+    //
+    // super.dispatchTouchEvent() is still called so the dialog's own
+    // internal gesture handling (ripples, etc.) keeps working normally.
+
+    override fun dispatchTouchEvent(ev: MotionEvent): Boolean {
+        if (ev.action == MotionEvent.ACTION_DOWN) {
+            completeFeedback()
+        }
+        return super.dispatchTouchEvent(ev)
+    }
+
+    // ── Lifecycle ─────────────────────────────────────────────────────────────
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         requestWindowFeature(Window.FEATURE_NO_TITLE)
         setContentView(R.layout.activity_feedback_popup_dialog)
 
-        // Transparent background so the rounded card shows through
         window?.setBackgroundDrawableResource(android.R.color.transparent)
         setCancelable(false)
         setCanceledOnTouchOutside(false)
@@ -56,10 +85,13 @@ class FeedbackPopupDialog(
         titleText   = findViewById(R.id.title)
         progressBar = findViewById(R.id.progressBar)
 
-        titleText.text = if (isGoodFeedback) "Wow! You got them!" else "You're learning – let's play more!"
+        titleText.text = if (isGoodFeedback)
+            "Wow! You got them!"
+        else
+            "You are learning. Keep going!"
 
-        // Tap anywhere to skip
-        window?.decorView?.setOnClickListener { completeFeedback() }
+        // NOTE: the old window?.decorView?.setOnClickListener is removed.
+        // dispatchTouchEvent above handles all taps more reliably.
 
         setupVideo()
     }
@@ -105,7 +137,7 @@ class FeedbackPopupDialog(
 
     private fun completeFeedback() {
         if (isDone) return
-        isDone = true
+        isDone = true                                      // guard — runs only once
         progressRunnable?.let { handler.removeCallbacks(it) }
         handler.removeCallbacksAndMessages(null)
         try { videoView.stopPlayback() } catch (_: Exception) {}

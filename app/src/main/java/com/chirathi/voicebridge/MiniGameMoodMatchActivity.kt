@@ -198,11 +198,14 @@ class MiniGameMoodMatchActivity : AppCompatActivity(), TextToSpeech.OnInitListen
     private lateinit var fbOptLabel2:    TextView
     private lateinit var fbOptLabel3:    TextView
     private lateinit var fbFeedback:     TextView
-    private lateinit var fbRevealFace:   ImageView    // final full-face image shown at review
     private lateinit var fbBtnDone:      Button
     private lateinit var fbSelectionRow: LinearLayout
     private lateinit var fbPreviewArea:  ConstraintLayout
     private lateinit var fbReviewArea:   LinearLayout
+    private lateinit var fbRevealBase:  ImageView
+    private lateinit var fbRevealBrows: ImageView
+    private lateinit var fbRevealEyes:  ImageView
+    private lateinit var fbRevealMouth: ImageView
 
     // ── Scenario views ────────────────────────────────────────────────────────
     private lateinit var scTitle:       TextView
@@ -275,7 +278,10 @@ class MiniGameMoodMatchActivity : AppCompatActivity(), TextToSpeech.OnInitListen
         fbOptLabel2    = findViewById(R.id.fbOptLabel2)
         fbOptLabel3    = findViewById(R.id.fbOptLabel3)
         fbFeedback     = findViewById(R.id.fbFeedback)
-        fbRevealFace   = findViewById(R.id.fbRevealFace)
+        fbRevealBase  = findViewById(R.id.fbRevealBase)
+        fbRevealBrows = findViewById(R.id.fbRevealBrows)
+        fbRevealEyes  = findViewById(R.id.fbRevealEyes)
+        fbRevealMouth = findViewById(R.id.fbRevealMouth)
         fbBtnDone      = findViewById(R.id.fbBtnDone)
         fbSelectionRow = findViewById(R.id.fbSelectionRow)
         fbPreviewArea  = findViewById(R.id.fbPreviewArea)
@@ -409,34 +415,41 @@ class MiniGameMoodMatchActivity : AppCompatActivity(), TextToSpeech.OnInitListen
         fbInstruction.text        = "Here is the face you built!"
         fbProgress.text           = ""
 
-        // Show the correct full-emotion face as reference
+        // Show review container
         fbReviewArea.visibility = View.VISIBLE
-        val faceRes = resolve(emotionFaceDrawable[targetEmotion] ?: "")
-        if (faceRes != 0) fbRevealFace.setImageResource(faceRes)
+
+        // ── Assemble the CORRECT face from parts in the reveal panel ─────────
+        val partNames = listOf("eyes", "eyebrows", "mouth")
+        val revealViews = listOf(fbRevealEyes, fbRevealBrows, fbRevealMouth)
+
+        // Pick one correct drawable per part and populate the reveal face
+        for (step in 0..2) {
+            val partKey     = when (step) { 0 -> "eyes"; 1 -> "eyebrows"; else -> "mouth" }
+            val correctName = correctDrawables[step]
+                ?: partArrayNames[partKey]!![targetEmotion]!!.first()
+            val res = resolve(correctName)
+            if (res != 0) {
+                revealViews[step].setImageResource(res)
+                revealViews[step].visibility = View.VISIBLE
+            }
+        }
 
         val emotionName = emotionDisplayName[targetEmotion] ?: targetEmotion
 
-        // Build feedback message
-        val partNames = listOf("eyes", "eyebrows", "mouth")
+        // ── Build feedback and fix wrong parts in the child's preview ────────
         var allCorrect = true
         val feedbackLines = mutableListOf<String>()
 
         for (step in 0..2) {
             if (!stepCorrect[step]) {
                 allCorrect = false
-                val partName = partNames[step]
-                feedbackLines.add("$emotionName $partName look different — see the correction below!")
-
-                // Replace wrong overlay with correct part
-                Handler(Looper.getMainLooper()).postDelayed({
-                    updateFacePreview(step, correctDrawables[step] ?: "")
-                }, 600L * (step + 1))
+                feedbackLines.add("Look at the correct face above to see the ${emotionName} ${partNames[step]}!")
             }
         }
 
         fbFeedback.visibility = View.VISIBLE
         if (allCorrect) {
-            fbFeedback.text = " Perfect! You built a great $emotionName face!"
+            fbFeedback.text = "Perfect! You built a great $emotionName face!"
             fbFeedback.setTextColor(ContextCompat.getColor(this, R.color.green))
             speak("Perfect! You built a great $emotionName face!")
         } else {

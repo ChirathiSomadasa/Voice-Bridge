@@ -13,7 +13,7 @@
     <LinearLayout
         android:id="@+id/bubbleContainer"
         android:layout_width="411dp"
-        android:layout_height="39dp"
+        android:layout_height="-8dp"
         android:background="@drawable/bubble_container_bg"
         android:gravity="center"
         android:orientation="horizontal"
@@ -36,6 +36,19 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/bubbleContainer" />
+
+    <ImageView
+        android:id="@+id/backBtn"
+        android:layout_width="45dp"
+        android:layout_height="45dp"
+        android:layout_marginStart="16dp"
+        android:layout_marginTop="16dp"
+        android:clickable="true"
+        android:focusable="true"
+        android:contentDescription="Back"
+        app:srcCompat="@drawable/back"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
 
     <TextView
         android:id="@+id/game_title"

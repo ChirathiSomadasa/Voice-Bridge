@@ -24,10 +24,6 @@
             android:exported="false"
             android:theme="@style/Theme.VoiceBridge" />
         <activity
-            android:name=".FeedbackPopupDialog"
-            android:exported="false"
-            android:theme="@style/Theme.VoiceBridge" />
-        <activity
             android:name=".MiniGameMoodMatchActivity"
             android:exported="false" />
         <activity

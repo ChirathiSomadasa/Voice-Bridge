@@ -285,12 +285,76 @@
                 android:textColor="#5D4037"
                 android:layout_marginBottom="8dp"/>
 
-            <ImageView
-                android:id="@+id/fbRevealFace"
-                android:layout_width="130dp"
-                android:layout_height="130dp"
-                android:scaleType="fitCenter"
-                android:src="@drawable/panda_confused"/>
+            <!-- Assembled reveal face — same layer structure as fbPreviewArea -->
+            <androidx.constraintlayout.widget.ConstraintLayout
+                android:id="@+id/fbRevealFaceContainer"
+                android:layout_width="160dp"
+                android:layout_height="183dp">
+
+                <androidx.constraintlayout.widget.Guideline
+                    android:id="@+id/rvGlEyebrowTop"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    app:layout_constraintGuide_percent="0.18"/>
+
+                <androidx.constraintlayout.widget.Guideline
+                    android:id="@+id/rvGlEyeTop"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    app:layout_constraintGuide_percent="0.30"/>
+
+                <androidx.constraintlayout.widget.Guideline
+                    android:id="@+id/rvGlMouthTop"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    app:layout_constraintGuide_percent="0.61"/>
+
+                <ImageView
+                    android:id="@+id/fbRevealBase"
+                    android:layout_width="0dp"
+                    android:layout_height="0dp"
+                    android:scaleType="fitXY"
+                    android:src="@drawable/face_empty_template"
+                    app:layout_constraintTop_toTopOf="parent"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintEnd_toEndOf="parent"/>
+
+                <ImageView
+                    android:id="@+id/fbRevealBrows"
+                    android:layout_width="0dp"
+                    android:layout_height="30dp"
+                    android:scaleType="fitCenter"
+                    android:visibility="invisible"
+                    app:layout_constraintTop_toBottomOf="@id/rvGlEyebrowTop"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintEnd_toEndOf="parent"/>
+
+                <ImageView
+                    android:id="@+id/fbRevealEyes"
+                    android:layout_width="0dp"
+                    android:layout_height="46dp"
+                    android:scaleType="fitCenter"
+                    android:visibility="invisible"
+                    app:layout_constraintTop_toBottomOf="@id/rvGlEyeTop"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintEnd_toEndOf="parent"/>
+
+                <ImageView
+                    android:id="@+id/fbRevealMouth"
+                    android:layout_width="0dp"
+                    android:layout_height="41dp"
+                    android:scaleType="fitCenter"
+                    android:visibility="invisible"
+                    app:layout_constraintTop_toBottomOf="@id/rvGlMouthTop"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintEnd_toEndOf="parent"/>
+
+            </androidx.constraintlayout.widget.ConstraintLayout>
+
         </LinearLayout>
 
         <!-- ── Feedback ───────────────────────────────────────────────── -->
@@ -315,7 +379,7 @@
             android:layout_height="56dp"
             android:layout_marginTop="14dp"
             android:layout_marginBottom="24dp"
-            android:text="Back to Game ➜"
+            android:text="Back to Game"
             android:textSize="17sp"
             android:textColor="@color/white"
             android:textStyle="bold"
