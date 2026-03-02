@@ -40,7 +40,7 @@
     <string name="image_dashboard">image_dashboard</string>
     <string name="level_1_letters">Level 1 - Letters</string>
     <string name="let_s_speak">Let\'s Speak!</string>
-    <string name="let_s_start_with_letters_say_each_n_letter_sound_out_loud_and_practice_n_speaking_clearly">Let’s start with letters! Say each\n letter sound out loud and practice\n speaking clearly.</string>
+    <string name="let_s_start_with_letters_say_each_n_letter_sound_out_loud_and_practice_n_speaking_clearly">Let’s start with letters! Say each sound out loud.\nScore 75% or higher on 5 letters to unlock new ones!</string>
     <string name="word_sound">Word Sound</string>
     <string name="say">Say</string>
     <string name="speak_sound">Speak Sound</string>
@@ -48,7 +48,7 @@
     <string name="next">Next</string>
     <string name="letter_sound">Letter Sound</string>
     <string name="level_2_words">Level 2 - Words</string>
-    <string name="now_let_s_make_words_put_letters_n_together_and_practice_saying_whole_n_words">Now let’s make words! Put letters\n together and practice saying whole\n words.</string>
+    <string name="now_let_s_make_words_put_letters_n_together_and_practice_saying_whole_n_words">Now let’s make words! Practice saying whole words clearly.\nScore 75% or higher on 5 words to unlock new ones!</string>
     <string name="let_s_do_education_therapyActivities">Let’s Learn and Have\nFun!</string>
     <string name="age6">Age 6</string>
     <string name="age7">Age 7</string>
@@ -59,7 +59,7 @@
     <string name="instruction_video">Instruction Video</string>
     <string name="level_3">Level 3 - Sentences</string>
     <string name="level_3_sentences">Level 3 - Sentences</string>
-    <string name="now_let_s_make_sentences_put_words_n_together_and_practice_saying_whole_n_sentences">Now let’s make sentences! Put words\n together and practice saying whole\n sentences.</string>
+    <string name="now_let_s_make_sentences_put_words_n_together_and_practice_saying_whole_n_sentences">Now let’s make sentences! Practice saying whole sentences clearly.\nScore 75% or higher on 3 sentences to unlock the next story!</string>
     <string name="say_sentence">Say Sentence</string>
     <string name="ok">OK</string>
     <string name="listening">Listening...</string>

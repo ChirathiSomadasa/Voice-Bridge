@@ -16,15 +16,10 @@
         android:theme="@style/Theme.VoiceBridge"
         tools:targetApi="31">
         <activity
-            android:name=".StickerGalleryActivity"
-            android:exported="false"
-            android:theme="@style/Theme.VoiceBridge" />
+            android:name=".ParentReportActivity"
+            android:exported="false" />
         <activity
-            android:name=".MiniGamesActivitySequence"
-            android:exported="false"
-            android:theme="@style/Theme.VoiceBridge" />
-        <activity
-            android:name=".MiniGameMoodMatchActivity"
+            android:name=".LevelTransitionActivity"
             android:exported="false" />
         <activity
             android:name=".SentencesProgressActivity"
@@ -206,6 +201,17 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="${applicationId}.provider"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/provider_paths" />
+        </provider>
+
     </application>
 
 </manifest>
