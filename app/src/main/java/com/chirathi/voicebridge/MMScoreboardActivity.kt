@@ -50,6 +50,7 @@ class MMScoreboardActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
 
     // AI feedback
     private var pendingSpeak: String? = null
+    private var friendAction   = 0
 
     companion object { private const val TAG = "MMScoreboard" }
 
@@ -64,6 +65,7 @@ class MMScoreboardActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
         ageGroup       = intent.getIntExtra("AGE_GROUP", 6)
         motivationId   = intent.getIntExtra("MOTIVATION_ID", 0)
         unlockGift     = intent.getBooleanExtra("UNLOCK_GIFT", false)
+        friendAction = intent.getIntExtra("FRIEND_ACTION", 0)
 
         Log.d(TAG, "correct=$correctAnswers total=$totalRounds ageGroup=$ageGroup")
 
@@ -167,7 +169,7 @@ class MMScoreboardActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
             }, 400)
 
             // Speak the message when TTS is ready
-            val spokenText = "${feedback.headline}. ${feedback.message} ${feedback.encouragement}"
+            val spokenText = "${feedback.message} ${feedback.encouragement}"
             if (isTtsReady) speakText(spokenText) else pendingSpeak = spokenText
 
             Log.d(TAG, "AI feedback applied (fromAI=${feedback.fromAI}): ${feedback.headline}")
@@ -254,8 +256,19 @@ class MMScoreboardActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
             }
         }
 
+        // FIXED — passes friendAction and ageGroup
         btnUnlockGift.setOnClickListener {
-            startActivityForResult(Intent(this, AllCorrectGrandPrizeActivity::class.java), 100)
+            // Stop scoreboard TTS before launching gift screen
+            if (::tts.isInitialized && isTtsReady) {
+                tts.stop()
+            }
+            startActivityForResult(
+                Intent(this, AllCorrectGrandPrizeActivity::class.java).apply {
+                    putExtra("FRIEND_ACTION", friendAction)
+                    putExtra("AGE_GROUP",     ageGroup)
+                },
+                100
+            )
         }
     }
 

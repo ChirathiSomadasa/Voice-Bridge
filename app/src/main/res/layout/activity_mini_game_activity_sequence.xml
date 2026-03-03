@@ -478,13 +478,11 @@
         </LinearLayout>
     </ScrollView>
 
-    <!-- ── Full-screen feedback overlay ─────────────────────────────────── -->
-    <!--    Shown briefly on correct / wrong answer before auto-dismiss      -->
     <FrameLayout
         android:id="@+id/feedbackOverlay"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:background="#CC000000"
+        android:background="#99000000"
         android:visibility="gone"
         android:elevation="20dp">
 
@@ -494,25 +492,24 @@
             android:layout_gravity="center"
             android:orientation="vertical"
             android:gravity="center"
-            android:padding="40dp"
+            android:padding="24dp"
             android:background="@drawable/rounded_card_background"
             android:elevation="4dp">
 
-            <TextView
+            <!-- Swap emoji TextView → ImageView like RhythmSummary -->
+            <ImageView
                 android:id="@+id/feedbackEmoji"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="🎉"
-                android:textSize="64sp"
-                android:gravity="center"
-                android:layout_marginBottom="16dp" />
+                android:layout_width="64dp"
+                android:layout_height="64dp"
+                android:scaleType="centerInside"
+                android:layout_marginBottom="12dp" />
 
             <TextView
                 android:id="@+id/feedbackMessage"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="That's it! Well done!"
-                android:textSize="26sp"
+                android:text="Well done!"
+                android:textSize="22sp"
                 android:textStyle="bold"
                 android:textColor="#4CAF50"
                 android:gravity="center" />

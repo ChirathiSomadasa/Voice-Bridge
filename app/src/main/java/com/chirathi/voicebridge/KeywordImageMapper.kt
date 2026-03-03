@@ -6,7 +6,6 @@ import android.graphics.Typeface
 import android.view.Gravity
 import android.view.View
 import android.view.ViewGroup
-import android.widget.FrameLayout
 import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
@@ -153,7 +152,7 @@ object KeywordImageMapper {
 
         // Looks like sun → yellow round object
         "ball"    to R.drawable.ball,
-        "apple"   to R.drawable.apple,
+        "apple"   to R.drawable.gen_apple,
 
         // Looks like mouse → small animal
         "cat"     to R.drawable.cat,
@@ -162,13 +161,13 @@ object KeywordImageMapper {
 
     //  RANDOM DISTRACTORS  (no association — easiest difficulty type)
     val randomDistractors = mapOf(
-        "apple"  to R.drawable.apple,
+        "apple"  to R.drawable.gen_apple,
         "ball"   to R.drawable.ball,
         "car"    to R.drawable.car,
         "cat"    to R.drawable.cat,
         "bird"   to R.drawable.bird,
         "fish"   to R.drawable.fish,
-        "flower" to R.drawable.flower,
+        "flower" to R.drawable.gen_flower,
         "cloud"  to R.drawable.cloud,
         "house"  to R.drawable.house,
         "goat"   to R.drawable.goat,

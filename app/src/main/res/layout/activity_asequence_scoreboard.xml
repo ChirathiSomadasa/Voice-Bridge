@@ -5,7 +5,7 @@
     android:id="@+id/staircaseContainer"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@drawable/activity_scoreboard_bg"
+    android:background="@drawable/activity_scorebaord_bg"
     android:padding="16dp">
 
     <TextView
@@ -15,7 +15,7 @@
         android:layout_marginTop="28dp"
         android:gravity="center"
         android:text=""
-        android:textColor="@color/dark_orange"
+        android:textColor="@color/dark_brown"
         android:textSize="35dp"
         android:textStyle="bold"
         app:layout_constraintEnd_toEndOf="parent"
@@ -27,10 +27,14 @@
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:textSize="18sp"
-        android:textStyle="italic"
+        android:textStyle="bold"
         android:textColor="@color/white"
         android:gravity="center"
         android:padding="8dp"
+        android:shadowColor="#000000"
+        android:shadowDx="0"
+        android:shadowDy="0"
+        android:shadowRadius="3"
         app:layout_constraintTop_toBottomOf="@+id/therapeuticMessage"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"

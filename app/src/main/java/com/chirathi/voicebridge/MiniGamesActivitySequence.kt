@@ -83,7 +83,7 @@ class MiniGamesActivitySequence : AppCompatActivity() {
     private lateinit var optionsGrid        : GridLayout
     private lateinit var btnSkipMiniGame    : Button
     private lateinit var feedbackOverlay    : FrameLayout
-    private lateinit var feedbackEmoji      : TextView
+    private lateinit var feedbackEmoji      : ImageView
     private lateinit var feedbackMessage    : TextView
     private lateinit var sequenceRow        : LinearLayout
 
@@ -231,7 +231,12 @@ class MiniGamesActivitySequence : AppCompatActivity() {
     // =========================================================================
 
     private fun showFeedback(emoji: String, message: String, color: String, onDone: () -> Unit) {
-        feedbackEmoji.text   = emoji
+        // Set icon image instead of emoji text
+        if (color == "#4CAF50") {
+            feedbackEmoji.setImageResource(R.drawable.correct_answer)  // same as RhythmSummary
+        } else {
+            feedbackEmoji.setImageResource(R.drawable.delete)           // same as RhythmSummary
+        }
         feedbackMessage.text = message
         feedbackMessage.setTextColor(Color.parseColor(color))
         feedbackOverlay.visibility = View.VISIBLE

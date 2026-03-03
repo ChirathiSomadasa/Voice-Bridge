@@ -15,7 +15,7 @@
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:text="You unlocked a new friend"
-        android:textSize="24sp"
+        android:textSize="20sp"
         android:textStyle="bold"
         android:textColor="@color/green_dark"
         android:gravity="center"
@@ -28,14 +28,14 @@
     <!-- Panda Image - Centered -->
     <ImageView
         android:id="@+id/feedbackImage"
-        android:layout_width="400dp"
-        android:layout_height="400dp"
-        android:src="@drawable/imagineryfriend"
+        android:layout_width="332dp"
+        android:layout_height="277dp"
         android:scaleType="fitCenter"
-        app:layout_constraintTop_toBottomOf="@+id/unlockedText"
+        android:src="@drawable/imagineryfriend"
         app:layout_constraintBottom_toTopOf="@+id/title"
-        app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/unlockedText"
         app:layout_constraintVertical_chainStyle="packed" />
 
     <!-- Title - Below Panda, Above Button -->
@@ -44,9 +44,9 @@
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:text="Let’s help it grow!"
-        android:textSize="24sp"
+        android:textSize="20sp"
         android:textStyle="bold"
-        android:textColor="@color/black"
+        android:textColor="@color/dark_orange"
         android:gravity="center"
         android:layout_marginTop="16dp"
         android:layout_marginBottom="32dp"

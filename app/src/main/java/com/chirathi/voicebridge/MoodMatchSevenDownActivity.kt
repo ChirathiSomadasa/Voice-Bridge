@@ -28,26 +28,51 @@ class MoodMatchSevenDownActivity : AppCompatActivity(), TextToSpeech.OnInitListe
     private var tapCount = 0
     private var minigameLaunchedThisSession = false
 
-    // Tracks which option numbers the child tapped wrong this round (for darkening)
+    // ── Session-level frustration tracking (never reset mid-session) ──────────
+    //
+    // These accumulate across ALL rounds and are used to make the final
+    // session-end prediction that determines friendAction / gift unlock.
+    // They are intentionally NOT reset when the child gets a correct answer —
+    // a child who struggled all game and then scraped a correct answer on
+    // attempt 3 should still trigger a comfort friend.
+
+    /** Total wrong taps across the entire session (never resets). */
+    private var sessionTotalWrong = 0
+
+    /** Highest consecutiveWrong value seen at any point in the session. */
+    private var sessionPeakConsecutiveWrong = 0
+
+    /**
+     * Running weighted frustration score 0..1, updated each round.
+     * Increases on wrong attempts, decays slightly on first-attempt correct answers.
+     * Never resets to 0 — preserves memory of earlier struggle.
+     */
+    private var sessionFrustration = 0.2f   // start at a mild baseline
+
+    /**
+     * Running weighted engagement score 0..1.
+     * Decreases when child is struggling, recovers on correct answers.
+     */
+    private var sessionEngagement = 0.6f
+
+    /** Total rounds completed (used for ratio calculations). */
+    private var roundsCompleted = 0
+
+    // ── Per-round wrong tracking ──────────────────────────────────────────────
     private val wrongTappedOptions = mutableSetOf<Int>()
 
     // ── Views ─────────────────────────────────────────────────────────────────
     private lateinit var emotionImage: ImageView
-
-    // Age 6-7
     private lateinit var layoutYoung:  LinearLayout
     private lateinit var btnOption1:   Button
     private lateinit var btnOption2:   Button
     private lateinit var soundOption1: LinearLayout
     private lateinit var soundOption2: LinearLayout
-
-    // Age 8-10 (2×2 grid)
-    private lateinit var layoutOlder: LinearLayout
-    private lateinit var btnGrid1:    Button
-    private lateinit var btnGrid2:    Button
-    private lateinit var btnGrid3:    Button
-    private lateinit var btnGrid4:    Button
-
+    private lateinit var layoutOlder:  LinearLayout
+    private lateinit var btnGrid1:     Button
+    private lateinit var btnGrid2:     Button
+    private lateinit var btnGrid3:     Button
+    private lateinit var btnGrid4:     Button
     private lateinit var btnNext:      Button
     private lateinit var tvScore:      TextView
     private lateinit var tvRound:      TextView
@@ -71,11 +96,16 @@ class MoodMatchSevenDownActivity : AppCompatActivity(), TextToSpeech.OnInitListe
 
     private lateinit var tts: TextToSpeech
     private var isTtsInitialized = false
-    private var pendingSpeech: String? = null   // spoken immediately when TTS becomes ready
+    private var pendingSpeech: String? = null
     private var correctSoundPlayer: MediaPlayer? = null
 
     companion object {
         private const val TAG = "MoodMatchActivity"
+
+        // Frustration thresholds for session-end gift decision
+        private const val FRUSTRATION_HIGH_THRESHOLD  = 0.55f  // comfort friend
+        private const val FRUSTRATION_PEAK_THRESHOLD  = 0.70f  // strong comfort friend
+        private const val PERFORMANCE_HIGH_THRESHOLD  = 0.82f  // trophy friend
     }
 
     // =========================================================================
@@ -193,7 +223,6 @@ class MoodMatchSevenDownActivity : AppCompatActivity(), TextToSpeech.OnInitListe
     }
 
     private fun onOptionTapped(option: Int) {
-        // Only block taps when the round is fully done (next button visible or auto-advancing)
         if (nextButtonVisible) return
         if (isAnswerSelected) return
         checkAnswer(option, System.currentTimeMillis() - roundStartTime)
@@ -223,41 +252,31 @@ class MoodMatchSevenDownActivity : AppCompatActivity(), TextToSpeech.OnInitListe
         resetButtonColors()
         enableGameButtons(true)
 
-        val accuracy    = liveAccuracy()
-        val engagement  = if (accuracy > 0.7f) 0.8f else 0.5f
-        val frustration = when {
-            consecutiveWrong >= 2 -> 0.7f
-            consecutiveWrong == 1 -> 0.45f
-            else                  -> 0.2f
-        }
         val jitter = if (jitterSamples > 0) totalJitter / jitterSamples else 0.10f
 
+        // Use SESSION-LEVEL frustration and engagement for per-round prediction
+        // so the model sees accumulated state, not just this round's snapshot.
         currentPrediction = gameMaster.predictSafe(
-            childId            = 0,
-            age                = ageGroup.toFloat(),
-            accuracy           = accuracy,
-            engagement         = engagement,
-            frustration        = frustration,
-            jitter             = jitter,
-            rt                 = 3000f,
-            consecutiveCorrect = consecutiveCorrect.toFloat(),
-            consecutiveWrong   = consecutiveWrong.toFloat()
+            childId             = 0,
+            age                 = ageGroup.toFloat(),
+            accuracy            = liveAccuracy(),
+            engagement          = sessionEngagement,
+            frustration         = sessionFrustration,
+            jitter              = jitter,
+            rt                  = 3000f,
+            consecutiveCorrect  = consecutiveCorrect.toFloat(),
+            consecutiveWrong    = consecutiveWrong.toFloat()
         )
 
         if (isOlderGroup) {
-            // ── Age 8-10: use string arrays just like the younger group ──────
-            // Level determines which correct-answer pool to draw from.
             val correctArrayId = when (currentPrediction.emotionLevel) {
                 1    -> R.array.mood_age8_lvl1_correct
                 else -> R.array.mood_age8_lvl0_correct
             }
             val possibleCorrect = resources.getStringArray(correctArrayId)
-
-            // Combined pool of ALL age-8 emotions used as distractor source
             val allAge8 = resources.getStringArray(R.array.mood_age8_lvl0_correct) +
                     resources.getStringArray(R.array.mood_age8_lvl1_correct)
 
-            // Pick correct emotion, avoiding repeats within the session
             val available = possibleCorrect.map { extractEmotionName(it) }.filter { it !in usedImages }
             if (available.isEmpty()) usedImages.clear()
             val pool = if (available.isNotEmpty()) available
@@ -267,11 +286,9 @@ class MoodMatchSevenDownActivity : AppCompatActivity(), TextToSpeech.OnInitListe
             usedImages.add(currentEmotion)
             currentEmotionDisplay = formatEmotionText(currentEmotion)
 
-            // Set the image using the drawable path from the array
             val rawSelection = findImageForEmotion(currentEmotion, possibleCorrect)
             setEmotionImage(extractResourceName(rawSelection, removeExtension = true))
 
-            // 3 unique distractors from the full age-8 pool — shuffle then take
             val distractors = allAge8
                 .map { extractEmotionName(it) }
                 .distinct()
@@ -289,8 +306,6 @@ class MoodMatchSevenDownActivity : AppCompatActivity(), TextToSpeech.OnInitListe
             btnGrid3.text = options[2]; btnGrid4.text = options[3]
 
         } else {
-            // ── Age 6-7: pull emotions from string-array resources ───────────
-
             val arrayId = when (currentPrediction.emotionLevel) {
                 1    -> R.array.mood_age6_lvl1_correct
                 2    -> R.array.mood_age6_lvl2_scenarios
@@ -336,14 +351,64 @@ class MoodMatchSevenDownActivity : AppCompatActivity(), TextToSpeech.OnInitListe
         correctAnswersCount.toFloat() / (currentRound - 1) else 0.5f
 
     // =========================================================================
-    // Answer checking — 3-try logic for both age groups
+    // Session state updater
     //
-    // Attempt 1 wrong → "Try again"      — all buttons stay enabled
-    // Attempt 2 wrong → "It's <emotion>" — correct button breathes, wrong
-    //                                       buttons tapped so far are darkened
-    // Attempt 3 wrong → "Let's try another one" — all buttons darkened,
-    //                                       auto-advance after short delay
-    // Correct any time → celebrate, show Next button
+    // Called after every answer (correct or wrong) to keep session-level
+    // frustration and engagement signals up to date.
+    //
+    // KEY RULE: frustration can only increase quickly but decreases slowly.
+    // A single correct answer on attempt 3 does NOT wipe out a session of
+    // struggling — it only nudges frustration down slightly.
+    // =========================================================================
+
+    private fun updateSessionState(wasCorrect: Boolean, attemptNumber: Int) {
+        roundsCompleted = currentRound
+
+        if (wasCorrect) {
+            when (attemptNumber) {
+                1 -> {
+                    // First-attempt correct: child is doing well
+                    // Frustration decreases noticeably, engagement increases
+                    sessionFrustration = (sessionFrustration - 0.10f).coerceAtLeast(0.10f)
+                    sessionEngagement  = (sessionEngagement  + 0.10f).coerceAtMost(1.00f)
+                }
+                2 -> {
+                    // Needed a hint but got there: small frustration nudge down
+                    sessionFrustration = (sessionFrustration - 0.05f).coerceAtLeast(0.10f)
+                    sessionEngagement  = (sessionEngagement  + 0.05f).coerceAtMost(1.00f)
+                }
+                else -> {
+                    // Correct after 3+ attempts: barely moves frustration down
+                    // The struggle this round still counts
+                    sessionFrustration = (sessionFrustration - 0.02f).coerceAtLeast(0.10f)
+                    sessionEngagement  = (sessionEngagement  + 0.02f).coerceAtMost(1.00f)
+                }
+            }
+        } else {
+            // Wrong answer: frustration rises, engagement drops
+            // Each successive wrong in the session hits harder
+            val wrongWeight = when (attemptNumber) {
+                1    -> 0.08f   // first miss in a round
+                2    -> 0.12f   // second miss: more frustrated
+                else -> 0.16f   // third miss: significant frustration signal
+            }
+            sessionFrustration = (sessionFrustration + wrongWeight).coerceAtMost(1.00f)
+            sessionEngagement  = (sessionEngagement  - wrongWeight * 0.5f).coerceAtLeast(0.10f)
+
+            // Track session-level peaks
+            sessionTotalWrong++
+            if (consecutiveWrong > sessionPeakConsecutiveWrong) {
+                sessionPeakConsecutiveWrong = consecutiveWrong
+            }
+        }
+
+        Log.d(TAG, "Session state → frustration=${"%.2f".format(sessionFrustration)} " +
+                "engagement=${"%.2f".format(sessionEngagement)} " +
+                "totalWrong=$sessionTotalWrong peakConsecWrong=$sessionPeakConsecutiveWrong")
+    }
+
+    // =========================================================================
+    // Answer checking
     // =========================================================================
 
     private fun checkAnswer(selectedOption: Int, responseTime: Long) {
@@ -352,11 +417,6 @@ class MoodMatchSevenDownActivity : AppCompatActivity(), TextToSpeech.OnInitListe
         if (isCorrect) {
             isAnswerSelected = true
 
-            // ── Tiered scoring: reward drops with each attempt needed ────────
-            //   1st attempt → 10 pts  (counts toward accuracy)
-            //   2nd attempt →  6 pts
-            //   3rd attempt →  3 pts
-            //   After 3 misses (child finally taps after auto-advance hint) → 1 pt
             val points = when (wrongAttempts) {
                 0    -> { correctAnswersCount++; consecutiveCorrect++; consecutiveWrong = 0; 10 }
                 1    -> { consecutiveCorrect = 0; consecutiveWrong = 0; 6 }
@@ -365,6 +425,10 @@ class MoodMatchSevenDownActivity : AppCompatActivity(), TextToSpeech.OnInitListe
             }
             score += points
             tvScore.text = "Score: $score"
+
+            // Update session state BEFORE resetting wrongAttempts
+            updateSessionState(wasCorrect = true, attemptNumber = wrongAttempts + 1)
+
             playCorrectSound()
             highlightButton(selectedOption, correct = true)
             darkenAllButtons(keepCorrectBright = true)
@@ -375,47 +439,37 @@ class MoodMatchSevenDownActivity : AppCompatActivity(), TextToSpeech.OnInitListe
             wrongAttempts++
             consecutiveWrong++
             consecutiveCorrect = 0
+
+            // Update session state immediately on each wrong tap
+            updateSessionState(wasCorrect = false, attemptNumber = wrongAttempts)
+
             Log.d(TAG, "WRONG attempt $wrongAttempts")
 
-            // Colour the tapped button red immediately
             highlightButton(selectedOption, correct = false)
 
             when (wrongAttempts) {
                 1 -> {
-                    // ── First miss: say try again, all buttons stay tappable ──
-                    // Do NOT add to wrongTappedOptions here — child must be able
-                    // to tap the same wrong button again to reach miss 2 and 3.
                     speakText("Try again")
                     roundStartTime = System.currentTimeMillis()
                 }
-
                 2 -> {
-                    // ── Second miss: reveal correct answer with breathing ─────
-                    // Buttons stay clickable — child can still tap the correct one.
-                    // We do NOT block or darken anything yet; only pulse the answer.
                     speakText("It's $currentEmotionDisplay")
                     roundStartTime = System.currentTimeMillis()
                     breatheCorrectButton(pulses = 3)
-
                     if (shouldLaunchMiniGame()) {
                         minigameLaunchedThisSession = true
                         btnForOption(selectedOption).postDelayed({ launchMiniGame() }, 900)
                     }
                 }
-
                 3 -> {
-                    // ── Third miss: give up, auto-advance ────────────────────
                     isAnswerSelected = true
                     wrongTappedOptions.add(selectedOption)
-
                     speakText("Let's try another one")
                     darkenAllButtons(keepCorrectBright = false)
-
                     if (shouldLaunchMiniGame()) {
                         minigameLaunchedThisSession = true
                         btnForOption(selectedOption).postDelayed({ launchMiniGame() }, 800)
                     }
-
                     btnNext.postDelayed({ goToNextRound() }, 2000)
                 }
             }
@@ -427,13 +481,11 @@ class MoodMatchSevenDownActivity : AppCompatActivity(), TextToSpeech.OnInitListe
     // =========================================================================
 
     private fun shouldLaunchMiniGame(): Boolean {
-        if (minigameLaunchedThisSession)        return false
-        if (currentRound < 2)                   return false
-        // Fire if the ML model says so, OR as a hard fallback when the child
-        // has been struggling across multiple rounds (consecutiveWrong >= 3).
+        if (minigameLaunchedThisSession) return false
+        if (currentRound < 2)           return false
         val modelSaysYes = currentPrediction.minigameTrigger &&
                 (wrongAttempts >= 2 || consecutiveWrong >= 2)
-        val fallback     = consecutiveWrong >= 3
+        val fallback = consecutiveWrong >= 3
         return modelSaysYes || fallback
     }
 
@@ -449,6 +501,137 @@ class MoodMatchSevenDownActivity : AppCompatActivity(), TextToSpeech.OnInitListe
             MiniGameMoodMatchActivity.REQUEST_CODE
         )
         overridePendingTransition(android.R.anim.slide_in_left, android.R.anim.slide_out_right)
+    }
+
+    // =========================================================================
+    // Navigation — session-end prediction determines gift/friend
+    // =========================================================================
+
+    private fun goToNextRound() {
+        currentRound++
+        if (currentRound > totalRounds) showFeedbackPopup() else startNewRound()
+    }
+
+    private fun showFeedbackPopup() {
+        FeedbackPopupDialog(
+            context        = this,
+            isGoodFeedback = correctAnswersCount >= 4,
+            correctAnswers = correctAnswersCount,
+            totalRounds    = totalRounds,
+            score          = score
+        ) { navigateToScoreboard() }.show()
+    }
+
+    /**
+     * Makes a FINAL session-end prediction using the accumulated session state,
+     * not the last round's instantaneous snapshot.
+     *
+     * This is the prediction that determines friendAction / gift unlock.
+     *
+     * We use sessionFrustration and sessionEngagement which have been updated
+     * after every single tap throughout the game — they represent the true
+     * emotional arc of the session, not just the last moment.
+     */
+    private fun navigateToScoreboard() {
+        val jitter = if (jitterSamples > 0) totalJitter / jitterSamples else 0.10f
+
+        // Session accuracy: first-attempt correct / total rounds
+        val sessionAccuracy = correctAnswersCount.toFloat() / totalRounds.toFloat()
+
+        // Wrong ratio: total wrong taps / (totalRounds * 3 max attempts)
+        val wrongRatio = sessionTotalWrong.toFloat() / (totalRounds * 3).toFloat()
+
+        Log.d(TAG, "──────────────────────────────────────────")
+        Log.d(TAG, "SESSION SUMMARY (for final prediction):")
+        Log.d(TAG, "  correctAnswers       = $correctAnswersCount / $totalRounds")
+        Log.d(TAG, "  sessionAccuracy      = ${"%.2f".format(sessionAccuracy)}")
+        Log.d(TAG, "  sessionFrustration   = ${"%.2f".format(sessionFrustration)}")
+        Log.d(TAG, "  sessionEngagement    = ${"%.2f".format(sessionEngagement)}")
+        Log.d(TAG, "  sessionTotalWrong    = $sessionTotalWrong")
+        Log.d(TAG, "  sessionPeakConsecW   = $sessionPeakConsecutiveWrong")
+        Log.d(TAG, "  wrongRatio           = ${"%.2f".format(wrongRatio)}")
+        Log.d(TAG, "──────────────────────────────────────────")
+
+        // Make a fresh prediction using the full session's accumulated state
+        val sessionPrediction = gameMaster.predictSafe(
+            childId             = 0,
+            age                 = ageGroup.toFloat(),
+            accuracy            = sessionAccuracy,
+            engagement          = sessionEngagement,
+            frustration         = sessionFrustration,      // ← full session frustration
+            jitter              = jitter,
+            rt                  = 3000f,
+            consecutiveCorrect  = consecutiveCorrect.toFloat(),
+            consecutiveWrong    = sessionPeakConsecutiveWrong.toFloat()  // ← session peak, not current
+        )
+
+        // ── Determine friendAction ────────────────────────────────────────────
+        //
+        // Priority order:
+        //   1. Model explicitly assigned a frustration-based friend (1, 2, 5)
+        //      → trust the model
+        //   2. Model assigned trophy friend (9) → trust the model
+        //   3. Model returned 0 but session signals clearly show high frustration
+        //      → override with a comfort friend based on session data
+        //   4. Model returned 0 and session was genuinely fine → no gift
+
+        val modelFriendAction = sessionPrediction.friendAction
+
+        val effectiveFriendAction: Int = when {
+
+            // Model explicitly triggered a friend → use it
+            modelFriendAction > 0 -> {
+                Log.d(TAG, "friendAction=$modelFriendAction from model prediction")
+                modelFriendAction
+            }
+
+            // Model returned 0 but session frustration was clearly high
+            // This catches cases where the model's threshold wasn't reached
+            // even though the child visibly struggled (e.g. all questions needed
+            // 2–3 attempts, consecutiveWrong peaked at 3, etc.)
+            sessionFrustration >= FRUSTRATION_PEAK_THRESHOLD -> {
+                // Very high frustration → Blanket Panda (most comforting)
+                Log.d(TAG, "friendAction=1 overridden: sessionFrustration=${"%.2f".format(sessionFrustration)} >= $FRUSTRATION_PEAK_THRESHOLD")
+                1
+            }
+            sessionFrustration >= FRUSTRATION_HIGH_THRESHOLD -> {
+                // High frustration → random comfort friend (1, 2, or 5)
+                val comfortFriend = listOf(1, 2, 5).random()
+                Log.d(TAG, "friendAction=$comfortFriend overridden: sessionFrustration=${"%.2f".format(sessionFrustration)} >= $FRUSTRATION_HIGH_THRESHOLD")
+                comfortFriend
+            }
+            sessionPeakConsecutiveWrong >= 3 && wrongRatio >= 0.4f -> {
+                // Child had a streak of 3+ wrong AND overall got many wrong
+                // → Hug Panda (persistence recognition)
+                Log.d(TAG, "friendAction=2 overridden: peakConsecWrong=$sessionPeakConsecutiveWrong wrongRatio=${"%.2f".format(wrongRatio)}")
+                2
+            }
+
+            // Session was fine → no gift
+            else -> {
+                Log.d(TAG, "friendAction=0: session frustration=${"%.2f".format(sessionFrustration)} below thresholds, no gift")
+                0
+            }
+        }
+
+        val unlockGift = effectiveFriendAction > 0
+
+        Log.d(TAG, "navigateToScoreboard: correct=$correctAnswersCount/$totalRounds " +
+                "modelFriendAction=$modelFriendAction effectiveFriendAction=$effectiveFriendAction " +
+                "unlockGift=$unlockGift " +
+                "frustration=${"%.2f".format(sessionFrustration)} engagement=${"%.2f".format(sessionEngagement)}")
+
+        startActivity(Intent(this, MMScoreboardActivity::class.java).apply {
+            putExtra("CORRECT_ANSWERS", correctAnswersCount)
+            putExtra("TOTAL_ROUNDS",    totalRounds)
+            putExtra("SCORE",           score)
+            putExtra("AGE_GROUP",       ageGroup)
+            putExtra("MOTIVATION_ID",   sessionPrediction.motivation)
+            putExtra("UNLOCK_GIFT",     unlockGift)
+            putExtra("FRIEND_ACTION",   effectiveFriendAction)
+            putExtra("GAME_MODE",       "seven_down")
+        })
+        finish()
     }
 
     // =========================================================================
@@ -476,79 +659,37 @@ class MoodMatchSevenDownActivity : AppCompatActivity(), TextToSpeech.OnInitListe
         btnForOption(option).setBackgroundColor(ContextCompat.getColor(this, colorRes))
     }
 
-    /**
-     * Breathing animation on the correct button using alpha — fades bright↔dim
-     * [pulses] times. We deliberately avoid scale so the button never physically
-     * grows and intercepts taps meant for a neighbouring wrong button.
-     */
     private fun breatheCorrectButton(pulses: Int) {
         val btn = btnForOption(correctOption)
         btn.setBackgroundColor(ContextCompat.getColor(this, R.color.green))
         btn.alpha = 1f
-
         fun doPulse(remaining: Int) {
             if (remaining <= 0) { btn.alpha = 1f; return }
-            btn.animate()
-                .alpha(0.3f)
-                .setDuration(400)
-                .withEndAction {
-                    btn.animate()
-                        .alpha(1f)
-                        .setDuration(400)
-                        .withEndAction { doPulse(remaining - 1) }
-                        .start()
-                }.start()
+            btn.animate().alpha(0.3f).setDuration(400).withEndAction {
+                btn.animate().alpha(1f).setDuration(400).withEndAction { doPulse(remaining - 1) }.start()
+            }.start()
         }
         doPulse(pulses)
     }
 
-    /**
-     * Darken only the buttons the child already tapped wrong (red → dark red).
-     * The correct button and un-tapped buttons are left unchanged and still enabled.
-     */
-    private fun darkenWrongButtons() {
-        val darkRed = android.graphics.Color.parseColor("#B71C1C")
-        for (opt in wrongTappedOptions) {
-            val btn = btnForOption(opt)
-            btn.setBackgroundColor(darkRed)
-            btn.isEnabled = false
-        }
-    }
-
-    /**
-     * Darken every button at the end of a round.
-     *
-     * @param keepCorrectBright  true  → correct button stays full green (used on
-     *                                   a correct answer so the child sees it shine)
-     *                           false → correct button also gets dark green (used
-     *                                   when all 3 attempts are exhausted)
-     */
     private fun darkenAllButtons(keepCorrectBright: Boolean) {
         val darkGreen = android.graphics.Color.parseColor("#1B5E20")
         val darkRed   = android.graphics.Color.parseColor("#B71C1C")
         val fullGreen = ContextCompat.getColor(this, R.color.green)
 
-        allOptionButtons().forEachIndexed { _, btn ->
-            btn.isEnabled = false
-        }
+        allOptionButtons().forEachIndexed { _, btn -> btn.isEnabled = false }
 
-        // Colour each button according to its role
         for (opt in 1..allOptionButtons().size) {
             val btn = btnForOption(opt)
             when {
-                opt == correctOption && keepCorrectBright ->
-                    btn.setBackgroundColor(fullGreen)           // stays bright green
-                opt == correctOption ->
-                    btn.setBackgroundColor(darkGreen)           // dark green on 3rd fail
-                opt in wrongTappedOptions ->
-                    btn.setBackgroundColor(darkRed)             // dark red for tapped-wrong
-                else ->
-                    btn.setBackgroundColor(darkGreen)           // dark green for untouched distractors
+                opt == correctOption && keepCorrectBright -> btn.setBackgroundColor(fullGreen)
+                opt == correctOption                      -> btn.setBackgroundColor(darkGreen)
+                opt in wrongTappedOptions                 -> btn.setBackgroundColor(darkRed)
+                else                                      -> btn.setBackgroundColor(darkGreen)
             }
         }
     }
 
-    /** Disable all buttons and sound panels without changing their background colour. */
     private fun enableGameButtons(enable: Boolean) {
         allOptionButtons().forEach { it.isEnabled = enable }
         if (!isOlderGroup) {
@@ -565,38 +706,6 @@ class MoodMatchSevenDownActivity : AppCompatActivity(), TextToSpeech.OnInitListe
     private fun playCorrectSound() {
         try { correctSoundPlayer?.let { if (it.isPlaying) it.seekTo(0); it.start() } }
         catch (e: Exception) { Log.w(TAG, "Sound error") }
-    }
-
-    // =========================================================================
-    // Navigation
-    // =========================================================================
-
-    private fun goToNextRound() {
-        currentRound++
-        if (currentRound > totalRounds) showFeedbackPopup() else startNewRound()
-    }
-
-    private fun showFeedbackPopup() {
-        FeedbackPopupDialog(
-            context        = this,
-            isGoodFeedback = correctAnswersCount >= 4,
-            correctAnswers = correctAnswersCount,
-            totalRounds    = totalRounds,
-            score          = score
-        ) { navigateToScoreboard() }.show()
-    }
-
-    private fun navigateToScoreboard() {
-        startActivity(Intent(this, MMScoreboardActivity::class.java).apply {
-            putExtra("CORRECT_ANSWERS", correctAnswersCount)
-            putExtra("TOTAL_ROUNDS",    totalRounds)
-            putExtra("SCORE",           score)
-            putExtra("AGE_GROUP",       ageGroup)
-            putExtra("MOTIVATION_ID",   currentPrediction.motivation)
-            putExtra("UNLOCK_GIFT",     currentPrediction.friendAction > 0)
-            putExtra("GAME_MODE",       "seven_down")
-        })
-        finish()
     }
 
     // =========================================================================
@@ -625,7 +734,6 @@ class MoodMatchSevenDownActivity : AppCompatActivity(), TextToSpeech.OnInitListe
     private fun setEmotionImage(resourceName: String) {
         var resId = resources.getIdentifier(resourceName, "drawable", packageName)
         if (resId == 0) {
-            // Try stripping any path prefix e.g. if full path was accidentally passed
             val last = resourceName.split("_").lastOrNull()
             last?.let { resId = resources.getIdentifier(it, "drawable", packageName) }
         }
@@ -639,7 +747,6 @@ class MoodMatchSevenDownActivity : AppCompatActivity(), TextToSpeech.OnInitListe
         if (status == TextToSpeech.SUCCESS) {
             tts.setLanguage(Locale.US); tts.setPitch(1.8f); tts.setSpeechRate(0.9f)
             isTtsInitialized = true
-            // Flush anything that was queued before TTS was ready (e.g. round-1 prompts)
             pendingSpeech?.let { tts.speak(it, TextToSpeech.QUEUE_FLUSH, null, ""); pendingSpeech = null }
         }
     }
@@ -648,7 +755,6 @@ class MoodMatchSevenDownActivity : AppCompatActivity(), TextToSpeech.OnInitListe
         if (isTtsInitialized) {
             tts.speak(text, TextToSpeech.QUEUE_FLUSH, null, "")
         } else {
-            // TTS not ready yet — save the most recent prompt and fire it once ready
             pendingSpeech = text
         }
     }

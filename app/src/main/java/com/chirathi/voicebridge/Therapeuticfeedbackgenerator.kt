@@ -166,10 +166,10 @@ object TherapeuticFeedbackGenerator {
         }
 
         val encouragementGuidance = when (s.performanceLevel) {
-            PerformanceLevel.MASTERY    -> "Invite them to play again RIGHT NOW with excitement. Like: 'Play again, it is so fun!' NOT 'come back tomorrow'."
-            PerformanceLevel.STRONG     -> "Encourage them to play again. Like: 'Play again and do great!' NOT 'try next time'."
-            PerformanceLevel.DEVELOPING -> "Gently invite them to try again. Like: 'Try again, you are brave!' NOT 'come back later'."
-            PerformanceLevel.PERSISTING -> "Warmly invite them to try once more. Like: 'Try again, you are strong!' NOT 'come back tomorrow'."
+            PerformanceLevel.MASTERY    -> "Gently invite them to play once more using a soft, warm phrase. Like: 'Want to play once more?' or 'You can play again.' Never use exclamation marks. Never use commands like 'Play now' or 'Go again'."
+            PerformanceLevel.STRONG     -> "Gently invite them to try again with warmth. Like: 'You can try once more.' or 'Want to go again?' Never use exclamation marks. Never use commands."
+            PerformanceLevel.DEVELOPING -> "Very softly invite them to try again. Like: 'You can try again.' or 'Want to try once more?' Use a calm, reassuring tone. Never use exclamation marks."
+            PerformanceLevel.PERSISTING -> "Very gently and warmly invite them. Like: 'You can try again.' or 'Want to try once more?' The tone must feel like a soft hug. Never use exclamation marks. Never use commands."
         }
 
         val speedNote = when {
@@ -253,8 +253,8 @@ NO TIME REFERENCES:
   BAD: "Come back and play again." — suggests leaving, do NOT write this.
   BAD: "Try again next time." — implies waiting, do NOT write this.
   BAD: "Play again tomorrow." — implies a future time, do NOT write this.
-  GOOD: "Play again right now!" — immediate and exciting.
-  GOOD: "Try once more, you are brave!" — immediate invitation.
+  GOOD: "You can play once more." — gentle, immediate, not a command.
+  GOOD: "Want to try once more?" — soft question, no pressure.
 
 NO EMOJIS. NO NUMBERS. NEVER NEGATIVE.
   Never say: wrong, mistake, fail, bad, hard, difficult, error, not, cannot.
@@ -268,10 +268,10 @@ PERFORMANCE MUST MATCH TONE:
 ONLY return the JSON. No markdown. No explanation. No backticks.
 
 GOOD MASTERY example:
-{"headline":"You did so well","message":"You got every step in the right order.","encouragement":"Play again right now!"}
+{"headline":"You did so well","message":"You got every step in the right order.","encouragement":"You can play once more."}
 
 GOOD PERSISTING example:
-{"headline":"You are so brave","message":"You kept trying and that is so good.","encouragement":"Try once more, you are strong!"}
+{"headline":"You are so brave","message":"You kept trying and that is so good.","encouragement":"Want to try once more?"}
     """.trimIndent()
     }
 
@@ -356,23 +356,23 @@ GOOD PERSISTING example:
     private fun lastResortFallback(level: PerformanceLevel): TherapeuticFeedback = when (level) {
         PerformanceLevel.MASTERY    -> TherapeuticFeedback(
             headline      = "You did so well",
-            message       = "That was great work today.",
-            encouragement = "Come back and play again."
+            message       = "You got every step in the right order.",
+            encouragement = "You can play once more."
         )
         PerformanceLevel.STRONG     -> TherapeuticFeedback(
             headline      = "Good job today",
             message       = "You tried hard and did well.",
-            encouragement = "Keep going next time."
+            encouragement = "Want to try once more?"
         )
         PerformanceLevel.DEVELOPING -> TherapeuticFeedback(
             headline      = "You kept going",
-            message       = "You are brave and strong.",
-            encouragement = "Try again next time."
+            message       = "You are so brave and strong.",
+            encouragement = "You can try again."
         )
         PerformanceLevel.PERSISTING -> TherapeuticFeedback(
-            headline      = "You are brave",
-            message       = "You tried and that is good.",
-            encouragement = "Come back and try again."
+            headline      = "You are so brave",
+            message       = "You tried and that is so good.",
+            encouragement = "Want to try once more?"
         )
     }
 }

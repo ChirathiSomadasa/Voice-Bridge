@@ -145,16 +145,17 @@ class ASequenceScoreboardActivity : AppCompatActivity() {
     private fun performanceTier(): Tier {
         val attempts = attemptsCount.coerceAtLeast(1)
         return when {
-            errorCount == 0 && attempts <= 2 -> Tier.BEST
-            errorCount <= 1 && attempts <= 3 -> Tier.HIGH
-            errorCount <= 3 && attempts <= 5 -> Tier.MODERATE
+            errorCount == 0 && attempts <= 1 -> Tier.BEST
+            errorCount <= 2 && attempts <= 2 -> Tier.HIGH
+            errorCount <= 3 && attempts <= 3 -> Tier.MODERATE
             else                             -> Tier.LOW
         }
     }
 
     private fun calculateStairCount() {
         totalSteps = when (performanceTier()) {
-            Tier.BEST, Tier.HIGH -> 5
+            Tier.BEST            -> 5
+            Tier.HIGH            -> 5
             Tier.MODERATE        -> 3
             Tier.LOW             -> 1
         }
@@ -166,10 +167,11 @@ class ASequenceScoreboardActivity : AppCompatActivity() {
     private fun calculateStarProgress() { starFinalStep = totalSteps - 1 }
 
     private fun buildStaircase() {
-        val themeColor = when (totalSteps) {
-            1    -> Color.parseColor("#FF6B8B")
-            3    -> Color.parseColor("#FF9800")
-            else -> Color.parseColor("#4CAF50")
+        val themeColor = when (performanceTier()) {
+            Tier.BEST,
+            Tier.HIGH     -> Color.parseColor("#4CAF50")  // green
+            Tier.MODERATE -> Color.parseColor("#FF9800")  // orange
+            Tier.LOW      -> Color.parseColor("#FF6B8B")  // pink
         }
         for (i in 0 until totalSteps) {
             val block = stepBlocks[i]
