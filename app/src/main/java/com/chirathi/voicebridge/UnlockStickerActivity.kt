@@ -227,63 +227,103 @@ class UnlockStickerActivity : AppCompatActivity() {
     private fun floatCardUpward() {
         AnimatorSet().apply {
             playTogether(
-                ObjectAnimator.ofFloat(stickerCard, "alpha", 0f, 1f).also { it.duration = 400 },
+                // Fade in
+                ObjectAnimator.ofFloat(stickerCard, "alpha", 0f, 1f)
+                    .also { it.duration = 600 },
+                // Scale up
                 ObjectAnimator.ofPropertyValuesHolder(stickerCard,
-                    android.animation.PropertyValuesHolder.ofFloat("scaleX", 0.5f, 0.8f),
-                    android.animation.PropertyValuesHolder.ofFloat("scaleY", 0.5f, 0.8f)
-                ).also { it.duration = 400; it.interpolator = DecelerateInterpolator() },
+                    android.animation.PropertyValuesHolder.ofFloat("scaleX", 0.2f, 0.9f),
+                    android.animation.PropertyValuesHolder.ofFloat("scaleY", 0.2f, 0.9f)
+                ).also { it.duration = 800; it.interpolator = DecelerateInterpolator() },
+                // Float upward
                 ObjectAnimator.ofFloat(stickerCard, "translationY",
                     stickerCard.translationY, stickerCard.translationY - 300f
-                ).also { it.duration = 1200; it.interpolator = AccelerateDecelerateInterpolator() }
+                ).also { it.duration = 1200; it.interpolator = AccelerateDecelerateInterpolator() },
+                // SWIRL — full 720° spin while rising
+                ObjectAnimator.ofFloat(stickerCard, "rotation", 0f, 720f)
+                    .also { it.duration = 1200; it.interpolator = DecelerateInterpolator() }
             )
             addListener(object : AnimatorListenerAdapter() {
-                override fun onAnimationEnd(animation: Animator) { revealStickerWithGlow() }
+                override fun onAnimationEnd(animation: Animator) {
+                    // Settle wobble after swirl
+                    ObjectAnimator.ofFloat(stickerCard, "rotation", 15f, -10f, 6f, -4f, 0f).apply {
+                        duration = 500
+                        interpolator = DecelerateInterpolator()
+                        addListener(object : AnimatorListenerAdapter() {
+                            override fun onAnimationEnd(animation: Animator) {
+                                revealStickerWithGlow()
+                            }
+                        })
+                        start()
+                    }
+                }
             })
             start()
         }
     }
 
     private fun revealStickerWithGlow() {
-        // Use drawable from the awarded sticker
         val drawableRes = awardedSticker?.drawableRes ?: R.drawable.sticker
         stickerReveal.setImageResource(drawableRes)
 
+        // Glow burst first
         glowOverlay.visibility = View.VISIBLE
-        glowOverlay.scaleX     = 0.5f; glowOverlay.scaleY = 0.5f; glowOverlay.alpha = 0f
+        glowOverlay.scaleX = 0.5f; glowOverlay.scaleY = 0.5f; glowOverlay.alpha = 0f
 
         AnimatorSet().apply {
             playTogether(
                 ObjectAnimator.ofPropertyValuesHolder(glowOverlay,
-                    android.animation.PropertyValuesHolder.ofFloat("scaleX", 0.5f, 2f),
-                    android.animation.PropertyValuesHolder.ofFloat("scaleY", 0.5f, 2f)
-                ).also { it.duration = 500 },
-                ObjectAnimator.ofFloat(glowOverlay, "alpha", 0f, 0.7f, 0f).also { it.duration = 600 }
+                    android.animation.PropertyValuesHolder.ofFloat("scaleX", 0.5f, 2.5f),
+                    android.animation.PropertyValuesHolder.ofFloat("scaleY", 0.5f, 2.5f)
+                ).also { it.duration = 800 },
+                ObjectAnimator.ofFloat(glowOverlay, "alpha", 0f, 0.9f, 0f)
+                    .also { it.duration = 900 }
             )
             start()
         }
 
+        // Sticker card fades out, sticker fades in cleanly
         Handler(Looper.getMainLooper()).postDelayed({
             stickerReveal.visibility = View.VISIBLE
-            stickerReveal.scaleX     = 0.8f; stickerReveal.scaleY = 0.8f; stickerReveal.alpha = 0f
+            stickerReveal.alpha = 0f
+            stickerReveal.scaleX = 0.85f
+            stickerReveal.scaleY = 0.85f
+            stickerReveal.rotation = 0f
             stickerReveal.translationX = stickerCard.translationX
             stickerReveal.translationY = stickerCard.translationY
 
-            ObjectAnimator.ofFloat(stickerCard, "alpha", 1f, 0f).apply { duration = 200; start() }
+            ObjectAnimator.ofFloat(stickerCard, "alpha", 1f, 0f)
+                .apply { duration = 200; start() }
 
+            // Gentle fade + scale in
             AnimatorSet().apply {
                 playTogether(
-                    ObjectAnimator.ofFloat(stickerReveal, "alpha", 0f, 1f).also { it.duration = 300 },
+                    ObjectAnimator.ofFloat(stickerReveal, "alpha", 0f, 1f)
+                        .also { it.duration = 700 },
                     ObjectAnimator.ofPropertyValuesHolder(stickerReveal,
-                        android.animation.PropertyValuesHolder.ofFloat("scaleX", 0.8f, 1.1f, 1f),
-                        android.animation.PropertyValuesHolder.ofFloat("scaleY", 0.8f, 1.1f, 1f)
-                    ).also { it.duration = 400; it.interpolator = BounceInterpolator() }
+                        android.animation.PropertyValuesHolder.ofFloat("scaleX", 0.85f, 1.05f, 1f),
+                        android.animation.PropertyValuesHolder.ofFloat("scaleY", 0.85f, 1.05f, 1f)
+                    ).also { it.duration = 700; it.interpolator = DecelerateInterpolator() }
                 )
                 addListener(object : AnimatorListenerAdapter() {
-                    override fun onAnimationEnd(animation: Animator) { showCollectButtonAndText() }
+                    override fun onAnimationEnd(animation: Animator) {
+                        // Gentle pulse after landing
+                        ObjectAnimator.ofPropertyValuesHolder(
+                            stickerReveal,
+                            android.animation.PropertyValuesHolder.ofFloat("scaleX", 1f, 1.06f, 1f),
+                            android.animation.PropertyValuesHolder.ofFloat("scaleY", 1f, 1.06f, 1f)
+                        ).apply {
+                            duration = 700
+                            repeatCount = 3
+                            repeatMode = android.animation.ValueAnimator.REVERSE
+                            start()
+                        }
+                        showCollectButtonAndText()
+                    }
                 })
                 start()
             }
-        }, 200)
+        }, 300)
     }
 
     private fun showCollectButtonAndText() {
@@ -327,49 +367,38 @@ class UnlockStickerActivity : AppCompatActivity() {
 
     private fun collectSticker() {
         collectButton.isEnabled = false
-        Toast.makeText(this, "Sticker Collected!", Toast.LENGTH_SHORT).show()
 
-        val shrinkAnim = ObjectAnimator.ofPropertyValuesHolder(
-            stickerReveal,
-            android.animation.PropertyValuesHolder.ofFloat("scaleX", 1f, 0.8f),
-            android.animation.PropertyValuesHolder.ofFloat("scaleY", 1f, 0.8f)
-        ).apply { duration = 200; interpolator = DecelerateInterpolator() }
-
-        shrinkAnim.addListener(object : AnimatorListenerAdapter() {
-            override fun onAnimationEnd(animation: Animator) {
-                AnimatorSet().apply {
-                    playTogether(
-                        ObjectAnimator.ofFloat(stickerReveal,   "alpha", 1f, 0f).also { it.duration = 500 },
-                        ObjectAnimator.ofFloat(unlockedText,    "alpha", 1f, 0f).also { it.duration = 300 },
-                        ObjectAnimator.ofFloat(titleText,       "alpha", 1f, 0f).also { it.duration = 300 },
-                        ObjectAnimator.ofFloat(collectButton,   "alpha", 1f, 0f).also { it.duration = 300 }
-                    )
-                    addListener(object : AnimatorListenerAdapter() {
-                        override fun onAnimationEnd(animation: Animator) { showReplayAndDashboardButtons() }
-                    })
-                    start()
+        // Only fade out the collect button, keep sticker + text visible
+        ObjectAnimator.ofFloat(collectButton, "alpha", 1f, 0f).apply {
+            duration = 300
+            addListener(object : AnimatorListenerAdapter() {
+                override fun onAnimationEnd(animation: Animator) {
+                    collectButton.visibility = View.GONE
+                    showReplayAndDashboardButtons()
                 }
-            }
-        })
-        shrinkAnim.start()
+            })
+            start()
+        }
     }
 
     private fun showReplayAndDashboardButtons() {
         runOnUiThread {
             buttonsContainer.visibility = View.VISIBLE
-            replayButton.visibility     = View.VISIBLE
-            dashboardButton.visibility  = View.VISIBLE
-            replayButton.alpha          = 0f; dashboardButton.alpha = 0f
-            replayButton.translationY   = 50f; dashboardButton.translationY = 50f
+            replayButton.alpha = 0f
+            dashboardButton.alpha = 0f
+            replayButton.translationY = 50f
+            dashboardButton.translationY = 50f
 
             replayButton.animate().alpha(1f).translationY(0f).setDuration(500)
                 .setInterpolator(DecelerateInterpolator()).start()
+
             Handler(Looper.getMainLooper()).postDelayed({
                 dashboardButton.animate().alpha(1f).translationY(0f).setDuration(500)
                     .setInterpolator(DecelerateInterpolator()).start()
             }, 200)
-            replayButton.isEnabled   = true
-            dashboardButton.isEnabled= true
+
+            replayButton.isEnabled = true
+            dashboardButton.isEnabled = true
         }
     }
 

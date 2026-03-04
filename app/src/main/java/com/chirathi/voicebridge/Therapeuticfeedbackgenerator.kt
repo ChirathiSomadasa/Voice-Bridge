@@ -356,23 +356,23 @@ GOOD PERSISTING example:
     private fun lastResortFallback(level: PerformanceLevel): TherapeuticFeedback = when (level) {
         PerformanceLevel.MASTERY    -> TherapeuticFeedback(
             headline      = "You did so well",
-            message       = "You got every step in the right order.",
-            encouragement = "You can play once more."
+            message       = "You got every step, in the right order.",
+            encouragement = "You can play, once more."
         )
         PerformanceLevel.STRONG     -> TherapeuticFeedback(
             headline      = "Good job today",
-            message       = "You tried hard and did well.",
-            encouragement = "Want to try once more?"
+            message       = "You tried hard, and did well.",
+            encouragement = "Want to try, once more?"
         )
         PerformanceLevel.DEVELOPING -> TherapeuticFeedback(
             headline      = "You kept going",
-            message       = "You are so brave and strong.",
-            encouragement = "You can try again."
+            message       = "You are so brave, and strong.",
+            encouragement = "You can try, again."
         )
         PerformanceLevel.PERSISTING -> TherapeuticFeedback(
             headline      = "You are so brave",
-            message       = "You tried and that is so good.",
-            encouragement = "Want to try once more?"
+            message       = "You tried, and that is so good.",
+            encouragement = "Want to try, once more?"
         )
     }
 }

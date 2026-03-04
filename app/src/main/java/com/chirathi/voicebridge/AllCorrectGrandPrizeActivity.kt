@@ -227,19 +227,16 @@ class AllCorrectGrandPrizeActivity : AppCompatActivity(), TextToSpeech.OnInitLis
                 name = if (isYoung) "Mochi" else "Mochi",
                 verse       = if (isYoung)
                     "\"Take a big breath with me… in… and out.\n\n" +
-                            "I could see how hard you were trying. That's really brave.\n\n" +
-                            "You don't have to be perfect. I'm here, and I'm proud of you.\""
+                            "I could see how hard you were trying. I'm proud of you.\""
                 else
                     "\"Let's breathe together for a moment. In… and slowly out.\n\n" +
-                            "I noticed how much effort you put in today, even when it felt tough.\n\n" +
-                            "Feeling frustrated just means you care. That matters. You did well.\"",
+                            "I noticed how much effort you put in today,and you did well.\"",
                 spokenVerse = if (isYoung)
                     "Take a big breath with me. In. And out. I could see how hard you were trying. " +
-                            "That is really brave. You don't have to be perfect. I'm here, and I'm proud of you."
+                            "And I'm proud of you."
                 else
                     "Let's breathe together for a moment. In. And slowly out. " +
-                            "I noticed how much effort you put in today, even when it felt tough. " +
-                            "Feeling frustrated just means you care. That matters. You did well.",
+                            "I noticed how much effort you put in today. You did well.",
                 okLabel     = "Thank you, Mochi",
                 animStyle   = AnimStyle.SOFT
             )
@@ -254,19 +251,16 @@ class AllCorrectGrandPrizeActivity : AppCompatActivity(), TextToSpeech.OnInitLis
                 name        = if (isYoung) "Senu the Snuggle Panda" else "Senu",
                 verse       = if (isYoung)
                     "\"You kept going, even when it was hard!\n\n" +
-                            "That's the bravest thing you can do.\n\n" +
                             "Come here — this hug is just for you, because you never gave up!\""
                 else
                     "\"You kept going, even when things got difficult.\n\n" +
-                            "A lot of people give up when it's hard — you didn't. That's real courage.\n\n" +
-                            "This hug is for you, because trying hard matters more than getting it right.\"",
+                            "This hug is for you, because trying hard.\"",
                 spokenVerse = if (isYoung)
-                    "You kept going, even when it was hard! That is the bravest thing you can do. " +
+                    "You kept going, even when it was hard!" +
                             "This hug is just for you, because you never gave up!"
                 else
                     "You kept going, even when things got difficult. " +
-                            "A lot of people give up when it is hard — you didn't. That is real courage. " +
-                            "This hug is for you, because trying hard matters more than getting it right.",
+                            "This hug is for you",
                 okLabel     = "I love hugs!",
                 animStyle   = AnimStyle.SOFT
             )
@@ -281,19 +275,16 @@ class AllCorrectGrandPrizeActivity : AppCompatActivity(), TextToSpeech.OnInitLis
                 name        = if (isYoung) "Lumi" else "Lumi",
                 verse       = if (isYoung)
                     "\"Do you know what I see? A star.\n\n" +
-                            "Every time you try — even the tricky tries — you grow a little bigger.\n\n" +
                             "You worked SO hard today. You're my star!\""
                 else
-                    "\"Every attempt you made today — the right ones and the tricky ones — " +
-                            "all of them made your brain stronger.\n\n" +
-                            "That's what stars are made of: effort, not just easy wins.\n\n" +
+                    "\"Every attempt you made today — the right ones and the hard ones — " +
                             "You earned this. Keep shining.\"",
                 spokenVerse = if (isYoung)
-                    "Do you know what I see? A star. Every time you try, even the tricky tries, " +
-                            "you grow a little bigger. You worked so hard today. You are my star!"
+                    "Do you know what I see? A star. " +
+                            "You worked so hard today. You are my star!"
                 else
-                    "Every attempt you made today, the right ones and the tricky ones, " +
-                            "all of them made your brain stronger. That is what stars are made of: effort, not just easy wins. " +
+                    "Every attempt you made today, the right ones and the hard ones, " +
+                            "all of them made you stronger." +
                             "You earned this. Keep shining.",
                 okLabel     = "I'm a star!",
                 animStyle   = AnimStyle.SOFT
@@ -309,18 +300,16 @@ class AllCorrectGrandPrizeActivity : AppCompatActivity(), TextToSpeech.OnInitLis
                 name        = if (isYoung) "Tutu" else "Tutu",
                 verse       = if (isYoung)
                     "\"WOW! You were absolutely AMAZING today!\n\n" +
-                            "You answered fast and you got it right — that's superstar stuff!\n\n" +
-                            "This trophy is YOURS. You totally earned it!\""
+                            "You answered fast and you got it right!\n\n" +
+                            "This trophy is YOURS!\""
                 else
-                    "\"That was an outstanding performance today!\n\n" +
-                            "Your speed and accuracy were at champion level — not many players reach that.\n\n" +
+                    "\"That was a great performance today!\n\n" +
                             "This trophy is yours. Own it — you completely earned it.\"",
                 spokenVerse = if (isYoung)
-                    "Wow! You were absolutely amazing today! You answered fast and you got it right. " +
-                            "That is superstar stuff! This trophy is yours. You totally earned it!"
+                    "Wow! You were absolutely amazing today! " +
+                            "This trophy is yours. You totally earned it!"
                 else
-                    "That was an outstanding performance today! " +
-                            "Your speed and accuracy were at champion level. Not many players reach that. " +
+                    "That was a great performance today! " +
                             "This trophy is yours. Own it. You completely earned it.",
                 okLabel     = "I'm a champion!",
                 animStyle   = AnimStyle.ENERGETIC

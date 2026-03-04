@@ -31,9 +31,11 @@ class ASGuide_BelowActivity : AppCompatActivity() {
          * Resets automatically when the process dies (new login session).
          */
         var hasBeenShownThisSession: Boolean = false
+
     }
 
     private var childId = "default"
+    private var tts: android.speech.tts.TextToSpeech? = null
     private lateinit var videoView: VideoView
     private lateinit var btnOk: Button
 
@@ -44,6 +46,7 @@ class ASGuide_BelowActivity : AppCompatActivity() {
         setContentView(buildDialogLayout())
         childId = intent.getStringExtra("CHILD_ID") ?: "default"
         setupVideo(R.raw.tap)
+        initTts()
 
         btnOk.setOnClickListener {
             hasBeenShownThisSession = true
@@ -63,6 +66,24 @@ class ASGuide_BelowActivity : AppCompatActivity() {
         )
         window.setGravity(Gravity.CENTER)
         setFinishOnTouchOutside(false) // child must tap "Got it!"
+    }
+    private fun initTts() {
+        tts = android.speech.tts.TextToSpeech(this) { status ->
+            if (status == android.speech.tts.TextToSpeech.SUCCESS) {
+                tts?.language    = java.util.Locale.US
+                tts?.setPitch(1.4f)
+                tts?.setSpeechRate(0.80f)
+                // Short delay so dialog is fully visible before speaking
+                android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
+                    tts?.speak(
+                        "Tap the steps in order!",
+                        android.speech.tts.TextToSpeech.QUEUE_FLUSH,
+                        null,
+                        "guide"
+                    )
+                }, 600)
+            }
+        }
     }
 
     // ── Layout (built in code — no extra XML needed) ───────────────────────
@@ -133,7 +154,12 @@ class ASGuide_BelowActivity : AppCompatActivity() {
         finish()
     }
 
-    override fun onPause()   { super.onPause();   videoView.pause() }
+    override fun onPause()   { super.onPause();   videoView.pause(); tts?.stop() }
     override fun onResume()  { super.onResume();  videoView.start() }
-    override fun onDestroy() { super.onDestroy(); videoView.stopPlayback() }
+    override fun onDestroy() {
+        super.onDestroy()
+        videoView.stopPlayback()
+        tts?.stop()       // ← add this
+        tts?.shutdown()
+    }
 }

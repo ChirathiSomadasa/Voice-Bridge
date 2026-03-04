@@ -11,6 +11,7 @@ import android.media.MediaPlayer
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
+import android.speech.tts.TextToSpeech
 import android.util.Log
 import android.view.View
 import android.view.animation.*
@@ -21,8 +22,9 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.lifecycle.lifecycleScope
 import kotlinx.coroutines.launch
+import java.util.Locale
 
-class ASequenceScoreboardActivity : AppCompatActivity() {
+class ASequenceScoreboardActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
 
     private var finalAlpha: Float = 0f
     private var poppedBubbles: Int = 0
@@ -38,7 +40,6 @@ class ASequenceScoreboardActivity : AppCompatActivity() {
     private var userAge: Int = 6
     private var attemptsCount: Int = 0
 
-    // ── NEW: sticker flag read from intent ────────────────────────────────────
     private var shouldAwardSticker: Boolean = false
 
     // Dynamic staircase configuration
@@ -74,6 +75,12 @@ class ASequenceScoreboardActivity : AppCompatActivity() {
     private var aiFeedback: TherapeuticFeedback? = null
     private var feedbackReady = false
 
+    // ── TTS ──────────────────────────────────────────────────────────────────
+    private lateinit var tts: TextToSpeech
+    private var isTtsReady = false
+    private var pendingMsg = ""
+    private var pendingEnc = ""
+
     companion object {
         private const val TAG = "ScoreboardActivity"
     }
@@ -99,9 +106,43 @@ class ASequenceScoreboardActivity : AppCompatActivity() {
         buildStaircase()
         hideExtraStairs()
 
+        // ── Initialise TTS before fetching feedback ───────────────────────────
+        tts = TextToSpeech(this, this)
+
         fetchAIFeedback()
         startTherapeuticAnimationSequence()
         setupButtonListeners()
+    }
+
+    // =========================================================================
+    // TTS
+    // =========================================================================
+
+    override fun onInit(status: Int) {
+        if (status == TextToSpeech.SUCCESS) {
+            tts.setLanguage(Locale.US)
+            tts.setPitch(1.3f)       // warm and child-friendly without being shrill
+            tts.setSpeechRate(0.75f) // slow enough for young listeners to follow
+            isTtsReady = true
+            if (pendingMsg.isNotBlank()) {
+                speakFeedback(pendingMsg, pendingEnc)
+                pendingMsg = ""
+                pendingEnc = ""
+            }
+        }
+    }
+
+    /**
+     * Speaks message and encouragement as two separate utterances with a
+     * 700 ms silent gap so the child can absorb each sentence naturally.
+     * Punctuation is preserved so the TTS engine pauses at sentence ends.
+     */
+    private fun speakFeedback(message: String, encouragement: String) {
+        if (!isTtsReady) return
+        fun clean(s: String) = s.replace(Regex("[^a-zA-Z0-9 .,!?']"), "").trim()
+        tts.speak(clean(message),       TextToSpeech.QUEUE_FLUSH, null, "msg")
+        tts.playSilentUtterance(700,    TextToSpeech.QUEUE_ADD,   "pause")
+        tts.speak(clean(encouragement), TextToSpeech.QUEUE_ADD,   null, "enc")
     }
 
     // =========================================================================
@@ -122,22 +163,11 @@ class ASequenceScoreboardActivity : AppCompatActivity() {
         userSelectedRoutine  = intent.getIntExtra("USER_SELECTED_ROUTINE", 0)
         userAge              = intent.getIntExtra("USER_AGE", 6)
         attemptsCount        = intent.getIntExtra("ATTEMPTS_COUNT", 0)
-        // ── Read the sticker flag ─────────────────────────────────────────────
         shouldAwardSticker   = intent.getBooleanExtra("SHOULD_AWARD_STICKER", false)
     }
 
     // =========================================================================
-    // =========================================================================
-    // Performance tier — single source of truth
-    //
-    //  BEST     → errors == 0, attempts <= 2  (perfect first try)
-    //             → 5 stairs (green) + sticker auto-unlocks after animation
-    //  HIGH     → errors <= 1, attempts <= 3
-    //             → 5 stairs (green), no sticker
-    //  MODERATE → errors <= 3, attempts <= 5
-    //             → 3 stairs (orange)
-    //  LOW      → everything else
-    //             → 1 stair (red)
+    // Performance tier
     // =========================================================================
 
     private enum class Tier { BEST, HIGH, MODERATE, LOW }
@@ -145,9 +175,9 @@ class ASequenceScoreboardActivity : AppCompatActivity() {
     private fun performanceTier(): Tier {
         val attempts = attemptsCount.coerceAtLeast(1)
         return when {
-            errorCount == 0 && attempts <= 1 -> Tier.BEST
-            errorCount <= 2 && attempts <= 2 -> Tier.HIGH
-            errorCount <= 3 && attempts <= 3 -> Tier.MODERATE
+            errorCount == 0 && attempts <= 3 -> Tier.BEST
+            errorCount <= 2 && attempts <= 3 -> Tier.HIGH
+            errorCount <= 3 && attempts <= 7 -> Tier.MODERATE
             else                             -> Tier.LOW
         }
     }
@@ -169,9 +199,9 @@ class ASequenceScoreboardActivity : AppCompatActivity() {
     private fun buildStaircase() {
         val themeColor = when (performanceTier()) {
             Tier.BEST,
-            Tier.HIGH     -> Color.parseColor("#4CAF50")  // green
-            Tier.MODERATE -> Color.parseColor("#FF9800")  // orange
-            Tier.LOW      -> Color.parseColor("#FF6B8B")  // pink
+            Tier.HIGH     -> Color.parseColor("#4CAF50")
+            Tier.MODERATE -> Color.parseColor("#FF9800")
+            Tier.LOW      -> Color.parseColor("#FF6B8B")
         }
         for (i in 0 until totalSteps) {
             val block = stepBlocks[i]
@@ -222,11 +252,9 @@ class ASequenceScoreboardActivity : AppCompatActivity() {
     private fun fetchAIFeedback() {
         therapeuticMessage.text = "Well done"
 
-        // DIAG 1 - Check API key
         val apiKey = getString(R.string.groq_api_key)
         Log.d(TAG, "DIAG 1 - API key: isBlank=${apiKey.isBlank()}, length=${apiKey.length}, starts=${apiKey.take(8)}")
 
-        // DIAG 2 - Check performance classification inputs
         val level = TherapeuticFeedbackGenerator.classify(
             correctCount = correctCount,
             errorCount   = errorCount,
@@ -254,8 +282,6 @@ class ASequenceScoreboardActivity : AppCompatActivity() {
             sessionNumber    = completedSubroutines
         )
         Log.d(TAG, "DIAG 3 - SessionContext built: age=$userAge, routine=$routineName, session=$completedSubroutines")
-
-        // DIAG 4 - Check coroutine is launching
         Log.d(TAG, "DIAG 4 - Launching coroutine for AI feedback...")
 
         lifecycleScope.launch {
@@ -288,13 +314,18 @@ class ASequenceScoreboardActivity : AppCompatActivity() {
             therapeuticMessage.animate().alpha(1f).setDuration(800).start()
 
             // If star is already visible, reposition the quote next to it
-            // If star hasn't appeared yet, showQuoteForStar() will pick up
-            // aiFeedback when it runs during the animation sequence
             if (starCharacter.visibility == View.VISIBLE) {
                 showQuoteForStar()
             } else {
-                // Star not yet shown — just store text, showQuoteForStar() will use it
                 motivationalQuote.text = "${feedback.message}\n\n${feedback.encouragement}"
+            }
+
+            // ── Speak feedback (message + encouragement only, no headline) ────
+            if (isTtsReady) {
+                speakFeedback(feedback.message, feedback.encouragement)
+            } else {
+                pendingMsg = feedback.message
+                pendingEnc = feedback.encouragement
             }
         }
     }
@@ -314,9 +345,6 @@ class ASequenceScoreboardActivity : AppCompatActivity() {
         updateTherapeuticMessage()
         Handler(Looper.getMainLooper()).postDelayed({ dropBlocksSequence() }, 1000)
 
-        // Safety net: if render pressure stalls animations and neither
-        // navigateToStickerScreen() nor enableNavigationButtons() fires,
-        // force the correct outcome after a generous deadline.
         val maxWait = 1000L + (totalSteps * 400L) + 600L + 2500L + 3000L
         Handler(Looper.getMainLooper()).postDelayed({
             if (!btnContinue.isEnabled && !isFinishing) {
@@ -329,6 +357,7 @@ class ASequenceScoreboardActivity : AppCompatActivity() {
             }
         }, maxWait.coerceAtLeast(10000L))
     }
+
     private fun dropBlocksSequence() {
         blockDropAnimators.clear()
         for (i in 0 until totalSteps) Handler().postDelayed({ animateBlockDrop(i) }, i * 400L)
@@ -415,59 +444,49 @@ class ASequenceScoreboardActivity : AppCompatActivity() {
         motivationalQuote.alpha      = 0f
 
         motivationalQuote.post {
-            // ── Get star position in SCREEN coordinates ───────────────────────
             val starScreenPos = IntArray(2)
             starCharacter.getLocationOnScreen(starScreenPos)
 
-            // ── Get motivationalQuote's parent position in SCREEN coordinates ─
             val parentScreenPos = IntArray(2)
             (motivationalQuote.parent as View).getLocationOnScreen(parentScreenPos)
 
-            // ── Convert star screen coords into quote's parent space ──────────
-            val starLeftInParent = (starScreenPos[0] - parentScreenPos[0]).toFloat()
-            val starTopInParent  = (starScreenPos[1] - parentScreenPos[1]).toFloat()
+            val starLeftInParent  = (starScreenPos[0] - parentScreenPos[0]).toFloat()
+            val starTopInParent   = (starScreenPos[1] - parentScreenPos[1]).toFloat()
             val starRightInParent = starLeftInParent + starCharacter.width
             val starMidYInParent  = starTopInParent + (starCharacter.height / 2f)
 
-            val quoteW = motivationalQuote.measuredWidth.toFloat()
-            val quoteH = motivationalQuote.measuredHeight.toFloat()
+            val quoteW  = motivationalQuote.measuredWidth.toFloat()
+            val quoteH  = motivationalQuote.measuredHeight.toFloat()
             val screenW = resources.displayMetrics.widthPixels.toFloat()
-            val margin = 24f
+            val margin  = 24f
 
             var targetX: Float
             var targetY: Float
 
             when (totalSteps) {
                 1 -> {
-                    // RED — right of star, clamped to screen
                     targetX = starRightInParent + margin
                     targetY = starMidYInParent - (quoteH / 2f)
-                    // If it goes off right edge, flip to left
                     if (targetX + quoteW > screenW - margin) {
                         targetX = starLeftInParent - quoteW - margin
                     }
                 }
                 3 -> {
-                    // ORANGE — above star, horizontally centered on star
                     targetX = starLeftInParent + (starCharacter.width / 2f) - (quoteW / 2f)
                     targetY = starTopInParent - quoteH - margin
-                    // If it goes off top, show below instead
                     if (targetY < parentScreenPos[1].toFloat()) {
                         targetY = starTopInParent + starCharacter.height + margin
                     }
                 }
                 else -> {
-                    // GREEN — left of star, clamped to screen
                     targetX = starLeftInParent - quoteW - margin
                     targetY = starMidYInParent - (quoteH / 2f)
-                    // If it goes off left edge, flip to right
                     if (targetX < margin) {
                         targetX = starRightInParent + margin
                     }
                 }
             }
 
-            // ── Clamp vertically so text never exits screen ───────────────────
             val parentH = (motivationalQuote.parent as View).height.toFloat()
             targetY = targetY.coerceIn(margin, parentH - quoteH - margin)
 
@@ -482,7 +501,6 @@ class ASequenceScoreboardActivity : AppCompatActivity() {
     private fun settleStar() {
         if (starFinalStep < 0 || starFinalStep >= stepBlocks.size) return
 
-        // Pulse each step block
         for (i in 0..starFinalStep) {
             Handler(Looper.getMainLooper()).postDelayed({
                 val block = stepBlocks[i]
@@ -508,11 +526,7 @@ class ASequenceScoreboardActivity : AppCompatActivity() {
         completionSound.seekTo(0); completionSound.start()
         startStarGlow()
 
-        // ── Auto-navigate after animation settles ────────────────────────────
-        //  BEST performance + sticker to award → go straight to sticker screen
-        //  after a short celebratory pause (1.5 s) so child can see the stairs.
-        //  All other tiers → show Continue / Home buttons as before.
-        val settleDelay = (starFinalStep * 150L) + 800L  // wait for pulse + glow
+        val settleDelay = (starFinalStep * 150L) + 800L
         if (shouldAwardSticker && performanceTier() == Tier.BEST) {
             Handler(Looper.getMainLooper()).postDelayed({
                 navigateToStickerScreen()
@@ -539,11 +553,7 @@ class ASequenceScoreboardActivity : AppCompatActivity() {
     }
 
     // =========================================================================
-    // Button listeners — FIXED
-    //
-    //  Root cause: SHOULD_AWARD_STICKER was received but never read, so
-    //  UnlockStickerActivity was never launched.  Both Continue and Home now
-    //  route through navigateNext() which checks the flag first.
+    // Button listeners
     // =========================================================================
 
     private fun setupButtonListeners() {
@@ -588,30 +598,25 @@ class ASequenceScoreboardActivity : AppCompatActivity() {
         }
     }
 
-    /**
-     * Stops all running animators and pending Handler callbacks, then
-     * navigates to the sticker unlock screen.
-     *
-     * Must cancel before finish() — leaving INFINITE ValueAnimators alive
-     * blocks the activity destroy and causes an ANR.
-     */
     private fun navigateToStickerScreen() {
-        if (isFinishing) return          // guard against double-call from fallback
+        if (isFinishing) return
 
-        // 1. Cancel all animators
+        // 1. Stop TTS before leaving
+        if (::tts.isInitialized && isTtsReady) tts.stop()
+
+        // 2. Cancel all animators
         starGlowAnimator?.cancel()
         starBounceAnimator?.cancel()
         blockDropAnimators.forEach { it.cancel() }
-        // Also stop any per-block INFINITE scale animators started by startStarGlow()
         stepBlocks.forEach { it.animate().cancel() }
         starCharacter.animate().cancel()
 
-        // 2. Release media players so they don't block the thread
+        // 3. Release media players
         try { blockDropSound.stop() } catch (_: Exception) {}
         try { starBounceSound.stop() } catch (_: Exception) {}
         try { completionSound.stop() } catch (_: Exception) {}
 
-        // 3. Navigate
+        // 4. Navigate
         startActivity(Intent(this, UnlockStickerActivity::class.java).apply {
             putExtra("FINAL_ALPHA",           finalAlpha)
             putExtra("POPPED_BUBBLES",        poppedBubbles)
@@ -628,15 +633,13 @@ class ASequenceScoreboardActivity : AppCompatActivity() {
         finish()
     }
 
-    /**
-     * Used by Continue / Home buttons for non-BEST tiers (no sticker).
-     */
     private fun navigateNext(destination: () -> Unit) {
         destination()
     }
 
     private fun navigateToGame() {
-        val targetActivity = if (userAge in 8..10) ActivitySequenceOverActivity::class.java
+        if (::tts.isInitialized && isTtsReady) tts.stop()
+        val targetActivity = if (userAge >= 8) ActivitySequenceOverActivity::class.java
         else ActivitySequenceUnderActivity::class.java
         Log.d(TAG, "Continue → ${targetActivity.simpleName}")
         startActivity(Intent(this, targetActivity).apply {
@@ -682,6 +685,7 @@ class ASequenceScoreboardActivity : AppCompatActivity() {
 
     override fun onDestroy() {
         super.onDestroy()
+        if (::tts.isInitialized) tts.shutdown()
         starGlowAnimator?.cancel()
         starBounceAnimator?.cancel()
         blockDropAnimators.forEach { it.cancel() }

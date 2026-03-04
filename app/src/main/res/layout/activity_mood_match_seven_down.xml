@@ -129,7 +129,7 @@
                         android:layout_marginEnd="8dp">
                         <Button
                             android:id="@+id/btnOption1"
-                            style="@style/SolidGreenButton"
+                            app:backgroundTint="@color/dark_orange"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_gravity="center"
@@ -185,7 +185,7 @@
                         android:layout_marginEnd="8dp">
                         <Button
                             android:id="@+id/btnOption2"
-                            style="@style/SolidGreenButton"
+                            app:backgroundTint="@color/dark_orange"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_gravity="center"
@@ -251,7 +251,7 @@
 
                     <Button
                         android:id="@+id/btnGrid1"
-                        style="@style/SolidGreenButton"
+                        app:backgroundTint="@color/dark_orange"
                         android:layout_width="0dp"
                         android:layout_height="65dp"
                         android:layout_weight="1"
@@ -264,7 +264,7 @@
 
                     <Button
                         android:id="@+id/btnGrid2"
-                        style="@style/SolidGreenButton"
+                        app:backgroundTint="@color/dark_orange"
                         android:layout_width="0dp"
                         android:layout_height="65dp"
                         android:layout_weight="1"
@@ -286,7 +286,7 @@
 
                     <Button
                         android:id="@+id/btnGrid3"
-                        style="@style/SolidGreenButton"
+                        app:backgroundTint="@color/dark_orange"
                         android:layout_width="0dp"
                         android:layout_height="65dp"
                         android:layout_weight="1"
@@ -299,7 +299,7 @@
 
                     <Button
                         android:id="@+id/btnGrid4"
-                        style="@style/SolidGreenButton"
+                        app:backgroundTint="@color/dark_orange"
                         android:layout_width="0dp"
                         android:layout_height="65dp"
                         android:layout_weight="1"

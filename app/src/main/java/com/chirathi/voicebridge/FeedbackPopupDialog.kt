@@ -51,6 +51,10 @@ class FeedbackPopupDialog(
     private var progressRunnable: Runnable? = null
     private var isDone           = false
 
+    private var isTtsShutdown = false
+
+    private var tts: android.speech.tts.TextToSpeech? = null
+
     // ── Intercept every touch at the Dialog level ─────────────────────────────
     //
     // dispatchTouchEvent() is the very first method called when a touch event
@@ -96,6 +100,32 @@ class FeedbackPopupDialog(
         setupVideo()
     }
 
+    private fun initTts() {
+        if (isGoodFeedback) return  // ← only speak for bad feedback
+        tts = android.speech.tts.TextToSpeech(context) { status ->
+            if (status == android.speech.tts.TextToSpeech.SUCCESS) {
+                tts?.language    = java.util.Locale.US
+                tts?.setPitch(1.4f)
+                tts?.setSpeechRate(0.80f)
+                handler.postDelayed({
+                    tts?.speak(
+                        "You are learning. Keep going!",
+                        android.speech.tts.TextToSpeech.QUEUE_FLUSH,
+                        null,
+                        "encourage"
+                    )
+                }, 400)
+            }
+        }
+    }
+
+    private fun shutdownTts() {
+        if (isTtsShutdown) return
+        isTtsShutdown = true
+        tts?.stop()
+        tts?.shutdown()
+    }
+
     private fun setupVideo() {
         try {
             val videoRes = if (isGoodFeedback) R.raw.feedback_good else R.raw.feedback_bad
@@ -115,6 +145,7 @@ class FeedbackPopupDialog(
             Log.e(TAG, "Video setup error: ${e.message}")
             startTimer()
         }
+        initTts()
     }
 
     private fun startTimer() {
@@ -140,6 +171,7 @@ class FeedbackPopupDialog(
         isDone = true                                      // guard — runs only once
         progressRunnable?.let { handler.removeCallbacks(it) }
         handler.removeCallbacksAndMessages(null)
+        shutdownTts()
         try { videoView.stopPlayback() } catch (_: Exception) {}
         dismiss()
         onComplete()
@@ -149,6 +181,7 @@ class FeedbackPopupDialog(
         super.onStop()
         progressRunnable?.let { handler.removeCallbacks(it) }
         handler.removeCallbacksAndMessages(null)
+        shutdownTts()
         try { videoView.pause() } catch (_: Exception) {}
     }
 }

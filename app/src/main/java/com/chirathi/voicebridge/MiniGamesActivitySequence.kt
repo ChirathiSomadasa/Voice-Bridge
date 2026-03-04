@@ -214,11 +214,11 @@ class MiniGamesActivitySequence : AppCompatActivity() {
     private fun handleWhatsMissingAnswer(chosen: Step, correct: Step, allFrames: List<FrameLayout>) {
         allFrames.forEach { it.isClickable = false }
         if (chosen.id == correct.id) {
-            speak("Yes! That's right! Great job!")
-            showFeedback("", "That's it! Well done!", "#4CAF50") { finishWithResult(true, 100) }
+            speak("Great job!")
+            showFeedback("", "Well done!", "#4CAF50") { finishWithResult(true, 100) }
         } else {
             mistakeCount++
-            speak("Not quite. Try again!")
+            speak("Try again!")
             showFeedback("", "Try again!", "#FF6B6B") {
                 feedbackOverlay.visibility = View.GONE
                 allFrames.forEach { it.isClickable = true }

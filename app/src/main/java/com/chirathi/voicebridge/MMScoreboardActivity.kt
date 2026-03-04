@@ -170,7 +170,12 @@ class MMScoreboardActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
 
             // Speak the message when TTS is ready
             val spokenText = "${feedback.message} ${feedback.encouragement}"
-            if (isTtsReady) speakText(spokenText) else pendingSpeak = spokenText
+            if (isTtsReady) {
+                speakFeedback(feedback.message, feedback.encouragement)
+            } else {
+                // Store both parts separated by a delimiter for deferred speaking
+                pendingSpeak = "${feedback.message}|||${feedback.encouragement}"
+            }
 
             Log.d(TAG, "AI feedback applied (fromAI=${feedback.fromAI}): ${feedback.headline}")
         }
@@ -278,17 +283,38 @@ class MMScoreboardActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
 
     override fun onInit(status: Int) {
         if (status == TextToSpeech.SUCCESS) {
-            tts.setLanguage(Locale.US); tts.setPitch(1.6f); tts.setSpeechRate(0.9f)
+            tts.setLanguage(Locale.US)
+            tts.setPitch(1.3f)        // slightly less chipmunk, clearer for children
+            tts.setSpeechRate(0.75f)
             isTtsReady = true
-            pendingSpeak?.let { speakText(it); pendingSpeak = null }
+            pendingSpeak?.let {
+                val parts = it.split("|||")
+                if (parts.size == 2) speakFeedback(parts[0], parts[1])
+                else speakFeedback(it, "")   // safety fallback
+                pendingSpeak = null
+            }
         }
     }
 
-    private fun speakText(text: String) {
-        if (isTtsReady) {
-            val clean = text.replace(Regex("[^a-zA-Z0-9 !.,'?]"), "")
-            tts.speak(clean, TextToSpeech.QUEUE_FLUSH, null, "")
-        }
+    // REMOVE the old speakText() entirely and replace with:
+
+    private fun speakFeedback(message: String, encouragement: String) {
+        if (!isTtsReady) return
+
+        // Keep periods and commas — they signal natural pauses to the TTS engine
+        fun clean(s: String) = s.replace(Regex("[^a-zA-Z0-9 .,!?']"), "").trim()
+
+        val cleanMsg = clean(message)
+        val cleanEnc = clean(encouragement)
+
+        // Speak the message first (flush any previous speech)
+        tts.speak(cleanMsg, TextToSpeech.QUEUE_FLUSH, null, "msg")
+
+        // Add ~700 ms silence so the child can absorb the message before encouragement
+        tts.playSilentUtterance(700, TextToSpeech.QUEUE_ADD, "pause")
+
+        // Then speak the encouragement
+        tts.speak(cleanEnc, TextToSpeech.QUEUE_ADD, null, "enc")
     }
 
     override fun onDestroy() {

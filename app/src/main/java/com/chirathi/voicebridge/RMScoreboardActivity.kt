@@ -7,36 +7,30 @@ import android.graphics.Color
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
+import android.speech.tts.TextToSpeech
 import android.util.Log
 import android.view.animation.AccelerateDecelerateInterpolator
 import android.widget.*
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import kotlinx.coroutines.launch
+import java.util.Locale
 import kotlin.random.Random
 
 /**
- * RMScoreboardActivity — v2.2.0
+ * RMScoreboardActivity — v2.3.0
  *
- * CHANGES FROM v2.1.0
+ * CHANGES FROM v2.2.0
  * ─────────────────────────────────────────────────
- *  [A] AI-GENERATED FEEDBACK
- *      resultText and effortMessage are now populated by Gemini via
- *      TherapeuticFeedbackGenerator.  No numeric score or ratio is ever
- *      shown to the child.  The candy jar remains as a fun visual metaphor
- *      for "filling up your brain" — the count text also uses non-numeric
- *      descriptions.
- *
- *  [B] SCORE TEXT HIDDEN FROM CHILD
- *      scoreText (showing e.g. "3/5") is replaced by the existing candy
- *      description which uses words only.  If a separate therapist-facing
- *      view is needed, add a toggled admin overlay instead.
- *
- *  [C] CRASH-FIX from v2.1.0 PRESERVED
- *      fillJarWithCandies() still guards removeViews() against negative counts.
- *      onResume() still does NOT re-trigger the animation.
+ *  [A] TTS ADDED
+ *      Human-like, child-friendly voice reads the therapeutic feedback
+ *      after AI generation completes. Only message + encouragement are
+ *      spoken (headline is visual only). Two separate speak() calls with
+ *      a 700 ms silent gap between them give natural pacing. Pitch and
+ *      speech rate are tuned for clarity with young listeners.
+ *      TTS is shut down cleanly in onDestroy().
  */
-class RMScoreboardActivity : AppCompatActivity() {
+class RMScoreboardActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
 
     private lateinit var candyJarContainer: FrameLayout
     private lateinit var candyJarImage:     ImageView
@@ -62,6 +56,12 @@ class RMScoreboardActivity : AppCompatActivity() {
     private var frustrationLevel = 0f
     private var accuracy         = 0f
     private var consecutiveWrong = 0
+
+    // ── TTS ──────────────────────────────────────────────────────────────────
+    private lateinit var tts: TextToSpeech
+    private var isTtsReady = false
+    private var pendingMsg = ""
+    private var pendingEnc = ""
 
     private val candyDrawables = listOf(
         R.drawable.candy_red,   R.drawable.candy_blue,
@@ -92,6 +92,9 @@ class RMScoreboardActivity : AppCompatActivity() {
 
         Log.d(TAG, "score=$score/$totalRounds alpha=$avgAlpha accuracy=$accuracy")
 
+        // ── Initialise TTS ────────────────────────────────────────────────────
+        tts = TextToSpeech(this, this)
+
         // ── Candy description (no number) ─────────────────────────────────────
         candyCountText.text = candyDescription(score, totalRounds)
 
@@ -112,6 +115,38 @@ class RMScoreboardActivity : AppCompatActivity() {
     override fun onDestroy() {
         super.onDestroy()
         handler.removeCallbacksAndMessages(null)
+        if (::tts.isInitialized) tts.shutdown()
+    }
+
+    // =========================================================================
+    // TTS
+    // =========================================================================
+
+    override fun onInit(status: Int) {
+        if (status == TextToSpeech.SUCCESS) {
+            tts.setLanguage(Locale.US)
+            tts.setPitch(1.3f)       // warm and child-friendly without being shrill
+            tts.setSpeechRate(0.75f) // slow enough for young listeners to follow
+            isTtsReady = true
+            if (pendingMsg.isNotBlank()) {
+                speakFeedback(pendingMsg, pendingEnc)
+                pendingMsg = ""
+                pendingEnc = ""
+            }
+        }
+    }
+
+    /**
+     * Speaks message and encouragement as two separate utterances with a
+     * 700 ms silent gap so the child can absorb each sentence naturally.
+     * Punctuation is preserved so the TTS engine pauses at sentence ends.
+     */
+    private fun speakFeedback(message: String, encouragement: String) {
+        if (!isTtsReady) return
+        fun clean(s: String) = s.replace(Regex("[^a-zA-Z0-9 .,!?']"), "").trim()
+        tts.speak(clean(message),      TextToSpeech.QUEUE_FLUSH, null, "msg")
+        tts.playSilentUtterance(700,   TextToSpeech.QUEUE_ADD,   "pause")
+        tts.speak(clean(encouragement),TextToSpeech.QUEUE_ADD,   null, "enc")
     }
 
     // =========================================================================
@@ -155,7 +190,7 @@ class RMScoreboardActivity : AppCompatActivity() {
             // Result headline — animated, colour driven by alpha (unchanged)
             resultText.text = feedback.headline
             resultText.setTextColor(Color.parseColor(headlineColor()))
-            resultText.alpha       = 0f
+            resultText.alpha        = 0f
             resultText.translationY = 50f
             resultText.animate().alpha(1f).translationY(0f).setDuration(800).start()
 
@@ -165,6 +200,14 @@ class RMScoreboardActivity : AppCompatActivity() {
             handler.postDelayed({
                 effortMessage.animate().alpha(1f).setDuration(600).start()
             }, 500)
+
+            // ── Speak feedback (message + encouragement only, no headline) ────
+            if (isTtsReady) {
+                speakFeedback(feedback.message, feedback.encouragement)
+            } else {
+                pendingMsg = feedback.message
+                pendingEnc = feedback.encouragement
+            }
 
             Log.d(TAG, "AI feedback applied (fromAI=${feedback.fromAI}): ${feedback.headline}")
         }
@@ -198,10 +241,6 @@ class RMScoreboardActivity : AppCompatActivity() {
     // Candy count description — words only, zero numbers
     // =========================================================================
 
-    /**
-     * Replaces the old numeric description ("3/5 candies") with a word-based
-     * metaphor that gives the child a sense of progress without a score.
-     */
     private fun candyDescription(score: Int, total: Int): String = when {
         score == 0              -> "Your jar is ready — let's fill it!"
         score <= total / 4      -> "A few yummy candies inside!"
@@ -212,7 +251,7 @@ class RMScoreboardActivity : AppCompatActivity() {
     }
 
     // =========================================================================
-    // Candy jar animation — unchanged from v2.1.0 (crash-safe)
+    // Candy jar animation — unchanged from v2.2.0 (crash-safe)
     // =========================================================================
 
     private fun setupCandyJarAnimation(score: Int) {
@@ -240,9 +279,9 @@ class RMScoreboardActivity : AppCompatActivity() {
             catch (e: Exception) { Log.w(TAG, "removeViews non-fatal: ${e.message}") }
         }
 
-        val jarWidth   = candyJarContainer.width.takeIf  { it > 0 } ?: 800
-        val jarHeight  = candyJarContainer.height.takeIf { it > 0 } ?: 800
-        val candySize  = (jarWidth * 0.15).toInt()
+        val jarWidth      = candyJarContainer.width.takeIf  { it > 0 } ?: 800
+        val jarHeight     = candyJarContainer.height.takeIf { it > 0 } ?: 800
+        val candySize     = (jarWidth * 0.15).toInt()
         val candiesPerRow = 4
 
         for (i in 0 until candyCount) {
@@ -276,7 +315,6 @@ class RMScoreboardActivity : AppCompatActivity() {
                     .withEndAction { candy.animate().translationY(0f).setDuration(200).start() }.start()
             }
         }, 600)
-        // Update candy text with word description (no number)
         candyCountText.text = candyDescription(index + 1, totalRounds)
     }
 
@@ -295,7 +333,6 @@ class RMScoreboardActivity : AppCompatActivity() {
     }
 
     private fun celebrateFullJar() {
-        // AI feedback will update resultText; here we just animate the jar
         candyJarImage.animate().scaleX(1.2f).scaleY(1.2f).setDuration(300)
             .withEndAction { candyJarImage.animate().scaleX(1f).scaleY(1f).setDuration(300).start() }.start()
         createSparkles(30)
@@ -357,6 +394,7 @@ class RMScoreboardActivity : AppCompatActivity() {
 
     private fun setupButtonListeners() {
         replayButton.setOnClickListener {
+            if (::tts.isInitialized && isTtsReady) tts.stop()
             startActivity(Intent(this, RhythmSummaryActivity::class.java).apply {
                 putExtra("SONG_TITLE", songTitle)
             })
@@ -364,6 +402,7 @@ class RMScoreboardActivity : AppCompatActivity() {
         }
 
         dashboardButton.setOnClickListener {
+            if (::tts.isInitialized && isTtsReady) tts.stop()
             startActivity(Intent(this, GameDashboardActivity::class.java))
             finish()
         }

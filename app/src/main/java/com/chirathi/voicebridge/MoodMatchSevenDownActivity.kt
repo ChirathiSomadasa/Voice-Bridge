@@ -26,6 +26,7 @@ class MoodMatchSevenDownActivity : AppCompatActivity(), TextToSpeech.OnInitListe
     private var totalJitter = 0f
     private var jitterSamples = 0
     private var tapCount = 0
+    private var isPulsing = false
     private var minigameLaunchedThisSession = false
 
     // ── Session-level frustration tracking (never reset mid-session) ──────────
@@ -508,6 +509,7 @@ class MoodMatchSevenDownActivity : AppCompatActivity(), TextToSpeech.OnInitListe
     // =========================================================================
 
     private fun goToNextRound() {
+        isPulsing = false
         currentRound++
         if (currentRound > totalRounds) showFeedbackPopup() else startNewRound()
     }
@@ -647,25 +649,34 @@ class MoodMatchSevenDownActivity : AppCompatActivity(), TextToSpeech.OnInitListe
     } else when (opt) { 1 -> btnOption1; else -> btnOption2 }
 
     private fun resetButtonColors() {
-        val green = ContextCompat.getColor(this, R.color.green)
+        val orange = ContextCompat.getColor(this, R.color.dark_orange)
         allOptionButtons().forEach { btn ->
-            btn.setBackgroundColor(green)
+            btn.backgroundTintList = android.content.res.ColorStateList.valueOf(orange)
+            btn.alpha = 1f
             btn.isEnabled = true
         }
     }
 
     private fun highlightButton(option: Int, correct: Boolean) {
-        val colorRes = if (correct) R.color.green else android.R.color.holo_red_light
-        btnForOption(option).setBackgroundColor(ContextCompat.getColor(this, colorRes))
+        val color = ContextCompat.getColor(this,
+            if (correct) R.color.dark_orange else R.color.dark_orange)
+        btnForOption(option).backgroundTintList = android.content.res.ColorStateList.valueOf(color)
     }
 
     private fun breatheCorrectButton(pulses: Int) {
         val btn = btnForOption(correctOption)
-        btn.setBackgroundColor(ContextCompat.getColor(this, R.color.green))
+        btn.backgroundTintList = android.content.res.ColorStateList.valueOf(
+            ContextCompat.getColor(this, R.color.dark_orange))
         btn.alpha = 1f
+        isPulsing = true
         fun doPulse(remaining: Int) {
-            if (remaining <= 0) { btn.alpha = 1f; return }
+            if (remaining <= 0 || !isPulsing) {
+                btn.alpha = 1f
+                isPulsing = false
+                return
+            }
             btn.animate().alpha(0.3f).setDuration(400).withEndAction {
+                if (!isPulsing) { btn.alpha = 1f; return@withEndAction }
                 btn.animate().alpha(1f).setDuration(400).withEndAction { doPulse(remaining - 1) }.start()
             }.start()
         }
@@ -673,20 +684,23 @@ class MoodMatchSevenDownActivity : AppCompatActivity(), TextToSpeech.OnInitListe
     }
 
     private fun darkenAllButtons(keepCorrectBright: Boolean) {
-        val darkGreen = android.graphics.Color.parseColor("#1B5E20")
-        val darkRed   = android.graphics.Color.parseColor("#B71C1C")
-        val fullGreen = ContextCompat.getColor(this, R.color.green)
+        isPulsing = false
+        val darkGreen   = android.graphics.Color.parseColor("#FFA726")
+        val darkRed     = android.graphics.Color.parseColor("#B71C1C")
+        val fullGreen   = ContextCompat.getColor(this, R.color.light_orange)
+        val lightOrange = ContextCompat.getColor(this, R.color.light_orange)
 
-        allOptionButtons().forEachIndexed { _, btn -> btn.isEnabled = false }
+        allOptionButtons().forEach { btn -> btn.isEnabled = false }
 
         for (opt in 1..allOptionButtons().size) {
             val btn = btnForOption(opt)
-            when {
-                opt == correctOption && keepCorrectBright -> btn.setBackgroundColor(fullGreen)
-                opt == correctOption                      -> btn.setBackgroundColor(darkGreen)
-                opt in wrongTappedOptions                 -> btn.setBackgroundColor(darkRed)
-                else                                      -> btn.setBackgroundColor(darkGreen)
+            val color = when {
+                opt == correctOption && keepCorrectBright -> fullGreen
+                opt == correctOption                      -> darkGreen
+                opt in wrongTappedOptions                 -> darkRed
+                else                                      -> lightOrange
             }
+            btn.backgroundTintList = android.content.res.ColorStateList.valueOf(color)
         }
     }
 
