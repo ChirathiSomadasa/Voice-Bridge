@@ -20,12 +20,6 @@ import android.widget.*
 import androidx.appcompat.app.AppCompatActivity
 import java.util.Locale
 
-/**
- * ActivitySequenceOverActivity — v2.0
- *
- * Uses XML layout (activity_sequence_over.xml) — same visual style as
- * ActivitySequenceUnderActivity. All UI logic unchanged.
- */
 class ActivitySequenceOverActivity : AppCompatActivity() {
 
     // ── Model ──────────────────────────────────────────────────────────────
@@ -56,46 +50,28 @@ class ActivitySequenceOverActivity : AppCompatActivity() {
     // ── Mini-game state ────────────────────────────────────────────────────
     private var miniGameTriggeredThisRound = false
 
-    // ── Routine data ───────────────────────────────────────────────────────
-    private val routineSentences = mapOf(
-        0 to mapOf(
-            0 to listOf(
-                "wake_up"     to "Wake up",
-                "make_bed"    to "Make your bed",
-                "drink_water" to "Drink water"
-            ),
-            1 to listOf(
-                "brush_teeth" to "Brush your teeth",
-                "wash_face"   to "Wash your face",
-                "dry_towel"   to "Dry your face"
-            ),
-            2 to listOf(
-                "get_dressed"  to "Get dressed",
-                "apply_powder" to "Put on lotion",
-                "put_pajamas"  to "Put away pajamas"
-            )
-        )
-    )
+    // ── Routine data — loaded from SequenceDataManager (custom or default) ─
+    private lateinit var routineSentences: Map<Int, Map<Int, List<Pair<String, String>>>>
 
-    // ── UI views (from XML) ────────────────────────────────────────────────
-    private lateinit var timerTextView:            TextView
-    private lateinit var gameTitleText:            TextView
-    private lateinit var tvInstruction:            TextView
-    private lateinit var btnStart:                 Button
+    // ── UI views ───────────────────────────────────────────────────────────
+    private lateinit var timerTextView:             TextView
+    private lateinit var gameTitleText:             TextView
+    private lateinit var tvInstruction:             TextView
+    private lateinit var btnStart:                  Button
     private lateinit var horizontalImagesContainer: LinearLayout
-    private lateinit var dropZonesContainer:       LinearLayout
-    private lateinit var verticalImagesContainer:  LinearLayout
+    private lateinit var dropZonesContainer:        LinearLayout
+    private lateinit var verticalImagesContainer:   LinearLayout
 
     private lateinit var previewText1: TextView
     private lateinit var previewText2: TextView
     private lateinit var previewText3: TextView
 
-    private lateinit var dropZone1:  LinearLayout
-    private lateinit var dropZone2:  LinearLayout
-    private lateinit var dropZone3:  LinearLayout
-    private lateinit var dropText1:  TextView
-    private lateinit var dropText2:  TextView
-    private lateinit var dropText3:  TextView
+    private lateinit var dropZone1: LinearLayout
+    private lateinit var dropZone2: LinearLayout
+    private lateinit var dropZone3: LinearLayout
+    private lateinit var dropText1: TextView
+    private lateinit var dropText2: TextView
+    private lateinit var dropText3: TextView
 
     // ── Timer ──────────────────────────────────────────────────────────────
     private val timerHandler = Handler(Looper.getMainLooper())
@@ -104,12 +80,12 @@ class ActivitySequenceOverActivity : AppCompatActivity() {
 
     // ── Drag-drop state ────────────────────────────────────────────────────
     private data class SentenceItem(val id: String, val text: String)
-    private var correctOrder          = listOf<SentenceItem>()
-    private var shuffledOrder         = listOf<SentenceItem>()
-    private val dropZoneContents      = mutableMapOf<Int, String?>()
-    private val draggableCards        = mutableListOf<View>()
-    private val dropZoneViews         = mutableListOf<LinearLayout>()
-    private val dropTextViews         = mutableListOf<TextView>()
+    private var correctOrder     = listOf<SentenceItem>()
+    private var shuffledOrder    = listOf<SentenceItem>()
+    private val dropZoneContents = mutableMapOf<Int, String?>()
+    private val draggableCards   = mutableListOf<View>()
+    private val dropZoneViews    = mutableListOf<LinearLayout>()
+    private val dropTextViews    = mutableListOf<TextView>()
 
     companion object { private const val TAG = "ActivityOverage" }
 
@@ -119,11 +95,14 @@ class ActivitySequenceOverActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_activity_sequence_over)   // ← XML layout
+        setContentView(R.layout.activity_activity_sequence_over)
 
         userAge          = intent.getIntExtra("USER_AGE", 8)
         currentRoutineId = intent.getIntExtra("SELECTED_ROUTINE_ID", 0)
         prefs            = getSharedPreferences(BUBBLE_PREFS, Context.MODE_PRIVATE)
+
+        // Load sequences — custom ones if parent saved any, otherwise defaults
+        routineSentences = SequenceDataManager.getSequences(this)
 
         gameMaster = GameMasterModel(this)
         initViews()
@@ -157,7 +136,6 @@ class ActivitySequenceOverActivity : AppCompatActivity() {
         if (requestCode == MiniGamesActivitySequence.REQUEST_CODE && resultCode == Activity.RESULT_OK) {
             val passed = data?.getBooleanExtra(MiniGamesActivitySequence.RESULT_PASSED, false) ?: false
             if (passed) correctCount++
-//            miniGameTriggeredThisRound = false
         }
     }
 
@@ -192,7 +170,6 @@ class ActivitySequenceOverActivity : AppCompatActivity() {
     private fun setupBackButton() {
         findViewById<View>(R.id.backBtn).setOnClickListener {
             if (dropZonesContainer.visibility == View.VISIBLE) {
-                // Mid drag-drop phase — warn before leaving
                 android.app.AlertDialog.Builder(this)
                     .setMessage("Leave this game? Your progress will be lost.")
                     .setPositiveButton("Leave") { _, _ ->
@@ -205,7 +182,6 @@ class ActivitySequenceOverActivity : AppCompatActivity() {
                     .setNegativeButton("Stay", null)
                     .show()
             } else {
-                // Still in preview phase — safe to leave
                 startActivity(Intent(this, RoutineSelectionActivity::class.java).apply {
                     flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
                 })
@@ -231,12 +207,13 @@ class ActivitySequenceOverActivity : AppCompatActivity() {
     }
 
     private fun selectSubRoutine() {
-        val available = (0..2).filter {
+        val allKeys = routineSentences[currentRoutineId]?.keys?.sorted() ?: listOf(0)
+        val available = allKeys.filter {
             !completedSubRoutines.contains(Pair(currentRoutineId, it))
         }.toMutableList()
         if (available.isEmpty()) { resetAllProgress(); currentSubRoutineId = 0; return }
-        val modelRec        = currentPrediction.subRoutine.coerceIn(0, 2)
-        currentSubRoutineId = if (modelRec < available.size) available[modelRec] else available.last()
+        val modelRec        = currentPrediction.subRoutine.coerceIn(0, available.size - 1)
+        currentSubRoutineId = available[modelRec]
     }
 
     private fun resetAllProgress() {
@@ -245,29 +222,24 @@ class ActivitySequenceOverActivity : AppCompatActivity() {
     }
 
     // ======================================================================
-    // Phase 1 — Show correct order via XML preview cards
+    // Phase 1 — Show correct order
     // ======================================================================
 
     private fun showCorrectOrderPhase() {
         val sentences = routineSentences[currentRoutineId]?.get(currentSubRoutineId)
-            ?: routineSentences[0]!![0]!!
+            ?: SequenceDataManager.defaults[0]!![0]!!
 
         correctOrder = sentences.map { (id, text) -> SentenceItem(id, text) }
 
-        gameTitleText.text = when (currentRoutineId) {
-            0 -> "Morning Routine"; 1 -> "Bedtime Routine"; 2 -> "School Routine"
-            else -> "Daily Routine"
-        }
+        gameTitleText.text = SequenceDataManager.routineNames.getOrElse(currentRoutineId) { "Daily Routine" }
         tvInstruction.text = "Read and remember the order!"
         speak("Look at the steps. Remember the order!")
 
-        // Fill the three XML preview cards
         val texts = listOf(previewText1, previewText2, previewText3)
         correctOrder.forEachIndexed { i, step ->
             if (i < texts.size) texts[i].text = step.text
         }
 
-        // Show phase 1, hide phase 2
         horizontalImagesContainer.visibility = View.VISIBLE
         dropZonesContainer.visibility        = View.GONE
         verticalImagesContainer.visibility   = View.GONE
@@ -278,7 +250,7 @@ class ActivitySequenceOverActivity : AppCompatActivity() {
     }
 
     // ======================================================================
-    // Phase 2 — Drag and drop using XML containers
+    // Phase 2 — Drag and drop
     // ======================================================================
 
     private fun startDragDropPhase() {
@@ -295,21 +267,19 @@ class ActivitySequenceOverActivity : AppCompatActivity() {
         tvInstruction.text = "Hold and drag each step to the right box!"
         speak("Hold a step and drag it to the right box!")
 
-        // Hide phase 1, show phase 2
         horizontalImagesContainer.visibility = View.GONE
         btnStart.visibility                  = View.GONE
         dropZonesContainer.visibility        = View.VISIBLE
         verticalImagesContainer.visibility   = View.VISIBLE
         timerTextView.visibility             = View.VISIBLE
 
-        // Reset drop zones
         dropZoneContents[0] = null
         dropZoneContents[1] = null
         dropZoneContents[2] = null
         dropTextViews.forEach { tv ->
-            tv.text      = "Drop here…"
+            tv.text     = "Drop here…"
             tv.setTextColor(Color.parseColor("#90A4AE"))
-            tv.typeface  = Typeface.DEFAULT
+            tv.typeface = Typeface.DEFAULT
         }
         dropZoneViews.forEachIndexed { i, zone ->
             zone.setBackgroundResource(R.drawable.order_display_bg)
@@ -318,7 +288,6 @@ class ActivitySequenceOverActivity : AppCompatActivity() {
             }
         }
 
-        // Add draggable cards to vertical container (keep the label, remove old cards)
         while (verticalImagesContainer.childCount > 1)
             verticalImagesContainer.removeViewAt(1)
 
@@ -397,9 +366,9 @@ class ActivitySequenceOverActivity : AppCompatActivity() {
                     droppedView.visibility = View.GONE
                     dropZoneContents[zoneIndex] = droppedId
                     zone.setBackgroundColor(Color.parseColor("#C8E6C9"))
-                    dropText.text      = correctOrder[zoneIndex].text
+                    dropText.text     = correctOrder[zoneIndex].text
                     dropText.setTextColor(Color.parseColor("#2E7D32"))
-                    dropText.typeface  = Typeface.DEFAULT_BOLD
+                    dropText.typeface = Typeface.DEFAULT_BOLD
                     speak("Well done!")
 
                     if (dropZoneContents.values.all { it != null }) {
@@ -446,15 +415,8 @@ class ActivitySequenceOverActivity : AppCompatActivity() {
 
     private fun maybeLaunchMiniGame() {
         if (miniGameTriggeredThisRound) return
-        val shouldTrigger = currentPrediction.minigameTrigger
-                || currentPrediction.whatsMissingTrigger
-        if (!shouldTrigger) return
+        if (!currentPrediction.minigameTrigger && !currentPrediction.whatsMissingTrigger) return
         miniGameTriggeredThisRound = true
-
-        val gameType = when {
-            currentPrediction.whatsMissingTrigger -> MiniGamesActivitySequence.TYPE_WHATS_MISSING
-            else -> MiniGamesActivitySequence.TYPE_WHATS_MISSING
-        }
 
         startActivityForResult(
             Intent(this, MiniGamesActivitySequence::class.java).apply {
@@ -485,24 +447,24 @@ class ActivitySequenceOverActivity : AppCompatActivity() {
         )
 
         val isBestPerformance = accuracy >= 0.85f && errorCount <= 1
-        val stickerKey  = "sub_${currentRoutineId}_${currentSubRoutineId}"
-        val alreadyWon  = prefs.getBoolean("sticker_won_$stickerKey", false)
+        val stickerKey   = "sub_${currentRoutineId}_${currentSubRoutineId}"
+        val alreadyWon   = prefs.getBoolean("sticker_won_$stickerKey", false)
         val awardSticker = isBestPerformance && !alreadyWon && !StickerManager.isPoolExhausted(this)
         if (awardSticker) prefs.edit().putBoolean("sticker_won_$stickerKey", true).apply()
 
         Handler(Looper.getMainLooper()).postDelayed({
             startActivity(Intent(this, ASequenceScoreboardActivity::class.java).apply {
-                putExtra("FINAL_ALPHA",          finalAlpha)
-                putExtra("POPPED_BUBBLES",       0)
-                putExtra("TOTAL_BUBBLES",        0)
-                putExtra("CORRECT_COUNT",        correctCount)
-                putExtra("ERROR_COUNT",          errorCount)
-                putExtra("ROUTINE_COMPLETED",    currentRoutineId)
-                putExtra("USER_AGE",             userAge)
-                putExtra("ATTEMPTS_COUNT",       attemptsCount)
-                putExtra("SHOULD_AWARD_STICKER", awardSticker)
-                putExtra("USER_SELECTED_ROUTINE",currentRoutineId)
-                putExtra("PREVIOUS_SUBROUTINE",  currentSubRoutineId)
+                putExtra("FINAL_ALPHA",           finalAlpha)
+                putExtra("POPPED_BUBBLES",        0)
+                putExtra("TOTAL_BUBBLES",         0)
+                putExtra("CORRECT_COUNT",         correctCount)
+                putExtra("ERROR_COUNT",           errorCount)
+                putExtra("ROUTINE_COMPLETED",     currentRoutineId)
+                putExtra("USER_AGE",              userAge)
+                putExtra("ATTEMPTS_COUNT",        attemptsCount)
+                putExtra("SHOULD_AWARD_STICKER",  awardSticker)
+                putExtra("USER_SELECTED_ROUTINE", currentRoutineId)
+                putExtra("PREVIOUS_SUBROUTINE",   currentSubRoutineId)
             })
             finish()
         }, 800)
@@ -549,7 +511,7 @@ class ActivitySequenceOverActivity : AppCompatActivity() {
     }
 
     // ======================================================================
-    // TTS / helpers
+    // TTS
     // ======================================================================
 
     private fun speak(text: String) {
@@ -559,8 +521,8 @@ class ActivitySequenceOverActivity : AppCompatActivity() {
     private fun initTts() {
         tts = TextToSpeech(this) { status ->
             if (status == TextToSpeech.SUCCESS) {
-                isTtsReady = true
-                tts.language     = Locale.US
+                isTtsReady   = true
+                tts.language = Locale.US
                 tts.setSpeechRate(0.75f)
                 tts.setPitch(1.1f)
             }

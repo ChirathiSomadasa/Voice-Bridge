@@ -171,7 +171,7 @@ class GameDashboardActivity : AppCompatActivity() {
             })
 
             android.app.AlertDialog.Builder(this)
-                .setTitle("Sound Settings")
+                .setTitle("Game Sound Settings")
                 .setView(dialogView)
                 .setPositiveButton("Done") { _, _ ->
                     val musicOn = switchCalmMusic.isChecked && hasCalmResource
@@ -184,6 +184,9 @@ class GameDashboardActivity : AppCompatActivity() {
                 .setNegativeButton("Cancel") { _, _ ->
                     audioManager.setStreamVolume(AudioManager.STREAM_MUSIC, curVol, 0)
                     CalmMusicManager.applySystemVolume(this)
+                }
+                .setNeutralButton("Customize Routines") { _, _ ->
+                    startActivity(Intent(this, ParentSequenceSettingsActivity::class.java))
                 }
                 .show()
 

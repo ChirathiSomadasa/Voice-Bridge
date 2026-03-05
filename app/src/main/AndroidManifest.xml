@@ -24,6 +24,9 @@
             android:exported="false"
             android:theme="@style/Theme.VoiceBridge" />
         <activity
+            android:name=".ParentSequenceSettingsActivity"
+            android:exported="false" />
+        <activity
             android:name=".MiniGameMoodMatchActivity"
             android:exported="false" />
         <activity
