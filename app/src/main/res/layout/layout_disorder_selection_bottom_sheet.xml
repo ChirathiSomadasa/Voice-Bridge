@@ -56,15 +56,6 @@
                 android:textSize="15sp" />
 
             <RadioButton
-                android:id="@+id/radioSpeechDelay"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:padding="12dp"
-                android:text="Speech Delay/ Stuttering"
-                android:textStyle="bold"
-                android:textSize="15sp" />
-
-            <RadioButton
                 android:id="@+id/radioArticulationDisorder"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -79,6 +70,33 @@
                 android:layout_height="wrap_content"
                 android:padding="12dp"
                 android:text="Phonological Disorder"
+                android:textStyle="bold"
+                android:textSize="15sp" />
+
+            <RadioButton
+                android:id="@+id/radioSpeechDelay"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:padding="12dp"
+                android:text="Speech Delay"
+                android:textStyle="bold"
+                android:textSize="15sp" />
+
+            <RadioButton
+                android:id="@+id/radioStuttering"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:padding="12dp"
+                android:text="Stuttering"
+                android:textStyle="bold"
+                android:textSize="15sp" />
+
+            <RadioButton
+                android:id="@+id/radioLanguage"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:padding="12dp"
+                android:text="Language Development"
                 android:textStyle="bold"
                 android:textSize="15sp" />
 
