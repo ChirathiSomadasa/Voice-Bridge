@@ -4,31 +4,20 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/light_blue"
+    android:background="@color/white"
     tools:context=".Education_therapyActivity">
 
-    <!-- Top Header Image -->
     <ImageView
         android:id="@+id/topImage"
         android:layout_width="0dp"
-        android:layout_height="220dp"
-        android:scaleType="centerCrop"
+        android:layout_height="250dp"
+        android:scaleType="fitXY"
         android:src="@drawable/speech_dashboard"
         app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.0"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
-    <!-- Gradient Overlay on Image -->
-    <View
-        android:id="@+id/headerGradient"
-        android:layout_width="0dp"
-        android:layout_height="220dp"
-        android:background="@drawable/gradient_header_overlay"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
-
-    <!-- Back Button -->
     <ImageView
         android:id="@+id/back"
         android:layout_width="45dp"
@@ -42,53 +31,6 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
-    <!-- Header Content -->
-    <LinearLayout
-        android:id="@+id/headerContent"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="24dp"
-        android:layout_marginEnd="24dp"
-        android:layout_marginTop="80dp"
-        android:gravity="center"
-        android:orientation="vertical"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent">
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="🎓"
-            android:textSize="48sp" />
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
-            android:text="Education Therapy"
-            android:textColor="@color/white"
-            android:textSize="28sp"
-            android:textStyle="bold"
-            android:shadowColor="#80000000"
-            android:shadowDx="2"
-            android:shadowDy="2"
-            android:shadowRadius="4" />
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="4dp"
-            android:text="Choose activities for your child"
-            android:textColor="@color/black"
-            android:textSize="14sp"
-            android:shadowColor="#80000000"
-            android:shadowDx="1"
-            android:shadowDy="1"
-            android:shadowRadius="3" />
-    </LinearLayout>
-
-    <!-- Bottom Background Image -->
     <ImageView
         android:id="@+id/bottom_bg"
         android:layout_width="0dp"
@@ -104,568 +46,139 @@
         android:id="@+id/menuScrollView"
         android:layout_width="0dp"
         android:layout_height="0dp"
+        android:layout_marginTop="-30dp"
+        android:background="@drawable/white_bottom_bg"
         android:fillViewport="true"
         app:layout_constraintBottom_toTopOf="@id/bottom_bg"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/headerContent">
+        app:layout_constraintTop_toBottomOf="@id/topImage">
 
         <LinearLayout
+            android:id="@+id/layoutContent"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:gravity="center_horizontal"
             android:orientation="vertical"
             android:paddingStart="20dp"
             android:paddingTop="24dp"
             android:paddingEnd="20dp"
-            android:paddingBottom="32dp">
+            android:paddingBottom="20dp">
 
-            <!-- AI Recommendation Card -->
-            <androidx.cardview.widget.CardView
-                android:id="@+id/card_recommend"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginBottom="20dp"
-                app:cardCornerRadius="20dp"
-                app:cardElevation="8dp">
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:background="@drawable/gradient_purple"
-                    android:orientation="vertical"
-                    android:padding="20dp">
-
-                    <LinearLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:gravity="center_vertical"
-                        android:orientation="horizontal">
-
-                        <TextView
-                            android:layout_width="0dp"
-                            android:layout_height="wrap_content"
-                            android:layout_weight="1"
-                            android:text="✨ AI Recommendations"
-                            android:textColor="@color/white"
-                            android:textSize="22sp"
-                            android:textStyle="bold" />
-
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:background="@drawable/badge_gold"
-                            android:paddingStart="12dp"
-                            android:paddingTop="4dp"
-                            android:paddingEnd="12dp"
-                            android:paddingBottom="4dp"
-                            android:text="NEW"
-                            android:textColor="@color/black"
-                            android:textSize="10sp"
-                            android:textStyle="bold" />
-                    </LinearLayout>
-
-                    <TextView
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="8dp"
-                        android:text="Get personalized activities powered by AI based on your child's progress"
-                        android:textColor="@color/black"
-                        android:textSize="14sp"
-                        android:textStyle="bold" />
-
-                    <Button
-                        android:id="@+id/btn_recommend"
-                        android:layout_width="match_parent"
-                        android:layout_height="56dp"
-                        android:layout_marginTop="16dp"
-                        android:backgroundTint="@color/white"
-                        android:text="Get Recommendations"
-                        android:textAllCaps="false"
-                        android:textColor="@color/purple_700"
-                        android:textSize="16sp"
-                        android:textStyle="bold"
-                        app:cornerRadius="16dp" />
-                </LinearLayout>
-            </androidx.cardview.widget.CardView>
-
-            <!-- Text-based AI Recommendation Card (new) -->
-            <androidx.cardview.widget.CardView
-                android:id="@+id/card_text_recommend"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
-                android:layout_marginBottom="20dp"
-                app:cardCornerRadius="20dp"
-                app:cardElevation="8dp">
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:background="@drawable/gradient_purple"
-                    android:orientation="vertical"
-                    android:padding="20dp">
-
-                    <LinearLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:gravity="center_vertical"
-                        android:orientation="horizontal">
-
-                        <TextView
-                            android:id="@+id/tvTextPrompt"
-                            android:layout_width="0dp"
-                            android:layout_height="wrap_content"
-                            android:layout_weight="1"
-                            android:paddingBottom="4dp"
-                            android:text="✨ Describe the child’s need"
-                            android:textColor="@color/white"
-                            android:textSize="22sp"
-                            android:textStyle="bold" />
-
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:background="@drawable/badge_gold"
-                            android:paddingStart="12dp"
-                            android:paddingTop="4dp"
-                            android:paddingEnd="12dp"
-                            android:paddingBottom="4dp"
-                            android:text="NEW"
-                            android:textColor="@color/black"
-                            android:textSize="10sp"
-                            android:textStyle="bold" />
-                    </LinearLayout>
-
-<!--                    <TextView-->
-<!--                        android:id="@+id/etTextDescriptionLabel"-->
-<!--                        android:layout_width="match_parent"-->
-<!--                        android:layout_height="wrap_content"-->
-<!--                        android:layout_marginTop="8dp"-->
-<!--                        android:text="Describe the child’s need"-->
-<!--                        android:textColor="@color/black"-->
-<!--                        android:textSize="16sp"-->
-<!--                        android:textStyle="bold" />-->
-
-                    <EditText
-                        android:id="@+id/etTextDescription"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="4dp"
-                        android:hint="e.g., Child stutters when excited"
-                        android:inputType="textMultiLine"
-                        android:maxLines="3"
-                        android:minHeight="56dp"
-                        android:textColor="@color/white"
-                        android:textColorHint="@color/gray_light" />
-
-                    <Button
-                        android:id="@+id/btnTextRecommend"
-                        android:layout_width="match_parent"
-                        android:layout_height="56dp"
-                        android:layout_marginTop="16dp"
-                        android:backgroundTint="@color/white"
-                        android:text="Get Recommendations"
-                        android:textAllCaps="false"
-                        android:textColor="@color/purple_700"
-                        android:textSize="16sp"
-                        android:textStyle="bold"
-                        app:cornerRadius="16dp" />
-                </LinearLayout>
-            </androidx.cardview.widget.CardView>
-
-
-            <!--   age group card 6-10         -->
-            <!--            &lt;!&ndash; Age Categories Title &ndash;&gt;-->
-            <!--            <LinearLayout-->
-            <!--                android:layout_width="match_parent"-->
-            <!--                android:layout_height="wrap_content"-->
-            <!--                android:layout_marginBottom="16dp"-->
-            <!--                android:gravity="center_vertical"-->
-            <!--                android:orientation="horizontal">-->
-
-            <!--                <TextView-->
-            <!--                    android:layout_width="0dp"-->
-            <!--                    android:layout_height="wrap_content"-->
-            <!--                    android:layout_weight="1"-->
-            <!--                    android:text="📚 Browse by Age"-->
-            <!--                    android:textColor="@color/blue_dark"-->
-            <!--                    android:textSize="20sp"-->
-            <!--                    android:textStyle="bold" />-->
-
-            <!--                <TextView-->
-            <!--                    android:layout_width="wrap_content"-->
-            <!--                    android:layout_height="wrap_content"-->
-            <!--                    android:text="Ages 6-10"-->
-            <!--                    android:textStyle="bold"-->
-            <!--                    android:textColor="@color/black"-->
-            <!--                    android:textSize="14sp" />-->
-            <!--            </LinearLayout>-->
-
-            <!--            &lt;!&ndash; Age Cards Grid &ndash;&gt;-->
-            <!--            <LinearLayout-->
-            <!--                android:layout_width="match_parent"-->
-            <!--                android:layout_height="wrap_content"-->
-            <!--                android:orientation="vertical">-->
-
-            <!--                &lt;!&ndash; Row 1: Age 6 & 7 &ndash;&gt;-->
-            <!--                <LinearLayout-->
-            <!--                    android:layout_width="match_parent"-->
-            <!--                    android:layout_height="wrap_content"-->
-            <!--                    android:layout_marginBottom="16dp"-->
-            <!--                    android:orientation="horizontal">-->
-
-            <!--                    <androidx.cardview.widget.CardView-->
-            <!--                        android:id="@+id/card_age1"-->
-            <!--                        android:layout_width="0dp"-->
-            <!--                        android:layout_height="140dp"-->
-            <!--                        android:layout_marginEnd="8dp"-->
-            <!--                        android:layout_weight="1"-->
-            <!--                        app:cardCornerRadius="20dp"-->
-            <!--                        app:cardElevation="4dp">-->
-
-            <!--                        <LinearLayout-->
-            <!--                            android:layout_width="match_parent"-->
-            <!--                            android:layout_height="match_parent"-->
-            <!--                            android:background="@drawable/gradient_green"-->
-            <!--                            android:gravity="center"-->
-            <!--                            android:orientation="vertical"-->
-            <!--                            android:padding="16dp">-->
-
-            <!--                            <TextView-->
-            <!--                                android:layout_width="wrap_content"-->
-            <!--                                android:layout_height="wrap_content"-->
-            <!--                                android:text="🌱"-->
-            <!--                                android:textSize="40sp" />-->
-
-            <!--                            <TextView-->
-            <!--                                android:id="@+id/btn_age1"-->
-            <!--                                android:layout_width="wrap_content"-->
-            <!--                                android:layout_height="wrap_content"-->
-            <!--                                android:layout_marginTop="8dp"-->
-            <!--                                android:text="@string/age6"-->
-            <!--                                android:textColor="@color/white"-->
-            <!--                                android:textSize="20sp"-->
-            <!--                                android:textStyle="bold" />-->
-
-            <!--                            <TextView-->
-            <!--                                android:layout_width="wrap_content"-->
-            <!--                                android:layout_height="wrap_content"-->
-            <!--                                android:layout_marginTop="4dp"-->
-            <!--                                android:text="Beginner"-->
-            <!--                                android:textColor="@color/white_50"-->
-            <!--                                android:textSize="12sp" />-->
-            <!--                        </LinearLayout>-->
-            <!--                    </androidx.cardview.widget.CardView>-->
-
-            <!--                    <androidx.cardview.widget.CardView-->
-            <!--                        android:id="@+id/card_age2"-->
-            <!--                        android:layout_width="0dp"-->
-            <!--                        android:layout_height="140dp"-->
-            <!--                        android:layout_marginStart="8dp"-->
-            <!--                        android:layout_weight="1"-->
-            <!--                        app:cardCornerRadius="20dp"-->
-            <!--                        app:cardElevation="4dp">-->
-
-            <!--                        <LinearLayout-->
-            <!--                            android:layout_width="match_parent"-->
-            <!--                            android:layout_height="match_parent"-->
-            <!--                            android:background="@drawable/gradient_pink"-->
-            <!--                            android:gravity="center"-->
-            <!--                            android:orientation="vertical"-->
-            <!--                            android:padding="16dp">-->
-
-            <!--                            <TextView-->
-            <!--                                android:layout_width="wrap_content"-->
-            <!--                                android:layout_height="wrap_content"-->
-            <!--                                android:text="🌸"-->
-            <!--                                android:textSize="40sp" />-->
-
-            <!--                            <TextView-->
-            <!--                                android:id="@+id/btn_age2"-->
-            <!--                                android:layout_width="wrap_content"-->
-            <!--                                android:layout_height="wrap_content"-->
-            <!--                                android:layout_marginTop="8dp"-->
-            <!--                                android:text="@string/age7"-->
-            <!--                                android:textColor="@color/white"-->
-            <!--                                android:textSize="20sp"-->
-            <!--                                android:textStyle="bold" />-->
-
-            <!--                            <TextView-->
-            <!--                                android:layout_width="wrap_content"-->
-            <!--                                android:layout_height="wrap_content"-->
-            <!--                                android:layout_marginTop="4dp"-->
-            <!--                                android:text="Elementary"-->
-            <!--                                android:textColor="@color/white_50"-->
-            <!--                                android:textSize="12sp" />-->
-            <!--                        </LinearLayout>-->
-            <!--                    </androidx.cardview.widget.CardView>-->
-            <!--                </LinearLayout>-->
-
-            <!--                &lt;!&ndash; Row 2: Age 8 & 9 &ndash;&gt;-->
-            <!--                <LinearLayout-->
-            <!--                    android:layout_width="match_parent"-->
-            <!--                    android:layout_height="wrap_content"-->
-            <!--                    android:layout_marginBottom="16dp"-->
-            <!--                    android:orientation="horizontal">-->
-
-            <!--                    <androidx.cardview.widget.CardView-->
-            <!--                        android:id="@+id/card_age3"-->
-            <!--                        android:layout_width="0dp"-->
-            <!--                        android:layout_height="140dp"-->
-            <!--                        android:layout_marginEnd="8dp"-->
-            <!--                        android:layout_weight="1"-->
-            <!--                        app:cardCornerRadius="20dp"-->
-            <!--                        app:cardElevation="4dp">-->
-
-            <!--                        <LinearLayout-->
-            <!--                            android:layout_width="match_parent"-->
-            <!--                            android:layout_height="match_parent"-->
-            <!--                            android:background="@drawable/gradient_orange"-->
-            <!--                            android:gravity="center"-->
-            <!--                            android:orientation="vertical"-->
-            <!--                            android:padding="16dp">-->
-
-            <!--                            <TextView-->
-            <!--                                android:layout_width="wrap_content"-->
-            <!--                                android:layout_height="wrap_content"-->
-            <!--                                android:text="🌻"-->
-            <!--                                android:textSize="40sp" />-->
-
-            <!--                            <TextView-->
-            <!--                                android:id="@+id/btn_age3"-->
-            <!--                                android:layout_width="wrap_content"-->
-            <!--                                android:layout_height="wrap_content"-->
-            <!--                                android:layout_marginTop="8dp"-->
-            <!--                                android:text="@string/age8"-->
-            <!--                                android:textColor="@color/white"-->
-            <!--                                android:textSize="20sp"-->
-            <!--                                android:textStyle="bold" />-->
-
-            <!--                            <TextView-->
-            <!--                                android:layout_width="wrap_content"-->
-            <!--                                android:layout_height="wrap_content"-->
-            <!--                                android:layout_marginTop="4dp"-->
-            <!--                                android:text="Intermediate"-->
-            <!--                                android:textColor="@color/white_50"-->
-            <!--                                android:textSize="12sp" />-->
-            <!--                        </LinearLayout>-->
-            <!--                    </androidx.cardview.widget.CardView>-->
-
-            <!--                    <androidx.cardview.widget.CardView-->
-            <!--                        android:id="@+id/card_age4"-->
-            <!--                        android:layout_width="0dp"-->
-            <!--                        android:layout_height="140dp"-->
-            <!--                        android:layout_marginStart="8dp"-->
-            <!--                        android:layout_weight="1"-->
-            <!--                        app:cardCornerRadius="20dp"-->
-            <!--                        app:cardElevation="4dp">-->
-
-            <!--                        <LinearLayout-->
-            <!--                            android:layout_width="match_parent"-->
-            <!--                            android:layout_height="match_parent"-->
-            <!--                            android:background="@drawable/gradient_teal"-->
-            <!--                            android:gravity="center"-->
-            <!--                            android:orientation="vertical"-->
-            <!--                            android:padding="16dp">-->
-
-            <!--                            <TextView-->
-            <!--                                android:layout_width="wrap_content"-->
-            <!--                                android:layout_height="wrap_content"-->
-            <!--                                android:text="🌺"-->
-            <!--                                android:textSize="40sp" />-->
-
-            <!--                            <TextView-->
-            <!--                                android:id="@+id/btn_age4"-->
-            <!--                                android:layout_width="wrap_content"-->
-            <!--                                android:layout_height="wrap_content"-->
-            <!--                                android:layout_marginTop="8dp"-->
-            <!--                                android:text="@string/age9"-->
-            <!--                                android:textColor="@color/white"-->
-            <!--                                android:textSize="20sp"-->
-            <!--                                android:textStyle="bold" />-->
-
-            <!--                            <TextView-->
-            <!--                                android:layout_width="wrap_content"-->
-            <!--                                android:layout_height="wrap_content"-->
-            <!--                                android:layout_marginTop="4dp"-->
-            <!--                                android:text="Advanced"-->
-            <!--                                android:textColor="@color/white_50"-->
-            <!--                                android:textSize="12sp" />-->
-            <!--                        </LinearLayout>-->
-            <!--                    </androidx.cardview.widget.CardView>-->
-            <!--                </LinearLayout>-->
-
-            <!--                &lt;!&ndash; Row 3: Age 10 &ndash;&gt;-->
-            <!--                <androidx.cardview.widget.CardView-->
-            <!--                    android:id="@+id/card_age5"-->
-            <!--                    android:layout_width="match_parent"-->
-            <!--                    android:layout_height="140dp"-->
-            <!--                    android:layout_marginBottom="24dp"-->
-            <!--                    app:cardCornerRadius="20dp"-->
-            <!--                    app:cardElevation="4dp">-->
-
-            <!--                    <LinearLayout-->
-            <!--                        android:layout_width="match_parent"-->
-            <!--                        android:layout_height="match_parent"-->
-            <!--                        android:background="@drawable/gradient_blue"-->
-            <!--                        android:gravity="center"-->
-            <!--                        android:orientation="vertical"-->
-            <!--                        android:padding="16dp">-->
-
-            <!--                        <TextView-->
-            <!--                            android:layout_width="wrap_content"-->
-            <!--                            android:layout_height="wrap_content"-->
-            <!--                            android:text="🌟"-->
-            <!--                            android:textSize="40sp" />-->
-
-            <!--                        <TextView-->
-            <!--                            android:id="@+id/btn_age5"-->
-            <!--                            android:layout_width="wrap_content"-->
-            <!--                            android:layout_height="wrap_content"-->
-            <!--                            android:layout_marginTop="8dp"-->
-            <!--                            android:text="@string/age10"-->
-            <!--                            android:textColor="@color/white"-->
-            <!--                            android:textSize="20sp"-->
-            <!--                            android:textStyle="bold" />-->
-
-            <!--                        <TextView-->
-            <!--                            android:layout_width="wrap_content"-->
-            <!--                            android:layout_height="wrap_content"-->
-            <!--                            android:layout_marginTop="4dp"-->
-            <!--                            android:text="Expert Level"-->
-            <!--                            android:textColor="@color/white_50"-->
-            <!--                            android:textSize="12sp" />-->
-            <!--                    </LinearLayout>-->
-            <!--                </androidx.cardview.widget.CardView>-->
-            <!--            </LinearLayout>-->
-
-
-
-            <!-- Additional Features Section -->
             <TextView
+                android:id="@+id/tvTitle"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginBottom="16dp"
-                android:text="📊 Track &amp; Support"
-                android:textColor="@color/blue_dark"
-                android:textSize="20sp"
+                android:lineSpacingExtra="8dp"
+                android:text="@string/let_s_do_education_therapyActivities"
+                android:textAlignment="center"
+                android:textColor="@color/green_dark"
+                android:textSize="26sp"
                 android:textStyle="bold" />
 
-            <!-- Progress Card -->
-<!--            <androidx.cardview.widget.CardView-->
-<!--                android:id="@+id/card_progress"-->
-<!--                android:layout_width="match_parent"-->
-<!--                android:layout_height="wrap_content"-->
-<!--                android:layout_marginBottom="16dp"-->
-<!--                app:cardCornerRadius="20dp"-->
-<!--                app:cardElevation="4dp">-->
-
-<!--                <LinearLayout-->
-<!--                    android:layout_width="match_parent"-->
-<!--                    android:layout_height="wrap_content"-->
-<!--                    android:background="@color/white"-->
-<!--                    android:orientation="horizontal"-->
-<!--                    android:padding="20dp">-->
-
-<!--                    <LinearLayout-->
-<!--                        android:layout_width="0dp"-->
-<!--                        android:layout_height="wrap_content"-->
-<!--                        android:layout_weight="1"-->
-<!--                        android:orientation="vertical">-->
-
-<!--                        <TextView-->
-<!--                            android:layout_width="wrap_content"-->
-<!--                            android:layout_height="wrap_content"-->
-<!--                            android:text="📈 Check Progress"-->
-<!--                            android:textColor="@color/blue_dark"-->
-<!--                            android:textSize="18sp"-->
-<!--                            android:textStyle="bold" />-->
-
-<!--                        <TextView-->
-<!--                            android:layout_width="wrap_content"-->
-<!--                            android:layout_height="wrap_content"-->
-<!--                            android:layout_marginTop="4dp"-->
-<!--                            android:text="View your child's achievements"-->
-<!--                            android:textColor="@color/gray"-->
-<!--                            android:textSize="13sp"-->
-<!--                            android:textStyle="bold" />-->
-<!--                    </LinearLayout>-->
-
-<!--                    <Button-->
-<!--                        android:id="@+id/check_progress"-->
-<!--                        android:layout_width="wrap_content"-->
-<!--                        android:layout_height="48dp"-->
-<!--                        android:layout_gravity="center_vertical"-->
-<!--                        android:backgroundTint="@color/light_orange"-->
-<!--                        android:paddingStart="24dp"-->
-<!--                        android:paddingEnd="24dp"-->
-<!--                        android:text="View"-->
-<!--                        android:textAllCaps="false"-->
-<!--                        android:textColor="@color/white"-->
-<!--                        android:textSize="15sp"-->
-<!--                        android:textStyle="bold"-->
-<!--                        app:cornerRadius="24dp" />-->
-<!--                </LinearLayout>-->
-<!--            </androidx.cardview.widget.CardView>-->
-
-            <!-- Chatbot Card -->
-            <androidx.cardview.widget.CardView
-                android:id="@+id/card_chatbot"
+            <Button
+                android:id="@+id/btn_recommend"
+                style="@style/SolidGreenButton"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginBottom="16dp"
-                app:cardCornerRadius="20dp"
-                app:cardElevation="4dp">
+                android:layout_height="55dp"
+                android:layout_marginTop="40dp"
+                android:text="Recommend for you"
+                android:textAllCaps="false"
+                android:textColor="@color/white"
+                android:textSize="20sp"
+                android:textStyle="bold"
+                app:backgroundTint="@color/bronze" />
 
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:background="@color/white"
-                    android:orientation="horizontal"
-                    android:padding="20dp">
+            <Button
+                android:id="@+id/btn_age1"
+                style="@style/SolidGreenButton"
+                android:layout_width="match_parent"
+                android:layout_height="55dp"
+                android:layout_marginTop="40dp"
+                android:text="@string/age6"
+                android:textAllCaps="false"
+                android:textColor="@color/white"
+                android:textSize="20sp"
+                android:textStyle="bold"
+                app:backgroundTint="@color/green" />
 
-                    <LinearLayout
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:orientation="vertical">
+            <Button
+                android:id="@+id/btn_age2"
+                style="@style/SolidPinkButton"
+                android:layout_width="match_parent"
+                android:layout_height="55dp"
+                android:layout_marginTop="20dp"
+                android:text="@string/age7"
+                android:textAllCaps="false"
+                android:textColor="@color/white"
+                android:textSize="20sp"
+                android:textStyle="bold"
+                app:backgroundTint="@color/pink" />
 
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="💬 Therapy Assistant"
-                            android:textColor="@color/blue_dark"
-                            android:textSize="18sp"
-                            android:textStyle="bold" />
+            <Button
+                android:id="@+id/btn_age3"
+                style="@style/SolidGreenButton"
+                android:layout_width="match_parent"
+                android:layout_height="55dp"
+                android:layout_marginTop="20dp"
+                android:text="@string/age8"
+                android:textAllCaps="false"
+                android:textColor="@color/white"
+                android:textSize="20sp"
+                android:textStyle="bold"
+                app:backgroundTint="@color/dark_orange" />
 
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_marginTop="4dp"
-                            android:text="Chat with AI for support"
-                            android:textColor="@color/gray"
-                            android:textSize="13sp"
-                            android:textStyle="bold" />
-                    </LinearLayout>
+            <Button
+                android:id="@+id/btn_age4"
+                style="@style/SolidPinkButton"
+                android:layout_width="match_parent"
+                android:layout_height="55dp"
+                android:layout_marginTop="20dp"
+                android:text="@string/age9"
+                android:textAllCaps="false"
+                android:textColor="@color/white"
+                android:textSize="20sp"
+                android:textStyle="bold"
+                app:backgroundTint="@color/green" />
 
-                    <Button
-                        android:id="@+id/btn_chatbot"
-                        android:layout_width="wrap_content"
-                        android:layout_height="48dp"
-                        android:layout_gravity="center_vertical"
-                        android:backgroundTint="@color/purple_500"
-                        android:paddingStart="24dp"
-                        android:paddingEnd="24dp"
-                        android:text="Chat"
-                        android:textAllCaps="false"
-                        android:textColor="@color/white"
-                        android:textSize="15sp"
-                        android:textStyle="bold"
-                        app:cornerRadius="24dp" />
-                </LinearLayout>
-            </androidx.cardview.widget.CardView>
+            <Button
+                android:id="@+id/btn_age5"
+                style="@style/SolidPinkButton"
+                android:layout_width="match_parent"
+                android:layout_height="55dp"
+                android:layout_marginTop="20dp"
+                android:text="@string/age10"
+                android:textAllCaps="false"
+                android:textColor="@color/white"
+                android:textSize="20sp"
+                android:textStyle="bold"
+                app:backgroundTint="@color/pink" />
+
+            <Button
+                android:id="@+id/check_progress"
+                style="@style/SolidOrangeButton"
+                android:layout_width="match_parent"
+                android:layout_height="55dp"
+                android:layout_marginTop="38dp"
+                android:text="@string/check_progress"
+                android:textAllCaps="false"
+                android:textColor="@color/white"
+                android:textSize="20sp"
+                android:textStyle="bold"
+                app:backgroundTint="@color/light_orange" />
 
         </LinearLayout>
     </ScrollView>
+
+    <!-- ADD THIS: This is the container where your level fragments will appear -->
+<!--    <androidx.fragment.app.FragmentContainerView-->
+<!--        android:id="@+id/fragment_container"-->
+<!--        android:layout_width="0dp"-->
+<!--        android:layout_height="0dp"-->
+<!--        android:visibility="gone"-->
+<!--        app:layout_constraintTop_toTopOf="parent"-->
+<!--        app:layout_constraintBottom_toBottomOf="parent"-->
+<!--        app:layout_constraintStart_toStartOf="parent"-->
+<!--        app:layout_constraintEnd_toEndOf="parent" />-->
 
 </androidx.constraintlayout.widget.ConstraintLayout>

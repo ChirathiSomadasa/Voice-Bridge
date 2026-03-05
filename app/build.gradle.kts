@@ -83,25 +83,4 @@ dependencies {
     androidTestImplementation ("androidx.test:rules:1.5.0")
     androidTestImplementation ("androidx.benchmark:benchmark-macro-junit4:1.2.2")
     androidTestImplementation("androidx.startup:startup-runtime:1.1.1")
-
-
-    implementation("com.google.firebase:firebase-ai:17.8.0")
-    implementation("org.tensorflow:tensorflow-lite-metadata:0.4.4")
-    implementation("org.tensorflow:tensorflow-lite-gpu:2.11.0")
-    // Retrofit for API calls
-    implementation("com.squareup.retrofit2:retrofit:2.11.0")
-    implementation("com.squareup.retrofit2:converter-gson:2.11.0")
-    implementation("com.squareup.okhttp3:okhttp:4.12.0")
-    implementation("com.squareup.okhttp3:logging-interceptor:4.12.0")
-    // Gemini AI SDK
-    implementation("com.google.ai.client.generativeai:generativeai:0.9.0")
-    // Coroutines (required for Gemini)
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3")
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.3")
-    // Lifecycle (for lifecycleScope)
-    implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.6.2")
-    // Import the Firebase BoM (Current 2026 version)
-    implementation(platform("com.google.firebase:firebase-bom:33.3.0"))
-    // Use the official Firebase AI Logic SDK instead of the legacy standalone SDK
-    implementation("com.google.firebase:firebase-ai")
 }

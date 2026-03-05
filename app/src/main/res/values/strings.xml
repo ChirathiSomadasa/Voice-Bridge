@@ -31,7 +31,7 @@
     <string name="let_s_talk">Let\'s Talk</string>
     <string name="talk_with_nsymbols">Talk With\nSymbols</string>
     <string name="little_nadventure">Little\nAdventure</string>
-    <string name="learn_nknowledge">Educational\nTherapies</string>
+    <string name="learn_nknowledge">Learn\nKnowledge</string>
     <string name="let_s_talking_with_symbols">Let\'s Talking With Symbols!</string>
     <string name="quick_words">Quick Words</string>
     <string name="symbol_charts">Symbol Charts</string>
@@ -66,5 +66,4 @@
     <string name="processing">Processing...</string>
     <string name="refresh">refresh</string>
     <string name="speaker">speaker</string>
-    <string name="Manage_nlessons">Progress \nCheck</string>
 </resources>

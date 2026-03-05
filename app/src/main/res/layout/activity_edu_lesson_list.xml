@@ -71,25 +71,13 @@
                 android:id="@+id/tvListTitle"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="AI Recommended Therapy Tasks"
+                android:text="Select a Lesson"
                 android:textAlignment="center"
                 android:textColor="@color/green_dark"
                 android:textSize="26sp"
                 android:textStyle="bold"
                 android:lineSpacingExtra="4dp"
-                android:layout_marginBottom="8dp" />
-
-            <!-- AI Info subtitle -->
-            <TextView
-                android:id="@+id/tvAiSubtitle"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="Personalized tasks based on age and disorder"
-                android:textAlignment="center"
-                android:textColor="@android:color/darker_gray"
-                android:textSize="14sp"
-                android:layout_marginBottom="16dp"
-                android:visibility="gone" />
+                android:layout_marginBottom="12dp" />
 
             <ProgressBar
                 android:id="@+id/progressBar"
@@ -98,18 +86,6 @@
                 android:layout_gravity="center"
                 android:visibility="visible"
                 android:layout_marginBottom="12dp" />
-            
-            <!-- Loading message -->
-            <TextView
-                android:id="@+id/tvLoadingMessage"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="AI is analyzing and selecting best therapy tasks..."
-                android:textAlignment="center"
-                android:textColor="@android:color/darker_gray"
-                android:textSize="14sp"
-                android:layout_marginBottom="16dp"
-                android:visibility="visible" />
 
             <androidx.recyclerview.widget.RecyclerView
                 android:id="@+id/rvLessons"
