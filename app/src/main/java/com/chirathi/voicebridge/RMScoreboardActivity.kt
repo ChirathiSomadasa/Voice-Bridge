@@ -403,7 +403,7 @@ class RMScoreboardActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
 
         dashboardButton.setOnClickListener {
             if (::tts.isInitialized && isTtsReady) tts.stop()
-            startActivity(Intent(this, GameDashboardActivity::class.java))
+            startActivity(Intent(this, SongSelectionActivity::class.java))
             finish()
         }
 

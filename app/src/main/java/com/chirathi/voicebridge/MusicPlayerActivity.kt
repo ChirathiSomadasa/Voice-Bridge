@@ -157,9 +157,6 @@ class MusicPlayerActivity : AppCompatActivity() {
                     likeButton.animate().scaleX(1f).scaleY(1f).setDuration(130).start()
                 }.start()
         }
-
-        // Background tap → back
-        findViewById<View>(R.id.rootLayout).setOnClickListener { onBackPressed() }
     }
 
     // ── Load a new song without leaving the activity ───────────────────────

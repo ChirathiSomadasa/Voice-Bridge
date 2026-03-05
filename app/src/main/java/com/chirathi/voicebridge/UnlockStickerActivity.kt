@@ -419,7 +419,7 @@ class UnlockStickerActivity : AppCompatActivity() {
     }
 
     private fun onDashboardClicked() {
-        startActivity(Intent(this, GameDashboardActivity::class.java).apply {
+        startActivity(Intent(this, RoutineSelectionActivity::class.java).apply {
             flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_NEW_TASK
         })
         finish()
