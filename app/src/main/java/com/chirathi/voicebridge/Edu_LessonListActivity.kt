@@ -59,14 +59,14 @@ class Edu_LessonListActivity : AppCompatActivity() {
                 }
 
                 val adapter = LessonAdapter(lessonList) { selectedLesson, index ->
-                    val intent = Intent(this, Edu_LessonDetailActivity::class.java).apply {
-                        putExtra("lesson", selectedLesson)
-                        putExtra("AGE_GROUP", age)
-                        putExtra("DISORDER_TYPE", disorderType)
-                        putExtra("DISORDER_SEVERITY", disorderSeverity)
-                        putParcelableArrayListExtra("LESSON_LIST", ArrayList(lessonList))
-                        putExtra("LESSON_INDEX", index)
-                    }
+//                    val intent = Intent(this, Edu_LessonDetailActivity::class.java).apply {
+//                        putExtra("lesson", selectedLesson)
+//                        putExtra("AGE_GROUP", age)
+//                        putExtra("DISORDER_TYPE", disorderType)
+//                        putExtra("DISORDER_SEVERITY", disorderSeverity)
+//                        putParcelableArrayListExtra("LESSON_LIST", ArrayList(lessonList))
+//                        putExtra("LESSON_INDEX", index)
+//                    }
                     startActivity(intent)
                 }
                 recyclerView.adapter = adapter
