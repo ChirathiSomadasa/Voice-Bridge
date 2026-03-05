@@ -1,6 +1,10 @@
 package com.chirathi.voicebridge
 
+import android.graphics.Typeface
 import android.os.Bundle
+import android.text.SpannableString
+import android.text.Spanned
+import android.text.style.StyleSpan
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -25,6 +29,7 @@ import kotlinx.coroutines.launch
 class AITherapyTasksActivity : AppCompatActivity() {
     
     private val aiRepository = AIRepository()
+    private val geminiHelper = Edu_GeminiHelper() // uses BuildConfig key by default
 
     companion object {
         private const val EXTRA_TEXT_DESCRIPTION = "TEXT_DESCRIPTION"
@@ -191,11 +196,52 @@ class AITherapyTasksActivity : AppCompatActivity() {
                 ${if (matchScore != null) "⭐ AI Match: ${(matchScore * 100).toInt()}%" else ""}
             """.trimIndent()
 
-        AlertDialog.Builder(this@AITherapyTasksActivity)
-            .setTitle("📚 $taskTitle")
-            .setMessage(previewMsg)
-            .setNegativeButton("Close", null)
-            .show()
+//        AlertDialog.Builder(this@AITherapyTasksActivity)
+//            .setTitle("📚 $taskTitle")
+//            .setMessage(previewMsg)
+//            .setNegativeButton("Close", null)
+//            .show()
+
+        val loadingDialog = AlertDialog.Builder(this)
+            .setView(ProgressBar(this))
+            .setCancelable(false)
+            .create()
+        loadingDialog.show()
+
+        lifecycleScope.launch {
+            val aiText = try {
+                geminiHelper.generateTherapyDetail(task)
+            } catch (e: Exception) {
+                null
+            } finally {
+                loadingDialog.dismiss()
+            }
+
+            val messageToShow = if (!aiText.isNullOrBlank()) aiText.trim() else previewMsg
+            val boldTargets = listOf("STEP 1:", "STEP 2:", "STEP 3:")
+            val spannable = SpannableString(messageToShow).apply {
+                boldTargets.forEach { target ->
+                    val start = messageToShow.indexOf(target)
+                    if (start >= 0) {
+                        setSpan(
+                            StyleSpan(Typeface.BOLD),
+                            start,
+                            start + target.length,
+                            Spanned.SPAN_EXCLUSIVE_EXCLUSIVE
+                        )
+                    }
+                }
+            }
+            AlertDialog.Builder(this@AITherapyTasksActivity)
+                .setTitle("📚 $taskTitle")
+                .setMessage(spannable)
+//                .setPositiveButton("Start This Activity") { dialog, _ ->
+//                    Toast.makeText(this@AITherapyTasksActivity, "Starting: $taskTitle", Toast.LENGTH_SHORT).show()
+//                    dialog.dismiss()
+//                }
+                .setNegativeButton("Close", null)
+                .show()
+        }
     }
 
 //    private fun showTaskDetails(task: TherapyTask) {

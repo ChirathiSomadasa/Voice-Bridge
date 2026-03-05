@@ -27,6 +27,7 @@ android {
         val properties = Properties()
         properties.load(project.rootProject.file("local.properties").inputStream())
         buildConfigField("String", "GEMINI_FEEDBACK_API_KEY", "\"${properties.getProperty("GEMINI_FEEDBACK_API_KEY")}\"")
+        buildConfigField("String", "GEMINI_Therapy_API_KEY", "\"${properties.getProperty("GEMINI_Therapy_API_KEY")}\"")
     }
 
     buildTypes {
@@ -85,22 +86,20 @@ dependencies {
     androidTestImplementation("androidx.startup:startup-runtime:1.1.1")
 
 
-    implementation("com.google.firebase:firebase-ai:17.8.0")
     implementation("org.tensorflow:tensorflow-lite-metadata:0.4.4")
     implementation("org.tensorflow:tensorflow-lite-gpu:2.11.0")
     // Retrofit for API calls
     implementation("com.squareup.retrofit2:retrofit:2.11.0")
     implementation("com.squareup.retrofit2:converter-gson:2.11.0")
-    implementation("com.squareup.okhttp3:okhttp:4.12.0")
+    // Ktor client required by the generativeai library (fixes NoClassDefFoundError for HttpTimeout)
+    implementation("io.ktor:ktor-client-core:2.3.6")
+    implementation("io.ktor:ktor-client-okhttp:2.3.6") // use Android engine or OkHttp engine on Android
     implementation("com.squareup.okhttp3:logging-interceptor:4.12.0")
-    // Gemini AI SDK
-//    implementation("com.google.ai.client.generativeai:generativeai:0.9.0")
+
     // Coroutines (required for Gemini)
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.3")
     // Lifecycle (for lifecycleScope)
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.6.2")
     // Import the Firebase BoM (Current 2026 version)
     implementation(platform("com.google.firebase:firebase-bom:33.3.0"))
-    // Use the official Firebase AI Logic SDK instead of the legacy standalone SDK
-    implementation("com.google.firebase:firebase-ai")
 }

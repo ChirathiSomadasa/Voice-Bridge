@@ -86,6 +86,7 @@
             android:text="Practice deep breathing exercises to improve speech fluency and reduce stuttering episodes"
             android:textSize="14sp"
             android:textColor="@android:color/black"
+            android:textStyle="bold"
             android:maxLines="2"
             android:ellipsize="end"
             android:layout_marginBottom="12dp" />
@@ -212,6 +213,7 @@
                 android:layout_height="wrap_content"
                 android:text="View Details"
                 android:textColor="@color/white"
+                android:textStyle="bold"
                 android:backgroundTint="@color/green_dark"
                 android:layout_marginEnd="8dp" />
 
