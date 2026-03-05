@@ -14,15 +14,15 @@ class TeacherDashboardActivity : AppCompatActivity() {
         navigationView.setOnItemSelectedListener  { menuItem ->
             when (menuItem.itemId) {
                 R.id.fragment_home -> {
-                    replaceFragment(HomeFragment())
+                    replaceFragment(TeacherHomeFragment())
                     return@setOnItemSelectedListener true
                 }
                 R.id.fragment_notification -> {
-                    replaceFragment(ProgressFragment())
+                    replaceFragment(ProgressFragment())   // You need to create a TeacherProgressFragment
                     return@setOnItemSelectedListener true
                 }
                 R.id.fragment_profile -> {
-                    replaceFragment(ProfileFragment())
+                    replaceFragment(ProfileFragment())  // You need to create a TeacherProfileFragment
                     return@setOnItemSelectedListener true
                 }
                 else -> false

@@ -1,0 +1,68 @@
+[
+    {
+        "age_group": "Preschool (3-5)",
+        "disorder_category": "Language Development",
+        "iep_smart_goal": "By the end of the semester, the child will use two-word combinations (e.g., 'want cookie') to request objects during playtime in 80% of opportunities.",
+        "suggested_activity": "Object Requesting Game: Child must combine two symbols (e.g., 'Want' + 'Ball') to get the item."
+    },
+    {
+        "age_group": "Preschool (3-5)",
+        "disorder_category": "Articulation (Speech Sound)",
+        "iep_smart_goal": "The child will correctly produce the /p/ sound in the initial position at the word level with 80% accuracy during structured activities.",
+        "suggested_activity": "Popping Bubbles: Child says 'Pop' or 'Push' to trigger a bubble animation."
+    },
+    {
+        "age_group": "Preschool (3-5)",
+        "disorder_category": "Fluency (Stuttering)",
+        "iep_smart_goal": "By the end of the school year, the child will use a slow speech rate during structured activities to reduce stuttering occurrences by 50%.",
+        "suggested_activity": "Turtle Talk: A game where the character moves only when the child speaks slowly."
+    },
+    {
+        "age_group": "Preschool (3-5)",
+        "disorder_category": "Pragmatic (Social Skills)",
+        "iep_smart_goal": "By the end of the quarter, the child will initiate greetings with peers (e.g., 'hi', 'hello') in 4 out of 5 opportunities during free play.",
+        "suggested_activity": "Morning Greeter: Child drags the 'Hello' emoji to different characters to wake them up."
+    },
+    {
+        "age_group": "Elementary (6-10)",
+        "disorder_category": "Language (Vocabulary)",
+        "iep_smart_goal": "Within six months, the student will define grade-level vocabulary words and use them appropriately in sentences with 80% accuracy.",
+        "suggested_activity": "Word Builder: Child matches a word to its definition picture and records a sentence."
+    },
+    {
+        "age_group": "Elementary (6-10)",
+        "disorder_category": "Articulation (Speech Sound)",
+        "iep_smart_goal": "By the end of the semester, the student will correctly produce the /r/ sound in all positions at the word level with 90% accuracy.",
+        "suggested_activity": "Roaring Racer: Car speeds up only when the /r/ sound (e.g., 'Run', 'Race') is pronounced correctly."
+    },
+    {
+        "age_group": "Elementary (6-10)",
+        "disorder_category": "Fluency (Stuttering)",
+        "iep_smart_goal": "Within three months, the student will use light articulatory contacts while reading aloud, achieving 85% fluency.",
+        "suggested_activity": "Feather Touch: Visual feedback shows a feather floating; if the child speaks too hard/tensely, the feather falls."
+    },
+    {
+        "age_group": "Elementary (6-10)",
+        "disorder_category": "Pragmatic (Social Skills)",
+        "iep_smart_goal": "Within three months, the student will identify and explain the emotions of characters in a short story with 80% accuracy.",
+        "suggested_activity": "Emotion Detective: Child watches a video clip and selects the correct emotion emoji for the character."
+    },
+    {
+        "age_group": "Middle School (11-14)",
+        "disorder_category": "Language (Inferencing)",
+        "iep_smart_goal": "Over the next quarter, the student will make inferences about character motivations in a story and justify their reasoning in a group discussion.",
+        "suggested_activity": "Mystery Solver: Child reads a clue and records voice notes explaining 'Why' the character did it."
+    },
+    {
+        "age_group": "Middle School (11-14)",
+        "disorder_category": "Fluency (Self-Monitoring)",
+        "iep_smart_goal": "Within six months, the student will track their own fluency patterns using a self-monitoring checklist in 4 out of 5 sessions.",
+        "suggested_activity": "Speech Journal: After a speaking task, the user rates their own fluency on a slider (1-5)."
+    },
+    {
+        "age_group": "High School (15-18)",
+        "disorder_category": "Social Communication (Job Skills)",
+        "iep_smart_goal": "By the end of the school year, the student will participate in a mock job interview, demonstrating appropriate eye contact and clear speech.",
+        "suggested_activity": "Interview Simulator: An AI avatar asks questions, and the camera tracks eye contact while recording answers."
+    }
+]
