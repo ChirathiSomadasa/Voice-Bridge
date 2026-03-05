@@ -94,9 +94,8 @@ dependencies {
     implementation("com.squareup.okhttp3:okhttp:4.12.0")
     implementation("com.squareup.okhttp3:logging-interceptor:4.12.0")
     // Gemini AI SDK
-    implementation("com.google.ai.client.generativeai:generativeai:0.9.0")
+//    implementation("com.google.ai.client.generativeai:generativeai:0.9.0")
     // Coroutines (required for Gemini)
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.3")
     // Lifecycle (for lifecycleScope)
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.6.2")
