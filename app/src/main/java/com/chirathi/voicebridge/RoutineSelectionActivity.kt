@@ -83,6 +83,12 @@ class RoutineSelectionActivity : AppCompatActivity() {
         StickerManager.updateRoutineUnlocks(this)
         checkRoutineUnlock()
         updateStickerCountDisplay()
+        CalmMusicManager.onActivityResume(this)
+    }
+
+    override fun onPause() {
+        super.onPause()
+        CalmMusicManager.onActivityPause()
     }
 
     // ─────────────────────────────────────────────────────────────────────────

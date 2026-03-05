@@ -45,7 +45,7 @@
         android:layout_marginEnd="-20dp"
         android:gravity="center"
         android:text="ROW ROW ROW YOUR BOAT"
-        android:textColor="@color/black"
+        android:textColor="@color/dark_green"
         android:textSize="20sp"
         android:textStyle="bold"
         app:layout_constraintEnd_toEndOf="parent"

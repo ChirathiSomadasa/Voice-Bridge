@@ -188,6 +188,47 @@ class MusicPlayerActivity : AppCompatActivity() {
         playMusic()
     }
 
+    private fun buildHighlightedLyric(lyricText: String): android.text.SpannableString {
+        val spannable = android.text.SpannableString(lyricText)
+
+        // Collect all keyword words for the current song
+        val keywordWords = currentKeywords.map { it.word.lowercase() }.distinct()
+
+        for (word in keywordWords) {
+            var searchStart = 0
+            val lowerLyric = lyricText.lowercase()
+            while (searchStart < lowerLyric.length) {
+                val idx = lowerLyric.indexOf(word, searchStart)
+                if (idx == -1) break
+
+                // Make sure we match whole words, not substrings
+                val before = if (idx > 0) lowerLyric[idx - 1] else ' '
+                val after  = if (idx + word.length < lowerLyric.length) lowerLyric[idx + word.length] else ' '
+                if (!before.isLetter() && !after.isLetter()) {
+                    spannable.setSpan(
+                        android.text.style.ForegroundColorSpan(
+                            android.graphics.Color.parseColor("#D32F2F") // dark orange
+                        ),
+                        idx, idx + word.length,
+                        android.text.Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
+                    )
+                    spannable.setSpan(
+                        android.text.style.RelativeSizeSpan(1.25f), // 25% bigger than surrounding text
+                        idx, idx + word.length,
+                        android.text.Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
+                    )
+                    spannable.setSpan(
+                        android.text.style.StyleSpan(android.graphics.Typeface.BOLD),
+                        idx, idx + word.length,
+                        android.text.Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
+                    )
+                }
+                searchStart = idx + word.length
+            }
+        }
+        return spannable
+    }
+
     private fun resourceForSong(title: String): Int = when (title) {
         "Twinkle Twinkle Little Star" -> R.raw.twinkle_twinkle
         "Jack and Jill"               -> R.raw.jack_and_jill
@@ -290,7 +331,12 @@ class MusicPlayerActivity : AppCompatActivity() {
     // ── Lyrics & flash-card sync ───────────────────────────────────────────
 
     private fun updateLyricsAndKeywords(pos: Int) {
-        lyricsTextView.text = currentLyrics.find { pos in it.startTime..it.endTime }?.text ?: ""
+        val lyricLine = currentLyrics.find { pos in it.startTime..it.endTime }?.text
+        if (lyricLine != null) {
+            lyricsTextView.text = buildHighlightedLyric(lyricLine)
+        } else {
+            lyricsTextView.text = ""
+        }
 
         currentKeywords.forEach { kw ->
             if (pos in kw.startTime..kw.endTime) {

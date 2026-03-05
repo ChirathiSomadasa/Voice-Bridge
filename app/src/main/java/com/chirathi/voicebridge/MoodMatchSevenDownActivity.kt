@@ -127,6 +127,15 @@ class MoodMatchSevenDownActivity : AppCompatActivity(), TextToSpeech.OnInitListe
         showHeader()
         setupGame()
     }
+    override fun onResume() {
+        super.onResume()
+        CalmMusicManager.onActivityResume(this)
+    }
+
+    override fun onPause() {
+        super.onPause()
+        CalmMusicManager.onActivityPause()
+    }
 
     override fun onDestroy() {
         super.onDestroy()

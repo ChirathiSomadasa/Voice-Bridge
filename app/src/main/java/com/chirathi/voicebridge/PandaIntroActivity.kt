@@ -30,14 +30,7 @@ class PandaIntroActivity : AppCompatActivity() {
     private val db = Firebase.firestore
     private val handler = Handler(Looper.getMainLooper())
 
-    // ── TTS ───────────────────────────────────────────────────────────────────
-    private var tts: android.speech.tts.TextToSpeech? = null
-    private var isTtsReady = false
-    private var userName = "friend"
-
-    // ── FIX: cache age from first Firestore load so navigation is instant ─────
     private var cachedAge: Int = 6
-    private var ageLoaded: Boolean = false
 
     // =========================================================================
     // Lifecycle
@@ -61,10 +54,6 @@ class PandaIntroActivity : AppCompatActivity() {
         val uri = Uri.parse("android.resource://$packageName/${R.raw.game_intro}")
         videoView.setVideoURI(uri)
 
-        // ── FIX 1: init TTS FIRST before video starts, no extra delay ─────────
-        initTts()
-
-        // Load user name + age in one Firestore call
         loadUserData()
 
         videoView.start()
@@ -74,54 +63,13 @@ class PandaIntroActivity : AppCompatActivity() {
             navigateToMoodMatch()
         }
 
-        // ── FIX 2: use cached age on completion — no second Firestore call ─────
         videoView.setOnCompletionListener {
             navigateToMoodMatch()
         }
     }
 
     // =========================================================================
-    // TTS — speaks immediately when engine ready, no extra Handler delay
-    // =========================================================================
-
-    private fun initTts() {
-        tts = android.speech.tts.TextToSpeech(this) { status ->
-            if (status == android.speech.tts.TextToSpeech.SUCCESS) {
-                tts?.language    = java.util.Locale.US
-                tts?.setPitch(1.4f)
-                tts?.setSpeechRate(0.80f)
-                isTtsReady = true
-                startVoiceSequence()   // no extra delay
-            }
-        }
-    }
-
-    /**
-     * Voice sequence — total ~9 seconds.
-     *
-     *  0ms    → "Hi"
-     *  1500ms → "I am Emo"
-     *  3200ms → "I am so happy to see you"
-     *  5200ms → (child's name)
-     *  6500ms → "Can you help me guess the emotion?"
-     *  8200ms → "We will have so much fun!"
-     */
-    private fun startVoiceSequence() {
-        if (!isTtsReady) return
-
-        speakPhrase("Hi", "hi")
-        handler.postDelayed({ speakPhrase("I am so happy to see you", "happy")          }, 600)
-        handler.postDelayed({ speakPhrase(userName, "username")                         }, 1000)
-        handler.postDelayed({ speakPhrase("Can you help me guess the emotion?", "help") }, 2000)
-        handler.postDelayed({ speakPhrase("We will have so much fun!", "fun")           }, 4200)
-    }
-
-    private fun speakPhrase(text: String, utteranceId: String) {
-        tts?.speak(text, android.speech.tts.TextToSpeech.QUEUE_ADD, null, utteranceId)
-    }
-
-    // =========================================================================
-    // Firestore — loads name AND age in one call, caches both
+    // Firestore — loads name AND age in one call
     // =========================================================================
 
     private fun loadUserData() {
@@ -133,24 +81,16 @@ class PandaIntroActivity : AppCompatActivity() {
         db.collection("users").document(currentUser.uid).get()
             .addOnSuccessListener { document ->
                 if (document.exists()) {
-                    // Name
                     val firstName = document.getString("firstName")
-                    if (!firstName.isNullOrEmpty()) {
-                        adventureText.text = "$firstName's\nAdventure"
-                        userName = firstName
+                    adventureText.text = if (!firstName.isNullOrEmpty()) {
+                        "$firstName's\nAdventure"
                     } else {
-                        adventureText.text = "Your\nAdventure"
+                        "Your\nAdventure"
                     }
 
-                    // Age — cached so navigation needs no second network call
                     val ageString = document.getString("age")
                     if (ageString != null) {
-                        try {
-                            cachedAge = ageString.toInt()
-                            ageLoaded = true
-                        } catch (_: NumberFormatException) {
-                            ageLoaded = false
-                        }
+                        try { cachedAge = ageString.toInt() } catch (_: NumberFormatException) {}
                     }
                 } else {
                     adventureText.text = "Your\nAdventure"
@@ -162,7 +102,7 @@ class PandaIntroActivity : AppCompatActivity() {
     }
 
     // =========================================================================
-    // Navigation — instant, uses cachedAge, no Firestore call
+    // Navigation
     // =========================================================================
 
     private fun navigateToMoodMatch() {
@@ -208,10 +148,10 @@ class PandaIntroActivity : AppCompatActivity() {
 
     private fun startFloatingAnimation(view: View, duration: Long, floatAmount: Float) {
         val floatAnim = TranslateAnimation(0f, 0f, 0f, floatAmount).apply {
-            this.duration  = duration
-            repeatCount    = Animation.INFINITE
-            repeatMode     = Animation.REVERSE
-            interpolator   = AccelerateDecelerateInterpolator()
+            this.duration = duration
+            repeatCount   = Animation.INFINITE
+            repeatMode    = Animation.REVERSE
+            interpolator  = AccelerateDecelerateInterpolator()
         }
         val rotateAnim = RotateAnimation(
             0f, 360f,
@@ -263,7 +203,6 @@ class PandaIntroActivity : AppCompatActivity() {
 
     private fun stopAllAnimations() {
         handler.removeCallbacksAndMessages(null)
-        tts?.stop()
 
         (sparkle1.drawable   as? android.graphics.drawable.AnimationDrawable)?.stop()
         (sparkle2.drawable   as? android.graphics.drawable.AnimationDrawable)?.stop()
@@ -296,8 +235,6 @@ class PandaIntroActivity : AppCompatActivity() {
     override fun onDestroy() {
         super.onDestroy()
         videoView.stopPlayback()
-        tts?.stop()
-        tts?.shutdown()
         handler.removeCallbacksAndMessages(null)
     }
 }

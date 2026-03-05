@@ -134,6 +134,16 @@ class ActivitySequenceOverActivity : AppCompatActivity() {
         sessionStart()
     }
 
+    override fun onResume() {
+        super.onResume()
+        CalmMusicManager.onActivityResume(this)
+    }
+
+    override fun onPause() {
+        super.onPause()
+        CalmMusicManager.onActivityPause()
+    }
+
     override fun onDestroy() {
         isTimerRunning = false
         timerHandler.removeCallbacks(timerRunnable)

@@ -32,6 +32,29 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
+    <FrameLayout
+        android:id="@+id/btnGameSettings"
+        android:layout_width="45dp"
+        android:layout_height="45dp"
+        android:layout_marginTop="16dp"
+        android:layout_marginEnd="16dp"
+        android:background="@drawable/rounded_button_background_locked"
+        android:clickable="true"
+        android:focusable="true"
+        android:elevation="6dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="parent">
+
+        <ImageView
+            android:layout_width="26dp"
+            android:layout_height="26dp"
+            android:layout_gravity="center"
+            android:contentDescription="Game Settings"
+            android:scaleType="fitCenter"
+            android:src="@drawable/game_settings" />
+
+    </FrameLayout>
+
     <ImageView
         android:id="@+id/bottom_bg"
         android:layout_width="0dp"
