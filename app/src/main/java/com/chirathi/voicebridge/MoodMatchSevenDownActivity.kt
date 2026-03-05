@@ -195,6 +195,26 @@ class MoodMatchSevenDownActivity : AppCompatActivity(), TextToSpeech.OnInitListe
         pandaImage     = findViewById(R.id.pandaImage)
         guessText      = findViewById(R.id.guessText)
 
+        findViewById<ImageView>(R.id.backBtn).setOnClickListener {
+            if (currentRound > 1 || isAnswerSelected || wrongAttempts > 0) {
+                android.app.AlertDialog.Builder(this)
+                    .setMessage("Leave this game? Your progress will be lost.")
+                    .setPositiveButton("Leave") { _, _ ->
+                        startActivity(Intent(this, GameDashboardActivity::class.java).apply {
+                            flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
+                        })
+                        finish()
+                    }
+                    .setNegativeButton("Stay", null)
+                    .show()
+            } else {
+                startActivity(Intent(this, GameDashboardActivity::class.java).apply {
+                    flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
+                })
+                finish()
+            }
+        }
+
         topGameImage1.visibility = View.INVISIBLE
         pandaImage.visibility    = View.INVISIBLE
         guessText.visibility     = View.INVISIBLE

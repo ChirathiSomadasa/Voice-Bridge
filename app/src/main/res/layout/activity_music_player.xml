@@ -23,17 +23,31 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
+    <ImageView
+        android:id="@+id/backBtn"
+        android:layout_width="45dp"
+        android:layout_height="45dp"
+        android:layout_marginStart="1dp"
+        android:layout_marginTop="16dp"
+        android:clickable="true"
+        android:contentDescription="Back"
+        android:focusable="true"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:srcCompat="@drawable/back" />
+
     <!-- Song Title -->
     <TextView
         android:id="@+id/songTitle"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:text="ROW ROW ROW YOUR BOAT"
-        android:textSize="24sp"
-        android:textStyle="bold"
-        android:textColor="@color/black"
-        android:gravity="center"
+        android:layout_width="340dp"
+        android:layout_height="47dp"
         android:layout_marginTop="16dp"
+        android:layout_marginEnd="-20dp"
+        android:gravity="center"
+        android:text="ROW ROW ROW YOUR BOAT"
+        android:textColor="@color/black"
+        android:textSize="20sp"
+        android:textStyle="bold"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />

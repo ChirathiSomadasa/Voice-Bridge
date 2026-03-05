@@ -102,6 +102,10 @@ class MusicPlayerActivity : AppCompatActivity() {
         likeButton        = findViewById(R.id.likeButton)
         songTitleTextView = findViewById(R.id.songTitle)
 
+        findViewById<ImageView>(R.id.backBtn).setOnClickListener {
+            onBackPressed()
+        }
+
         updateSongTitleUI()
         flashImage.visibility = View.INVISIBLE
     }

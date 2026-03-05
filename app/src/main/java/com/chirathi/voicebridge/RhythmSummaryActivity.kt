@@ -138,6 +138,21 @@ class RhythmSummaryActivity : AppCompatActivity() {
         nextButton        = findViewById(R.id.nextButton)
         levelBadge        = findViewById(R.id.levelBadge)
         levelIndicator    = findViewById(R.id.levelIndicator)
+
+//        findViewById<ImageView>(R.id.backBtn).setOnClickListener {
+//            android.app.AlertDialog.Builder(this)
+//                .setMessage("Leave this game? Your progress will be lost.")
+//                .setPositiveButton("Leave") { _, _ ->
+//                    isGameFinished = true
+//                    handler.removeCallbacksAndMessages(null)
+//                    startActivity(Intent(this, SongSelectionActivity::class.java).apply {
+//                        flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
+//                    })
+//                    finish()
+//                }
+//                .setNegativeButton("Stay", null)
+//                .show()
+//        }
     }
 
     private fun initializeAudio() {

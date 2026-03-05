@@ -336,10 +336,25 @@ class ActivitySequenceUnderActivity : AppCompatActivity() {
         btnClear.setOnClickListener { clearAllSelections() }
 
         findViewById<ImageView>(R.id.backBtn).setOnClickListener {
-            startActivity(Intent(this, RoutineSelectionActivity::class.java).apply {
-                flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
-            })
-            finish()
+            if (verticalContainer.visibility == View.VISIBLE) {
+                // Mid-game — warn before leaving
+                android.app.AlertDialog.Builder(this)
+                    .setMessage("Leave this game? Your progress will be lost.")
+                    .setPositiveButton("Leave") { _, _ ->
+                        startActivity(Intent(this, RoutineSelectionActivity::class.java).apply {
+                            flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
+                        })
+                        finish()
+                    }
+                    .setNegativeButton("Stay", null)
+                    .show()
+            } else {
+                // Still in preview phase — safe to leave directly
+                startActivity(Intent(this, RoutineSelectionActivity::class.java).apply {
+                    flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
+                })
+                finish()
+            }
         }
 
         setupInitialView()
