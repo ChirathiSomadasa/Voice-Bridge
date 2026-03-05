@@ -1,0 +1,229 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- AI Therapy Task Card Item -->
+<com.google.android.material.card.MaterialCardView 
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_margin="8dp"
+    app:cardCornerRadius="16dp"
+    app:cardElevation="4dp"
+    app:strokeWidth="1dp"
+    app:strokeColor="#E0E0E0">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="16dp">
+
+        <!-- Header with icon and match score -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:layout_marginBottom="8dp">
+
+            <!-- Task icon/emoji -->
+            <TextView
+                android:id="@+id/tvTaskIcon"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:text="📚"
+                android:textSize="24sp"
+                android:gravity="center"
+                android:background="@drawable/circle_background"
+                android:backgroundTint="#E8F5E9" />
+
+            <!-- Task title -->
+            <TextView
+                android:id="@+id/tvTaskTitle"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Breath Control for Fluency"
+                android:textSize="18sp"
+                android:textStyle="bold"
+                android:textColor="@color/green_dark"
+                android:layout_marginStart="12dp"
+                android:maxLines="2"
+                android:ellipsize="end" />
+
+            <!-- AI match score -->
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:gravity="center"
+                android:background="@drawable/rounded_background"
+                android:backgroundTint="#FFF3E0"
+                android:padding="8dp">
+
+                <TextView
+                    android:id="@+id/tvMatchScore"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="89%"
+                    android:textSize="16sp"
+                    android:textStyle="bold"
+                    android:textColor="#FF6F00" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="match"
+                    android:textSize="10sp"
+                    android:textColor="#FF6F00" />
+            </LinearLayout>
+        </LinearLayout>
+
+        <!-- Description -->
+        <TextView
+            android:id="@+id/tvTaskDescription"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Practice deep breathing exercises to improve speech fluency and reduce stuttering episodes"
+            android:textSize="14sp"
+            android:textColor="@android:color/black"
+            android:maxLines="2"
+            android:ellipsize="end"
+            android:layout_marginBottom="12dp" />
+
+        <!-- Info chips row -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginBottom="8dp">
+
+            <!-- Age group chip -->
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:background="@drawable/rounded_background"
+                android:backgroundTint="#E3F2FD"
+                android:padding="6dp"
+                android:layout_marginEnd="4dp">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="👥"
+                    android:textSize="14sp" />
+
+                <TextView
+                    android:id="@+id/tvAgeGroup"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="6-8 years"
+                    android:textSize="12sp"
+                    android:textColor="#1976D2"
+                    android:layout_marginStart="4dp"
+                    android:maxLines="1"
+                    android:ellipsize="end" />
+            </LinearLayout>
+
+            <!-- Duration chip -->
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:background="@drawable/rounded_background"
+                android:backgroundTint="#F3E5F5"
+                android:padding="6dp"
+                android:layout_marginStart="4dp">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="⏱️"
+                    android:textSize="14sp" />
+
+                <TextView
+                    android:id="@+id/tvDuration"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="15-20 min"
+                    android:textSize="12sp"
+                    android:textColor="#7B1FA2"
+                    android:layout_marginStart="4dp"
+                    android:maxLines="1"
+                    android:ellipsize="end" />
+            </LinearLayout>
+        </LinearLayout>
+
+        <!-- Disorder type -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:background="@drawable/rounded_background"
+            android:backgroundTint="#E8F5E9"
+            android:padding="8dp"
+            android:layout_marginBottom="12dp">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="🎯"
+                android:textSize="14sp" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Best for: "
+                android:textSize="12sp"
+                android:textStyle="bold"
+                android:textColor="#2E7D32"
+                android:layout_marginStart="4dp" />
+
+            <TextView
+                android:id="@+id/tvDisorder"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Stuttering"
+                android:textSize="12sp"
+                android:textColor="#2E7D32"
+                android:maxLines="1"
+                android:ellipsize="end" />
+        </LinearLayout>
+
+        <!-- Action buttons -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="end">
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnViewDetails"
+                style="@style/Widget.MaterialComponents.Button.TextButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="View Details"
+                android:textColor="@color/white"
+                android:backgroundTint="@color/green_dark"
+                android:layout_marginEnd="8dp" />
+
+<!--            <com.google.android.material.button.MaterialButton-->
+<!--                android:id="@+id/btnStartActivity"-->
+<!--                android:layout_width="wrap_content"-->
+<!--                android:layout_height="wrap_content"-->
+<!--                android:text="Start Activity"-->
+<!--                android:backgroundTint="@color/green_dark"-->
+<!--                app:cornerRadius="8dp" />-->
+        </LinearLayout>
+
+    </LinearLayout>
+
+</com.google.android.material.card.MaterialCardView>

@@ -10,13 +10,14 @@ import com.chirathi.voicebridge.R
 
 class LessonAdapter(
     private val lessons: List<LessonModel>,
-    private val onClick: (LessonModel) -> Unit
+    private val onClick: (LessonModel, Int) -> Unit
 ) : RecyclerView.Adapter<LessonAdapter.LessonViewHolder>() {
 
     class LessonViewHolder(view: View) : RecyclerView.ViewHolder(view) {
         val icon: ImageView = view.findViewById(R.id.imgLessonIcon)
         val title: TextView = view.findViewById(R.id.tvLessonTitle)
-        val content: TextView = view.findViewById(R.id.tvLessonContent)
+        val subtitle: TextView = view.findViewById(R.id.tvLessonContent)
+//        val content: TextView = view.findViewById(R.id.tvLessonContent)
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): LessonViewHolder {
@@ -28,8 +29,10 @@ class LessonAdapter(
 
     override fun onBindViewHolder(holder: LessonViewHolder, position: Int) {
         val lesson = lessons[position]
-        holder.title.text = lesson.lessonTitle
-        holder.content.text = lesson.lessonContent
+//        holder.title.text = lesson.lessonTitle
+        holder.title.text = lesson.lessonHint
+        holder.subtitle.text = lesson.subject
+//        holder.content.text = lesson.lessonContent
 
         // Handle Icon
         val iconId = lesson.getIconResId(holder.itemView.context)
@@ -40,7 +43,9 @@ class LessonAdapter(
             holder.icon.setImageResource(R.drawable.lesson_icon)
         }
 
-        holder.itemView.setOnClickListener { onClick(lesson) }
+//        holder.itemView.setOnClickListener { onClick(lesson) }
+        holder.itemView.setOnClickListener { onClick(lesson, position) }
+
     }
 
     override fun getItemCount() = lessons.size
