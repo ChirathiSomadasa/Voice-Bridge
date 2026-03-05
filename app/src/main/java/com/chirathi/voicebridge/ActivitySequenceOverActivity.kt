@@ -207,13 +207,12 @@ class ActivitySequenceOverActivity : AppCompatActivity() {
     }
 
     private fun selectSubRoutine() {
-        val allKeys = routineSentences[currentRoutineId]?.keys?.sorted() ?: listOf(0)
-        val available = allKeys.filter {
+        val available = (0..2).filter {
             !completedSubRoutines.contains(Pair(currentRoutineId, it))
         }.toMutableList()
         if (available.isEmpty()) { resetAllProgress(); currentSubRoutineId = 0; return }
-        val modelRec        = currentPrediction.subRoutine.coerceIn(0, available.size - 1)
-        currentSubRoutineId = available[modelRec]
+        val modelRec        = currentPrediction.subRoutine.coerceIn(0, 2)
+        currentSubRoutineId = if (modelRec < available.size) available[modelRec] else available.last()
     }
 
     private fun resetAllProgress() {

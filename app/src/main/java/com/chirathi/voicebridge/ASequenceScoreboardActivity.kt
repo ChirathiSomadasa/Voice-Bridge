@@ -56,6 +56,8 @@ class ASequenceScoreboardActivity : AppCompatActivity(), TextToSpeech.OnInitList
     private lateinit var btnHome: Button
     private lateinit var motivationalQuote: TextView
 
+    private var gameMode: String = "under"
+
     // Animation containers
     private lateinit var blockDropAnimators: MutableList<AnimatorSet>
     private var starGlowAnimator: ObjectAnimator? = null
@@ -98,7 +100,7 @@ class ASequenceScoreboardActivity : AppCompatActivity(), TextToSpeech.OnInitList
 
         getIntentData()
         Log.d(TAG, "Scoreboard: finalAlpha=$finalAlpha correct=$correctCount errors=$errorCount attempts=$attemptsCount awardSticker=$shouldAwardSticker")
-
+        gameMode = intent.getStringExtra("GAME_MODE") ?: if (userAge >= 8) "over" else "under"
         initializeSounds()
         initializeViews()
         calculateStairCount()
@@ -162,6 +164,7 @@ class ASequenceScoreboardActivity : AppCompatActivity(), TextToSpeech.OnInitList
         previousError        = intent.getStringExtra("PREVIOUS_ERROR") ?: "none"
         userSelectedRoutine  = intent.getIntExtra("USER_SELECTED_ROUTINE", 0)
         userAge              = intent.getIntExtra("USER_AGE", 6)
+        val gameMode = intent.getStringExtra("GAME_MODE") ?: if (userAge >= 8) "over" else "under"
         attemptsCount        = intent.getIntExtra("ATTEMPTS_COUNT", 0)
         shouldAwardSticker   = intent.getBooleanExtra("SHOULD_AWARD_STICKER", false)
     }
@@ -639,7 +642,7 @@ class ASequenceScoreboardActivity : AppCompatActivity(), TextToSpeech.OnInitList
 
     private fun navigateToGame() {
         if (::tts.isInitialized && isTtsReady) tts.stop()
-        val targetActivity = if (userAge >= 8) ActivitySequenceOverActivity::class.java
+        val targetActivity = if (gameMode == "over") ActivitySequenceOverActivity::class.java
         else ActivitySequenceUnderActivity::class.java
         Log.d(TAG, "Continue → ${targetActivity.simpleName}")
         startActivity(Intent(this, targetActivity).apply {

@@ -20,16 +20,6 @@ import androidx.core.content.ContextCompat
 import java.util.Locale
 import kotlin.math.sqrt
 
-/**
- * ActivitySequenceUnderActivity — age 6-7, tap-to-order.
- *
- *  Mini-game fix:
- *   maybeLaunchMiniGame() now uses currentPrediction.minigameTrigger as the
- *   PRIMARY gate (was previously only checking whatsMissingTrigger /
- *   connectDotsTrigger which the model returns as false even when
- *   minigameTrigger = true).  Game type is resolved from the specific
- *   triggers first, then falls back to alternating by error count parity.
- */
 class ActivitySequenceUnderActivity : AppCompatActivity() {
 
     // ── Model ─────────────────────────────────────────────────────────────────
@@ -71,16 +61,15 @@ class ActivitySequenceUnderActivity : AppCompatActivity() {
     private val KEY_COMPLETED_SUBROUTINES = "completed_subroutines"
 
     // ── Game state ────────────────────────────────────────────────────────────
-    private var currentRoutineId     = 0
-    private var currentSubRoutineId  = 0
-    private var currentCorrectOrder  = mutableListOf<String>()
-    private var userAge              = 6
-    private var userSelectedRoutineId= -1
-    private var attemptsCount        = 0
-    private var correctAnswers       = 0
-    private var isGameComplete       = false
-    private val completedSubRoutines = mutableSetOf<Pair<Int,Int>>()
-
+    private var currentRoutineId      = 0
+    private var currentSubRoutineId   = 0
+    private var currentCorrectOrder   = mutableListOf<String>()
+    private var userAge               = 6
+    private var userSelectedRoutineId = -1
+    private var attemptsCount         = 0
+    private var correctAnswers        = 0
+    private var isGameComplete        = false
+    private val completedSubRoutines  = mutableSetOf<Pair<Int,Int>>()
 
     // ── Timer ─────────────────────────────────────────────────────────────────
     private var gameStartTime  = 0L
@@ -111,9 +100,16 @@ class ActivitySequenceUnderActivity : AppCompatActivity() {
     // ── Routines ──────────────────────────────────────────────────────────────
     private val routines = mapOf(
         0 to mapOf(
-            0 to Triple(listOf("wake_up",    "make_bed",     "drink_water"), 1, "Wake up routine"),
-            1 to Triple(listOf("brush_teeth","wash_face",    "dry_towel"),   2, "Hygiene sequence"),
-            2 to Triple(listOf("get_dressed","apply_powder", "put_pajamas"), 3, "Getting dressed")
+            0 to Triple(listOf("rtn0_sub1_wake",   "rtn0_sub1_bed",    "rtn0_sub1_drink"),  1, "Wake up routine"),
+            1 to Triple(listOf("rtn0_sub2_brush",  "rtn0_sub2_wash",   "rtn0_sub2_dry"),    2, "Hygiene sequence"),
+            2 to Triple(listOf("rtn0_sub3_change", "rtn0_sub3_cream",  "rtn0_sub3_wash"),   3, "Getting dressed")
+        ),
+        1 to mapOf(
+            0 to Triple(listOf("rtn1_sub1_wash",   "rtn1_sub1_sit",    "rtn1_sub1_napkin"), 1, "Before eating"),
+            1 to Triple(listOf("rtn1_sub2_eat",    "rtn1_sub2_wipe",   "rtn1_sub2_wash"),   2, "Mealtime")
+        ),
+        2 to mapOf(
+            0 to Triple(listOf("rtn2_sub1_books",  "rtn2_sub1_lunch",  "rtn2_sub1_pack"),   1, "Pack for school")
         )
     )
 
@@ -143,6 +139,7 @@ class ActivitySequenceUnderActivity : AppCompatActivity() {
         setupBubbleProgress()
         loadUserProfile()
     }
+
     override fun onResume() {
         super.onResume()
         CalmMusicManager.onActivityResume(this)
@@ -168,10 +165,7 @@ class ActivitySequenceUnderActivity : AppCompatActivity() {
             val passed = data?.getBooleanExtra(MiniGamesActivitySequence.RESULT_PASSED, false) ?: false
             val score  = data?.getIntExtra(MiniGamesActivitySequence.RESULT_SCORE, 0) ?: 0
             Log.d(TAG, "Mini-game returned: passed=$passed score=$score")
-
             if (passed) sessionMetrics.correctCount++
-
-
             if (verticalContainer.visibility != View.VISIBLE) {
                 transitionToVerticalLayout()
             }
@@ -257,7 +251,7 @@ class ActivitySequenceUnderActivity : AppCompatActivity() {
             currentCorrectOrder = routineData.first.toMutableList()
             Handler(Looper.getMainLooper()).post { showInitialCorrectOrder() }
         } else {
-            currentCorrectOrder = mutableListOf("wake_up", "make_bed", "drink_water")
+            currentCorrectOrder = mutableListOf("rtn0_sub1_wake", "rtn0_sub1_bed", "rtn0_sub1_drink")
             currentSubRoutineId = 0
             Handler(Looper.getMainLooper()).post { showInitialCorrectOrder() }
         }
@@ -266,17 +260,20 @@ class ActivitySequenceUnderActivity : AppCompatActivity() {
         updateHintIndicator()
     }
 
+    // ── FIX: use actual sub-routine count for the selected routine ────────────
     private fun selectSubRoutine() {
-        val available = (0..2).filter { !completedSubRoutines.contains(Pair(currentRoutineId, it)) }
-            .toMutableList()
+        val maxSub = routines[currentRoutineId]?.keys?.maxOrNull() ?: 0
+        val available = (0..maxSub).filter {
+            !completedSubRoutines.contains(Pair(currentRoutineId, it))
+        }.toMutableList()
 
         if (available.isEmpty()) {
             resetAllProgress(); currentSubRoutineId = 0; return
         }
 
-        val rec = currentPrediction.subRoutine.coerceIn(0, 2)
-        currentSubRoutineId = if (rec < available.size) available[rec] else available.last()
-        Log.d(TAG, "SubRoutine selected: $currentSubRoutineId")
+        val rec = currentPrediction.subRoutine.coerceIn(0, available.size - 1)
+        currentSubRoutineId = available[rec]
+        Log.d(TAG, "SubRoutine selected: $currentSubRoutineId  (routineId=$currentRoutineId)")
     }
 
     private fun resetAllProgress() {
@@ -290,17 +287,15 @@ class ActivitySequenceUnderActivity : AppCompatActivity() {
 
     private fun updateInstruction(isInitialPhase: Boolean = false) {
         val routineName = when (currentRoutineId) {
-            0 -> "Morning Routine"; 1 -> "Bedtime Routine"
+            0 -> "Morning Routine"; 1 -> "Mealtime Routine"
             2 -> "School Routine";  else -> "Daily Activity"
         }
         val subDesc = routines[currentRoutineId]?.get(currentSubRoutineId)?.third ?: ""
 
         runOnUiThread {
             gameTitle.text = "$routineName: $subDesc"
-            val instr = when {
-                isInitialPhase                         -> "Look and remember the correct order"
-                else                                   -> "Tap in the right order"
-            }
+            val instr = if (isInitialPhase) "Look and remember the correct order"
+            else                "Tap in the right order"
             tvInstruction.text = instr
             if (isTtsReady) textToSpeech.speak(instr, TextToSpeech.QUEUE_FLUSH, null, "instr")
         }
@@ -309,16 +304,6 @@ class ActivitySequenceUnderActivity : AppCompatActivity() {
     private fun updateHintIndicator() {
         runOnUiThread { hintIndicator.visibility = View.GONE }
     }
-
-    // =========================================================================
-    // Mini-game launcher — FIXED
-    //
-    //  Root cause: the model consistently returns
-    //    minigameTrigger=true  BUT  whatsMissingTrigger=false  connectDotsTrigger=false
-    //  The old code only checked the two specific triggers, so the gate always
-    //  blocked launch.  Now minigameTrigger is the PRIMARY gate.
-    // =========================================================================
-
 
     // =========================================================================
     // Views
@@ -346,7 +331,6 @@ class ActivitySequenceUnderActivity : AppCompatActivity() {
 
         findViewById<ImageView>(R.id.backBtn).setOnClickListener {
             if (verticalContainer.visibility == View.VISIBLE) {
-                // Mid-game — warn before leaving
                 android.app.AlertDialog.Builder(this)
                     .setMessage("Leave this game? Your progress will be lost.")
                     .setPositiveButton("Leave") { _, _ ->
@@ -358,7 +342,6 @@ class ActivitySequenceUnderActivity : AppCompatActivity() {
                     .setNegativeButton("Stay", null)
                     .show()
             } else {
-                // Still in preview phase — safe to leave directly
                 startActivity(Intent(this, RoutineSelectionActivity::class.java).apply {
                     flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
                 })
@@ -430,7 +413,8 @@ class ActivitySequenceUnderActivity : AppCompatActivity() {
                 findViewById<FrameLayout>(R.id.horizontal_frame_2),
                 findViewById<FrameLayout>(R.id.horizontal_frame_3)
             )
-            val drawableMap = subRoutineDrawableMap(currentSubRoutineId)
+            // ── FIX: pass currentRoutineId as first arg ───────────────────────
+            val drawableMap = subRoutineDrawableMap(currentRoutineId, currentSubRoutineId)
 
             for ((index, stepId) in currentCorrectOrder.withIndex()) {
                 if (index >= imageViews.size) break
@@ -443,16 +427,42 @@ class ActivitySequenceUnderActivity : AppCompatActivity() {
         }
     }
 
-    private fun subRoutineDrawableMap(subId: Int): Map<String, Int> = when (subId) {
-        1    -> mapOf("brush_teeth" to R.drawable.seq_rtn0_sub2_1_brush,
-            "wash_face"   to R.drawable.seq_rtn0_sub2_2_wash,
-            "dry_towel"   to R.drawable.seq_rtn0_sub2_3_dry)
-        2    -> mapOf("get_dressed"   to R.drawable.seq_rtn0_sub3_1_change,
-            "apply_powder"  to R.drawable.seq_rtn0_sub3_2_cream,
-            "put_pajamas"   to R.drawable.seq_rtn0_sub3_3_wash)
-        else -> mapOf("wake_up"     to R.drawable.seq_rtn0_sub1_1_wakeup,
-            "make_bed"    to R.drawable.seq_rtn0_sub1_2_bed,
-            "drink_water" to R.drawable.seq_rtn0_sub1_3_drink)
+    // ── FIX: first param is routineId, second is subId ────────────────────────
+    private fun subRoutineDrawableMap(routineId: Int, subId: Int): Map<String, Int> = when (routineId) {
+        1 -> when (subId) {
+            0 -> mapOf(
+                "rtn1_sub1_wash"   to R.drawable.seq_rtn1_sub1_1_wash,
+                "rtn1_sub1_sit"    to R.drawable.seq_rtn1_sub1_2_sit,
+                "rtn1_sub1_napkin" to R.drawable.seq_rtn1_sub1_3_napkin
+            )
+            else -> mapOf(
+                "rtn1_sub2_eat"  to R.drawable.seq_rtn1_sub2_1_eat,
+                "rtn1_sub2_wipe" to R.drawable.seq_rtn1_sub2_2_wipe,
+                "rtn1_sub2_wash" to R.drawable.seq_rtn1_sub2_3_wash
+            )
+        }
+        2 -> mapOf(
+            "rtn2_sub1_books" to R.drawable.seq_rtn2_sub1_1_books,
+            "rtn2_sub1_lunch" to R.drawable.seq_rtn2_sub1_2_lunch,
+            "rtn2_sub1_pack"  to R.drawable.seq_rtn2_sub1_3_pack
+        )
+        else -> when (subId) {   // routine 0
+            1 -> mapOf(
+                "rtn0_sub2_brush" to R.drawable.seq_rtn0_sub2_1_brush,
+                "rtn0_sub2_wash"  to R.drawable.seq_rtn0_sub2_2_wash,
+                "rtn0_sub2_dry"   to R.drawable.seq_rtn0_sub2_3_dry
+            )
+            2 -> mapOf(
+                "rtn0_sub3_change" to R.drawable.seq_rtn0_sub3_1_change,
+                "rtn0_sub3_cream"  to R.drawable.seq_rtn0_sub3_2_cream,
+                "rtn0_sub3_wash"   to R.drawable.seq_rtn0_sub3_3_wash
+            )
+            else -> mapOf(
+                "rtn0_sub1_wake"  to R.drawable.seq_rtn0_sub1_1_wakeup,
+                "rtn0_sub1_bed"   to R.drawable.seq_rtn0_sub1_2_bed,
+                "rtn0_sub1_drink" to R.drawable.seq_rtn0_sub1_3_drink
+            )
+        }
     }
 
     private fun makeBadge(text: String, size: Int = 65): TextView = TextView(this).apply {
@@ -478,7 +488,10 @@ class ActivitySequenceUnderActivity : AppCompatActivity() {
 
     private fun resetGameState() {
         selectedOrder.clear(); isGameComplete = false
-        runOnUiThread { tvOrder1.text = "1. "; tvOrder2.text = "2. "; tvOrder3.text = "3. "; timerTextView.text = "00:00" }
+        runOnUiThread {
+            tvOrder1.text = "1. "; tvOrder2.text = "2. "; tvOrder3.text = "3. "
+            timerTextView.text = "00:00"
+        }
     }
 
     private fun startGame() {
@@ -486,7 +499,6 @@ class ActivitySequenceUnderActivity : AppCompatActivity() {
         updateInstructionForGameplay()
         startTimer()
         transitionToVerticalLayout()
-
     }
 
     private fun updateInstructionForGameplay() {
@@ -532,8 +544,9 @@ class ActivitySequenceUnderActivity : AppCompatActivity() {
     private fun createVerticalLayout() {
         runOnUiThread {
             verticalContainer.removeAllViews(); verticalImages.clear()
-            val shuffled    = currentCorrectOrder.shuffled()
-            val drawableMap = subRoutineDrawableMap(currentSubRoutineId)
+            val shuffled = currentCorrectOrder.shuffled()
+            // ── FIX: pass currentRoutineId as first arg ───────────────────────
+            val drawableMap = subRoutineDrawableMap(currentRoutineId, currentSubRoutineId)
 
             for (stepId in shuffled) {
                 val frame = FrameLayout(this).apply {
@@ -548,7 +561,7 @@ class ActivitySequenceUnderActivity : AppCompatActivity() {
 
                     setOnClickListener {
                         val tapTime = System.currentTimeMillis()
-                        val hes     = if (sessionMetrics.tapTimes.isNotEmpty())
+                        val hes = if (sessionMetrics.tapTimes.isNotEmpty())
                             tapTime - sessionMetrics.tapTimes.last()
                         else tapTime - sessionMetrics.startTime
                         sessionMetrics.tapTimes.add(tapTime)
@@ -594,17 +607,35 @@ class ActivitySequenceUnderActivity : AppCompatActivity() {
         runOnUiThread {
             selectedOrder.forEachIndexed { index, id ->
                 val name = displayName(id)
-                when (index) { 0 -> tvOrder1.text = "1. $name"; 1 -> tvOrder2.text = "2. $name"; 2 -> tvOrder3.text = "3. $name" }
+                when (index) {
+                    0 -> tvOrder1.text = "1. $name"
+                    1 -> tvOrder2.text = "2. $name"
+                    2 -> tvOrder3.text = "3. $name"
+                }
             }
         }
     }
 
     private fun displayName(id: String) = when (id) {
-        "wake_up"      -> "Wake Up";       "make_bed"    -> "Make Bed"
-        "drink_water"  -> "Drink Water";   "brush_teeth" -> "Brush Teeth"
-        "wash_face"    -> "Wash Face";     "dry_towel"   -> "Dry with Towel"
-        "get_dressed"  -> "Get Dressed";   "apply_powder"-> "Apply Powder"
-        "put_pajamas"  -> "Put Pajamas Away"; else       -> "Step"
+        "rtn0_sub1_wake"   -> "Wake Up"
+        "rtn0_sub1_bed"    -> "Make Bed"
+        "rtn0_sub1_drink"  -> "Drink Water"
+        "rtn0_sub2_brush"  -> "Brush Teeth"
+        "rtn0_sub2_wash"   -> "Wash Face"
+        "rtn0_sub2_dry"    -> "Dry with Towel"
+        "rtn0_sub3_change" -> "Get Dressed"
+        "rtn0_sub3_cream"  -> "Apply Lotion"
+        "rtn0_sub3_wash"   -> "Put Pajamas Away"
+        "rtn1_sub1_wash"   -> "Wash Hands"
+        "rtn1_sub1_sit"    -> "Sit Down"
+        "rtn1_sub1_napkin" -> "Put on Napkin"
+        "rtn1_sub2_eat"    -> "Eat Food"
+        "rtn1_sub2_wipe"   -> "Wipe Mouth"
+        "rtn1_sub2_wash"   -> "Wash Hands"
+        "rtn2_sub1_books"  -> "Pack Books"
+        "rtn2_sub1_lunch"  -> "Pack Lunch"
+        "rtn2_sub1_pack"   -> "Pack Bag"
+        else               -> "Step"
     }
 
     // =========================================================================
@@ -624,9 +655,7 @@ class ActivitySequenceUnderActivity : AppCompatActivity() {
                 sessionMetrics.errorCount++
                 Log.d(TAG, "WRONG (errors=${sessionMetrics.errorCount})")
                 Toast.makeText(this, "Try again!", Toast.LENGTH_SHORT).show()
-
                 updateInstructionForGameplay()
-
                 Handler(Looper.getMainLooper()).postDelayed({ resetForRetry() }, 1500)
             }
         }, 500)
@@ -665,19 +694,29 @@ class ActivitySequenceUnderActivity : AppCompatActivity() {
     }
 
     private fun undoLastSelection() {
-        if (selectedOrder.isEmpty()) { Toast.makeText(this, "No steps to undo", Toast.LENGTH_SHORT).show(); return }
+        if (selectedOrder.isEmpty()) {
+            Toast.makeText(this, "No steps to undo", Toast.LENGTH_SHORT).show(); return
+        }
         val last = selectedOrder.removeLast()
         verticalImages.firstOrNull { it.tag == last }?.let { img ->
-            runOnUiThread { img.alpha = 1f; img.isClickable = true; (img.parent as? FrameLayout)?.let { removeBadgesFrom(it) } }
+            runOnUiThread {
+                img.alpha = 1f; img.isClickable = true
+                (img.parent as? FrameLayout)?.let { removeBadgesFrom(it) }
+            }
         }
         updateOrderDisplay()
     }
 
     private fun clearAllSelections() {
-        if (selectedOrder.isEmpty()) { Toast.makeText(this, "Nothing to clear", Toast.LENGTH_SHORT).show(); return }
+        if (selectedOrder.isEmpty()) {
+            Toast.makeText(this, "Nothing to clear", Toast.LENGTH_SHORT).show(); return
+        }
         selectedOrder.forEach { id ->
             verticalImages.firstOrNull { it.tag == id }?.let { img ->
-                runOnUiThread { img.alpha = 1f; img.isClickable = true; (img.parent as? FrameLayout)?.let { removeBadgesFrom(it) } }
+                runOnUiThread {
+                    img.alpha = 1f; img.isClickable = true
+                    (img.parent as? FrameLayout)?.let { removeBadgesFrom(it) }
+                }
             }
         }
         selectedOrder.clear(); updateOrderDisplay()
@@ -697,12 +736,12 @@ class ActivitySequenceUnderActivity : AppCompatActivity() {
     private fun calculateJitter(): Float {
         if (sessionMetrics.tapPositions.size < 3) return 0.10f
         val dists = (1 until sessionMetrics.tapPositions.size).map { i ->
-            val (x1,y1) = sessionMetrics.tapPositions[i-1]
-            val (x2,y2) = sessionMetrics.tapPositions[i]
-            sqrt(((x2-x1)*(x2-x1)+(y2-y1)*(y2-y1)).toFloat())
+            val (x1, y1) = sessionMetrics.tapPositions[i - 1]
+            val (x2, y2) = sessionMetrics.tapPositions[i]
+            sqrt(((x2 - x1) * (x2 - x1) + (y2 - y1) * (y2 - y1)).toFloat())
         }
         val mean     = dists.average().toFloat()
-        val variance = dists.map { (it-mean)*(it-mean) }.average().toFloat()
+        val variance = dists.map { (it - mean) * (it - mean) }.average().toFloat()
         return sqrt(variance).coerceIn(0.01f, 0.5f)
     }
 
@@ -728,6 +767,7 @@ class ActivitySequenceUnderActivity : AppCompatActivity() {
         Log.d(TAG, "Session complete: finalAlpha=$finalAlpha awardSticker=$awardSticker")
 
         startActivity(Intent(this, ASequenceScoreboardActivity::class.java).apply {
+            putExtra("GAME_MODE",             "under")
             putExtra("FINAL_ALPHA",           finalAlpha)
             putExtra("POPPED_BUBBLES",        poppedBubbles)
             putExtra("TOTAL_BUBBLES",         totalBubbles)

@@ -314,4 +314,22 @@
         <item>@drawable/seq_rtn0_sub3_3_wash</item>
     </array>
 
+    <array name="seq_rtn1_sub1">
+        <item>@drawable/seq_rtn1_sub1_1_wash</item>
+        <item>@drawable/seq_rtn1_sub1_2_sit</item>
+        <item>@drawable/seq_rtn1_sub1_3_napkin</item>
+    </array>
+
+    <array name="seq_rtn1_sub2">
+        <item>@drawable/seq_rtn1_sub2_1_eat</item>
+        <item>@drawable/seq_rtn1_sub2_2_wipe</item>
+        <item>@drawable/seq_rtn1_sub2_3_wash</item>
+    </array>
+
+    <array name="seq_rtn2_sub1">
+        <item>@drawable/seq_rtn2_sub1_1_books</item>
+        <item>@drawable/seq_rtn2_sub1_2_lunch</item>
+        <item>@drawable/seq_rtn2_sub1_3_pack</item>
+    </array>
+
 </resources>
