@@ -20,6 +20,10 @@ android {
 
         testInstrumentationRunner="androidx.test.runner.AndroidJUnitRunner"
 
+        testInstrumentationRunnerArguments += mapOf(
+            "androidx.benchmark.suppressErrors" to "DEBUGGABLE,NOT-SELF-INSTRUMENTING"
+        )
+
         val properties = Properties()
         properties.load(project.rootProject.file("local.properties").inputStream())
         buildConfigField("String", "GEMINI_FEEDBACK_API_KEY", "\"${properties.getProperty("GEMINI_FEEDBACK_API_KEY")}\"")
@@ -73,6 +77,10 @@ dependencies {
     implementation("com.google.ai.client.generativeai:generativeai:0.9.0")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3")
     testImplementation("junit:junit:4.13.2")
+    testImplementation ("io.mockk:mockk:1.13.5")
     androidTestImplementation("androidx.test.ext:junit:1.3.0")
     androidTestImplementation("androidx.test.espresso:espresso-core:3.7.0")
+    androidTestImplementation ("androidx.test:rules:1.5.0")
+    androidTestImplementation ("androidx.benchmark:benchmark-macro-junit4:1.2.2")
+    androidTestImplementation("androidx.startup:startup-runtime:1.1.1")
 }
