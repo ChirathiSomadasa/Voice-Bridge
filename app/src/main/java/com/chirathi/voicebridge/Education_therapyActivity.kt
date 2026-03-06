@@ -36,7 +36,7 @@ class Education_therapyActivity : AppCompatActivity() {
             Toast.makeText(this, "✅ AI Model loaded successfully", Toast.LENGTH_SHORT).show()
         } catch (e: Exception) {
             e.printStackTrace()
-            Toast.makeText(this, "⚠️ AI Model error: ${e.message}", Toast.LENGTH_LONG).show()
+//            Toast.makeText(this, "⚠️ AI Model error: ${e.message}", Toast.LENGTH_LONG).show()
         }
 
         // Card references
