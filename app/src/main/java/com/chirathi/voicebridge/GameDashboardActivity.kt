@@ -29,6 +29,8 @@ class GameDashboardActivity : AppCompatActivity() {
     private val KEY_CALM_MUSIC  = "pref_calm_music_enabled"
     private val KEY_CALM_VOLUME = "pref_calm_music_volume"
 
+    private var currentUserAge: Int = 6  // stored after Firestore fetch
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_game_dashboard)
@@ -60,6 +62,7 @@ class GameDashboardActivity : AppCompatActivity() {
         }
 
         setupGameSettings()
+        prefetchUserAge()  // fetch age early so settings dialog has it ready
     }
 
     override fun onResume() {
@@ -70,6 +73,19 @@ class GameDashboardActivity : AppCompatActivity() {
     override fun onPause() {
         super.onPause()
         CalmMusicManager.onActivityPause()
+    }
+
+    /** Fetches the user's age from Firestore and caches it in [currentUserAge]. */
+    private fun prefetchUserAge() {
+        val uid = auth.currentUser?.uid ?: return
+        db.collection("users").document(uid).get()
+            .addOnSuccessListener { document ->
+                currentUserAge = document.getString("age")?.toIntOrNull() ?: 6
+                Log.d(TAG, "prefetchUserAge: $currentUserAge")
+            }
+            .addOnFailureListener { e ->
+                Log.e(TAG, "prefetchUserAge failed: ${e.message}")
+            }
     }
 
     private fun handleMoodMatchClick() {
@@ -96,6 +112,7 @@ class GameDashboardActivity : AppCompatActivity() {
         db.collection("users").document(currentUser.uid).get()
             .addOnSuccessListener { document ->
                 val age = document.getString("age")?.toIntOrNull() ?: 6
+                currentUserAge = age  // keep cache in sync
                 Log.d(TAG, "Age fetched: $age  viaPandaIntro=$viaPandaIntro")
                 if (viaPandaIntro) {
                     startActivity(Intent(this, PandaIntroActivity::class.java).apply {
@@ -170,7 +187,7 @@ class GameDashboardActivity : AppCompatActivity() {
                 override fun onStopTrackingTouch(sb: SeekBar?) {}
             })
 
-            android.app.AlertDialog.Builder(this)
+            val builder = android.app.AlertDialog.Builder(this)
                 .setTitle("Game Sound Settings")
                 .setView(dialogView)
                 .setPositiveButton("Done") { _, _ ->
@@ -185,10 +202,15 @@ class GameDashboardActivity : AppCompatActivity() {
                     audioManager.setStreamVolume(AudioManager.STREAM_MUSIC, curVol, 0)
                     CalmMusicManager.applySystemVolume(this)
                 }
-                .setNeutralButton("Customize Routines") { _, _ ->
+
+            // "Customize Routines" is only available for the 8–10 age group
+            if (currentUserAge in 8..10) {
+                builder.setNeutralButton("Customize Routines") { _, _ ->
                     startActivity(Intent(this, ParentSequenceSettingsActivity::class.java))
                 }
-                .show()
+            }
+
+            builder.show()
 
         } catch (e: Exception) {
             Log.e(TAG, "showGameSettingsDialog failed: ${e.message}", e)

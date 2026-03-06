@@ -453,6 +453,7 @@ class ActivitySequenceOverActivity : AppCompatActivity() {
 
         Handler(Looper.getMainLooper()).postDelayed({
             startActivity(Intent(this, ASequenceScoreboardActivity::class.java).apply {
+                putExtra("GAME_MODE",             "over")
                 putExtra("FINAL_ALPHA",           finalAlpha)
                 putExtra("POPPED_BUBBLES",        0)
                 putExtra("TOTAL_BUBBLES",         0)

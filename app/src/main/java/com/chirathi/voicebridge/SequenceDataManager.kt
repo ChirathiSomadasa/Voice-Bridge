@@ -12,6 +12,11 @@ import org.json.JSONObject
  * • Parents edit via ParentSequenceSettingsActivity.
  * • ActivitySequenceOverActivity reads via getSequences().
  * • If no custom data is saved the built-in defaults are returned.
+ *
+ * Routine mapping (must match arrays.xml and ActivitySequenceUnderActivity):
+ *   0 → Morning Routine   (3 sub-routines: wake-up, hygiene, getting dressed)
+ *   1 → Mealtime Routine  (2 sub-routines: before eating, eating)
+ *   2 → School Routine    (1 sub-routine:  pack for school)
  */
 object SequenceDataManager {
 
@@ -19,43 +24,65 @@ object SequenceDataManager {
     private const val KEY_SEQUENCES = "custom_sequences"
 
     // ── Routine / sub-routine labels ──────────────────────────────────────
-    val routineNames    = listOf("Morning Routine", "Bedtime Routine", "School Routine")
+    // Order and names must match the routineId constants used throughout the app
+    val routineNames = listOf("Morning Routine", "Mealtime Routine", "School Routine")
     val subRoutineNames = listOf("Sub-Routine 1", "Sub-Routine 2", "Sub-Routine 3")
 
     // ── Built-in defaults ─────────────────────────────────────────────────
+    // IDs mirror the drawable-key prefixes used in ActivitySequenceUnderActivity
+    // so both activities stay in sync.
+    //
+    // Routine 0 — Morning (seq_rtn0_sub1 / sub2 / sub3)
+    // Routine 1 — Mealtime (seq_rtn1_sub1 / sub2)          ← was wrongly "Bedtime"
+    // Routine 2 — School (seq_rtn2_sub1 only)              ← was wrongly 3 sub-routines
     val defaults: Map<Int, Map<Int, List<Pair<String, String>>>> = mapOf(
+
+        // ── Routine 0: Morning ────────────────────────────────────────────
         0 to mapOf(
-            0 to listOf("wake_up"      to "Wake up",
-                "make_bed"     to "Make your bed",
-                "drink_water"  to "Drink water"),
-            1 to listOf("brush_teeth"  to "Brush your teeth",
-                "wash_face"    to "Wash your face",
-                "dry_towel"    to "Dry your face"),
-            2 to listOf("get_dressed"  to "Get dressed",
-                "apply_powder" to "Put on lotion",
-                "put_pajamas"  to "Put away pajamas")
+            // seq_rtn0_sub1: wake up sequence
+            0 to listOf(
+                "rtn0_sub1_wake"   to "Wake up",
+                "rtn0_sub1_bed"    to "Make your bed",
+                "rtn0_sub1_drink"  to "Drink water"
+            ),
+            // seq_rtn0_sub2: hygiene sequence
+            1 to listOf(
+                "rtn0_sub2_brush"  to "Brush your teeth",
+                "rtn0_sub2_wash"   to "Wash your face",
+                "rtn0_sub2_dry"    to "Dry with a towel"
+            ),
+            // seq_rtn0_sub3: getting dressed
+            2 to listOf(
+                "rtn0_sub3_change" to "Get dressed",
+                "rtn0_sub3_cream"  to "Put on lotion",
+                "rtn0_sub3_wash"   to "Put away your pajamas"
+            )
         ),
+
+        // ── Routine 1: Mealtime ───────────────────────────────────────────
         1 to mapOf(
-            0 to listOf("brush_teeth"  to "Brush your teeth",
-                "put_pajamas"  to "Put on pajamas",
-                "drink_water"  to "Drink water"),
-            1 to listOf("wash_face"    to "Wash your face",
-                "dry_towel"    to "Dry your face",
-                "make_bed"     to "Tidy your bed"),
-            2 to listOf("get_dressed"  to "Change clothes",
-                "apply_powder" to "Apply lotion",
-                "wake_up"      to "Say good night")
+            // seq_rtn1_sub1: before eating
+            0 to listOf(
+                "rtn1_sub1_wash"   to "Wash your hands",
+                "rtn1_sub1_sit"    to "Sit down at the table",
+                "rtn1_sub1_napkin" to "Put on your napkin"
+            ),
+            // seq_rtn1_sub2: eating
+            1 to listOf(
+                "rtn1_sub2_eat"    to "Eat your food",
+                "rtn1_sub2_wipe"   to "Wipe your mouth",
+                "rtn1_sub2_wash"   to "Wash your hands"
+            )
         ),
+
+        // ── Routine 2: School ─────────────────────────────────────────────
         2 to mapOf(
-            0 to listOf("wake_up"      to "Wake up",
-                "get_dressed"  to "Get dressed",
-                "drink_water"  to "Have breakfast"),
-            1 to listOf("brush_teeth"  to "Brush your teeth",
-                "wash_face"    to "Wash your face",
-                "make_bed"     to "Pack your bag"),
-            2 to listOf("apply_powder" to "Put on shoes",
-                "dry_towel"    to "Grab your lunch",
-                "put_pajamas"  to "Head to school")
+            // seq_rtn2_sub1: pack for school
+            0 to listOf(
+                "rtn2_sub1_books"  to "Pack your books",
+                "rtn2_sub1_lunch"  to "Pack your lunch",
+                "rtn2_sub1_pack"   to "Pack your bag"
+            )
         )
     )
 

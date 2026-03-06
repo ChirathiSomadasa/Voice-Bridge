@@ -164,7 +164,7 @@ class ASequenceScoreboardActivity : AppCompatActivity(), TextToSpeech.OnInitList
         previousError        = intent.getStringExtra("PREVIOUS_ERROR") ?: "none"
         userSelectedRoutine  = intent.getIntExtra("USER_SELECTED_ROUTINE", 0)
         userAge              = intent.getIntExtra("USER_AGE", 6)
-        val gameMode = intent.getStringExtra("GAME_MODE") ?: if (userAge >= 8) "over" else "under"
+        gameMode = intent.getStringExtra("GAME_MODE") ?: if (userAge >= 8) "over" else "under"
         attemptsCount        = intent.getIntExtra("ATTEMPTS_COUNT", 0)
         shouldAwardSticker   = intent.getBooleanExtra("SHOULD_AWARD_STICKER", false)
     }
