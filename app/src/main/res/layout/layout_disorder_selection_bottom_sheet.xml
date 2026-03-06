@@ -56,20 +56,20 @@
                 android:textSize="15sp" />
 
             <RadioButton
-                android:id="@+id/radioArticulationDisorder"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:padding="12dp"
-                android:text="Articulation Disorder"
-                android:textStyle="bold"
-                android:textSize="15sp" />
-
-            <RadioButton
                 android:id="@+id/radioPhonologicalDisorder"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:padding="12dp"
                 android:text="Phonological Disorder"
+                android:textStyle="bold"
+                android:textSize="15sp" />
+
+            <RadioButton
+                android:id="@+id/radioArticulationDisorder"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:padding="12dp"
+                android:text="Articulation"
                 android:textStyle="bold"
                 android:textSize="15sp" />
 
