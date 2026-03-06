@@ -80,18 +80,18 @@
                 android:textSize="28sp"
                 android:textStyle="bold" />
 
-            <Button
-                android:id="@+id/take_photo"
-                style="@style/SolidGreenButton"
-                android:layout_width="match_parent"
-                android:layout_height="55dp"
-                android:layout_marginTop="50dp"
-                android:text="@string/take_photo"
-                android:textAllCaps="false"
-                android:textColor="@color/white"
-                android:textSize="20sp"
-                android:textStyle="bold"
-                app:backgroundTint="@color/pink" />
+<!--            <Button-->
+<!--                android:id="@+id/take_photo"-->
+<!--                style="@style/SolidGreenButton"-->
+<!--                android:layout_width="match_parent"-->
+<!--                android:layout_height="55dp"-->
+<!--                android:layout_marginTop="50dp"-->
+<!--                android:text="@string/take_photo"-->
+<!--                android:textAllCaps="false"-->
+<!--                android:textColor="@color/white"-->
+<!--                android:textSize="20sp"-->
+<!--                android:textStyle="bold"-->
+<!--                app:backgroundTint="@color/pink" />-->
 
             <Button
                 android:id="@+id/detect_object"
@@ -105,6 +105,39 @@
                 android:textSize="20sp"
                 android:textStyle="bold"
                 app:backgroundTint="@color/light_orange" />
+
+            <RelativeLayout
+                android:id="@+id/btn_instruction_o"
+                android:layout_width="match_parent"
+                android:layout_height="55dp"
+                android:layout_marginTop="40dp"
+                android:backgroundTint="@color/pink"
+                style="@style/SolidGreenButton"
+                android:paddingStart="16dp"
+                android:paddingEnd="16dp"
+                android:gravity="center_vertical"
+                android:clickable="true"
+                android:focusable="true">
+
+                <ImageView
+                    android:id="@+id/imgPlay"
+                    android:layout_width="64dp"
+                    android:layout_height="64dp"
+                    android:layout_centerVertical="true"
+                    android:src="@drawable/instruction_play" />
+
+                <TextView
+                    android:id="@+id/tvInstruction"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_centerVertical="true"
+                    android:layout_toEndOf="@id/imgPlay"
+                    android:layout_marginStart="14dp"
+                    android:text="@string/instruction_video"
+                    android:textColor="@color/white"
+                    android:textSize="20sp"
+                    android:textStyle="bold"/>
+            </RelativeLayout>
 
         </LinearLayout>
     </ScrollView>

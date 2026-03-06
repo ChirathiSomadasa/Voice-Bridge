@@ -77,4 +77,11 @@ dependencies {
     implementation ("com.squareup.retrofit2:retrofit:2.9.0")
     implementation ("com.squareup.retrofit2:converter-gson:2.9.0")
     implementation ("com.squareup.okhttp3:okhttp:4.9.3")
+
+    // 1. Networking - Retrofit & Gson
+    implementation("com.google.code.gson:gson:2.10.1") // Explicit Gson for Lenient configuration
+
+    // 2. Updated OkHttp & Logging Interceptor
+    implementation("com.squareup.okhttp3:okhttp:4.12.0")
+    implementation("com.squareup.okhttp3:logging-interceptor:4.12.0")
 }

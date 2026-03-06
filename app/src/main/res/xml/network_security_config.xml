@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <network-security-config>
     <domain-config cleartextTrafficPermitted="true">
-       <domain includeSubdomains="true">192.168.46.45</domain> <!-- change-->
+       <domain includeSubdomains="true">hf.space</domain> <!-- change-->
     </domain-config>
 </network-security-config>

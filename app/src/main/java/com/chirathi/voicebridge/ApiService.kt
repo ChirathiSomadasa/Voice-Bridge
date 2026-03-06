@@ -13,5 +13,8 @@ data class CaptionResponse(
 interface ApiService {
     @Multipart
     @POST("caption")
-    fun uploadImage(@Part image: MultipartBody.Part): Call<CaptionResponse>
+    fun uploadImage(
+        @Part image: MultipartBody.Part,
+        @Part("hint") hint: okhttp3.RequestBody):
+            Call<CaptionResponse>
 }

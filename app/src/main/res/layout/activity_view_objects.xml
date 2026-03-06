@@ -16,6 +16,7 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"/>
 
+
     <!-- Detection Container -->
     <LinearLayout
         android:id="@+id/resultContainer"
@@ -24,11 +25,11 @@
         android:orientation="vertical"
         android:padding="16dp"
         android:gravity="center"
-        android:background="@drawable/bg_detect_idle"
-
+        android:background="@drawable/rounded_corner_orange_bg"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent">
+
 
         <TextView
             android:id="@+id/resultText"
@@ -39,6 +40,50 @@
             android:textStyle="bold"
             android:textColor="#FFFFFF"
             android:gravity="center"/>
+        <!-- Buttons -->
+        <LinearLayout
+            android:id="@+id/buttonContainer"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center"
+            android:visibility="gone"
+            android:paddingTop="12dp">
+
+            <Button
+                android:id="@+id/btnIWant"
+                android:text="I want"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textStyle="bold"/>
+
+            <Button
+                android:id="@+id/btnISee"
+                android:text="I see"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="8dp"
+                android:textStyle="bold"/>
+
+            <Button
+                android:id="@+id/btnThisIs"
+                android:text="This is"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="8dp"
+                android:textStyle="bold"/>
+        </LinearLayout>
+
+        <!-- Final sentence -->
+        <TextView
+            android:id="@+id/finalSentence"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text=""
+            android:textSize="18sp"
+            android:textColor="#FFFFFF"
+            android:paddingTop="8dp"/>
+
     </LinearLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

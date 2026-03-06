@@ -22,23 +22,36 @@ import org.tensorflow.lite.support.common.FileUtil
 import java.io.ByteArrayOutputStream
 import java.util.concurrent.Executors
 import android.speech.tts.TextToSpeech
+import android.view.View
+import android.widget.Button
+import android.widget.LinearLayout
+import android.widget.Toast
 import java.util.Locale
 
 class ViewObjectsActivity : AppCompatActivity() {
 
-    private lateinit var previewView: PreviewView
-    private lateinit var resultText: TextView
-    private lateinit var yoloDetector: YoloV5Detector
-    private lateinit var labels: List<String>
-    private var hasNavigated = false
-    private var detectedImageBytes: ByteArray? = null
-
+    private lateinit var previewView: PreviewView //show the live camera
+    private lateinit var resultText: TextView //display status
+    private lateinit var yoloDetector: YoloV5Detector //load yolov5 model
+    private lateinit var labels: List<String> //load labels
+    private var detectedImageBytes: ByteArray? = null //store image byte to sent to phraseactivity
+    private lateinit var buttonContainer: LinearLayout
+    private lateinit var btnIWant: Button
+    private lateinit var btnISee: Button
+    private lateinit var btnThisIs: Button
+    private lateinit var cameraProvider: ProcessCameraProvider
+    private lateinit var imageAnalyzer: ImageAnalysis
+    private var isObjectDetected = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_view_objects)
         previewView = findViewById(R.id.previewView)
         resultText = findViewById(R.id.resultText)
+        buttonContainer = findViewById(R.id.buttonContainer)
+        btnIWant = findViewById(R.id.btnIWant)
+        btnISee = findViewById(R.id.btnISee)
+        btnThisIs = findViewById(R.id.btnThisIs)
 
         try {
             // Load labels from assets directory
@@ -46,7 +59,6 @@ class ViewObjectsActivity : AppCompatActivity() {
             Log.d("ObjectDetection", "Labels loaded: ${labels.size} classes")
 
             // Initialize detector with model from ml directory
-            // Use the actual filename you have in ml folder
             yoloDetector = YoloV5Detector(this, "ml/object-detection-model.tflite")
             Log.d("ObjectDetection", "Model loaded successfully")
 
@@ -88,21 +100,25 @@ class ViewObjectsActivity : AppCompatActivity() {
 
         cameraProviderFuture.addListener({
             try {
-                val cameraProvider = cameraProviderFuture.get()
+                // REMOVE 'val' here to use the class-level variable
+                cameraProvider = cameraProviderFuture.get()
 
                 val preview = Preview.Builder().build().also {
                     it.setSurfaceProvider(previewView.surfaceProvider)
                 }
 
-                val imageAnalyzer = ImageAnalysis.Builder()
+                // REMOVE 'val' here to use the class-level variable
+                imageAnalyzer = ImageAnalysis.Builder()
                     .setTargetRotation(previewView.display.rotation)
                     .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
                     .build()
 
-                imageAnalyzer.setAnalyzer(
-                    Executors.newSingleThreadExecutor()
-                ) { imageProxy ->
-                    processImage(imageProxy)
+                imageAnalyzer.setAnalyzer(Executors.newSingleThreadExecutor()) { imageProxy ->
+                    if (!isObjectDetected) {
+                        processImage(imageProxy)
+                    } else {
+                        imageProxy.close()
+                    }
                 }
 
                 val cameraSelector = CameraSelector.Builder()
@@ -110,60 +126,93 @@ class ViewObjectsActivity : AppCompatActivity() {
                     .build()
 
                 cameraProvider.unbindAll()
-                cameraProvider.bindToLifecycle(
-                    this,
-                    cameraSelector,
-                    preview,
-                    imageAnalyzer
-                )
+                cameraProvider.bindToLifecycle(this, cameraSelector, preview, imageAnalyzer)
 
             } catch (e: Exception) {
                 Log.e("ObjectDetection", "Camera start failed: ${e.message}")
             }
         }, ContextCompat.getMainExecutor(this))
     }
+    private fun rotateBitmap(bitmap: Bitmap, rotationDegrees: Int): Bitmap {
+        val matrix = android.graphics.Matrix()
+        matrix.postRotate(rotationDegrees.toFloat())
+        return Bitmap.createBitmap(
+            bitmap, 0, 0, bitmap.width, bitmap.height, matrix, true
+        )
+    }
 
     private fun processImage(imageProxy: ImageProxy) {
         try {
-            val bitmap = imageProxy.toBitmap()
+            val rotation = imageProxy.imageInfo.rotationDegrees
+            val rawBitmap = imageProxy.toBitmap()
+            val bitmap = rotateBitmap(rawBitmap, rotation)
             detectedImageBytes = bitmapToByteArray(bitmap)
 
-            // Convert bitmap to multipart
             val multipart = bitmapToMultipart(bitmap)
 
-            // Send to server
-            RetrofitClient.instance.uploadImage(multipart).enqueue(object : retrofit2.Callback<CaptionResponse> {
-                override fun onResponse(
-                    call: retrofit2.Call<CaptionResponse>,
-                    response: retrofit2.Response<CaptionResponse>
-                ) {
-                    if (response.isSuccessful && !hasNavigated) {
+            // CREATE THE HINT (Pass an empty string or the YOLO detected label)
+            val hintText = "object" // You could pass yoloDetector results here if you want
+            val hintBody = RequestBody.create(MultipartBody.FORM, hintText)
 
-                        val caption = response.body()?.caption ?: "Object detected"
+            // UPDATED CALL WITH HINT
+            RetrofitClient.instance.uploadImage(multipart, hintBody).enqueue(object : retrofit2.Callback<CaptionResponse> {
+                override fun onResponse(call: retrofit2.Call<CaptionResponse>, response: retrofit2.Response<CaptionResponse>) {
+                    if (response.isSuccessful && !isObjectDetected) {
+                        isObjectDetected = true
+                        val objectName = response.body()?.caption ?: "object"
 
-                        hasNavigated = true
                         runOnUiThread {
-                            resultText.text = caption
+                            stopCamera()
 
-                            navigateToPhraseActivity(caption)
+                            // Show toast only
+                            Toast.makeText(this@ViewObjectsActivity, "Object Detected", Toast.LENGTH_SHORT).show()
+
+                            // Do not show sentence here
+                            resultText.text = "Object detected"
+
+                            showButtons(objectName)
                         }
-                    } else {
-                        runOnUiThread { resultText.text = "Server error" }
                     }
                 }
 
                 override fun onFailure(call: retrofit2.Call<CaptionResponse>, t: Throwable) {
-                    runOnUiThread {
-                        resultText.text = "Request failed: ${t.message}" }
+//                    runOnUiThread {
+//                        resultText.text = "Server connecting... please wait"
+//                    }
                 }
             })
-
         } catch (e: Exception) {
             Log.e("ObjectDetection", "Process error: ${e.message}")
         } finally {
             imageProxy.close()
         }
     }
+    private fun stopCamera() {
+        try {
+            imageAnalyzer.clearAnalyzer()
+            cameraProvider.unbindAll()
+        } catch (e: Exception) {
+            Log.e("CameraX", "Failed to stop camera: ${e.message}")
+        }
+    }
+
+
+    private fun showButtons(objectName: String) {
+        buttonContainer.visibility = View.VISIBLE
+
+        btnIWant.setOnClickListener {
+            navigateToPhraseActivity("I want $objectName")
+        }
+
+        btnISee.setOnClickListener {
+            navigateToPhraseActivity("I see $objectName")
+        }
+
+        btnThisIs.setOnClickListener {
+            navigateToPhraseActivity("This is $objectName")
+        }
+    }
+
 
     private fun navigateToPhraseActivity(detectedSentence: String) {
 
