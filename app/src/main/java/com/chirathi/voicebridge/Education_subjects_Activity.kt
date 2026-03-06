@@ -18,15 +18,22 @@ private val Int.dp: Int
 
 class Education_subjects_Activity : AppCompatActivity() {
 
+    private var disorderType: String? = null
+    private var disorderSeverity: String? = null
+
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContentView(R.layout.activity_education_subjects) // existing layout with root id @+id/main
 
         val ageGroup = intent.getStringExtra("AGE_GROUP") ?: "6"
+        disorderType = intent.getStringExtra("DISORDER_TYPE") // Default disorder type
+        disorderSeverity = intent.getStringExtra("DISORDER_SEVERITY")
+
+
         val title = findViewById<TextView>(R.id.tvTitle)
         val subjectsContainer = findViewById<LinearLayout>(R.id.subjectsContainer)
-
         val backButton: ImageView = findViewById(R.id.back)
 
         title.text = when (ageGroup) {
@@ -41,7 +48,7 @@ class Education_subjects_Activity : AppCompatActivity() {
 
         // Example subject lists per age group
         val subjects = when (ageGroup) {
-            "6" -> listOf("General", "Speech", "Reading", "English", "Basic Math")
+            "6" -> listOf("General", "Basic Math", "Speech", "Reading", "English")
             "7" -> listOf("Math", "Science", "Reading", "English")
             "8" -> listOf("Math", "Science", "Reading", "English")
             "9" -> listOf("Math", "Science", "Reading", "English")
@@ -49,22 +56,6 @@ class Education_subjects_Activity : AppCompatActivity() {
             else -> listOf("General")
         }
 
-//        subjectsContainer.removeAllViews()
-//        subjects.forEach { subj ->
-//            val btn = Button(this).apply {
-//                text = subj
-//                textSize = 20f
-//                isAllCaps = false
-//                setOnClickListener {
-//                    // Handle subject click, e.g., open levels
-//                    val intent = Intent(this@Education_subjects_Activity, LessonListActivity::class.java)
-//                    intent.putExtra("AGE_GROUP", ageGroup)
-//                    intent.putExtra("SUBJECT", subj)
-//                    startActivity(intent)
-//                }
-//            }
-//            subjectsContainer.addView(btn)
-//        }
 
 
         subjects.forEachIndexed { index, subj ->
@@ -97,10 +88,7 @@ class Education_subjects_Activity : AppCompatActivity() {
 
                 // ADD THIS CLICK LISTENER HERE:
                 setOnClickListener {
-                    val intent = Intent(this@Education_subjects_Activity, Edu_LessonListActivity::class.java)
-                    intent.putExtra("AGE_GROUP", ageGroup)
-                    intent.putExtra("SUBJECT", subj)
-                    startActivity(intent)
+                    navigateToLessonListActivity(ageGroup, subj)
                 }
             }
             subjectsContainer.addView(btn)
@@ -113,5 +101,14 @@ class Education_subjects_Activity : AppCompatActivity() {
 
     override fun onBackPressed() {
         super.onBackPressed()
+    }
+
+    private fun navigateToLessonListActivity(ageGroup: String, subject: String) {
+        val intent = Intent(this, Edu_LessonListActivity::class.java)
+        intent.putExtra("AGE_GROUP", ageGroup)
+        intent.putExtra("SUBJECT", subject)
+        intent.putExtra("DISORDER_TYPE", disorderType) // Pass disorderType forward
+        intent.putExtra("DISORDER_SEVERITY", disorderSeverity)
+        startActivity(intent)
     }
 }

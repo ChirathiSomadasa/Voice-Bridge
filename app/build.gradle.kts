@@ -1,3 +1,5 @@
+import java.util.Properties
+
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
@@ -17,6 +19,15 @@ android {
         versionName="1.0"
 
         testInstrumentationRunner="androidx.test.runner.AndroidJUnitRunner"
+
+        testInstrumentationRunnerArguments += mapOf(
+            "androidx.benchmark.suppressErrors" to "DEBUGGABLE,NOT-SELF-INSTRUMENTING"
+        )
+
+        val properties = Properties()
+        properties.load(project.rootProject.file("local.properties").inputStream())
+        buildConfigField("String", "GEMINI_FEEDBACK_API_KEY", "\"${properties.getProperty("GEMINI_FEEDBACK_API_KEY")}\"")
+        buildConfigField("String", "GEMINI_Therapy_API_KEY", "\"${properties.getProperty("GEMINI_Therapy_API_KEY")}\"")
     }
 
     buildTypes {
@@ -43,6 +54,9 @@ android {
         mlModelBinding = true
     }
 
+    buildFeatures {
+        buildConfig = true
+    }
 }
 
 dependencies {
@@ -63,7 +77,15 @@ dependencies {
     implementation("org.tensorflow:tensorflow-lite-select-tf-ops:2.14.0")
     implementation("org.tensorflow:tensorflow-lite-metadata:0.1.0")
     implementation("org.tensorflow:tensorflow-lite-gpu:2.3.0")
+
+    // Networking (Crucial for Hugging Face connection)
+    implementation("com.squareup.okhttp3:okhttp:4.12.0")
+    implementation("androidx.biometric:biometric:1.1.0")
+    implementation("com.google.ai.client.generativeai:generativeai:0.9.0")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3")
+
     testImplementation("junit:junit:4.13.2")
+    testImplementation ("io.mockk:mockk:1.13.5")
     androidTestImplementation("androidx.test.ext:junit:1.3.0")
     androidTestImplementation("androidx.test.espresso:espresso-core:3.7.0")
 
@@ -84,4 +106,25 @@ dependencies {
     // 2. Updated OkHttp & Logging Interceptor
     implementation("com.squareup.okhttp3:okhttp:4.12.0")
     implementation("com.squareup.okhttp3:logging-interceptor:4.12.0")
+    androidTestImplementation ("androidx.test:rules:1.5.0")
+    androidTestImplementation ("androidx.benchmark:benchmark-macro-junit4:1.2.2")
+    androidTestImplementation("androidx.startup:startup-runtime:1.1.1")
+
+
+    implementation("org.tensorflow:tensorflow-lite-metadata:0.4.4")
+    implementation("org.tensorflow:tensorflow-lite-gpu:2.11.0")
+    // Retrofit for API calls
+    implementation("com.squareup.retrofit2:retrofit:2.11.0")
+    implementation("com.squareup.retrofit2:converter-gson:2.11.0")
+    // Ktor client required by the generativeai library (fixes NoClassDefFoundError for HttpTimeout)
+    implementation("io.ktor:ktor-client-core:2.3.6")
+    implementation("io.ktor:ktor-client-okhttp:2.3.6") // use Android engine or OkHttp engine on Android
+    implementation("com.squareup.okhttp3:logging-interceptor:4.12.0")
+
+    // Coroutines (required for Gemini)
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.3")
+    // Lifecycle (for lifecycleScope)
+    implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.6.2")
+    // Import the Firebase BoM (Current 2026 version)
+    implementation(platform("com.google.firebase:firebase-bom:33.3.0"))
 }
