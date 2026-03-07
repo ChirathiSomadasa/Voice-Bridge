@@ -26,6 +26,15 @@
           </targets>
         </DialogSelection>
       </SelectionState>
+      <SelectionState runConfigName="ViewObjectsActivityTest">
+        <option name="selectionMode" value="DROPDOWN" />
+      </SelectionState>
+      <SelectionState runConfigName="CameraProcessingPerformanceTest">
+        <option name="selectionMode" value="DROPDOWN" />
+      </SelectionState>
+      <SelectionState runConfigName="PhraseActivityTest">
+        <option name="selectionMode" value="DROPDOWN" />
+      </SelectionState>
     </selectionStates>
   </component>
 </project>
