@@ -14,18 +14,16 @@ import androidx.core.content.ContextCompat
 import android.graphics.Color
 
 /**
- * RhythmSummaryActivity — v9.8.0
+ * RhythmSummaryActivity — v9.8.1
  *
- * CHANGES IN THIS VERSION (on top of v9.7.1)
+ * CHANGES IN THIS VERSION (on top of v9.8.0)
  * ─────────────────────────────────────────
- *  [L] DELAYED FEEDBACK OVERLAY
- *      Previously showFeedback() was called immediately on tap, covering
- *      the card colour highlights before the child could see them.
- *      Fix: card colours are applied instantly on tap, but the feedback
- *      overlay is posted via a FEEDBACK_DELAY_MS (1 000 ms) delay.
- *      The overlay is then shown for FEEDBACK_MS (950 ms) before the
- *      next action (retry reset or round advance).
- *      Total visible time per answer = ~2 seconds of feedback.
+ *  [M] SECOND-WRONG FEEDBACK MESSAGE
+ *      showFeedback() now accepts an optional `message` parameter.
+ *      The second wrong attempt shows "Oops! Let's try the next one."
+ *      instead of "Try again!" (which would be confusing since the round
+ *      is about to advance, not retry).
+ *      First wrong still shows "Try again!" unchanged.
  */
 class RhythmSummaryActivity : AppCompatActivity() {
 
@@ -392,7 +390,7 @@ class RhythmSummaryActivity : AppCompatActivity() {
     }
 
     // =========================================================================
-    // Click handling  [FIX L — delayed feedback overlay]
+    // Click handling
     // =========================================================================
 
     private fun handleOptionClick(
@@ -415,13 +413,11 @@ class RhythmSummaryActivity : AppCompatActivity() {
                 consecutiveWrong = 0
             }
 
-            // 1. Colour the card immediately so the child can see it.
             card.setCardBackgroundColor(Color.parseColor("#C8E6C9"))
             playSound(correctSound)
             updateScore()
             updateProgressDots()
 
-            // 2. After FEEDBACK_DELAY_MS, show overlay then advance.
             handler.postDelayed({
                 showFeedback(correct = true)
                 handler.postDelayed({
@@ -432,7 +428,7 @@ class RhythmSummaryActivity : AppCompatActivity() {
         } else {
             // ── WRONG ──────────────────────────────────────────────────────
             if (!isRetryAttempt) {
-                // First wrong — colour cards immediately, overlay after delay.
+                // First wrong — give the child a retry
                 disableAllCards()
                 consecutiveWrong++
                 consecutiveCorrect = 0
@@ -445,14 +441,14 @@ class RhythmSummaryActivity : AppCompatActivity() {
                 isRetryAttempt = true
 
                 handler.postDelayed({
-                    showFeedback(correct = false)
+                    showFeedback(correct = false)   // shows "Try again!"
                     handler.postDelayed({
                         hideFeedbackAnimated { resetCardsForRetry(wrongCard = card) }
                     }, FEEDBACK_MS)
                 }, FEEDBACK_DELAY_MS)
 
             } else {
-                // Second wrong — colour cards immediately, overlay after delay, then advance.
+                // Second wrong — move on to the next round
                 isAnswerSelected = true
                 disableAllCards()
                 card.setCardBackgroundColor(Color.parseColor("#FFCDD2"))
@@ -460,7 +456,7 @@ class RhythmSummaryActivity : AppCompatActivity() {
                 playSound(wrongSound)
 
                 handler.postDelayed({
-                    showFeedback(correct = false)
+                    showFeedback(correct = false, message = "Good Try!")
                     handler.postDelayed({
                         hideFeedbackAnimated { advanceRound() }
                     }, FEEDBACK_MS)
@@ -485,10 +481,6 @@ class RhythmSummaryActivity : AppCompatActivity() {
         }
     }
 
-    /**
-     * Resets ALL cards to white and re-enables them all.
-     * No colour hint remains — the retry is a genuine fresh attempt.
-     */
     private fun resetCardsForRetry(wrongCard: CardView) {
         if (isGameFinished) return
         for (i in 0 until optionsGrid.childCount) {
@@ -508,14 +500,19 @@ class RhythmSummaryActivity : AppCompatActivity() {
     // Feedback overlay
     // =========================================================================
 
-    private fun showFeedback(correct: Boolean) {
+    /**
+     * @param correct  true = correct answer, false = wrong answer
+     * @param message  optional override for the feedback text label.
+     *                 Defaults to "Well done!" for correct, "Try again!" for wrong.
+     */
+    private fun showFeedback(correct: Boolean, message: String? = null) {
         if (correct) {
             feedbackIcon.setImageResource(R.drawable.correct_answer)
-            feedbackText.text = "Well done!"
+            feedbackText.text = message ?: "Well done!"
             feedbackText.setTextColor(Color.parseColor("#388E3C"))
         } else {
             feedbackIcon.setImageResource(R.drawable.delete)
-            feedbackText.text = "Try again!"
+            feedbackText.text = message ?: "Try again!"
             feedbackText.setTextColor(Color.parseColor("#D32F2F"))
         }
         feedbackIcon.visibility    = View.VISIBLE

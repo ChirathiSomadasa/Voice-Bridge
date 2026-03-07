@@ -25,13 +25,12 @@
             android:layout_width="45dp"
             android:layout_height="45dp"
             android:layout_marginStart="16dp"
-            android:layout_marginTop="16dp"
             android:clickable="true"
-            android:focusable="true"
             android:contentDescription="Back"
-            app:srcCompat="@drawable/back"
+            android:focusable="true"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent" />
+            app:layout_constraintTop_toTopOf="parent"
+            app:srcCompat="@drawable/back" />
 
         <!-- Word to Find -->
         <LinearLayout
@@ -53,14 +52,13 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="4dp"
-                android:fontFamily="sans-serif-condensed-bold"
                 android:shadowColor="#40000000"
                 android:shadowDx="2"
                 android:shadowDy="2"
                 android:shadowRadius="4"
                 android:text="BOAT"
-                android:textColor="@color/white"
-                android:textSize="27sp"
+                android:textColor="@color/dark_green"
+                android:textSize="28sp"
                 android:textStyle="bold" />
 
         </LinearLayout>
@@ -103,7 +101,7 @@
                     android:layout_height="wrap_content"
                     android:layout_marginTop="4dp"
                     android:text="0/5"
-                    android:textColor="@color/white"
+                    android:textColor="@color/dark_green"
                     android:textSize="28sp"
                     android:textStyle="bold" />
 
@@ -130,6 +128,7 @@
             android:paddingTop="8dp"
             android:paddingEnd="20dp"
             android:paddingBottom="8dp"
+            android:visibility="gone"
             app:layout_constraintEnd_toEndOf="@id/scoreCard"
             app:layout_constraintStart_toStartOf="@id/scoreCard"
             app:layout_constraintTop_toBottomOf="@id/scoreCard">
