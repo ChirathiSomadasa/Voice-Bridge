@@ -19,37 +19,32 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent">
 
-
-
+        <!-- [FIX F] Back button replaces the panda mascot -->
         <ImageView
-            android:id="@+id/pandaImage"
-            android:layout_width="128dp"
-            android:layout_height="169dp"
-            android:layout_marginStart="-18dp"
-            android:layout_marginTop="-15dp"
-            android:contentDescription="Panda Mascot"
-            android:elevation="12dp"
-            android:src="@drawable/panda_confused"
-            app:layout_constraintBottom_toBottomOf="@id/headerLayout"
+            android:id="@+id/backBtn"
+            android:layout_width="45dp"
+            android:layout_height="45dp"
+            android:layout_marginStart="16dp"
+            android:layout_marginTop="16dp"
+            android:clickable="true"
+            android:focusable="true"
+            android:contentDescription="Back"
+            app:srcCompat="@drawable/back"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="@id/headerLayout"
-            app:layout_constraintVertical_bias="0.0" />
+            app:layout_constraintTop_toTopOf="parent" />
 
         <!-- Word to Find -->
-
-        <!-- Score Card -->
-
         <LinearLayout
             android:id="@+id/wordContainer"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_marginTop="0dp"
+            android:layout_marginStart="10dp"
             android:gravity="center_vertical"
             android:orientation="vertical"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toStartOf="@+id/scoreCard"
             app:layout_constraintHorizontal_bias="1.0"
-            app:layout_constraintStart_toEndOf="@id/pandaImage"
+            app:layout_constraintStart_toEndOf="@id/backBtn"
             app:layout_constraintTop_toTopOf="parent"
             app:layout_constraintVertical_bias="0.0">
 
@@ -70,6 +65,7 @@
 
         </LinearLayout>
 
+        <!-- Score Card -->
         <com.google.android.material.card.MaterialCardView
             android:id="@+id/scoreCard"
             android:layout_width="100dp"
@@ -121,8 +117,7 @@
 
         </com.google.android.material.card.MaterialCardView>
 
-        <!-- 🏆 LEVEL BADGE - Below Score Card -->
-        <!-- 🏆 LEVEL BADGE - Below Score Card -->
+        <!-- Level Badge -->
         <LinearLayout
             android:id="@+id/levelBadge"
             android:layout_width="wrap_content"
@@ -166,11 +161,7 @@
         android:padding="2dp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/headerLayout">
-
-        <!-- Progress dots will be added dynamically -->
-
-    </LinearLayout>
+        app:layout_constraintTop_toBottomOf="@id/headerLayout" />
 
     <!-- Instructions -->
     <TextView
@@ -189,7 +180,7 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/progressContainer" />
 
-    <!-- Therapeutic Message (for confidence builder mode) -->
+    <!-- Therapeutic Message -->
     <TextView
         android:id="@+id/therapeuticMessage"
         android:layout_width="0dp"
@@ -221,13 +212,9 @@
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/therapeuticMessage">
+        app:layout_constraintTop_toBottomOf="@id/therapeuticMessage" />
 
-        <!-- Options will be added dynamically -->
-
-    </GridLayout>
-
-    <!-- Confidence Builder Overlay (for simplified options) -->
+    <!-- Confidence Builder Overlay -->
     <FrameLayout
         android:id="@+id/confidenceBuilderOverlay"
         android:layout_width="match_parent"
@@ -239,7 +226,6 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="@id/therapeuticMessage">
 
-        <!-- Simplified Options Container -->
         <LinearLayout
             android:id="@+id/simplifiedOptionsContainer"
             android:layout_width="match_parent"
@@ -293,23 +279,5 @@
         </LinearLayout>
 
     </FrameLayout>
-
-    <!-- Next Button -->
-    <com.google.android.material.button.MaterialButton
-        android:id="@+id/nextButton"
-        android:layout_width="200dp"
-        android:layout_height="60dp"
-        android:layout_marginBottom="32dp"
-        android:text="NEXT"
-        android:textSize="20sp"
-        android:textStyle="bold"
-        android:visibility="gone"
-        app:cornerRadius="30dp"
-        app:icon="@drawable/button_green"
-        app:iconGravity="textEnd"
-        app:iconPadding="8dp"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

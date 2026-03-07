@@ -14,36 +14,31 @@ import androidx.core.content.ContextCompat
 import android.graphics.Color
 
 /**
- * RhythmSummaryActivity — v9.5.0
+ * RhythmSummaryActivity — v9.8.0
  *
- * FIXES IN THIS VERSION (on top of v9.4.0)
+ * CHANGES IN THIS VERSION (on top of v9.7.1)
  * ─────────────────────────────────────────
- *  [A] KEYWORD POOL LOCKED TO THE SONG THAT WAS PLAYED
- *      Previously the GameMaster prediction could switch currentSongTitle
- *      mid-game, which caused keywords from Row Row / Jack & Jill to appear
- *      inside a Twinkle Twinkle session.
- *      Fix: currentSongTitle is now stored once (from intent) as
- *      originalSongTitle and NEVER changed. The difficulty level (badge)
- *      still adapts from the model prediction; only the keyword pool is
- *      protected.
- *
- *  [B] TWO-OPTION CARDS ARE NOW SQUARE (same size as 4-option cards)
- *      Root cause: rowSpec = GridLayout.spec(index / 2, 1f)
- *      The 1f row-weight caused GridLayout to stretch the single row to
- *      fill all remaining height → tall rectangle instead of square.
- *      Fix: rowSpec uses no weight → GridLayout respects the explicit
- *      height = size set in LayoutParams → perfect square for both
- *      2-option and 4-option modes.
- *
- *  All other behaviour from v9.4.0 (performance-based distractor strategy,
- *  scaffolding, crash fix for RMScoreboardActivity) is unchanged.
+ *  [L] DELAYED FEEDBACK OVERLAY
+ *      Previously showFeedback() was called immediately on tap, covering
+ *      the card colour highlights before the child could see them.
+ *      Fix: card colours are applied instantly on tap, but the feedback
+ *      overlay is posted via a FEEDBACK_DELAY_MS (1 000 ms) delay.
+ *      The overlay is then shown for FEEDBACK_MS (950 ms) before the
+ *      next action (retry reset or round advance).
+ *      Total visible time per answer = ~2 seconds of feedback.
  */
 class RhythmSummaryActivity : AppCompatActivity() {
 
-    // [FIX A] Song title never changes after being read from the intent.
     private lateinit var originalSongTitle: String
 
     private val TAG = "RhythmSummary"
+
+    /** Delay after tap before the feedback overlay appears (card colours show first). */
+    private val FEEDBACK_DELAY_MS = 1000L
+    /** How long the feedback overlay stays fully visible (ms). */
+    private val FEEDBACK_MS       = 950L
+    /** Gap between overlay fade-out and the next round starting (ms). */
+    private val ADVANCE_GAP_MS    = 150L
 
     private val handler = Handler(Looper.getMainLooper())
     private var isGameFinished = false
@@ -57,7 +52,7 @@ class RhythmSummaryActivity : AppCompatActivity() {
     private var responseStartTime: Long = 0
     private val responseTimes = mutableListOf<Long>()
 
-    private lateinit var pandaImage:        ImageView
+    private lateinit var backButton:        ImageView
     private lateinit var wordTitle:         TextView
     private lateinit var scoreText:         TextView
     private lateinit var progressContainer: LinearLayout
@@ -65,8 +60,7 @@ class RhythmSummaryActivity : AppCompatActivity() {
     private lateinit var feedbackIcon:      ImageView
     private lateinit var feedbackText:      TextView
     private lateinit var feedbackOverlay:   FrameLayout
-    private lateinit var nextButton:        Button
-    private lateinit var levelBadge: LinearLayout
+    private lateinit var levelBadge:        LinearLayout
     private lateinit var levelIndicator:    TextView
 
     private var currentRound           = 0
@@ -75,6 +69,9 @@ class RhythmSummaryActivity : AppCompatActivity() {
     private var correctAnswerIndex     = 0
     private var isAnswerSelected       = false
     private var currentDifficultyLevel = 1
+
+    /** True once the child has had one wrong attempt in the current round. */
+    private var isRetryAttempt = false
 
     private val usedKeywords     = mutableSetOf<String>()
     private lateinit var currentKeywords:   List<Keyword>
@@ -101,16 +98,12 @@ class RhythmSummaryActivity : AppCompatActivity() {
         Log.d(TAG, "✅ GameMaster initialized  modelLoaded=${gameMaster.modelLoaded}")
 
         initializeViews()
-
-        // [FIX A] Read once; never overwrite from model prediction.
         originalSongTitle = intent.getStringExtra("SONG_TITLE") ?: "Row Row Row Your Boat"
-
         initializeAudio()
         setupSongData()
         setupUI()
 
         handler.postDelayed({ startNewRound() }, 1000)
-        nextButton.setOnClickListener { onNextButtonClick() }
     }
 
     override fun onDestroy() {
@@ -127,7 +120,7 @@ class RhythmSummaryActivity : AppCompatActivity() {
     // =========================================================================
 
     private fun initializeViews() {
-        pandaImage        = findViewById(R.id.pandaImage)
+        backButton        = findViewById(R.id.backBtn)
         wordTitle         = findViewById(R.id.wordTitle)
         scoreText         = findViewById(R.id.scoreText)
         progressContainer = findViewById(R.id.progressContainer)
@@ -135,24 +128,19 @@ class RhythmSummaryActivity : AppCompatActivity() {
         feedbackOverlay   = findViewById(R.id.feedbackOverlay)
         feedbackIcon      = findViewById(R.id.feedbackIcon)
         feedbackText      = findViewById(R.id.feedbackText)
-        nextButton        = findViewById(R.id.nextButton)
         levelBadge        = findViewById(R.id.levelBadge)
         levelIndicator    = findViewById(R.id.levelIndicator)
 
-//        findViewById<ImageView>(R.id.backBtn).setOnClickListener {
-//            android.app.AlertDialog.Builder(this)
-//                .setMessage("Leave this game? Your progress will be lost.")
-//                .setPositiveButton("Leave") { _, _ ->
-//                    isGameFinished = true
-//                    handler.removeCallbacksAndMessages(null)
-//                    startActivity(Intent(this, SongSelectionActivity::class.java).apply {
-//                        flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
-//                    })
-//                    finish()
-//                }
-//                .setNegativeButton("Stay", null)
-//                .show()
-//        }
+        backButton.setOnClickListener {
+            isGameFinished = true
+            handler.removeCallbacksAndMessages(null)
+            startActivity(
+                Intent(this, SongSelectionActivity::class.java).apply {
+                    flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
+                }
+            )
+            finish()
+        }
     }
 
     private fun initializeAudio() {
@@ -164,7 +152,6 @@ class RhythmSummaryActivity : AppCompatActivity() {
         }
     }
 
-    // Keywords are always loaded from the original song — never switched.
     private fun setupSongData() {
         currentKeywords = when (originalSongTitle) {
             "Twinkle Twinkle Little Star", "Twinkle Twinkle" -> listOf(
@@ -195,13 +182,9 @@ class RhythmSummaryActivity : AppCompatActivity() {
     }
 
     private fun setupUI() {
-        animatePanda(); setupProgressDots(); updateScore(); updateLevelBadge()
-    }
-
-    private fun animatePanda() {
-        pandaImage.animate().translationY(-20f).setDuration(1000)
-            .withEndAction { pandaImage.animate().translationY(0f).setDuration(1000).start() }
-            .start()
+        setupProgressDots()
+        updateScore()
+        updateLevelBadge()
     }
 
     private fun setupProgressDots() {
@@ -245,8 +228,11 @@ class RhythmSummaryActivity : AppCompatActivity() {
         }
 
         Log.d(TAG, "=== ROUND ${currentRound + 1}/$totalRounds ===")
+
+        hideFeedbackNow()
+
         isAnswerSelected = false
-        nextButton.visibility = View.GONE
+        isRetryAttempt   = false
         optionsGrid.removeAllViews()
 
         val accuracy    = if (currentRound > 0) score.toFloat() / currentRound else 0.5f
@@ -265,21 +251,13 @@ class RhythmSummaryActivity : AppCompatActivity() {
             consecutiveWrong   = consecutiveWrong.toFloat()
         )
 
-        Log.d(TAG, "🤖 PREDICTION (fromModel=${currentPrediction.fromModel}):")
-        Log.d(TAG, "   rhythmComplexity = ${currentPrediction.rhythmComplexity}")
-        Log.d(TAG, "   distractor       = ${currentPrediction.distractor}")
-        Log.d(TAG, "   nextAccuracy     = ${currentPrediction.nextAccuracy}")
-        Log.d(TAG, "   frustrationRisk  = ${currentPrediction.frustrationRisk}")
-
-        // [FIX A] Difficulty badge can still adapt, but the keyword pool
-        // always stays tied to originalSongTitle — no song switch allowed.
-        Log.d(TAG, "🎵 Song locked to: $originalSongTitle (prediction ignored for song switch)")
+        Log.d(TAG, "🤖 PREDICTION (fromModel=${currentPrediction.fromModel})")
+        Log.d(TAG, "🎵 Song locked to: $originalSongTitle")
         updateLevelBadge()
 
-        // ── Scaffolding: 2-column grid, only 2 cards when struggling ─
         val isScaffolding = consecutiveWrong >= 2
         val optionCount   = if (isScaffolding) 2 else 4
-        if (isScaffolding) Log.d(TAG, "⚠️ consecutiveWrong=$consecutiveWrong → scaffolding to 2 options")
+        if (isScaffolding) Log.d(TAG, "⚠️ scaffolding to 2 options")
 
         val keyword         = getUniqueKeyword()
         val correctImageRes = keywordImages[keyword.word]
@@ -294,7 +272,6 @@ class RhythmSummaryActivity : AppCompatActivity() {
         responseStartTime = System.currentTimeMillis()
     }
 
-    // Performance-based distractor builder (unchanged from v9.4.0)
     private fun buildDistractors(
         keyword: String,
         accuracy: Float,
@@ -312,12 +289,8 @@ class RhythmSummaryActivity : AppCompatActivity() {
         }
 
         return when {
-            isScaffolding || accuracy < 0.40f -> {
-                Log.d(TAG, "   distractor strategy: ALL RANDOM (poor/scaffold)")
-                KeywordImageMapper.getDistractors(keyword, 0, count)
-            }
+            isScaffolding || accuracy < 0.40f -> KeywordImageMapper.getDistractors(keyword, 0, count)
             accuracy < 0.70f -> {
-                Log.d(TAG, "   distractor strategy: MIXED random+semantic+phonetic (average)")
                 val random   = KeywordImageMapper.getDistractors(keyword, 0, 1)
                 val semantic = KeywordImageMapper.getDistractors(keyword, 2, 1)
                     .filter { it.first != random.firstOrNull()?.first }
@@ -326,7 +299,6 @@ class RhythmSummaryActivity : AppCompatActivity() {
                 padWithRandom((random + semantic + phonetic).distinctBy { it.first })
             }
             else -> {
-                Log.d(TAG, "   distractor strategy: SEMANTIC+PHONETIC (good)")
                 val semantic = KeywordImageMapper.getDistractors(keyword, 2, 2)
                 val phonetic = KeywordImageMapper.getDistractors(keyword, 1, 1)
                     .filter { p -> p.first !in semantic.map { it.first } }
@@ -364,17 +336,12 @@ class RhythmSummaryActivity : AppCompatActivity() {
     // =========================================================================
 
     private fun displayOptions(gameRound: GameRound, optionCount: Int) {
-        // Card size is the same whether 2 or 4 options are shown.
-        // Half the screen width minus margins → square cards in a 2-column grid.
         val optionSize = resources.displayMetrics.widthPixels / 2 - 48.dpToPx()
         gameRound.options.take(optionCount).forEachIndexed { i, option ->
             createOptionCard(i, option.first, option.second, optionSize, gameRound.keyword)
         }
     }
 
-    // [FIX B] rowSpec no longer carries a weight (1f).
-    // Without the weight, GridLayout respects the explicit height = size
-    // set in LayoutParams, giving a perfect square for both 2- and 4-option modes.
     private fun createOptionCard(
         index: Int,
         word: String,
@@ -385,9 +352,9 @@ class RhythmSummaryActivity : AppCompatActivity() {
         val card = CardView(this).apply {
             layoutParams = GridLayout.LayoutParams().apply {
                 width      = size
-                height     = size                                    // explicit square height
-                columnSpec = GridLayout.spec(index % 2, 1f)         // column weight keeps 2-col layout
-                rowSpec    = GridLayout.spec(index / 2)              // [FIX B] no row weight → height respected
+                height     = size
+                columnSpec = GridLayout.spec(index % 2, 1f)
+                rowSpec    = GridLayout.spec(index / 2)
                 setMargins(8.dpToPx(), 8.dpToPx(), 8.dpToPx(), 8.dpToPx())
             }
             radius        = 16.dpToPx().toFloat()
@@ -425,7 +392,7 @@ class RhythmSummaryActivity : AppCompatActivity() {
     }
 
     // =========================================================================
-    // Click handling
+    // Click handling  [FIX L — delayed feedback overlay]
     // =========================================================================
 
     private fun handleOptionClick(
@@ -436,23 +403,100 @@ class RhythmSummaryActivity : AppCompatActivity() {
         responseTime: Long
     ) {
         if (!card.isClickable || isAnswerSelected) return
-        isAnswerSelected = true
-        disableAllCards()
 
         if (selectedIndex == correctAnswerIndex) {
-            score++; consecutiveCorrect++; consecutiveWrong = 0
-            showFeedback(true, card)
-            playSound(correctSound)
-        } else {
-            consecutiveWrong++; consecutiveCorrect = 0
-            showFeedback(false, card)
-            highlightCorrectAnswer()
-            playSound(wrongSound)
-        }
+            // ── CORRECT ────────────────────────────────────────────────────
+            isAnswerSelected = true
+            disableAllCards()
 
-        updateScore()
-        updateProgressDots()
-        handler.postDelayed({ hideFeedbackAndShowNextButton() }, 1500)
+            if (!isRetryAttempt) {
+                score++
+                consecutiveCorrect++
+                consecutiveWrong = 0
+            }
+
+            // 1. Colour the card immediately so the child can see it.
+            card.setCardBackgroundColor(Color.parseColor("#C8E6C9"))
+            playSound(correctSound)
+            updateScore()
+            updateProgressDots()
+
+            // 2. After FEEDBACK_DELAY_MS, show overlay then advance.
+            handler.postDelayed({
+                showFeedback(correct = true)
+                handler.postDelayed({
+                    hideFeedbackAnimated { advanceRound() }
+                }, FEEDBACK_MS)
+            }, FEEDBACK_DELAY_MS)
+
+        } else {
+            // ── WRONG ──────────────────────────────────────────────────────
+            if (!isRetryAttempt) {
+                // First wrong — colour cards immediately, overlay after delay.
+                disableAllCards()
+                consecutiveWrong++
+                consecutiveCorrect = 0
+
+                card.setCardBackgroundColor(Color.parseColor("#FFCDD2"))
+                colorCorrectCard(green = true)
+                playSound(wrongSound)
+                updateProgressDots()
+
+                isRetryAttempt = true
+
+                handler.postDelayed({
+                    showFeedback(correct = false)
+                    handler.postDelayed({
+                        hideFeedbackAnimated { resetCardsForRetry(wrongCard = card) }
+                    }, FEEDBACK_MS)
+                }, FEEDBACK_DELAY_MS)
+
+            } else {
+                // Second wrong — colour cards immediately, overlay after delay, then advance.
+                isAnswerSelected = true
+                disableAllCards()
+                card.setCardBackgroundColor(Color.parseColor("#FFCDD2"))
+                colorCorrectCard(green = true)
+                playSound(wrongSound)
+
+                handler.postDelayed({
+                    showFeedback(correct = false)
+                    handler.postDelayed({
+                        hideFeedbackAnimated { advanceRound() }
+                    }, FEEDBACK_MS)
+                }, FEEDBACK_DELAY_MS)
+            }
+        }
+    }
+
+    // =========================================================================
+    // Card colour helpers
+    // =========================================================================
+
+    private fun colorCorrectCard(green: Boolean) {
+        (optionsGrid.getChildAt(correctAnswerIndex) as? CardView)?.let { c ->
+            if (green) {
+                c.setCardBackgroundColor(Color.parseColor("#C8E6C9"))
+                c.animate().scaleX(1.08f).scaleY(1.08f).setDuration(150).start()
+            } else {
+                c.setCardBackgroundColor(Color.WHITE)
+                c.animate().scaleX(1f).scaleY(1f).setDuration(100).start()
+            }
+        }
+    }
+
+    /**
+     * Resets ALL cards to white and re-enables them all.
+     * No colour hint remains — the retry is a genuine fresh attempt.
+     */
+    private fun resetCardsForRetry(wrongCard: CardView) {
+        if (isGameFinished) return
+        for (i in 0 until optionsGrid.childCount) {
+            val c = optionsGrid.getChildAt(i) as? CardView ?: continue
+            c.setCardBackgroundColor(Color.WHITE)
+            c.animate().scaleX(1f).scaleY(1f).setDuration(100).start()
+            c.isClickable = true
+        }
     }
 
     private fun disableAllCards() {
@@ -460,21 +504,16 @@ class RhythmSummaryActivity : AppCompatActivity() {
             (optionsGrid.getChildAt(i) as? CardView)?.isClickable = false
     }
 
-    private fun highlightCorrectAnswer() {
-        (optionsGrid.getChildAt(correctAnswerIndex) as? CardView)?.let {
-            it.setCardBackgroundColor(Color.parseColor("#C8E6C9"))
-            it.animate().scaleX(1.08f).scaleY(1.08f).setDuration(150).start()
-        }
-    }
+    // =========================================================================
+    // Feedback overlay
+    // =========================================================================
 
-    private fun showFeedback(isCorrect: Boolean, selectedCard: CardView) {
-        if (isCorrect) {
-            selectedCard.setCardBackgroundColor(Color.parseColor("#C8E6C9"))
+    private fun showFeedback(correct: Boolean) {
+        if (correct) {
             feedbackIcon.setImageResource(R.drawable.correct_answer)
             feedbackText.text = "Well done!"
             feedbackText.setTextColor(Color.parseColor("#388E3C"))
         } else {
-            selectedCard.setCardBackgroundColor(Color.parseColor("#FFCDD2"))
             feedbackIcon.setImageResource(R.drawable.delete)
             feedbackText.text = "Try again!"
             feedbackText.setTextColor(Color.parseColor("#D32F2F"))
@@ -482,21 +521,55 @@ class RhythmSummaryActivity : AppCompatActivity() {
         feedbackIcon.visibility    = View.VISIBLE
         feedbackText.visibility    = View.VISIBLE
         feedbackOverlay.visibility = View.VISIBLE
-        feedbackOverlay.alpha      = 0f
-        feedbackOverlay.animate().alpha(1f).setDuration(300).start()
+        feedbackOverlay.animate().cancel()
+        feedbackOverlay.alpha = 0f
+        feedbackOverlay.animate().alpha(1f).setDuration(200).start()
     }
 
-    private fun hideFeedbackAndShowNextButton() {
-        if (isGameFinished) return
-        feedbackOverlay.animate().alpha(0f).setDuration(300).withEndAction {
+    private fun hideFeedbackAnimated(onDone: () -> Unit) {
+        if (feedbackOverlay.visibility != View.VISIBLE || feedbackOverlay.alpha == 0f) {
             feedbackOverlay.visibility = View.GONE
             feedbackIcon.visibility    = View.GONE
             feedbackText.visibility    = View.GONE
+            onDone()
+            return
+        }
+        feedbackOverlay.animate().cancel()
+        feedbackOverlay.animate().alpha(0f).setDuration(200).withEndAction {
+            feedbackOverlay.visibility = View.GONE
+            feedbackIcon.visibility    = View.GONE
+            feedbackText.visibility    = View.GONE
+            onDone()
         }.start()
-        nextButton.visibility = View.VISIBLE
-        nextButton.alpha      = 0f
-        nextButton.animate().alpha(1f).setDuration(300).start()
     }
+
+    private fun hideFeedbackNow() {
+        feedbackOverlay.animate().cancel()
+        feedbackOverlay.alpha      = 0f
+        feedbackOverlay.visibility = View.GONE
+        feedbackIcon.visibility    = View.GONE
+        feedbackText.visibility    = View.GONE
+    }
+
+    // =========================================================================
+    // Round advance
+    // =========================================================================
+
+    private fun advanceRound() {
+        if (isGameFinished) return
+        currentRound++
+        Log.d(TAG, "advanceRound → currentRound=$currentRound / $totalRounds")
+        if (currentRound >= totalRounds) {
+            isGameFinished = true
+            navigateToScoreboard()
+            return
+        }
+        handler.postDelayed({ startNewRound() }, ADVANCE_GAP_MS)
+    }
+
+    // =========================================================================
+    // Audio / score / badge
+    // =========================================================================
 
     private fun playSound(player: MediaPlayer?) {
         try {
@@ -517,47 +590,21 @@ class RhythmSummaryActivity : AppCompatActivity() {
             currentPrediction.rhythmComplexity < 0.66f -> 2
             else                                        -> 3
         }
-
         val (label, colorRes) = when (level) {
-            1    -> "Easy"   to R.color.green_dark   // #FF6B35
-            2    -> "Medium" to R.color.dark_orange      // #4A90E2
-            else -> "Hard"   to R.color.pink            // your pink
+            1    -> "Easy"   to R.color.green_dark
+            2    -> "Medium" to R.color.dark_orange
+            else -> "Hard"   to R.color.pink
         }
-
         currentDifficultyLevel = level
         levelIndicator.text    = label
-
-        // mutate() prevents the tint from affecting other views that share
-        // this same drawable reference. setTint() recolours the layer-list
-        // shape without replacing it — so the flag corners are preserved.
-        levelBadge.background
-            ?.mutate()
-            ?.setTint(ContextCompat.getColor(this, colorRes))
-
+        levelBadge.background?.mutate()?.setTint(ContextCompat.getColor(this, colorRes))
         levelBadge.animate().scaleX(1.1f).scaleY(1.1f).setDuration(200)
             .withEndAction { levelBadge.animate().scaleX(1f).scaleY(1f).setDuration(200).start() }
             .start()
     }
 
     // =========================================================================
-    // Next button
-    // =========================================================================
-
-    private fun onNextButtonClick() {
-        if (isGameFinished) return
-        nextButton.visibility = View.GONE
-        currentRound++
-        Log.d(TAG, "onNextButtonClick → currentRound=$currentRound / $totalRounds")
-        if (currentRound >= totalRounds) {
-            isGameFinished = true
-            navigateToScoreboard()
-            return
-        }
-        startNewRound()
-    }
-
-    // =========================================================================
-    // Scoreboard navigation — FLAG_ACTIVITY_CLEAR_TASK (unchanged from v9.4.0)
+    // Scoreboard navigation
     // =========================================================================
 
     private fun navigateToScoreboard() {
@@ -601,7 +648,7 @@ class RhythmSummaryActivity : AppCompatActivity() {
             )
             finish()
         } catch (e: Exception) {
-            Log.e(TAG,  "navigateToScoreboard FAILED: ${e.message}", e)
+            Log.e(TAG, "navigateToScoreboard FAILED: ${e.message}", e)
             try {
                 startActivity(
                     Intent(this, GameDashboardActivity::class.java).apply {
