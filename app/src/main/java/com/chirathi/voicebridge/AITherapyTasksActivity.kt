@@ -218,7 +218,7 @@ class AITherapyTasksActivity : AppCompatActivity() {
             }
 
             val messageToShow = if (!aiText.isNullOrBlank()) aiText.trim() else previewMsg
-            val boldTargets = listOf("STEP 1:", "STEP 2:", "STEP 3:")
+            val boldTargets = listOf("Goal", "Tools & Materials", "STEP 1:", "STEP 2:", "STEP 3:", "STEP 4:", "STEP 5:", "STEP 6:")
             val spannable = SpannableString(messageToShow).apply {
                 boldTargets.forEach { target ->
                     val start = messageToShow.indexOf(target)
