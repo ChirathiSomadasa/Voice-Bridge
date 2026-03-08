@@ -82,9 +82,6 @@
             android:name=".Education_subjects_Activity"
             android:exported="false" />
         <activity
-            android:name=".Edu_LessonDetailActivity"
-            android:exported="false" />
-        <activity
             android:name=".Edu_LessonListActivity"
             android:exported="false" />
         <activity
