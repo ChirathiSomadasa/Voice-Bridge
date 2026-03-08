@@ -212,7 +212,7 @@ class Education_therapyActivity : AppCompatActivity() {
         }
 
         // Show loading message
-        Toast.makeText(this, "🤖 Getting AI recommendations...", Toast.LENGTH_SHORT).show()
+        Toast.makeText(this, "Getting AI recommendations...", Toast.LENGTH_SHORT).show()
 
         db.collection("users").document(userId).get()
             .addOnSuccessListener { document ->
