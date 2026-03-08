@@ -34,6 +34,20 @@
             android:name=".ViewObjectsActivity"
             android:exported="false" />
         <activity
+            android:name=".StickerGalleryActivity"
+            android:exported="false"
+            android:theme="@style/Theme.VoiceBridge" />
+        <activity
+            android:name=".MiniGamesActivitySequence"
+            android:exported="false"
+            android:theme="@style/Theme.VoiceBridge" />
+        <activity
+            android:name=".ParentSequenceSettingsActivity"
+            android:exported="false" />
+        <activity
+            android:name=".MiniGameMoodMatchActivity"
+            android:exported="false" />
+        <activity
             android:name=".ParentReportActivity"
             android:exported="false" />
         <activity
@@ -94,12 +108,6 @@
             android:name=".Education_therapyActivity"
             android:exported="false" />
         <activity
-            android:name=".Education_subjects_Activity"
-            android:exported="false" />
-        <activity
-            android:name=".Edu_LessonDetailActivity"
-            android:exported="false" />
-        <activity
             android:name=".Edu_LessonListActivity"
             android:exported="false" />
         <activity
@@ -112,6 +120,9 @@
             android:name=".ChatbotActivity"
             android:exported="false"
             android:windowSoftInputMode="adjustResize" />
+        <activity
+            android:name=".Education_subjects_Activity"
+            android:exported="false" />
         <activity
             android:name=".RhythmSummaryActivity"
             android:exported="false" />

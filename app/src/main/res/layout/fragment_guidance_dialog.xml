@@ -14,7 +14,7 @@
         android:layout_height="452dp"
         android:layout_marginTop="16dp"
         android:scaleType="fitCenter"
-        android:src="@drawable/panda"
+        android:src="@drawable/panda_think"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />

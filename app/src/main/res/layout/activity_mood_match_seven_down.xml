@@ -1,38 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/white"
-    tools:context=".MoodMatchSevenDownActivity">
+    android:background="@color/white">
 
-    <!-- Video Player (Plays on top, but game area is still visible and playable) -->
-    <FrameLayout
-        android:id="@+id/videoContainer"
-        android:layout_width="0dp"
-        android:layout_height="250dp"
-        android:scaleX="1.5"
-        android:scaleY="1.5"
-        android:background="@android:color/transparent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent">
-
-        <VideoView
-            android:id="@+id/videoView"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:scaleType="fitXY"
-            android:background="@android:color/transparent" />
-
-    </FrameLayout>
-
-    <!-- Top Bamboo Background -->
+    <!-- Static bamboo header -->
     <ImageView
         android:id="@+id/topGameImage1"
         android:layout_width="0dp"
-        android:layout_height="250dp"
+        android:layout_height="220dp"
         android:alpha="0.7"
         android:scaleType="fitXY"
         android:scaleX="1.5"
@@ -40,14 +18,26 @@
         android:src="@drawable/game_bg"
         android:visibility="invisible"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.0"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
-    <!-- "Guess the emotion?" Text BEFORE the Panda -->
+
+    <ImageView
+        android:id="@+id/backBtn"
+        android:layout_width="45dp"
+        android:layout_height="45dp"
+        android:layout_marginStart="16dp"
+        android:layout_marginTop="16dp"
+        android:clickable="true"
+        android:focusable="true"
+        android:contentDescription="Back"
+        app:srcCompat="@drawable/back"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
     <TextView
         android:id="@+id/guessText"
         android:layout_width="300dp"
-        android:layout_height="285dp"
+        android:layout_height="250dp"
         android:gravity="center"
         android:shadowColor="#000000"
         android:shadowDx="2"
@@ -63,24 +53,22 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
-    <!-- Panda Image on Top (Initially invisible, becomes visible after video) -->
     <ImageView
         android:id="@+id/pandaImage"
-        android:layout_width="260dp"
-        android:layout_height="243dp"
-        android:layout_marginEnd="-50dp"
+        android:layout_width="230dp"
+        android:layout_height="220dp"
+        android:layout_marginEnd="-40dp"
         android:scaleType="fitCenter"
         android:src="@drawable/panda_confused"
         android:visibility="invisible"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
-    <!-- Current Score & Round -->
     <TextView
         android:id="@+id/tvScore"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="16dp"
+        android:layout_marginTop="8dp"
         android:text="Score: 0"
         android:textSize="20sp"
         android:textColor="@color/white"
@@ -93,15 +81,14 @@
         android:id="@+id/tvRound"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"
-        android:text="Round: 1/10"
+        android:layout_marginTop="4dp"
+        android:text="Round: 1/5"
         android:textSize="18sp"
         android:textColor="@color/white"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/tvScore" />
 
-    <!-- Scrollable Bottom Section -->
     <ScrollView
         android:id="@+id/contentScroll"
         android:layout_width="0dp"
@@ -115,134 +102,242 @@
         app:layout_constraintEnd_toEndOf="parent">
 
         <LinearLayout
-            android:id="@+id/layoutContent"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
             android:gravity="center_horizontal"
-            android:padding="20dp">
+            android:padding="16dp">
 
-            <!-- Emotion Image - REMOVE THE android:src ATTRIBUTE -->
+            <!-- Emotion image (size adjusted in code for older group) -->
             <ImageView
                 android:id="@+id/emotionImage"
                 android:layout_width="260dp"
                 android:layout_height="260dp"
                 android:scaleType="fitCenter"
-                android:layout_marginBottom="20dp" />
+                android:layout_marginBottom="16dp" />
 
-            <!-- Option 1 -->
+            <!-- ══════════════════════════════════
+                 AGE 6-7: 2 large buttons + sound
+                 ══════════════════════════════════ -->
             <LinearLayout
-                android:layout_width="wrap_content"
+                android:id="@+id/layoutYoung"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:layout_marginBottom="12dp">
+                android:orientation="vertical"
+                android:gravity="center_horizontal"
+                android:visibility="visible">
 
-                <Button
-                    android:id="@+id/btnOption1"
-                    style="@style/SolidGreenButton"
-                    android:layout_width="200dp"
-                    android:layout_height="75dp"
-                    android:text="Happy"
-                    android:textSize="24sp"
-                    android:textStyle="bold"
-                    android:textAllCaps="false"
-                    app:backgroundTint="@color/dark_orange"
-                    android:textColor="@color/white"
-                    android:layout_marginEnd="8dp" />
-
+                <!-- Option 1 -->
                 <LinearLayout
-                    android:id="@+id/soundOption1"
-                    android:layout_width="75dp"
-                    android:layout_height="75dp"
-                    android:layout_marginStart="8dp"
-                    android:background="@color/pink"
-                    android:clickable="true"
-                    android:elevation="4dp"
-                    android:focusable="true"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:layout_marginBottom="16dp"
                     android:gravity="center"
-                    android:orientation="vertical"
-                    android:padding="4dp">
+                    android:paddingHorizontal="16dp">
 
-                    <ImageView
-                        android:layout_width="40dp"
-                        android:layout_height="43dp"
-                        android:src="@drawable/volume"
-                        app:tint="@android:color/white" />
+                    <FrameLayout
+                        android:layout_width="200dp"
+                        android:layout_height="75dp"
+                        android:layout_marginEnd="8dp">
+                        <Button
+                            android:id="@+id/btnOption1"
+                            app:backgroundTint="@color/dark_orange"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_gravity="center"
+                            android:minWidth="180dp"
+                            android:minHeight="75dp"
+                            android:text="Happy"
+                            android:textAllCaps="false"
+                            android:textColor="@color/white"
+                            android:textSize="24sp"
+                            android:textStyle="bold" />
+                    </FrameLayout>
 
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="2dp"
-                        android:text="Play Sound"
-                        android:textColor="@android:color/white"
-                        android:textSize="10sp"
+                    <LinearLayout
+                        android:id="@+id/soundOption1"
+                        android:layout_width="75dp"
+                        android:layout_height="75dp"
+                        android:layout_marginStart="8dp"
+                        android:background="@color/pink"
+                        android:clickable="true"
+                        android:elevation="4dp"
+                        android:focusable="true"
+                        android:gravity="center"
+                        android:orientation="vertical"
+                        android:padding="4dp">
+                        <ImageView
+                            android:layout_width="40dp"
+                            android:layout_height="43dp"
+                            android:src="@drawable/volume"
+                            app:tint="@android:color/white" />
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="2dp"
+                            android:text="Play Sound"
+                            android:textColor="@android:color/white"
+                            android:textSize="10sp"
+                            android:textStyle="bold" />
+                    </LinearLayout>
+                </LinearLayout>
+
+                <!-- Option 2 -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:layout_marginBottom="16dp"
+                    android:gravity="center"
+                    android:paddingHorizontal="16dp">
+
+                    <FrameLayout
+                        android:layout_width="200dp"
+                        android:layout_height="75dp"
+                        android:layout_marginEnd="8dp">
+                        <Button
+                            android:id="@+id/btnOption2"
+                            app:backgroundTint="@color/dark_orange"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_gravity="center"
+                            android:minWidth="180dp"
+                            android:minHeight="75dp"
+                            android:text="Sad"
+                            android:textAllCaps="false"
+                            android:textColor="@color/white"
+                            android:textSize="24sp"
+                            android:textStyle="bold" />
+                    </FrameLayout>
+
+                    <LinearLayout
+                        android:id="@+id/soundOption2"
+                        android:layout_width="75dp"
+                        android:layout_height="75dp"
+                        android:layout_marginStart="8dp"
+                        android:background="@color/pink"
+                        android:clickable="true"
+                        android:elevation="4dp"
+                        android:focusable="true"
+                        android:gravity="center"
+                        android:orientation="vertical"
+                        android:padding="4dp">
+                        <ImageView
+                            android:layout_width="44dp"
+                            android:layout_height="41dp"
+                            android:src="@drawable/volume"
+                            app:tint="@android:color/white" />
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="2dp"
+                            android:text="Play Sound"
+                            android:textColor="@android:color/white"
+                            android:textSize="10sp"
+                            android:textStyle="bold" />
+                    </LinearLayout>
+                </LinearLayout>
+
+            </LinearLayout>
+            <!-- end layoutYoung -->
+
+            <!-- ══════════════════════════════════
+                 AGE 8-10: 2x2 grid (no sound)
+                 ══════════════════════════════════ -->
+            <LinearLayout
+                android:id="@+id/layoutOlder"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:gravity="center_horizontal"
+                android:paddingHorizontal="16dp"
+                android:visibility="gone">
+
+                <!-- Row 1 -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center"
+                    android:layout_marginBottom="12dp">
+
+                    <Button
+                        android:id="@+id/btnGrid1"
+                        app:backgroundTint="@color/dark_orange"
+                        android:layout_width="0dp"
+                        android:layout_height="65dp"
+                        android:layout_weight="1"
+                        android:layout_marginEnd="8dp"
+                        android:text="Happy"
+                        android:textAllCaps="false"
+                        android:textColor="@color/white"
+                        android:textSize="18sp"
                         android:textStyle="bold" />
 
+                    <Button
+                        android:id="@+id/btnGrid2"
+                        app:backgroundTint="@color/dark_orange"
+                        android:layout_width="0dp"
+                        android:layout_height="65dp"
+                        android:layout_weight="1"
+                        android:layout_marginStart="8dp"
+                        android:text="Sad"
+                        android:textAllCaps="false"
+                        android:textColor="@color/white"
+                        android:textSize="18sp"
+                        android:textStyle="bold" />
                 </LinearLayout>
-            </LinearLayout>
 
-            <!-- Option 2 -->
-            <LinearLayout
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:layout_marginBottom="12dp">
-
-                <Button
-                    android:id="@+id/btnOption2"
-                    style="@style/SolidGreenButton"
-                    android:layout_width="200dp"
-                    android:layout_height="75dp"
-                    android:text="Sad"
-                    android:textSize="24sp"
-                    android:textStyle="bold"
-                    android:textAllCaps="false"
-                    app:backgroundTint="@color/dark_orange"
-                    android:textColor="@color/white"
-                    android:layout_marginEnd="8dp" />
-
+                <!-- Row 2 -->
                 <LinearLayout
-                    android:id="@+id/soundOption2"
-                    android:layout_width="75dp"
-                    android:layout_height="75dp"
-                    android:layout_marginStart="8dp"
-                    android:background="@color/pink"
-                    android:clickable="true"
-                    android:elevation="4dp"
-                    android:focusable="true"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
                     android:gravity="center"
-                    android:orientation="vertical"
-                    android:padding="4dp">
+                    android:layout_marginBottom="16dp">
 
-                    <ImageView
-                        android:layout_width="44dp"
-                        android:layout_height="41dp"
-                        android:src="@drawable/volume"
-                        app:tint="@android:color/white" />
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="2dp"
-                        android:text="Play Sound"
-                        android:textColor="@android:color/white"
-                        android:textSize="10sp"
+                    <Button
+                        android:id="@+id/btnGrid3"
+                        app:backgroundTint="@color/dark_orange"
+                        android:layout_width="0dp"
+                        android:layout_height="65dp"
+                        android:layout_weight="1"
+                        android:layout_marginEnd="8dp"
+                        android:text="Angry"
+                        android:textAllCaps="false"
+                        android:textColor="@color/white"
+                        android:textSize="18sp"
                         android:textStyle="bold" />
 
+                    <Button
+                        android:id="@+id/btnGrid4"
+                        app:backgroundTint="@color/dark_orange"
+                        android:layout_width="0dp"
+                        android:layout_height="65dp"
+                        android:layout_weight="1"
+                        android:layout_marginStart="8dp"
+                        android:text="Scared"
+                        android:textAllCaps="false"
+                        android:textColor="@color/white"
+                        android:textSize="18sp"
+                        android:textStyle="bold" />
                 </LinearLayout>
-            </LinearLayout>
 
-            <!-- Next Button -->
+            </LinearLayout>
+            <!-- end layoutOlder -->
+
+            <!-- Next button (shared) -->
             <Button
                 android:id="@+id/btnNext"
                 android:layout_width="200dp"
                 android:layout_height="60dp"
-                android:layout_marginTop="20dp"
+                android:layout_marginTop="8dp"
                 android:text="Next"
                 android:textSize="20sp"
+                android:textColor="@color/white"
                 android:visibility="gone"
-                app:backgroundColor="@drawable/button_green"
-                android:textColor="@color/white" />
+                app:backgroundColor="@drawable/button_green" />
 
         </LinearLayout>
     </ScrollView>

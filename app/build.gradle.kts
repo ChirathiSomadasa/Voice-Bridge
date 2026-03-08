@@ -110,7 +110,6 @@ dependencies {
     androidTestImplementation ("androidx.benchmark:benchmark-macro-junit4:1.2.2")
     androidTestImplementation("androidx.startup:startup-runtime:1.1.1")
 
-
     implementation("org.tensorflow:tensorflow-lite-metadata:0.4.4")
     implementation("org.tensorflow:tensorflow-lite-gpu:2.11.0")
     // Retrofit for API calls

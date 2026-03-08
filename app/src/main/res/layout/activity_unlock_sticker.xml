@@ -31,8 +31,8 @@
     <!-- Blank Sticker Card -->
     <ImageView
         android:id="@+id/stickerCard"
-        android:layout_width="150dp"
-        android:layout_height="150dp"
+        android:layout_width="130dp"
+        android:layout_height="130dp"
         android:layout_gravity="center"
         android:src="@drawable/sticker_card_blank"
         android:visibility="invisible"
@@ -41,8 +41,8 @@
     <!-- Sticker Reveal -->
     <ImageView
         android:id="@+id/stickerReveal"
-        android:layout_width="150dp"
-        android:layout_height="150dp"
+        android:layout_width="450dp"
+        android:layout_height="450dp"
         android:layout_gravity="center"
         android:src="@drawable/sticker"
         android:visibility="invisible"
@@ -54,7 +54,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="center_horizontal"
-        android:layout_marginTop="100dp"
+        android:layout_marginTop="30dp"
         android:text="NEW STICKER UNLOCKED!"
         android:textSize="28sp"
         android:textStyle="bold"
@@ -68,28 +68,29 @@
         android:shadowDy="2" />
 
     <!-- Collect Button -->
+
+    <!-- Title Text -->
     <Button
         android:id="@+id/collectButton"
         android:layout_width="200dp"
         android:layout_height="60dp"
         android:layout_gravity="center_horizontal|bottom"
-        android:layout_marginBottom="80dp"
-        android:text="COLLECT"
-        android:textSize="20sp"
-        android:textStyle="bold"
-        android:textAllCaps="true"
-        android:textColor="@color/white"
+        android:layout_marginBottom="20dp"
         android:background="@drawable/button_collect_gradient"
         android:elevation="10dp"
+        android:text="COLLECT"
+        android:textAllCaps="true"
+        android:textColor="@color/white"
+        android:textSize="20sp"
+        android:textStyle="bold"
         android:visibility="invisible" />
 
-    <!-- Title Text -->
     <TextView
         android:id="@+id/title"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="center_horizontal"
-        android:layout_marginTop="400dp"
+        android:layout_marginTop="570dp"
         android:text="Collect 2 More to \nUnlock New Routine!"
         android:textSize="20sp"
         android:textStyle="bold"
@@ -101,5 +102,43 @@
         android:shadowRadius="4"
         android:shadowDx="2"
         android:shadowDy="2" />
+
+    <!-- Buttons Container for Replay and Dashboard -->
+    <LinearLayout
+        android:id="@+id/buttonsContainer"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_horizontal|bottom"
+        android:layout_marginBottom="20dp"
+        android:orientation="horizontal"
+        android:gravity="center"
+        android:visibility="gone">
+
+        <Button
+            android:id="@+id/replayButton"
+            android:layout_width="180dp"
+            android:layout_height="70dp"
+            android:layout_marginEnd="20dp"
+            android:text="REPLAY"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:textColor="@android:color/white"
+            android:background="@drawable/rounded_button_background_g"
+            app:backgroundTint="@null"
+            android:elevation="10dp"/>
+
+        <Button
+            android:id="@+id/dashboardButton"
+            android:layout_width="180dp"
+            android:layout_height="70dp"
+            android:text="DASHBOARD"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:textColor="@android:color/white"
+            android:background="@drawable/rounded_button_background"
+            app:backgroundTint="@null"
+            android:elevation="10dp"/>
+
+    </LinearLayout>
 
 </FrameLayout>

@@ -5,33 +5,80 @@
     android:viewportWidth="200"
     android:viewportHeight="200">
 
-    <!-- Gift box base -->
+    <!-- Box shadow -->
+    <path
+        android:fillColor="#CC4400"
+        android:pathData="M55,108 L155,108 L155,158 L55,158 Z" />
+
+    <!-- Box base -->
     <path
         android:fillColor="#FF6B35"
-        android:pathData="M50,100 L150,100 L150,150 L50,150 Z" />
+        android:pathData="M50,105 L150,105 L150,155 L50,155 Z" />
 
-    <!-- Gift box lid -->
+    <!-- Box base shine -->
+    <path
+        android:fillColor="#FF8C5A"
+        android:pathData="M50,105 L150,105 L150,115 L50,115 Z" />
+
+    <!-- Lid shadow -->
+    <path
+        android:fillColor="#CC4400"
+        android:pathData="M45,80 L155,80 L155,108 L45,108 Z" />
+
+    <!-- Lid -->
     <path
         android:fillColor="#FF9E6D"
-        android:pathData="M50,100 L150,100 L140,70 L60,70 Z" />
+        android:pathData="M42,78 L158,78 L158,106 L42,106 Z" />
 
-    <!-- Ribbon vertical -->
+    <!-- Lid shine -->
+    <path
+        android:fillColor="#FFBA91"
+        android:pathData="M42,78 L158,78 L158,88 L42,88 Z" />
+
+    <!-- Ribbon vertical on base -->
     <path
         android:fillColor="#FFD166"
-        android:pathData="M97,70 L103,70 L103,150 L97,150 Z" />
+        android:pathData="M94,105 L106,105 L106,155 L94,155 Z" />
 
-    <!-- Ribbon horizontal -->
+    <!-- Ribbon vertical on lid -->
     <path
         android:fillColor="#FFD166"
-        android:pathData="M50,120 L150,120 L150,126 L50,126 Z" />
+        android:pathData="M94,78 L106,78 L106,106 L94,106 Z" />
 
-    <!-- Ribbon bow left -->
+    <!-- Ribbon horizontal on base -->
     <path
         android:fillColor="#FFD166"
-        android:pathData="M85,70 C75,70 70,80 75,90 C80,85 85,80 85,70" />
+        android:pathData="M50,126 L150,126 L150,134 L50,134 Z" />
 
-    <!-- Ribbon bow right -->
+    <!-- Ribbon horizontal on lid -->
     <path
         android:fillColor="#FFD166"
-        android:pathData="M115,70 C125,70 130,80 125,90 C120,85 115,80 115,70" />
+        android:pathData="M42,89 L158,89 L158,97 L42,97 Z" />
+
+    <!-- Bow left loop -->
+    <path
+        android:fillColor="#FFD166"
+        android:pathData="M100,78 C100,78 80,72 72,60 C68,54 72,46 80,50 C86,53 94,68 100,78 Z" />
+
+    <!-- Bow right loop -->
+    <path
+        android:fillColor="#FFBB00"
+        android:pathData="M100,78 C100,78 120,72 128,60 C132,54 128,46 120,50 C114,53 106,68 100,78 Z" />
+
+    <!-- Bow centre knot -->
+    <path
+        android:fillColor="#FFD166"
+        android:pathData="M93,74 C93,74 100,70 107,74 C107,74 100,82 93,74 Z" />
+
+    <!-- Stars decoration -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:fillAlpha="0.6"
+        android:pathData="M65,120 L67,126 L73,126 L68,130 L70,136 L65,132 L60,136 L62,130 L57,126 L63,126 Z" />
+
+    <path
+        android:fillColor="#FFFFFF"
+        android:fillAlpha="0.6"
+        android:pathData="M130,118 L131.5,123 L137,123 L132.5,126 L134,131 L130,128 L126,131 L127.5,126 L123,123 L128.5,123 Z" />
+
 </vector>
