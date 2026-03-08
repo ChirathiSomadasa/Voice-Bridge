@@ -41,6 +41,7 @@ class UnlockStickerActivity : AppCompatActivity() {
     private lateinit var dashboardButton : android.widget.Button
     private lateinit var buttonsContainer: LinearLayout
 
+    private var gameMode = "under"
     // Game data from intent
     private var finalAlpha           = 0f
     private var poppedBubbles        = 0
@@ -107,6 +108,7 @@ class UnlockStickerActivity : AppCompatActivity() {
     // =========================================================================
 
     private fun readIntent() {
+        gameMode = intent.getStringExtra("GAME_MODE") ?: "under"
         finalAlpha           = intent.getFloatExtra("FINAL_ALPHA", 0f)
         poppedBubbles        = intent.getIntExtra("POPPED_BUBBLES", 0)
         totalBubbles         = intent.getIntExtra("TOTAL_BUBBLES", 5)
@@ -407,7 +409,11 @@ class UnlockStickerActivity : AppCompatActivity() {
     // =========================================================================
 
     private fun onReplayClicked() {
-        startActivity(Intent(this, ActivitySequenceUnderActivity::class.java).apply {
+        val targetActivity = if (gameMode == "over")
+            ActivitySequenceOverActivity::class.java
+        else
+            ActivitySequenceUnderActivity::class.java
+        startActivity(Intent(this, targetActivity).apply {
             putExtra("PREVIOUS_ALPHA",       previousAlpha)
             putExtra("PREVIOUS_CORRECT",     previousCorrect)
             putExtra("PREVIOUS_SUBROUTINE",  previousSubroutine)

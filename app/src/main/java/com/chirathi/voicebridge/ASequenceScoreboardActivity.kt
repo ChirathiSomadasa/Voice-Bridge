@@ -621,6 +621,7 @@ class ASequenceScoreboardActivity : AppCompatActivity(), TextToSpeech.OnInitList
 
         // 4. Navigate
         startActivity(Intent(this, UnlockStickerActivity::class.java).apply {
+            putExtra("GAME_MODE",             gameMode)
             putExtra("FINAL_ALPHA",           finalAlpha)
             putExtra("POPPED_BUBBLES",        poppedBubbles)
             putExtra("TOTAL_BUBBLES",         totalBubbles)

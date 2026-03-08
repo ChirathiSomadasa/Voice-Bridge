@@ -104,7 +104,7 @@
                 <LinearLayout
                     android:id="@+id/morningRoutineLayout"
                     android:layout_width="0dp"
-                    android:layout_height="wrap_content"
+                    android:layout_height="match_parent"
                     android:layout_marginEnd="12dp"
                     android:layout_weight="1"
                     android:background="@drawable/rounded_button_background_locked"
@@ -148,7 +148,7 @@
                 <LinearLayout
                     android:id="@+id/localTimeRoutineLayout"
                     android:layout_width="0dp"
-                    android:layout_height="wrap_content"
+                    android:layout_height="match_parent"
                     android:layout_marginStart="12dp"
                     android:layout_weight="1"
                     android:background="@drawable/rounded_button_background"
@@ -214,7 +214,7 @@
                 <LinearLayout
                     android:id="@+id/schoolRoutineLayout"
                     android:layout_width="0dp"
-                    android:layout_height="wrap_content"
+                    android:layout_height="match_parent"
                     android:layout_marginEnd="12dp"
                     android:layout_weight="1"
                     android:background="@drawable/rounded_button_background"
@@ -274,7 +274,7 @@
 
                 <LinearLayout
                     android:layout_width="0dp"
-                    android:layout_height="wrap_content"
+                    android:layout_height="match_parent"
                     android:layout_marginStart="12dp"
                     android:layout_weight="1"
                     android:alpha="0.3"
