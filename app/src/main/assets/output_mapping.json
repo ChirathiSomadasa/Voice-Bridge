@@ -1,0 +1,249 @@
+{
+  "version": "9.2",
+  "tf_version": "2.19.0",
+  "total_outputs": 20,
+  "output_order": "alphabetical \u2014 serving_fn explicitly returns sorted(LABEL_COLS)",
+  "note": "Android reads this file at startup. outputs maps name\u2192tflite_index for output routing. scaler maps feature values to normalized input. Copy both game_master.tflite and output_mapping.json to assets/.",
+  "outputs": {
+    "connect_dots_trigger": {
+      "tflite_index": 0,
+      "shape": [
+        1,
+        2
+      ],
+      "output_size": 2,
+      "verified": true
+    },
+    "distractor": {
+      "tflite_index": 1,
+      "shape": [
+        1,
+        5
+      ],
+      "output_size": 5,
+      "verified": true
+    },
+    "emotion_level": {
+      "tflite_index": 2,
+      "shape": [
+        1,
+        3
+      ],
+      "output_size": 3,
+      "verified": true
+    },
+    "friend_action": {
+      "tflite_index": 3,
+      "shape": [
+        1,
+        10
+      ],
+      "output_size": 10,
+      "verified": true
+    },
+    "frustration_risk": {
+      "tflite_index": 4,
+      "shape": [
+        1,
+        1
+      ],
+      "output_size": 1,
+      "verified": true
+    },
+    "future_engagement": {
+      "tflite_index": 5,
+      "shape": [
+        1,
+        1
+      ],
+      "output_size": 1,
+      "verified": true
+    },
+    "hidden_step_index": {
+      "tflite_index": 6,
+      "shape": [
+        1,
+        3
+      ],
+      "output_size": 3,
+      "verified": true
+    },
+    "interaction_mode": {
+      "tflite_index": 7,
+      "shape": [
+        1,
+        3
+      ],
+      "output_size": 3,
+      "verified": true
+    },
+    "latency_buffer": {
+      "tflite_index": 8,
+      "shape": [
+        1,
+        1
+      ],
+      "output_size": 1,
+      "verified": true
+    },
+    "minigame_difficulty": {
+      "tflite_index": 9,
+      "shape": [
+        1,
+        3
+      ],
+      "output_size": 3,
+      "verified": true
+    },
+    "minigame_trigger": {
+      "tflite_index": 10,
+      "shape": [
+        1,
+        2
+      ],
+      "output_size": 2,
+      "verified": true
+    },
+    "minigame_type": {
+      "tflite_index": 11,
+      "shape": [
+        1,
+        4
+      ],
+      "output_size": 4,
+      "verified": true
+    },
+    "motivation": {
+      "tflite_index": 12,
+      "shape": [
+        1,
+        3
+      ],
+      "output_size": 3,
+      "verified": true
+    },
+    "next_accuracy": {
+      "tflite_index": 13,
+      "shape": [
+        1,
+        1
+      ],
+      "output_size": 1,
+      "verified": true
+    },
+    "optimal_difficulty": {
+      "tflite_index": 14,
+      "shape": [
+        1,
+        4
+      ],
+      "output_size": 4,
+      "verified": true
+    },
+    "optimal_hint": {
+      "tflite_index": 15,
+      "shape": [
+        1,
+        3
+      ],
+      "output_size": 3,
+      "verified": true
+    },
+    "rhythm_complexity": {
+      "tflite_index": 16,
+      "shape": [
+        1,
+        1
+      ],
+      "output_size": 1,
+      "verified": true
+    },
+    "sub_routine": {
+      "tflite_index": 17,
+      "shape": [
+        1,
+        3
+      ],
+      "output_size": 3,
+      "verified": true
+    },
+    "time_pressure": {
+      "tflite_index": 18,
+      "shape": [
+        1,
+        3
+      ],
+      "output_size": 3,
+      "verified": true
+    },
+    "whats_missing_trigger": {
+      "tflite_index": 19,
+      "shape": [
+        1,
+        2
+      ],
+      "output_size": 2,
+      "verified": true
+    }
+  },
+  "scaler": {
+    "feature_cols": [
+      "age",
+      "jitter",
+      "itl",
+      "rt",
+      "hesitation",
+      "accuracy",
+      "engagement",
+      "frustration",
+      "error_phonetic",
+      "error_semantic",
+      "error_visual",
+      "error_random",
+      "consecutive_correct",
+      "consecutive_wrong",
+      "response_decay",
+      "tap_variance",
+      "alpha"
+    ],
+    "mean": [
+      8.111841557793126,
+      0.17105919101888256,
+      1721.9808572348513,
+      2880.692660105925,
+      1362.7908298395619,
+      0.3368303130564888,
+      0.26076438083528597,
+      0.6918902955296038,
+      0.20988599484064244,
+      0.18605309145377383,
+      0.10085711908130149,
+      0.09603062328368145,
+      0.5379046351002746,
+      1.0493301156694683,
+      0.0,
+      0.1710978798900148,
+      3.17486864878424
+    ],
+    "scale": [
+      1.4715545043455232,
+      0.12550525837052307,
+      394.831947814086,
+      594.8836791776138,
+      424.95636406043246,
+      0.273978969764164,
+      0.2654570017828093,
+      0.33779471702097486,
+      0.4072270423367149,
+      0.38914950676351345,
+      0.30113943715820646,
+      0.2946332341665105,
+      1.20451649424753,
+      1.1748507863816777,
+      1.0,
+      0.12771325436834152,
+      2.8333524814016178
+    ],
+    "n_features": 17
+  }
+}

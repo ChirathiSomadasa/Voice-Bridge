@@ -10,11 +10,24 @@
 
     <ImageView
         android:id="@+id/topGameImage"
-        android:layout_width="match_parent"
-        android:layout_height="360dp"
+        android:layout_width="411dp"
+        android:layout_height="216dp"
         android:scaleType="fitXY"
-        android:src="@drawable/activity_sequence"
+        android:src="@drawable/rythm_bg"
         app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <ImageView
+        android:id="@+id/backBtn"
+        android:layout_width="45dp"
+        android:layout_height="45dp"
+        android:layout_marginStart="16dp"
+        android:layout_marginTop="16dp"
+        android:clickable="true"
+        android:focusable="true"
+        android:contentDescription="Back"
+        app:srcCompat="@drawable/back"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 

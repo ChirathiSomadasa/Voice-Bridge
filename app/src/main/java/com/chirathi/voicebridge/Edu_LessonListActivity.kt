@@ -45,7 +45,6 @@ class Edu_LessonListActivity : AppCompatActivity() {
         recyclerView.visibility = View.GONE
 
         LessonRepository.getLessons(
-            context = this,
             age = age,
             subject = subject,
 //            disorderType = disorderType,
@@ -58,7 +57,7 @@ class Edu_LessonListActivity : AppCompatActivity() {
                     return@getLessons
                 }
 
-                val adapter = LessonAdapter(lessonList) { selectedLesson, index ->
+                val adapter = LessonAdapter(lessonList) { selectedLesson ->
 //                    val intent = Intent(this, Edu_LessonDetailActivity::class.java).apply {
 //                        putExtra("lesson", selectedLesson)
 //                        putExtra("AGE_GROUP", age)

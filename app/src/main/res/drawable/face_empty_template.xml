@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    face_empty_template.xml
+    Clean blank face: oval + ears + nose only.
+    Eyes, eyebrows, mouth are rendered by overlaid ImageViews — no ghost guides here.
+-->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="240dp"
+    android:height="280dp"
+    android:viewportWidth="280"
+    android:viewportHeight="320">
+
+    <!-- Face oval -->
+    <path
+        android:pathData="M140,10
+                          C210,10 265,70 265,165
+                          C265,255 210,310 140,310
+                          C70,310 15,255 15,165
+                          C15,70 70,10 140,10 Z"
+        android:fillColor="#FDEBD0"
+        android:strokeColor="#D4956A"
+        android:strokeWidth="4"/>
+
+    <!-- Left ear -->
+    <path
+        android:pathData="M18,140 C2,140 2,200 18,200"
+        android:fillColor="#FDEBD0"
+        android:strokeColor="#D4956A"
+        android:strokeWidth="3.5"/>
+
+    <!-- Right ear -->
+    <path
+        android:pathData="M262,140 C278,140 278,200 262,200"
+        android:fillColor="#FDEBD0"
+        android:strokeColor="#D4956A"
+        android:strokeWidth="3.5"/>
+
+    <!-- Nose bridge -->
+    <path
+        android:pathData="M140,148 L140,178"
+        android:strokeColor="#C9956A"
+        android:strokeWidth="2.5"
+        android:strokeLineCap="round"/>
+
+    <!-- Left nostril -->
+    <path
+        android:pathData="M124,178 C120,170 115,175 118,181 C121,187 128,184 124,178 Z"
+        android:fillColor="#C9956A"/>
+
+    <!-- Right nostril -->
+    <path
+        android:pathData="M156,178 C160,170 165,175 162,181 C159,187 152,184 156,178 Z"
+        android:fillColor="#C9956A"/>
+
+</vector>
