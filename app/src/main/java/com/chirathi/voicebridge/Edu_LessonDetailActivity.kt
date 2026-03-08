@@ -1,4 +1,7 @@
-//
+//        <activity
+//            android:name=".Edu_LessonDetailActivity"
+//            android:exported="false" />
+// ActivityMainifest.xml
 //
 //package com.chirathi.voicebridge
 //
