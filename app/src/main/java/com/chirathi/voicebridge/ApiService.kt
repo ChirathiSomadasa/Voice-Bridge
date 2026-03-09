@@ -15,6 +15,6 @@ interface ApiService {
     @POST("caption")
     fun uploadImage(
         @Part image: MultipartBody.Part,
-        @Part("hint") hint: okhttp3.RequestBody):
-            Call<CaptionResponse>
+        @Part("hint") hint: okhttp3.RequestBody
+    ): Call<CaptionResponse>
 }
