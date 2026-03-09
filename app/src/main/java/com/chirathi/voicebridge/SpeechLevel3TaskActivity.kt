@@ -196,8 +196,12 @@ class SpeechLevel3TaskActivity : AppCompatActivity(), TextToSpeech.OnInitListene
                         FeedbackDialog(this@SpeechLevel3TaskActivity).show(
                             score = score,
                             category = category,
-                            feedbackMessage = aiFeedbackText
+                            feedbackMessage = aiFeedbackText,
+                            onClose = {
+                                tts?.stop()
+                            }
                         )
+                        tts?.speak(aiFeedbackText, TextToSpeech.QUEUE_FLUSH, null, "feedbackTTS")
                         btnNext.isEnabled = true
                     }
                 }
