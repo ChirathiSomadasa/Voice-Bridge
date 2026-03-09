@@ -11,7 +11,7 @@ object PronunciationAnalyst {
         "spoon" to "Cluster Reduction (p for sp). Check 'S' blends.",
         "rabbit" to "Gliding Error (w for r). Check 'R' sound.",
         "chair" to "Deaffrication (sh for ch). Check 'CH' sound.",
-        "tap" to "Backing Error (k for t). Check 'T' sound.",
+        "carrot" to "Fronting Error (t for k). Check 'K' sound.",
         "leaf" to "Final Consonant Deletion. Check 'F' sound.",
         "shoe" to "Stopping (t for sh). Check 'SH' sound.",
         "bottle" to "Vowelization. Check 'TL' or 'L' sound.",

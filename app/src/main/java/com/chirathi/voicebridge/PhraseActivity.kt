@@ -1,16 +1,27 @@
 package com.chirathi.voicebridge
 
+import android.content.ClipData
 import android.content.Intent
+import android.graphics.BitmapFactory
+import android.os.Build
 import android.os.Bundle
 import android.speech.tts.TextToSpeech
 import android.speech.tts.Voice
 import android.util.Log
+import android.view.DragEvent
+import android.view.View
 import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import java.text.SimpleDateFormat
 import java.util.*
+
+data class BlankWord(
+    val index: Int,
+    val word: String
+)
 
 class PhraseActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
 
@@ -39,6 +50,12 @@ class PhraseActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
         quickWordImage.setImageResource(selectedIconDrawable)
         phraseText?.text = selectedPhrase
 
+        val imageBytes = intent.getByteArrayExtra("DETECTED_IMAGE")
+
+        if (imageBytes != null) {
+            val bitmap = BitmapFactory.decodeByteArray(imageBytes, 0, imageBytes.size)
+            quickWordImage.setImageBitmap(bitmap)
+        }
         setTimeAndGreeting()
 
         // Initialize TextToSpeech with specific engine if needed
@@ -46,7 +63,130 @@ class PhraseActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
 
         speakerBtn?.isEnabled = false
         refreshBtn.setOnClickListener { finish() }
-        speakerBtn?.setOnClickListener { speakOut() }
+        speakerBtn?.setOnClickListener {
+            val currentText = phraseText?.text.toString()
+            speakOut(currentText)
+        }
+
+        val (blankSentence, hiddenWords) =
+            generateSentenceWithBlanks(selectedPhrase)
+
+        phraseText?.text = blankSentence
+        val blanks = hiddenWords
+
+        val options = generateOptions(hiddenWords)
+
+        val wordContainer = findViewById<LinearLayout>(R.id.wordOptions)
+
+        for (word in options) {
+            val tv = TextView(this).apply {
+                text = word
+                textSize = 20f
+                setPadding(24, 16, 24, 16)
+                setBackgroundResource(R.drawable.button_green_light)
+
+                val params = LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.WRAP_CONTENT,
+                    LinearLayout.LayoutParams.WRAP_CONTENT
+                )
+
+                params.setMargins(10, 5, 10, 5) // LEFT, TOP, RIGHT, BOTTOM gap
+                layoutParams = params
+
+                setOnLongClickListener {
+                    val dragData = ClipData.newPlainText("word", word)
+                    startDragAndDrop(dragData, View.DragShadowBuilder(this), this, 0)
+                    true
+                }
+            }
+            wordContainer.addView(tv)
+        }
+
+        phraseText?.setOnDragListener { _, event ->
+            when (event.action) {
+                DragEvent.ACTION_DROP -> {
+                    val draggedWord = event.clipData.getItemAt(0).text.toString()
+                    val currentText = phraseText?.text.toString()
+
+                    // Replace the first occurrence of the blank
+                    val updatedText = currentText.replaceFirst("____", draggedWord)
+                    phraseText?.text = updatedText
+
+                    // Check if all blanks are filled
+                    if (!updatedText.contains("____")) {
+                        // All blanks are filled
+                        if (updatedText.equals(selectedPhrase, ignoreCase = true)) {
+                            // Correct sentence → just speak
+                            speakOut(updatedText)
+                        } else {
+                            // Incorrect sentence → show toast and reset blanks
+                            Toast.makeText(this, "Sentence is incorrect. Try again!", Toast.LENGTH_SHORT).show()
+                            resetBlanks(selectedPhrase, blanks)
+                        }
+                    }
+                }
+            }
+            true
+        }
+
+        fun isCorrect(filledSentence: String, original: String): Boolean {
+            return filledSentence.equals(original, ignoreCase = true)
+        }
+    }
+
+
+    private fun generateOptions(
+        correctWords: List<BlankWord>
+    ): List<String> {
+
+        val extraWords = listOf(
+            "ball", "girl", "dog", "run", "standing", "pink", "blue", "black",
+            "cat", "table", "chair", "car", "book", "phone", "laptop", "window",
+            "tree", "flower", "sun", "moon", "star", "house", "road", "river"
+        )
+        val options = mutableListOf<String>()
+        options.addAll(correctWords.map { it.word })
+        options.addAll(extraWords.shuffled().take(2))
+
+        return options.shuffled()
+    }
+
+    private fun checkSentenceOrder(filledSentence: String, correctSentence: String) {
+        if (filledSentence.equals(correctSentence, ignoreCase = true)) {
+            speakOut(filledSentence)
+        } else {
+            // Sentence is complete but incorrect order
+            Toast.makeText(this, "Sentence is incorrect. Try again!", Toast.LENGTH_SHORT).show()
+
+        }
+    }
+
+    private fun resetBlanks(sentence: String, blanks: List<BlankWord>) {
+        val words = sentence.split(" ").toMutableList()
+        for (blank in blanks) {
+            words[blank.index] = "____"
+        }
+        phraseText?.text = words.joinToString(" ")
+    }
+
+    private fun generateSentenceWithBlanks(sentence: String): Pair<String, List<BlankWord>> {
+        val words = sentence.split(" ").toMutableList()
+
+        // pick nouns / random words (simple version)
+        val candidateIndexes = words.indices.filter {
+            words[it].length > 3
+        }
+
+        val selectedIndexes = candidateIndexes.shuffled().take(2)
+
+        val blanks = mutableListOf<BlankWord>()
+
+        for (i in selectedIndexes) {
+            blanks.add(BlankWord(i, words[i]))
+            words[i] = "____"
+        }
+
+        return Pair(words.joinToString(" " ), blanks)
     }
 
     private fun setTimeAndGreeting() {
@@ -66,6 +206,7 @@ class PhraseActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
         // Set the greeting text with time and date
         greetingText?.text = "$greeting\n$currentTime"
     }
+
     private fun getEnglishGreeting(hour: Int): String {
         return when (hour) {
             in 5..11 -> "Good Morning!"
@@ -91,63 +232,50 @@ class PhraseActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
             return
         }
 
-        // Method 1: Try to find a child-like voice (Android 21+)
-        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.LOLLIPOP) {
-            try {
-                // Get available voices
-                val voices = tts!!.voices
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            val voices = tts!!.voices
+            val tinyVoice = voices.firstOrNull { voice ->
+                voice.locale == Locale.US &&
+                        !voice.isNetworkConnectionRequired &&
+                        voice.quality >= Voice.QUALITY_HIGH
+            }
 
-                // Look for child-like voices - common names include "child", "kids", "young", etc.
-                val childVoice = voices.find { voice ->
-                    voice.name.contains("child", ignoreCase = true) ||
-                            voice.name.contains("kids", ignoreCase = true) ||
-                            voice.name.contains("young", ignoreCase = true) ||
-                            voice.name.contains("boy", ignoreCase = true) ||
-                            voice.name.contains("girl", ignoreCase = true)
-                }
-
-                if (childVoice != null) {
-                    tts!!.voice = childVoice
-                    Log.d("TTS", "Using child voice: ${childVoice.name}")
-                } else {
-                    // If no child voice found, adjust pitch and speech rate
-                    setVoiceParameters()
-                }
-            } catch (e: Exception) {
+            if (tinyVoice != null) {
+                tts!!.voice = tinyVoice
+                setVoiceParameters()
+                Log.d("TTS", "Using tiny voice: ${tinyVoice.name}")
+            } else {
                 setVoiceParameters()
             }
-        } else {
-            // For older Android versions, use parameter method
-            setVoiceParameters()
         }
+
 
         speakerBtn?.isEnabled = true
     }
 
     private fun setVoiceParameters() {
         try {
-            // Higher pitch for child-like voice (1.0 is normal, >1.0 is higher)
-            tts?.setPitch(1.3f)  // Higher pitch sounds more child-like
+            // Higher pitch for child-like voice
+            tts?.setPitch(1.9f)  // Higher pitch sounds more child-like
 
             // Slightly faster speech rate for energetic child voice
-            tts?.setSpeechRate(1.1f)  // 1.0 is normal rate
+            tts?.setSpeechRate(0.9f)  // 1.0 is normal rate
 
-            Log.d("TTS", "Voice parameters set: Pitch=1.3, Rate=1.1")
+            Log.d("TTS", "Voice parameters set: Pitch=1.9, Rate=0.9")
         } catch (e: Exception) {
             Log.e("TTS", "Error setting voice parameters: ${e.message}")
         }
     }
 
-    private fun speakOut() {
-        val text = selectedPhrase
+    private fun speakOut(textToSay: String) {
+        if (textToSay.isEmpty()) return
+
         try {
-            // For Android 21+ with additional control
-            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.LOLLIPOP) {
-                tts?.speak(text, TextToSpeech.QUEUE_FLUSH, null, null)
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                tts?.speak(textToSay, TextToSpeech.QUEUE_FLUSH, null, "PhraseID")
             } else {
-                //tts?.speak(text, TextToSpeech.QUEUE_FLUSH, null)
                 @Suppress("DEPRECATION")
-                tts?.speak(text, TextToSpeech.QUEUE_FLUSH, null)
+                tts?.speak(textToSay, TextToSpeech.QUEUE_FLUSH, null)
             }
         } catch (e: Exception) {
             Log.e("TTS", "Error speaking: ${e.message}")
