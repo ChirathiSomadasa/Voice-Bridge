@@ -8,10 +8,12 @@ import android.widget.*
 
 class FeedbackDialog(private val context: Context) {
 
+    // 1. Add the 'onClose' lambda function as a parameter
     fun show(
         score: Int,
         category: String,
-        feedbackMessage: String
+        feedbackMessage: String,
+        onClose: (() -> Unit)? = null
     ) {
         val dialog = Dialog(context)
         val view = LayoutInflater.from(context)
@@ -41,11 +43,18 @@ class FeedbackDialog(private val context: Context) {
         }
 
         tvScore.text = "Score: $score%"
-
-        // Display the generated AI feedback message instantly without delay
         tvMessage.text = feedbackMessage
 
-        btnOk.setOnClickListener { dialog.dismiss() }
+        // 2. Dismiss the dialog when OK is clicked
+        btnOk.setOnClickListener {
+            dialog.dismiss()
+        }
+
+        // 3. Trigger the onClose action when the dialog fully disappears
+        dialog.setOnDismissListener {
+            onClose?.invoke()
+        }
+
         dialog.show()
     }
 }

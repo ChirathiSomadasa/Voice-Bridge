@@ -206,7 +206,10 @@ class GameDashboardActivity : AppCompatActivity() {
             // "Customize Routines" is only available for the 8–10 age group
             if (currentUserAge in 8..10) {
                 builder.setNeutralButton("Customize Routines") { _, _ ->
-                    startActivity(Intent(this, ParentSequenceSettingsActivity::class.java))
+                    startActivityForResult(
+                        Intent(this, ParentSequenceSettingsActivity::class.java),
+                        REQUEST_CUSTOMIZE_ROUTINES
+                    )
                 }
             }
 
@@ -215,6 +218,17 @@ class GameDashboardActivity : AppCompatActivity() {
         } catch (e: Exception) {
             Log.e(TAG, "showGameSettingsDialog failed: ${e.message}", e)
             Toast.makeText(this, "Could not open settings", Toast.LENGTH_SHORT).show()
+        }
+    }
+    companion object {
+        private const val REQUEST_CUSTOMIZE_ROUTINES = 1001
+    }
+
+    // Add this override:
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+        if (requestCode == REQUEST_CUSTOMIZE_ROUTINES) {
+            showGameSettingsDialog()   // reopen settings dialog automatically
         }
     }
 }
