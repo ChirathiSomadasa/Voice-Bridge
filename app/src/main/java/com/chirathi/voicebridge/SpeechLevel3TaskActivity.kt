@@ -184,7 +184,7 @@ class SpeechLevel3TaskActivity : AppCompatActivity(), TextToSpeech.OnInitListene
                 saveToHistory(targetSentence, score, 3, pronunciationType)
 
                 CoroutineScope(Dispatchers.IO).launch {
-                    val aiFeedbackText = FeedbackGenerator.getDynamicFeedback(score, category)
+                    val aiFeedbackText = FeedbackGenerator.getDynamicFeedback(score, category, "sentence", targetSentence)
 
                     withContext(Dispatchers.Main) {
                         if (::processingDialog.isInitialized && processingDialog.isShowing) {
