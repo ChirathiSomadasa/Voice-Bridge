@@ -13,6 +13,7 @@ import android.view.View
 import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import java.text.SimpleDateFormat
 import java.util.*
@@ -71,6 +72,7 @@ class PhraseActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
             generateSentenceWithBlanks(selectedPhrase)
 
         phraseText?.text = blankSentence
+        val blanks = hiddenWords
 
         val options = generateOptions(hiddenWords)
 
@@ -88,7 +90,7 @@ class PhraseActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
                     LinearLayout.LayoutParams.WRAP_CONTENT
                 )
 
-                params.setMargins(20, 10, 20, 10) // LEFT, TOP, RIGHT, BOTTOM gap
+                params.setMargins(10, 5, 10, 5) // LEFT, TOP, RIGHT, BOTTOM gap
                 layoutParams = params
 
                 setOnLongClickListener {
@@ -112,8 +114,15 @@ class PhraseActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
 
                     // Check if all blanks are filled
                     if (!updatedText.contains("____")) {
-                        // Small delay optional, but usually better to let the UI update first
-                        speakOut(updatedText)
+                        // All blanks are filled
+                        if (updatedText.equals(selectedPhrase, ignoreCase = true)) {
+                            // Correct sentence → just speak
+                            speakOut(updatedText)
+                        } else {
+                            // Incorrect sentence → show toast and reset blanks
+                            Toast.makeText(this, "Sentence is incorrect. Try again!", Toast.LENGTH_SHORT).show()
+                            resetBlanks(selectedPhrase, blanks)
+                        }
                     }
                 }
             }
@@ -130,13 +139,34 @@ class PhraseActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
         correctWords: List<BlankWord>
     ): List<String> {
 
-        val extraWords = listOf("ball", "girl", "dog", "run","standing","pink","blue","black") // dummy distractors
-
+        val extraWords = listOf(
+            "ball", "girl", "dog", "run", "standing", "pink", "blue", "black",
+            "cat", "table", "chair", "car", "book", "phone", "laptop", "window",
+            "tree", "flower", "sun", "moon", "star", "house", "road", "river"
+        )
         val options = mutableListOf<String>()
         options.addAll(correctWords.map { it.word })
         options.addAll(extraWords.shuffled().take(2))
 
         return options.shuffled()
+    }
+
+    private fun checkSentenceOrder(filledSentence: String, correctSentence: String) {
+        if (filledSentence.equals(correctSentence, ignoreCase = true)) {
+            speakOut(filledSentence)
+        } else {
+            // Sentence is complete but incorrect order
+            Toast.makeText(this, "Sentence is incorrect. Try again!", Toast.LENGTH_SHORT).show()
+
+        }
+    }
+
+    private fun resetBlanks(sentence: String, blanks: List<BlankWord>) {
+        val words = sentence.split(" ").toMutableList()
+        for (blank in blanks) {
+            words[blank.index] = "____"
+        }
+        phraseText?.text = words.joinToString(" ")
     }
 
     private fun generateSentenceWithBlanks(sentence: String): Pair<String, List<BlankWord>> {

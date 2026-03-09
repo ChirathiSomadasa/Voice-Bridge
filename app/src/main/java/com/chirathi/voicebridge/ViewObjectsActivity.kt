@@ -142,25 +142,64 @@ class ViewObjectsActivity : AppCompatActivity() {
     }
 
     private fun processImage(imageProxy: ImageProxy) {
+        if(isObjectDetected){
+            imageProxy.close()
+            return
+        }
         try {
             val rotation = imageProxy.imageInfo.rotationDegrees
             val rawBitmap = imageProxy.toBitmap()
             val bitmap = rotateBitmap(rawBitmap, rotation)
             detectedImageBytes = bitmapToByteArray(bitmap)
 
+            // RUN YOLO DETECTION
+            val output = yoloDetector.detect(bitmap)
+
+            val bestDetection = YoloPostProcessor.getBestDetectionFromImage(
+                output,
+                labels
+            )
+
+            val detectedObject = bestDetection?.className ?: "object"
+
+            val sentence = YoloPostProcessor.buildBestSentence(bestDetection)
+
+            runOnUiThread {
+                //resultText.text = YoloPostProcessor.buildBestSentence(bestDetection)
+                Toast.makeText(this@ViewObjectsActivity, "Detected: $detectedObject", Toast.LENGTH_SHORT).show()
+                showButtons(detectedObject)
+            }
+            Log.d("YOLO", "Detected object: $detectedObject")
+
+            // Send to BLIP server in background (optional)
             val multipart = bitmapToMultipart(bitmap)
 
+            val hintBody = RequestBody.create(MultipartBody.FORM, detectedObject)
+            RetrofitClient.instance.uploadImage(multipart, hintBody).enqueue(object : retrofit2.Callback<CaptionResponse> {
+                override fun onResponse(call: retrofit2.Call<CaptionResponse>, response: retrofit2.Response<CaptionResponse>) {
+                    // Optional: update resultText if server gives better caption
+                    val caption = response.body()?.caption
+                    if (caption != null) {
+                        runOnUiThread {
+                            resultText.text = caption
+                        }
+                    }
+                }
+
+                override fun onFailure(call: retrofit2.Call<CaptionResponse>, t: Throwable) {}
+            })
+
             // CREATE THE HINT (Pass an empty string or the YOLO detected label)
-            val hintText = "object" // You could pass yoloDetector results here if you want
-            val hintBody = RequestBody.create(MultipartBody.FORM, hintText)
+            val hintText = detectedObject // You could pass yoloDetector results here if you want
+            //val hintBody = RequestBody.create(MultipartBody.FORM, hintText)
 
             // UPDATED CALL WITH HINT
             RetrofitClient.instance.uploadImage(multipart, hintBody).enqueue(object : retrofit2.Callback<CaptionResponse> {
                 override fun onResponse(call: retrofit2.Call<CaptionResponse>, response: retrofit2.Response<CaptionResponse>) {
                     if (response.isSuccessful && !isObjectDetected) {
                         isObjectDetected = true
-                        val objectName = response.body()?.caption ?: "object"
-
+                        //val objectName = response.body()?.caption ?: "object"
+                        val objectName =detectedObject
                         runOnUiThread {
                             stopCamera()
 
@@ -168,7 +207,8 @@ class ViewObjectsActivity : AppCompatActivity() {
                             Toast.makeText(this@ViewObjectsActivity, "Object Detected", Toast.LENGTH_SHORT).show()
 
                             // Do not show sentence here
-                            resultText.text = "Object detected"
+                            //resultText.text = "Object detected"
+                            resultText.text = objectName
 
                             showButtons(objectName)
                         }

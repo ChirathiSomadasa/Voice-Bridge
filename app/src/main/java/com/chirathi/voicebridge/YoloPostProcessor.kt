@@ -54,8 +54,7 @@ object YoloPostProcessor {
             BestDetection(
                 className = labels[bestClassIndex],
                 confidence = bestConfidence,
-                box = TODO()
-            )
+                box = Rect(0,0,0,0)            )
         } else {
             null
         }

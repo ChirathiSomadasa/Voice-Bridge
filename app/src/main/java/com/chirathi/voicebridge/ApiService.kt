@@ -7,7 +7,8 @@ import retrofit2.http.POST
 import retrofit2.http.Part
 
 data class CaptionResponse(
-    val caption: String
+    val caption: String,
+    val `object`: String
 )
 
 interface ApiService {
