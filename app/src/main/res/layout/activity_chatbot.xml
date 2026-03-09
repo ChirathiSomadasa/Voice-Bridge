@@ -1,0 +1,176 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#F5F5F5"
+    tools:context=".ChatbotActivity">
+
+    <!-- Header -->
+    <LinearLayout
+        android:id="@+id/chatHeader"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@color/purple_500"
+        android:elevation="4dp"
+        android:orientation="vertical"
+        android:padding="16dp"
+        app:layout_constraintTop_toTopOf="parent">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <ImageButton
+                android:id="@+id/btnBack"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="Back"
+                android:src="@android:drawable/ic_menu_close_clear_cancel"
+                android:tint="@android:color/white" />
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="8dp"
+                android:layout_weight="1"
+                android:text="🤖 Therapy Assistant"
+                android:textColor="@android:color/white"
+                android:textSize="20sp"
+                android:textStyle="bold" />
+
+        </LinearLayout>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="48dp"
+            android:layout_marginTop="4dp"
+            android:text="Here to support your mental health journey"
+            android:textColor="@android:color/white"
+            android:textSize="12sp"
+            android:alpha="0.9" />
+
+    </LinearLayout>
+
+    <!-- Chat Messages RecyclerView -->
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/recyclerMessages"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:padding="8dp"
+        android:clipToPadding="false"
+        app:layout_constraintBottom_toTopOf="@id/inputLayout"
+        app:layout_constraintTop_toBottomOf="@id/chatHeader" />
+
+    <!-- Loading Indicator -->
+    <ProgressBar
+        android:id="@+id/progressLoading"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:visibility="gone"
+        app:layout_constraintBottom_toTopOf="@id/inputLayout"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/chatHeader" />
+
+    <!-- Input Layout -->
+    <LinearLayout
+        android:id="@+id/inputLayout"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@android:color/white"
+        android:elevation="8dp"
+        android:orientation="horizontal"
+        android:padding="8dp"
+        app:layout_constraintBottom_toBottomOf="parent">
+
+        <EditText
+            android:id="@+id/editMessage"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:background="@android:drawable/edit_text"
+            android:hint="Type your message..."
+            android:inputType="textMultiLine|textCapSentences"
+            android:maxLines="4"
+            android:minHeight="48dp"
+            android:padding="12dp"
+            android:textSize="16sp" />
+
+        <ImageButton
+            android:id="@+id/btnSend"
+            android:layout_width="56dp"
+            android:layout_height="56dp"
+            android:layout_marginStart="8dp"
+            android:background="@drawable/circle_background"
+            android:backgroundTint="@color/purple_500"
+            android:contentDescription="Send"
+            android:src="@android:drawable/ic_menu_send"
+            android:tint="@android:color/white" />
+
+    </LinearLayout>
+
+    <!-- Quick Reply Suggestions -->
+    <HorizontalScrollView
+        android:id="@+id/quickRepliesScroll"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="8dp"
+        android:scrollbars="none"
+        app:layout_constraintBottom_toTopOf="@id/inputLayout">
+
+        <LinearLayout
+            android:id="@+id/quickRepliesLayout"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:padding="8dp">
+
+            <com.google.android.material.chip.Chip
+                android:id="@+id/chipAnger"
+                style="@style/Widget.MaterialComponents.Chip.Action"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginEnd="8dp"
+                android:text="😤 Anger" />
+
+            <com.google.android.material.chip.Chip
+                android:id="@+id/chipAnxiety"
+                style="@style/Widget.MaterialComponents.Chip.Action"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginEnd="8dp"
+                android:text="😰 Anxiety" />
+
+            <com.google.android.material.chip.Chip
+                android:id="@+id/chipSelfEsteem"
+                style="@style/Widget.MaterialComponents.Chip.Action"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginEnd="8dp"
+                android:text="💪 Self-Esteem" />
+
+            <com.google.android.material.chip.Chip
+                android:id="@+id/chipRelationship"
+                style="@style/Widget.MaterialComponents.Chip.Action"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginEnd="8dp"
+                android:text="❤️ Relationships" />
+
+            <com.google.android.material.chip.Chip
+                android:id="@+id/chipHelp"
+                style="@style/Widget.MaterialComponents.Chip.Action"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="🆘 Need Help" />
+
+        </LinearLayout>
+    </HorizontalScrollView>
+
+</androidx.constraintlayout.widget.ConstraintLayout>

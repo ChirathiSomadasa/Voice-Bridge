@@ -14,7 +14,7 @@
         android:id="@+id/feedbackImage"
         android:layout_width="400dp"
         android:layout_height="400dp"
-        android:src="@drawable/panda"
+        android:src="@drawable/panda_rm"
         android:scaleType="fitCenter"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintBottom_toTopOf="@+id/title"

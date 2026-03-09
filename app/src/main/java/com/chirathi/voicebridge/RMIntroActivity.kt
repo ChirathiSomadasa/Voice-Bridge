@@ -1,231 +1,209 @@
 package com.chirathi.voicebridge
 
 import android.content.Intent
+import android.graphics.Color
 import android.net.Uri
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
 import android.util.Log
+import android.view.Gravity
 import android.view.View
+import android.view.Window
+import android.view.WindowManager
 import android.widget.*
 import androidx.appcompat.app.AppCompatActivity
 
+/**
+ * RMIntroActivity — v12.0 (Popup style, buffering spinner hidden, smaller size)
+ *
+ * CHANGES FROM v11.0
+ * ──────────────────
+ *  [1] BUFFERING SPINNER HIDDEN
+ *      The spinning circle while the video loads is NOT part of the layout —
+ *      it is drawn by the Android MediaPlayer system layer directly on top of
+ *      the VideoView's SurfaceView. Hiding a ProgressBar in your own XML does
+ *      nothing to it.
+ *
+ *      Fix: a solid white cover View is inserted programmatically into the
+ *      same FrameLayout parent as the VideoView, above it in Z-order, before
+ *      playback begins. This physically paints over the spinner. The instant
+ *      the video is prepared and starts playing, the cover fades out (200 ms)
+ *      and is removed from the hierarchy. Tap-to-skip also removes it.
+ *
+ *  [2] POPUP IS SMALLER
+ *      Window reduced from 90 × 70 % to 82 × 56 % of the screen.
+ */
 class RMIntroActivity : AppCompatActivity() {
 
-    private lateinit var videoView: VideoView
-    private lateinit var loadingIndicator: ProgressBar
-    private lateinit var progressBar: ProgressBar
+    private lateinit var videoView:        VideoView
     private lateinit var currentSongTitle: String
 
-    private val updateHandler = Handler(Looper.getMainLooper())
-    private val TAG = "RMIntroActivity"
+    /** White cover placed above the VideoView to hide the system buffering spinner. */
+    private var bufferCover: View? = null
+
+    private val updateHandler       = Handler(Looper.getMainLooper())
+    private val TAG                 = "RMIntroActivity"
     private var isActivityDestroyed = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        Log.d(TAG, "onCreate: Starting RMIntroActivity")
-        isActivityDestroyed = false
 
-        try {
-            // Make activity full screen
-            window.decorView.systemUiVisibility = (
-                    View.SYSTEM_UI_FLAG_FULLSCREEN or
-                            View.SYSTEM_UI_FLAG_HIDE_NAVIGATION or
-                            View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
-                    )
+        requestWindowFeature(Window.FEATURE_NO_TITLE)
+        window.setBackgroundDrawableResource(android.R.color.transparent)
+        setContentView(R.layout.activity_rmintro)
 
-            setContentView(R.layout.activity_rmintro)
-            Log.d(TAG, "Layout set successfully")
-
-            // Get the song title from intent
-            currentSongTitle = intent.getStringExtra("SONG_TITLE") ?: "Row Row Row Your Boat"
-            Log.d(TAG, "Received song title: $currentSongTitle")
-
-            // Initialize views
-            videoView = findViewById(R.id.videoView)
-            loadingIndicator = findViewById(R.id.loadingIndicator)
-            progressBar = findViewById(R.id.progressBar)
-
-            // Setup video player
-            setupVideoPlayer()
-
-            // Set click listener for the entire layout
-            findViewById<View>(R.id.main).setOnClickListener {
-                Log.d(TAG, "Screen tapped, skipping video")
-                skipToNextActivity()
-            }
-
-            Log.d(TAG, "RMIntroActivity initialized successfully")
-
-        } catch (e: Exception) {
-            Log.e(TAG, "Error in onCreate: ${e.message}", e)
-            // Move to next activity on error
-            Handler(Looper.getMainLooper()).postDelayed({
-                navigateToRhythmSummary()
-            }, 1000)
+        // [FIX 2] Smaller popup — 82 % wide × 56 % tall, always centred.
+        window.setLayout(
+            (resources.displayMetrics.widthPixels  * 0.82).toInt(),
+            (resources.displayMetrics.heightPixels * 0.56).toInt()
+        )
+        window.addFlags(WindowManager.LayoutParams.FLAG_DIM_BEHIND)
+        window.attributes = window.attributes.also {
+            it.dimAmount = 0.55f
+            it.gravity   = Gravity.CENTER
         }
+
+        isActivityDestroyed = false
+        currentSongTitle    = intent.getStringExtra("SONG_TITLE") ?: "Row Row Row Your Boat"
+
+        videoView = findViewById(R.id.videoView)
+
+        // Hide any ProgressBar that lives in the XML layout.
+        try { findViewById<ProgressBar>(R.id.progressBar)?.visibility = View.GONE }
+        catch (_: Exception) {}
+
+        // Show tap-to-skip hint if the view id exists in the layout.
+        try {
+            findViewById<TextView>(R.id.skipLabel)?.apply {
+                text       = "TAP ANYWHERE TO SKIP  ▶"
+                visibility = View.VISIBLE
+            }
+        } catch (_: Exception) {}
+
+        // [FIX 1] Cover the VideoView BEFORE it starts preparing so the
+        // MediaPlayer buffering spinner is never visible to the child.
+        attachBufferCover()
+
+        setupVideoPlayer()
+
+        // Tap anywhere → skip
+        val root = try { findViewById<View>(R.id.main) } catch (_: Exception) { null }
+        root?.setOnClickListener     { skip() }
+        videoView.setOnClickListener { skip() }
     }
 
+    // ── [FIX 1] Buffer cover ──────────────────────────────────────────────
+
+    /**
+     * Inserts a solid white View directly above the VideoView in the same
+     * FrameLayout parent. Because it is added last it sits on top in Z-order,
+     * covering whatever MediaPlayer renders on the SurfaceView beneath it.
+     */
+    private fun attachBufferCover() {
+        val parent = videoView.parent as? FrameLayout ?: return
+        val cover = View(this).apply {
+            setBackgroundColor(Color.WHITE)
+            layoutParams = FrameLayout.LayoutParams(
+                FrameLayout.LayoutParams.MATCH_PARENT,
+                FrameLayout.LayoutParams.MATCH_PARENT
+            )
+        }
+        parent.addView(cover)
+        bufferCover = cover
+    }
+
+    /**
+     * Fades the cover out over 200 ms then removes it from the view hierarchy.
+     * Called as soon as the video actually starts playing.
+     */
+    private fun removeBufferCover() {
+        val cover = bufferCover ?: return
+        bufferCover = null
+        cover.animate()
+            .alpha(0f)
+            .setDuration(200)
+            .withEndAction { (cover.parent as? FrameLayout)?.removeView(cover) }
+            .start()
+    }
+
+    // ── Video player ──────────────────────────────────────────────────────
+
     private fun setupVideoPlayer() {
-        Log.d(TAG, "Setting up video player")
-
         try {
-            // Hide media controller
             videoView.setMediaController(null)
+            val videoUri = Uri.parse("android.resource://$packageName/raw/bears_fun_singing_game")
 
-            // Set video URI from raw resources
-            // IMPORTANT: Make sure you have a video file in raw folder
-            // For testing, you can use a simple local video or use a placeholder
-            val videoUri = Uri.parse("android.resource://" + packageName + "/raw/bears_fun_singing_game")
-            Log.d(TAG, "Attempting to load video from: $videoUri")
-
-            // Set listeners BEFORE setting video URI
             videoView.setOnPreparedListener {
                 if (isActivityDestroyed) return@setOnPreparedListener
-                Log.d(TAG, "Video prepared successfully")
-                loadingIndicator.visibility = View.GONE
-                progressBar.max = 100
-                progressBar.progress = 0
-
-                // Auto-start the video
                 videoView.start()
-                Log.d(TAG, "Video started automatically")
-
-                // Start updating progress
-                startProgressUpdate()
+                removeBufferCover()   // reveal video; spinner is already gone
             }
 
             videoView.setOnCompletionListener {
-                if (isActivityDestroyed) return@setOnCompletionListener
-                Log.d(TAG, "Video completed")
-                // When video completes, move to next activity
-                navigateToRhythmSummary()
+                if (!isActivityDestroyed) navigateToRhythmSummary()
             }
 
             videoView.setOnErrorListener { _, what, extra ->
-                if (isActivityDestroyed) return@setOnErrorListener true
-
-                Log.e(TAG, "Video error: what=$what, extra=$extra")
-                loadingIndicator.visibility = View.GONE
-
-                // Don't show any dialog - just log and move on
-                // Auto-move to next activity on error after delay
-                updateHandler.postDelayed({
-                    if (!isActivityDestroyed) {
-                        navigateToRhythmSummary()
-                    }
-                }, 1000)
-                true // Return true to indicate we handled the error (no default dialog)
+                Log.w(TAG, "Video error $what/$extra — auto-skipping")
+                removeBufferCover()
+                if (!isActivityDestroyed) {
+                    updateHandler.postDelayed({
+                        if (!isActivityDestroyed) navigateToRhythmSummary()
+                    }, 600)
+                }
+                true
             }
 
-            // Now set the video URI
             videoView.setVideoURI(videoUri)
-
         } catch (e: Exception) {
-            Log.e(TAG, "Error setting up video player: ${e.message}", e)
-            loadingIndicator.visibility = View.GONE
-            // Auto-move to next activity on error after delay
+            Log.e(TAG, "Video setup failed: ${e.message}")
+            removeBufferCover()
             updateHandler.postDelayed({
-                if (!isActivityDestroyed) {
-                    navigateToRhythmSummary()
-                }
-            }, 1000)
+                if (!isActivityDestroyed) navigateToRhythmSummary()
+            }, 600)
         }
     }
 
-    private fun startProgressUpdate() {
-        updateHandler.post(object : Runnable {
-            override fun run() {
-                try {
-                    if (!isActivityDestroyed && videoView.isPlaying) {
-                        val currentPosition = videoView.currentPosition
-                        val duration = videoView.duration
+    // ── Navigation & lifecycle ────────────────────────────────────────────
 
-                        if (duration > 0 && ::progressBar.isInitialized) {
-                            val progress = (currentPosition * 100 / duration).toInt()
-                            progressBar.progress = progress
-                        }
-                    }
-                    // Update every 200ms for smooth progress
-                    if (!isActivityDestroyed) {
-                        updateHandler.postDelayed(this, 200)
-                    }
-                } catch (e: Exception) {
-                    Log.e(TAG, "Error updating progress: ${e.message}", e)
-                }
-            }
-        })
-    }
-
-    private fun skipToNextActivity() {
+    private fun skip() {
         if (isActivityDestroyed) return
-        Log.d(TAG, "Skipping to next activity")
-        // Stop the video
+        removeBufferCover()
         videoView.stopPlayback()
-        // Remove any pending updates
         updateHandler.removeCallbacksAndMessages(null)
-        // Move to next activity
         navigateToRhythmSummary()
     }
 
     private fun navigateToRhythmSummary() {
         if (isActivityDestroyed) return
-        Log.d(TAG, "navigateToRhythmSummary called")
-
+        updateHandler.removeCallbacksAndMessages(null)
         try {
-            // Stop any running updates
-            updateHandler.removeCallbacksAndMessages(null)
-
-            Log.d(TAG, "Creating intent for RhythmSummaryActivity")
-            val intent = Intent(this, RhythmSummaryActivity::class.java)
-            intent.putExtra("SONG_TITLE", currentSongTitle)
-
-            Log.d(TAG, "Starting RhythmSummaryActivity")
-            startActivity(intent)
-            Log.d(TAG, "RhythmSummaryActivity started successfully")
-
+            startActivity(Intent(this, RhythmSummaryActivity::class.java).apply {
+                putExtra("SONG_TITLE", currentSongTitle)
+            })
             finish()
-            Log.d(TAG, "RMIntroActivity finished")
-
         } catch (e: Exception) {
-            Log.e(TAG, "Error navigating to RhythmSummaryActivity: ${e.message}", e)
+            Log.e(TAG, "Navigation error: ${e.message}")
             finish()
         }
     }
 
     override fun onPause() {
         super.onPause()
-        Log.d(TAG, "onPause: Stopping video")
-        // Skip to next activity if app goes to background
-        if (!isActivityDestroyed) {
-            skipToNextActivity()
-        }
-    }
-
-    override fun onResume() {
-        super.onResume()
-        Log.d(TAG, "onResume: Ensuring full screen")
-        // Ensure full screen
-        window.decorView.systemUiVisibility = (
-                View.SYSTEM_UI_FLAG_FULLSCREEN or
-                        View.SYSTEM_UI_FLAG_HIDE_NAVIGATION or
-                        View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
-                )
+        if (!isActivityDestroyed) skip()
     }
 
     override fun onDestroy() {
         super.onDestroy()
-        Log.d(TAG, "onDestroy: Cleaning up")
         isActivityDestroyed = true
+        bufferCover = null
         updateHandler.removeCallbacksAndMessages(null)
         try {
             videoView.stopPlayback()
-            // Clear all listeners to prevent callbacks
             videoView.setOnPreparedListener(null)
             videoView.setOnCompletionListener(null)
             videoView.setOnErrorListener(null)
-        } catch (e: Exception) {
-            Log.e(TAG, "Error stopping video playback: ${e.message}", e)
-        }
+        } catch (_: Exception) {}
     }
 }

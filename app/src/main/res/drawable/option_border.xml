@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Drawable: res/drawable/option_border.xml
+     Rounded border for the face part option images -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="rectangle">
+    <corners android:radius="12dp"/>
+    <stroke android:width="2dp" android:color="#FFCC88"/>
+    <solid android:color="#FFF8F0"/>
+</shape>

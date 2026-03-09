@@ -97,7 +97,7 @@
                 android:layout_width="208dp"
                 android:layout_height="20dp"
                 android:lineSpacingExtra="4dp"
-                android:text="If you want to eat, drink, or go "
+                android:text="If you want to eat, drink"
                 android:textAlignment="center"
                 android:textColor="@color/green"
                 android:textSize="15sp"

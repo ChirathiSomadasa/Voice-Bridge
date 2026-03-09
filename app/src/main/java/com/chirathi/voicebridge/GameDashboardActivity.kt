@@ -1,11 +1,16 @@
 package com.chirathi.voicebridge
 
 import android.content.Intent
+import android.content.SharedPreferences
+import android.media.AudioManager
 import android.util.Log
 import androidx.appcompat.app.AppCompatActivity
+import androidx.appcompat.widget.SwitchCompat
 import android.os.Bundle
 import android.widget.Button
+import android.widget.FrameLayout
 import android.widget.ImageView
+import android.widget.SeekBar
 import android.widget.Toast
 import com.google.firebase.Firebase
 import com.google.firebase.auth.FirebaseAuth
@@ -14,144 +19,216 @@ import com.google.firebase.firestore.firestore
 class GameDashboardActivity : AppCompatActivity() {
 
     private lateinit var auth: FirebaseAuth
-    private val db = Firebase.firestore
+    private lateinit var prefs: SharedPreferences
+    private val db  = Firebase.firestore
     private val TAG = "GameDashboardDebug"
+
+    private lateinit var settingsPrefs: SharedPreferences
+    private lateinit var audioManager: AudioManager
+
+    private val KEY_CALM_MUSIC  = "pref_calm_music_enabled"
+    private val KEY_CALM_VOLUME = "pref_calm_music_volume"
+
+    private var currentUserAge: Int = 6  // stored after Firestore fetch
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_game_dashboard)
 
-        auth = FirebaseAuth.getInstance()
+        auth  = FirebaseAuth.getInstance()
+        prefs = getSharedPreferences("voicebridge_prefs", MODE_PRIVATE)
 
         val moodMatchBtn = findViewById<Button>(R.id.btn_game1)
-        val myDayBtn = findViewById<Button>(R.id.btn_level2)
-        val singTimeBtn = findViewById<Button>(R.id.btn_level3)
-        val backBtn = findViewById<ImageView>(R.id.backGame)
+        val myDayBtn     = findViewById<Button>(R.id.btn_level2)
+        val singTimeBtn  = findViewById<Button>(R.id.btn_level3)
+        val backBtn      = findViewById<ImageView>(R.id.backGame)
 
-        // Mood Match button click - navigate to PandaIntroActivity
-        moodMatchBtn.setOnClickListener {
-            val intent = Intent(this, PandaIntroActivity::class.java)
-            startActivity(intent)
-        }
+        moodMatchBtn.setOnClickListener { handleMoodMatchClick() }
 
-        // My Day button click - navigate to RoutineSelectionActivity
         myDayBtn.setOnClickListener {
-            val intent = Intent(this, RoutineSelectionActivity::class.java)
-            startActivity(intent)
+            startActivity(Intent(this, RoutineSelectionActivity::class.java))
             overridePendingTransition(R.drawable.slide_in_right, R.drawable.slide_out_left)
         }
 
         singTimeBtn.setOnClickListener {
-            val intent = Intent(this, SongSelectionActivity::class.java)
-            startActivity(intent)
+            startActivity(Intent(this, SongSelectionActivity::class.java))
         }
 
-        // Back button click
         backBtn.setOnClickListener {
-            val intent = Intent(this, HomeActivity::class.java)
-            intent.flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
-            startActivity(intent)
+            startActivity(Intent(this, HomeActivity::class.java).apply {
+                flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
+            })
             finish()
+        }
+
+        setupGameSettings()
+        prefetchUserAge()  // fetch age early so settings dialog has it ready
+    }
+
+    override fun onResume() {
+        super.onResume()
+        CalmMusicManager.onActivityResume(this)
+    }
+
+    override fun onPause() {
+        super.onPause()
+        CalmMusicManager.onActivityPause()
+    }
+
+    /** Fetches the user's age from Firestore and caches it in [currentUserAge]. */
+    private fun prefetchUserAge() {
+        val uid = auth.currentUser?.uid ?: return
+        db.collection("users").document(uid).get()
+            .addOnSuccessListener { document ->
+                currentUserAge = document.getString("age")?.toIntOrNull() ?: 6
+                Log.d(TAG, "prefetchUserAge: $currentUserAge")
+            }
+            .addOnFailureListener { e ->
+                Log.e(TAG, "prefetchUserAge failed: ${e.message}")
+            }
+    }
+
+    private fun handleMoodMatchClick() {
+        val uid          = auth.currentUser?.uid ?: return
+        val introKey     = "panda_intro_shown_$uid"
+        val hasSeenIntro = prefs.getBoolean(introKey, false)
+
+        if (!hasSeenIntro) {
+            prefs.edit().putBoolean(introKey, true).apply()
+            fetchAgeAndLaunch(viaPandaIntro = true)
+        } else {
+            fetchAgeAndLaunch(viaPandaIntro = false)
         }
     }
 
-    private fun checkAgeAndNavigate() {
+    private fun fetchAgeAndLaunch(viaPandaIntro: Boolean) {
         val currentUser = auth.currentUser
         if (currentUser == null) {
-            Toast.makeText(this, "Please login again", Toast.LENGTH_SHORT).show()
-            val intent = Intent(this, LoginActivity::class.java)
-            startActivity(intent)
+            startActivity(Intent(this, LoginActivity::class.java))
             finish()
             return
         }
 
-        // Show loading
-        Toast.makeText(this, "Loading...", Toast.LENGTH_SHORT).show()
-
-        Log.d(TAG, "Checking age for user: ${currentUser.uid}")
-        Log.d(TAG, "User email: ${currentUser.email}")
-
         db.collection("users").document(currentUser.uid).get()
             .addOnSuccessListener { document ->
-                Log.d(TAG, "Document retrieved: ${document.exists()}")
-
-                if (document.exists()) {
-                    // Get all document data for debugging
-                    val allData = document.data
-                    Log.d(TAG, "All document data: $allData")
-
-                    // Get age as String (matching ChildRegistrationActivity)
-                    val ageString = document.getString("age")
-                    Log.d(TAG, "Age string from document: '$ageString'")
-                    Log.d(TAG, "Age string is null: ${ageString == null}")
-                    Log.d(TAG, "Age string is empty: ${ageString?.isEmpty()}")
-
-                    // Also check other fields to confirm document structure
-                    val firstName = document.getString("firstName")
-                    val email = document.getString("email")
-                    Log.d(TAG, "First name: $firstName")
-                    Log.d(TAG, "Email: $email")
-
-                    if (ageString != null && ageString.isNotEmpty()) {
-                        try {
-                            val age = ageString.toInt()
-                            Log.d(TAG, "Age converted to int: $age")
-
-                            // Navigate based on age group
-                            when (age) {
-                                in 6..7 -> {
-                                    Log.d(TAG, "Navigating to ActivitySequenceUnderActivity (age: $age)")
-                                    // Age 6-7: Navigate to ActivitySequenceUnderActivity
-                                    val intent = Intent(this, ActivitySequenceUnderActivity::class.java)
-                                    startActivity(intent)
-                                }
-                                in 8..10 -> {
-                                    Log.d(TAG, "Navigating to ActivitySequenceOverActivity (age: $age)")
-                                    // Age 8-10: Navigate to ActivitySequenceOverActivity
-                                    val intent = Intent(this, ActivitySequenceOverActivity::class.java)
-                                    startActivity(intent)
-                                }
-                                else -> {
-                                    Log.d(TAG, "Age $age is outside 6-10 range")
-                                    Toast.makeText(this, "Age $age is outside 6-10 range. Defaulting to simpler activity.", Toast.LENGTH_SHORT).show()
-                                    // Default to simpler activity for safety
-                                    val intent = Intent(this, ActivitySequenceUnderActivity::class.java)
-                                    startActivity(intent)
-                                }
-                            }
-                        } catch (e: NumberFormatException) {
-                            Log.e(TAG, "Invalid age format: $ageString", e)
-                            // Age is not a valid number
-                            Toast.makeText(this, "Invalid age format: $ageString", Toast.LENGTH_SHORT).show()
-                            // Default to simpler activity
-                            val intent = Intent(this, ActivitySequenceUnderActivity::class.java)
-                            startActivity(intent)
-                        }
-                    } else {
-                        Log.d(TAG, "Age not found or empty in document")
-                        // Age not found in document
-                        Toast.makeText(this, "Age information not found in profile", Toast.LENGTH_SHORT).show()
-                        // Default to simpler activity
-                        val intent = Intent(this, ActivitySequenceUnderActivity::class.java)
-                        startActivity(intent)
-                    }
+                val age = document.getString("age")?.toIntOrNull() ?: 6
+                currentUserAge = age  // keep cache in sync
+                Log.d(TAG, "Age fetched: $age  viaPandaIntro=$viaPandaIntro")
+                if (viaPandaIntro) {
+                    startActivity(Intent(this, PandaIntroActivity::class.java).apply {
+                        putExtra("AGE_GROUP", age)
+                    })
                 } else {
-                    Log.d(TAG, "Document doesn't exist for user")
-                    // Document doesn't exist
-                    Toast.makeText(this, "User profile not found. Please complete registration.", Toast.LENGTH_SHORT).show()
-                    // Go to login
-                    val intent = Intent(this, LoginActivity::class.java)
-                    startActivity(intent)
-                    finish()
+                    launchMoodMatch(age)
                 }
             }
-            .addOnFailureListener { exception ->
-                Log.e(TAG, "Failed to load user data", exception)
-                // Firestore fetch failed
-                Toast.makeText(this, "Error loading profile: ${exception.message}", Toast.LENGTH_SHORT).show()
-                // Default to simpler activity
-                val intent = Intent(this, ActivitySequenceUnderActivity::class.java)
-                startActivity(intent)
+            .addOnFailureListener { e ->
+                Log.e(TAG, "Firestore error: ${e.message}")
+                Toast.makeText(this, "Error loading profile", Toast.LENGTH_SHORT).show()
+                if (viaPandaIntro) {
+                    startActivity(Intent(this, PandaIntroActivity::class.java).apply {
+                        putExtra("AGE_GROUP", 6)
+                    })
+                } else {
+                    launchMoodMatch(6)
+                }
             }
+    }
+
+    fun launchMoodMatch(age: Int) {
+        startActivity(Intent(this, MoodMatchSevenDownActivity::class.java).apply {
+            putExtra("AGE_GROUP", age)
+        })
+    }
+
+    private fun setupGameSettings() {
+        settingsPrefs = getSharedPreferences("game_settings_prefs", MODE_PRIVATE)
+        audioManager  = getSystemService(AUDIO_SERVICE) as AudioManager
+
+        // Init the singleton — checks resource existence, respects saved pref
+        CalmMusicManager.init(this)
+
+        findViewById<FrameLayout>(R.id.btnGameSettings).setOnClickListener {
+            showGameSettingsDialog()
+        }
+    }
+
+    private fun showGameSettingsDialog() {
+        try {
+            val dialogView = layoutInflater.inflate(R.layout.activity_dialog_game_settings, null)
+
+            val switchCalmMusic = dialogView.findViewById<SwitchCompat>(R.id.switchCalmMusic)
+            val seekVolume      = dialogView.findViewById<SeekBar>(R.id.seekMasterVolume)
+
+            val hasCalmResource = try {
+                resources.openRawResourceFd(R.raw.calm_background) != null
+            } catch (_: Exception) { false }
+
+            switchCalmMusic.isChecked = settingsPrefs.getBoolean(KEY_CALM_MUSIC, false)
+
+            if (!hasCalmResource) {
+                switchCalmMusic.isChecked = false
+                switchCalmMusic.isEnabled = false
+                switchCalmMusic.alpha     = 0.4f
+            }
+
+            val maxVol = audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC)
+            val curVol = audioManager.getStreamVolume(AudioManager.STREAM_MUSIC)
+            seekVolume.max      = maxVol
+            seekVolume.progress = curVol
+
+            seekVolume.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
+                override fun onProgressChanged(sb: SeekBar?, p: Int, fromUser: Boolean) {
+                    if (!fromUser) return
+                    audioManager.setStreamVolume(AudioManager.STREAM_MUSIC, p, 0)
+                    CalmMusicManager.applySystemVolume(this@GameDashboardActivity)
+                }
+                override fun onStartTrackingTouch(sb: SeekBar?) {}
+                override fun onStopTrackingTouch(sb: SeekBar?) {}
+            })
+
+            val builder = android.app.AlertDialog.Builder(this)
+                .setTitle("Game Sound Settings")
+                .setView(dialogView)
+                .setPositiveButton("Done") { _, _ ->
+                    val musicOn = switchCalmMusic.isChecked && hasCalmResource
+                    settingsPrefs.edit()
+                        .putBoolean(KEY_CALM_MUSIC,  musicOn)
+                        .putInt(KEY_CALM_VOLUME,     seekVolume.progress)
+                        .apply()
+                    CalmMusicManager.applySettings(this)
+                }
+                .setNegativeButton("Cancel") { _, _ ->
+                    audioManager.setStreamVolume(AudioManager.STREAM_MUSIC, curVol, 0)
+                    CalmMusicManager.applySystemVolume(this)
+                }
+
+            // "Customize Routines" is only available for the 8–10 age group
+            if (currentUserAge in 8..10) {
+                builder.setNeutralButton("Customize Routines") { _, _ ->
+                    startActivityForResult(
+                        Intent(this, ParentSequenceSettingsActivity::class.java),
+                        REQUEST_CUSTOMIZE_ROUTINES
+                    )
+                }
+            }
+
+            builder.show()
+
+        } catch (e: Exception) {
+            Log.e(TAG, "showGameSettingsDialog failed: ${e.message}", e)
+            Toast.makeText(this, "Could not open settings", Toast.LENGTH_SHORT).show()
+        }
+    }
+    companion object {
+        private const val REQUEST_CUSTOMIZE_ROUTINES = 1001
+    }
+
+    // Add this override:
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+        if (requestCode == REQUEST_CUSTOMIZE_ROUTINES) {
+            showGameSettingsDialog()   // reopen settings dialog automatically
+        }
     }
 }

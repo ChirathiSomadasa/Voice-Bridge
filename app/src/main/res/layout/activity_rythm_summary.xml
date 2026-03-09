@@ -1,80 +1,76 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/rootLayout"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="#F8FAFF"
     tools:context=".RhythmSummaryActivity">
 
-    <!-- Modern Header with Wave Design -->
     <androidx.constraintlayout.widget.ConstraintLayout
         android:id="@+id/headerLayout"
-        android:layout_width="413dp"
-        android:layout_height="296dp"
+        android:layout_width="412dp"
+        android:layout_height="201dp"
         android:background="@drawable/header_cloud_background"
         android:paddingTop="40dp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent">
 
-        <!-- Panda Mascot Positioned Outside (Overlapping the header) -->
-
-        <!-- Word to Find with Modern Typography -->
-
+        <!-- [FIX F] Back button replaces the panda mascot -->
         <ImageView
-            android:id="@+id/pandaImage"
-            android:layout_width="140dp"
-            android:layout_height="171dp"
-            android:layout_marginStart="-18dp"
-            android:layout_marginTop="-15dp"
-            android:contentDescription="Panda Mascot"
-            android:elevation="12dp"
-            android:src="@drawable/panda_confused"
-            app:layout_constraintBottom_toBottomOf="@id/headerLayout"
+            android:id="@+id/backBtn"
+            android:layout_width="45dp"
+            android:layout_height="45dp"
+            android:layout_marginStart="16dp"
+            android:clickable="true"
+            android:contentDescription="Back"
+            android:focusable="true"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="@id/headerLayout"
-            app:layout_constraintVertical_bias="0.0" />
+            app:layout_constraintTop_toTopOf="parent"
+            app:srcCompat="@drawable/back" />
 
-        <!-- Modern Score Card -->
-
+        <!-- Word to Find -->
         <LinearLayout
+            android:id="@+id/wordContainer"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_marginTop="-2dp"
+            android:layout_marginStart="10dp"
             android:gravity="center_vertical"
             android:orientation="vertical"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toStartOf="@+id/scoreCard"
-            app:layout_constraintHorizontal_bias="0.0"
-            app:layout_constraintStart_toEndOf="@id/pandaImage"
+            app:layout_constraintHorizontal_bias="1.0"
+            app:layout_constraintStart_toEndOf="@id/backBtn"
             app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintVertical_bias="0.01">
+            app:layout_constraintVertical_bias="0.0">
 
             <TextView
                 android:id="@+id/wordTitle"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="4dp"
-                android:fontFamily="sans-serif-condensed"
                 android:shadowColor="#40000000"
                 android:shadowDx="2"
                 android:shadowDy="2"
                 android:shadowRadius="4"
                 android:text="BOAT"
-                android:textColor="@android:color/white"
-                android:textSize="30sp"
+                android:textColor="@color/dark_green"
+                android:textSize="28sp"
                 android:textStyle="bold" />
 
         </LinearLayout>
 
+        <!-- Score Card -->
         <com.google.android.material.card.MaterialCardView
             android:id="@+id/scoreCard"
             android:layout_width="100dp"
             android:layout_height="100dp"
-            android:layout_marginTop="-140dp"
+            android:layout_marginTop="-50dp"
             android:layout_marginEnd="13dp"
-            android:layout_marginBottom="16dp"
+            android:layout_marginBottom="1dp"
             app:cardBackgroundColor="@color/light_green"
             app:cardCornerRadius="20dp"
             app:cardElevation="16dp"
@@ -105,7 +101,7 @@
                     android:layout_height="wrap_content"
                     android:layout_marginTop="4dp"
                     android:text="0/5"
-                    android:textColor="@color/white"
+                    android:textColor="@color/dark_green"
                     android:textSize="28sp"
                     android:textStyle="bold" />
 
@@ -119,6 +115,35 @@
 
         </com.google.android.material.card.MaterialCardView>
 
+        <!-- Level Badge -->
+        <LinearLayout
+            android:id="@+id/levelBadge"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:background="@drawable/level_flag_background"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:paddingStart="20dp"
+            android:paddingTop="8dp"
+            android:paddingEnd="20dp"
+            android:paddingBottom="8dp"
+            android:visibility="gone"
+            app:layout_constraintEnd_toEndOf="@id/scoreCard"
+            app:layout_constraintStart_toStartOf="@id/scoreCard"
+            app:layout_constraintTop_toBottomOf="@id/scoreCard">
+
+            <TextView
+                android:id="@+id/levelIndicator"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Beginner"
+                android:textColor="@android:color/white"
+                android:textSize="16sp"
+                android:textStyle="bold" />
+
+        </LinearLayout>
+
     </androidx.constraintlayout.widget.ConstraintLayout>
 
     <!-- Progress Indicator -->
@@ -127,7 +152,7 @@
         android:layout_width="0dp"
         android:layout_height="20dp"
         android:layout_marginStart="24dp"
-        android:layout_marginTop="-96dp"
+        android:layout_marginTop="10dp"
         android:layout_marginEnd="24dp"
         android:background="@drawable/progress_background"
         android:gravity="center"
@@ -135,11 +160,7 @@
         android:padding="2dp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/headerLayout">
-
-        <!-- Progress dots will be added dynamically -->
-
-    </LinearLayout>
+        app:layout_constraintTop_toBottomOf="@id/headerLayout" />
 
     <!-- Instructions -->
     <TextView
@@ -147,7 +168,7 @@
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginStart="24dp"
-        android:layout_marginTop="16dp"
+        android:layout_marginTop="22dp"
         android:layout_marginEnd="24dp"
         android:gravity="center"
         android:text="Tap the correct image for the word!"
@@ -157,6 +178,23 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/progressContainer" />
+
+    <!-- Therapeutic Message -->
+    <TextView
+        android:id="@+id/therapeuticMessage"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="24dp"
+        android:layout_marginTop="8dp"
+        android:layout_marginEnd="24dp"
+        android:gravity="center"
+        android:text="Let's try an easier one! You can do it!"
+        android:textColor="#4CAF50"
+        android:textSize="18sp"
+        android:visibility="gone"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/instructionsText" />
 
     <!-- Options Grid -->
     <GridLayout
@@ -173,13 +211,33 @@
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/instructionsText">
+        app:layout_constraintTop_toBottomOf="@id/therapeuticMessage" />
 
-        <!-- Options will be added dynamically -->
+    <!-- Confidence Builder Overlay -->
+    <FrameLayout
+        android:id="@+id/confidenceBuilderOverlay"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="#80FFFFFF"
+        android:visibility="gone"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="@id/therapeuticMessage">
 
-    </GridLayout>
+        <LinearLayout
+            android:id="@+id/simplifiedOptionsContainer"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:gravity="center"
+            android:orientation="horizontal"
+            android:padding="16dp"
+            android:visibility="gone" />
 
-    <!-- Center Feedback Overlay - Appears in center of screen -->
+    </FrameLayout>
+
+    <!-- Feedback Overlay -->
     <FrameLayout
         android:id="@+id/feedbackOverlay"
         android:layout_width="match_parent"
@@ -192,6 +250,7 @@
         app:layout_constraintTop_toTopOf="parent">
 
         <LinearLayout
+            android:id="@+id/feedbackContainer"
             android:layout_width="280dp"
             android:layout_height="200dp"
             android:layout_gravity="center"
@@ -219,23 +278,5 @@
         </LinearLayout>
 
     </FrameLayout>
-
-    <!-- Next Button - At bottom -->
-    <com.google.android.material.button.MaterialButton
-        android:id="@+id/nextButton"
-        android:layout_width="200dp"
-        android:layout_height="60dp"
-        android:layout_marginBottom="32dp"
-        android:text="NEXT"
-        android:textSize="20sp"
-        android:textStyle="bold"
-        android:visibility="gone"
-        app:cornerRadius="30dp"
-        app:icon="@drawable/button_green"
-        app:iconGravity="textEnd"
-        app:iconPadding="8dp"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

@@ -10,14 +10,50 @@
 
     <ImageView
         android:id="@+id/topGameImage"
-        android:layout_width="match_parent"
-        android:layout_height="250dp"
+        android:layout_width="413dp"
+        android:layout_height="271dp"
         android:scaleType="fitXY"
         android:src="@drawable/activity_sequence"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.0"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
+
+    <ImageView
+        android:id="@+id/backBtn"
+        android:layout_width="45dp"
+        android:layout_height="45dp"
+        android:layout_marginStart="16dp"
+        android:layout_marginTop="16dp"
+        android:clickable="true"
+        android:focusable="true"
+        android:contentDescription="Back"
+        app:srcCompat="@drawable/back"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <FrameLayout
+        android:id="@+id/stickerChip"
+        android:layout_width="45dp"
+        android:layout_height="45dp"
+        android:layout_marginTop="16dp"
+        android:layout_marginEnd="16dp"
+        android:background="@drawable/rounded_button_background_locked"
+        android:padding="10dp"
+        android:clickable="true"
+        android:focusable="true"
+        android:elevation="6dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="parent">
+
+        <ImageView
+            android:layout_width="33dp"
+            android:layout_height="27dp"
+            android:contentDescription="My Stickers"
+            android:scaleType="fitCenter"
+            android:src="@drawable/sticcker_badge" />
+
+    </FrameLayout>
 
     <ImageView
         android:id="@+id/bottom_bg"
@@ -34,7 +70,7 @@
         android:id="@+id/scrollView"
         android:layout_width="0dp"
         android:layout_height="0dp"
-        android:layout_marginTop="-30dp"
+        android:layout_marginTop="-40dp"
         android:background="@drawable/white_bottom_bg"
         android:fillViewport="true"
         app:layout_constraintBottom_toTopOf="@+id/bottom_bg"
@@ -48,7 +84,6 @@
             android:orientation="vertical"
             android:padding="24dp">
 
-            <!-- Title -->
             <TextView
                 android:id="@+id/titleTextView"
                 android:layout_width="match_parent"
@@ -60,18 +95,16 @@
                 android:textSize="24sp"
                 android:textStyle="bold" />
 
-            <!-- First Row -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="24dp"
                 android:orientation="horizontal">
 
-                <!-- Morning Routine -->
                 <LinearLayout
                     android:id="@+id/morningRoutineLayout"
                     android:layout_width="0dp"
-                    android:layout_height="wrap_content"
+                    android:layout_height="match_parent"
                     android:layout_marginEnd="12dp"
                     android:layout_weight="1"
                     android:background="@drawable/rounded_button_background_locked"
@@ -80,21 +113,21 @@
                     android:focusable="true"
                     android:gravity="center"
                     android:orientation="vertical"
-                    android:padding="16dp"
+                    android:padding="8dp"
                     android:stateListAnimator="@null">
 
                     <ImageView
-                        android:layout_width="88dp"
-                        android:layout_height="112dp"
+                        android:layout_width="105dp"
+                        android:layout_height="115dp"
                         android:src="@drawable/morning" />
 
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="12dp"
+                        android:layout_marginTop="6dp"
                         android:gravity="center"
                         android:text="Morning Routine"
-                        android:textColor="@color/black"
+                        android:textColor="@color/white"
                         android:textSize="16sp"
                         android:textStyle="bold" />
 
@@ -112,11 +145,10 @@
                         android:textStyle="bold" />
                 </LinearLayout>
 
-                <!-- Local-Time Routine (Locked) -->
                 <LinearLayout
                     android:id="@+id/localTimeRoutineLayout"
                     android:layout_width="0dp"
-                    android:layout_height="wrap_content"
+                    android:layout_height="match_parent"
                     android:layout_marginStart="12dp"
                     android:layout_weight="1"
                     android:background="@drawable/rounded_button_background"
@@ -125,26 +157,25 @@
                     android:focusable="true"
                     android:gravity="center"
                     android:orientation="vertical"
-                    android:padding="16dp"
+                    android:padding="8dp"
                     android:stateListAnimator="@null">
 
                     <ImageView
-                        android:layout_width="88dp"
-                        android:layout_height="88dp"
-                        android:alpha="0.7"
-                        android:src="@drawable/meal_time" />
+                        android:layout_width="105dp"
+                        android:layout_height="115dp"
+                        android:alpha="0.9"
+                        android:src="@drawable/breakfast" />
 
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="12dp"
+                        android:layout_marginTop="6dp"
                         android:gravity="center"
-                        android:text="Local-Time Routine"
-                        android:textColor="@color/black"
+                        android:text="Breakfast  Routine"
+                        android:textColor="@color/white"
                         android:textSize="16sp"
                         android:textStyle="bold" />
 
-                    <!-- Locked Tag -->
                     <TextView
                         android:id="@+id/lockedTag1"
                         android:layout_width="wrap_content"
@@ -158,20 +189,32 @@
                         android:textColor="@color/white"
                         android:textSize="12sp"
                         android:textStyle="bold" />
+                    <TextView
+                        android:id="@+id/availableTag1"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="4dp"
+                        android:background="@color/green"
+                        android:gravity="center"
+                        android:paddingHorizontal="12dp"
+                        android:paddingVertical="4dp"
+                        android:text="AVAILABLE"
+                        android:textColor="@color/white"
+                        android:textSize="12sp"
+                        android:textStyle="bold"
+                        android:visibility="gone" />
                 </LinearLayout>
             </LinearLayout>
 
-            <!-- Second Row -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="horizontal">
 
-                <!-- School Routine (Locked) -->
                 <LinearLayout
                     android:id="@+id/schoolRoutineLayout"
                     android:layout_width="0dp"
-                    android:layout_height="wrap_content"
+                    android:layout_height="match_parent"
                     android:layout_marginEnd="12dp"
                     android:layout_weight="1"
                     android:background="@drawable/rounded_button_background"
@@ -180,26 +223,25 @@
                     android:focusable="true"
                     android:gravity="center"
                     android:orientation="vertical"
-                    android:padding="16dp"
+                    android:padding="8dp"
                     android:stateListAnimator="@null">
 
                     <ImageView
-                        android:layout_width="88dp"
-                        android:layout_height="98dp"
-                        android:alpha="0.7"
+                        android:layout_width="105dp"
+                        android:layout_height="115dp"
+                        android:alpha="0.9"
                         android:src="@drawable/school_routine" />
 
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="12dp"
+                        android:layout_marginTop="6dp"
                         android:gravity="center"
                         android:text="School Routine"
-                        android:textColor="@color/black"
+                        android:textColor="@color/white"
                         android:textSize="16sp"
                         android:textStyle="bold" />
 
-                    <!-- Locked Tag -->
                     <TextView
                         android:id="@+id/lockedTag2"
                         android:layout_width="wrap_content"
@@ -213,30 +255,44 @@
                         android:textColor="@color/white"
                         android:textSize="12sp"
                         android:textStyle="bold" />
+
+                    <TextView
+                        android:id="@+id/availableTag2"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="4dp"
+                        android:background="@color/green"
+                        android:gravity="center"
+                        android:paddingHorizontal="12dp"
+                        android:paddingVertical="4dp"
+                        android:text="AVAILABLE"
+                        android:textColor="@color/white"
+                        android:textSize="12sp"
+                        android:textStyle="bold"
+                        android:visibility="gone" />
                 </LinearLayout>
 
-                <!-- Placeholder for future routine -->
                 <LinearLayout
                     android:layout_width="0dp"
-                    android:layout_height="wrap_content"
+                    android:layout_height="match_parent"
                     android:layout_marginStart="12dp"
                     android:layout_weight="1"
                     android:alpha="0.3"
                     android:background="@drawable/rounded_button_background"
                     android:gravity="center"
                     android:orientation="vertical"
-                    android:padding="16dp">
+                    android:padding="8dp">
 
                     <ImageView
-                        android:layout_width="88dp"
-                        android:layout_height="88dp"
+                        android:layout_width="105dp"
+                        android:layout_height="105dp"
                         android:alpha="0.5"
                         android:src="@drawable/ic_placeholder" />
 
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="12dp"
+                        android:layout_marginTop="6dp"
                         android:gravity="center"
                         android:text="Coming Soon"
                         android:textColor="@color/black"
@@ -245,8 +301,8 @@
                 </LinearLayout>
             </LinearLayout>
 
-            <!-- Info Text -->
             <TextView
+                android:id="@+id/infoTextView"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="32dp"

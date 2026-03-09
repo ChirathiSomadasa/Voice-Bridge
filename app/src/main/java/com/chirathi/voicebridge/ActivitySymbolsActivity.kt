@@ -24,21 +24,21 @@ class ActivitySymbolsActivity : AppCompatActivity() {
     private fun setupIconClickListeners() {
         // Map of image view IDs to drawable resources and phrases
         val iconData = mapOf(
-            R.id.imgCycle to Pair(R.drawable.cycle, "Yes"),
-            R.id.imgTV to Pair(R.drawable.flatscreen_tv, "Ok"),
-            R.id.imgStudy to Pair(R.drawable.study, "No"),
-            R.id.imgBathe to Pair(R.drawable.bathe, "Thank you"),
-            R.id.imgWashFace to Pair(R.drawable.wash_face, "Hello"),
-            R.id.imgWashHands to Pair(R.drawable.wash_hands, "Good Bye"),
-            R.id.imgRun to Pair(R.drawable.run, "I need to use washroom"),
-            R.id.imgGo to Pair(R.drawable.go, "I'm hungry"),
-            R.id.imgSit to Pair(R.drawable.sit, "I am thirsty"),
-            R.id.imgExercise to Pair(R.drawable.exercise, "I want to play"),
-            R.id.imgSwim to Pair(R.drawable.swim, "Please"),
-            R.id.imgSwing to Pair(R.drawable.swing, "Bad"),
-            R.id.imgCelebrate to Pair(R.drawable.celebrate, "Good"),
-            R.id.imgCelebrateBirth to Pair(R.drawable.celebrate_birth, "I have pain"),
-            R.id.imgSleep to Pair(R.drawable.sleep, "Stop")
+            R.id.imgCycle to Pair(R.drawable.cycle, "I want to cycle a bicycle"),
+            R.id.imgTV to Pair(R.drawable.flatscreen_tv, "I want to watch TV"),
+            R.id.imgStudy to Pair(R.drawable.study, "I want to do my studies"),
+            R.id.imgBathe to Pair(R.drawable.bathe, "I want to have a bathe "),
+            R.id.imgWashFace to Pair(R.drawable.wash_face, " I want to wash my face"),
+            R.id.imgWashHands to Pair(R.drawable.wash_hands, "I want to wash my hands "),
+            R.id.imgRun to Pair(R.drawable.run, "I want to run "),
+            R.id.imgGo to Pair(R.drawable.go, "I want to go"),
+            R.id.imgSit to Pair(R.drawable.sit, "I want to sit"),
+            R.id.imgExercise to Pair(R.drawable.exercise, " I want to do exercise"),
+            R.id.imgSwim to Pair(R.drawable.swim, " I want to swim"),
+            R.id.imgSwing to Pair(R.drawable.swing, " I want to swing"),
+            R.id.imgCelebrate to Pair(R.drawable.celebrate, " I want to celebrate"),
+            R.id.imgCelebrateBirth to Pair(R.drawable.celebrate_birth, "Happy Birthday!"),
+            R.id.imgSleep to Pair(R.drawable.sleep, "I want to sleep ")
         )
 
         // Set click listeners for all icons

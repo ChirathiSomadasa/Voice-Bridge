@@ -23,21 +23,21 @@ class FoodSymbolsActivity : AppCompatActivity() {
     private fun setupIconClickListeners() {
         // Map of image view IDs to drawable resources and phrases
         val iconData = mapOf(
-            R.id.imgHotDog to Pair(R.drawable.hot_dog, "Yes"),
-            R.id.imgBurger to Pair(R.drawable.burger, "Ok"),
-            R.id.imgPizza to Pair(R.drawable.pizza, "No"),
-            R.id.imgCupCake to Pair(R.drawable.cup_cake, "Thank you"),
-            R.id.imgFishBurger to Pair(R.drawable.fish_burger, "Hello"),
-            R.id.imgToast to Pair(R.drawable.toast, "Good Bye"),
-            R.id.imgPancake to Pair(R.drawable.pancake, "I need to use washroom"),
-            R.id.imgSandwich to Pair(R.drawable.toasted_sandwich, "I'm hungry"),
-            R.id.imgScrambledEggs to Pair(R.drawable.scrambled_eggs, "I am thirsty"),
-            R.id.imgFriedEgg to Pair(R.drawable.fried_egg, "I want to play"),
-            R.id.imgCorn to Pair(R.drawable.sweetcorn, "Please"),
-            R.id.imgPasta to Pair(R.drawable.pasta, "Bad"),
-            R.id.imgNoodles to Pair(R.drawable.noodles, "Good"),
-            R.id.imgCereal to Pair(R.drawable.cereal, "I have pain"),
-            R.id.imgCheese to Pair(R.drawable.cheese, "Stop")
+            R.id.imgHotDog to Pair(R.drawable.hot_dog, "I want to eat hot dog"),
+            R.id.imgBurger to Pair(R.drawable.burger, "I want to eat burger"),
+            R.id.imgPizza to Pair(R.drawable.pizza, "I want to eat pizza "),
+            R.id.imgCupCake to Pair(R.drawable.cup_cake, " I want to eat cup cake"),
+            R.id.imgFishBurger to Pair(R.drawable.fish_burger, "I want to eat fish burger "),
+            R.id.imgToast to Pair(R.drawable.toast, "I want to eat toasted bun"),
+            R.id.imgPancake to Pair(R.drawable.pancake, "I want to eat pan cake"),
+            R.id.imgSandwich to Pair(R.drawable.toasted_sandwich, "I want to eat sandwitch "),
+            R.id.imgScrambledEggs to Pair(R.drawable.scrambled_eggs, " I want to eat scrambled egg"),
+            R.id.imgFriedEgg to Pair(R.drawable.fried_egg, "I want to eat fried egg "),
+            R.id.imgCorn to Pair(R.drawable.sweetcorn, " I want to eat corn"),
+            R.id.imgPasta to Pair(R.drawable.pasta, "I want to eat pasta "),
+            R.id.imgNoodles to Pair(R.drawable.noodles, "I want to eat noodles "),
+            R.id.imgCereal to Pair(R.drawable.cereal, " I want to eat cereal"),
+            R.id.imgCheese to Pair(R.drawable.cheese, "I want to eat cheese ")
         )
 
         // Set click listeners for all icons
