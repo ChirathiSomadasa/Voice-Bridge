@@ -36,4 +36,9 @@ interface VoiceBridgeApi {
     @POST("api/recommend/text")
 //    @POST("recommend/text")  // becomes /+/api/recommend/text
     suspend fun recommendByText(@Body request: RecommendByTextRequest): Response<RecommendationsResponse>
+
+
+    @POST("/api/recommend/therapy")
+    suspend fun recommendTherapy(@Body request: RecommendTherapyRequest): Response<RecommendTherapyResponse>
+
 }

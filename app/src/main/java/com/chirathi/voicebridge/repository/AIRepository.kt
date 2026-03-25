@@ -85,4 +85,22 @@ class AIRepository {
             emptyList()
         }
     }
+
+    suspend fun getTherapyRecommendations(request: RecommendTherapyRequest): List<RecommendTherapyItem> {
+        return try {
+            val response = api.recommendTherapy(request)
+
+            if (response.isSuccessful) {
+                val activities = response.body()?.activities ?: emptyList()
+                Log.d(TAG, "Got ${activities.size} therapy recommendations")
+                activities
+            } else {
+                Log.e(TAG, "Therapy recommend error: ${response.errorBody()?.string()}")
+                emptyList()
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "Therapy recommend exception: ${e.message}", e)
+            emptyList()
+        }
+    }
 }

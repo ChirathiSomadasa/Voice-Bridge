@@ -119,6 +119,77 @@
             android:paddingEnd="20dp"
             android:paddingBottom="32dp">
 
+            <!-- NEW: Therapy profile + Flask CTA card -->
+            <androidx.cardview.widget.CardView
+                android:id="@+id/card_therapy_flask"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="16dp"
+                app:cardCornerRadius="20dp"
+                app:cardElevation="8dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:background="@drawable/gradient_purple"
+                    android:orientation="vertical"
+                    android:padding="20dp">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal">
+
+                        <TextView
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:text="🏡 Home Therapy Plan"
+                            android:textAlignment="viewStart"
+                            android:textColor="@color/white"
+                            android:textSize="20sp"
+                            android:textStyle="bold" />
+
+                        <Button
+                            android:id="@+id/btnEditProfile"
+                            android:layout_width="wrap_content"
+                            android:layout_height="40dp"
+                            android:backgroundTint="@color/white"
+                            android:text="Edit"
+                            android:textAllCaps="false"
+                            android:textSize="16sp"
+                            android:textColor="@color/purple_700"
+                            android:textStyle="bold" />
+                    </LinearLayout>
+
+                    <TextView
+                        android:id="@+id/tvProfileSummary"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        android:lineSpacingExtra="2sp"
+                        android:textColor="@color/black"
+                        android:textSize="16sp"
+                        android:textStyle="bold"
+                        tools:text="Disorder: Speech Delay\nSeverity: Moderate\nCommunication: Few Words\nAttention: Low" />
+
+                    <Button
+                        android:id="@+id/btnTherapyPlan"
+                        android:layout_width="match_parent"
+                        android:layout_height="56dp"
+                        android:layout_marginTop="8dp"
+                        android:backgroundTint="@color/white"
+                        android:text="Get Therapy Plan"
+                        android:textAllCaps="false"
+                        android:textColor="@color/purple_700"
+                        android:textSize="16sp"
+                        android:textStyle="bold"
+                        app:cornerRadius="16dp" />
+                </LinearLayout>
+            </androidx.cardview.widget.CardView>
+
+
             <!-- AI Recommendation Card -->
             <androidx.cardview.widget.CardView
                 android:id="@+id/card_recommend"

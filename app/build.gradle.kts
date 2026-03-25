@@ -88,6 +88,10 @@ dependencies {
     testImplementation ("io.mockk:mockk:1.13.5")
     androidTestImplementation("androidx.test.ext:junit:1.3.0")
     androidTestImplementation("androidx.test.espresso:espresso-core:3.7.0")
+    testImplementation("org.robolectric:robolectric:4.12.1")
+    testImplementation("androidx.arch.core:core-testing:2.2.0")
+    testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.7.3")
+    androidTestImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.7.3")
 
     implementation ("androidx.camera:camera-core:1.3.0")
     implementation ("androidx.camera:camera-camera2:1.3.0")
@@ -126,4 +130,5 @@ dependencies {
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.6.2")
     // Import the Firebase BoM (Current 2026 version)
     implementation(platform("com.google.firebase:firebase-bom:33.3.0"))
+    implementation("androidx.recyclerview:recyclerview:1.3.2")
 }
