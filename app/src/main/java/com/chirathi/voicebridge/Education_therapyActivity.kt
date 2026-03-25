@@ -5,21 +5,31 @@ import android.os.Bundle
 import android.widget.Button
 import android.widget.EditText
 import android.widget.ImageView
+import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.cardview.widget.CardView
+import androidx.lifecycle.lifecycleScope
+import com.chirathi.voicebridge.api.models.*
+import com.chirathi.voicebridge.repository.AIRepository
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.SetOptions
+import kotlinx.coroutines.launch
 
 
 class Education_therapyActivity : AppCompatActivity() {
 
     private val db = FirebaseFirestore.getInstance()
     private val auth = FirebaseAuth.getInstance()
+    private val aiRepository = AIRepository()
+
     private var disorderType: String? = null // Store disorder type globally
     private var disorderSeverity: String? = null
+    private var communicationMode: String? = null
+    private var attentionLevel: String? = null
+    private lateinit var tvProfileSummary: TextView
     private lateinit var recommender: Edu_TaskRecommender
     companion object {
         private const val EXTRA_TEXT_DESCRIPTION = "TEXT_DESCRIPTION"
@@ -41,29 +51,25 @@ class Education_therapyActivity : AppCompatActivity() {
 
         // Card references
         val cardRecommend: CardView = findViewById(R.id.card_recommend)
+        val cardChatbot: CardView = findViewById(R.id.card_chatbot)
 //        val cardAge1: CardView = findViewById(R.id.card_age1)
 //        val cardAge2: CardView = findViewById(R.id.card_age2)
 //        val cardAge3: CardView = findViewById(R.id.card_age3)
 //        val cardAge4: CardView = findViewById(R.id.card_age4)
 //        val cardAge5: CardView = findViewById(R.id.card_age5)
 //        val cardProgress: CardView = findViewById(R.id.card_progress)
-        val cardChatbot: CardView = findViewById(R.id.card_chatbot)
-        
+
         val btnRecommend: Button = findViewById(R.id.btn_recommend)
         val btnChatbot: Button = findViewById(R.id.btn_chatbot)
-//        val checkProgress: Button = findViewById(R.id.check_progress)
         val backButton: ImageView = findViewById(R.id.back)
 
         val etTextDescription: EditText = findViewById(R.id.etTextDescription)
         val btnTextRecommend: Button = findViewById(R.id.btnTextRecommend)
-        btnTextRecommend.setOnClickListener {
-            val description = etTextDescription.text.toString().trim()
-            if (description.isEmpty()) {
-                Toast.makeText(this, "Please enter a description", Toast.LENGTH_SHORT).show()
-                return@setOnClickListener
-            }
-            navigateToTextRecommendations(description)
-        }
+
+        val btnTherapyPlan: Button = findViewById(R.id.btnTherapyPlan)
+        val btnEditProfile: Button = findViewById(R.id.btnEditProfile)
+        tvProfileSummary = findViewById(R.id.tvProfileSummary)
+
         // Age card clicks
 //        cardAge1.setOnClickListener {
 //            navigateToSubjectsActivity("6")
@@ -89,14 +95,17 @@ class Education_therapyActivity : AppCompatActivity() {
         btnRecommend.setOnClickListener {
             fetchUserAgeAndNavigate()
         }
-        
-        // Progress card click
-//        cardProgress.setOnClickListener {
-//            // Navigate to progress screen
-//            Toast.makeText(this, "📊 Opening Progress Dashboard...", Toast.LENGTH_SHORT).show()
-//        }
-        
-        // Chatbot card click
+
+        btnTextRecommend.setOnClickListener {
+            val description = etTextDescription.text.toString().trim()
+            if (description.isEmpty()) {
+                Toast.makeText(this, "Please enter a description", Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
+            navigateToTextRecommendations(description)
+        }
+
+        // Chatbot card and button clicks
         cardChatbot.setOnClickListener {
             val intent = Intent(this, ChatbotActivity::class.java)
             startActivity(intent)
@@ -106,10 +115,9 @@ class Education_therapyActivity : AppCompatActivity() {
             val intent = Intent(this, ChatbotActivity::class.java)
             startActivity(intent)
         }
-        
-//        checkProgress.setOnClickListener {
-//            Toast.makeText(this, "📊 Opening Progress Dashboard...", Toast.LENGTH_SHORT).show()
-//        }
+
+        btnTherapyPlan.setOnClickListener { fetchTherapyRecommendationsFromFlask() }
+        btnEditProfile.setOnClickListener { showDisorderSelectionBottomSheet() }
 
         backButton.setOnClickListener {
             finish()
@@ -123,25 +131,84 @@ class Education_therapyActivity : AppCompatActivity() {
     }
 
 
+    // --- NEW: call Flask /api/recommend/therapy ---
+    private fun fetchTherapyRecommendationsFromFlask() {
+        val userId = auth.currentUser?.uid
+        if (userId == null) {
+            Toast.makeText(this, "User not signed in!", Toast.LENGTH_SHORT).show()
+            return
+        }
+        if (!hasAllSelections()) {
+            showDisorderSelectionBottomSheet()
+            return
+        }
+
+        db.collection("users").document(userId).get()
+            .addOnSuccessListener { doc ->
+                val ageStr = doc.getString("age")
+                val age = ageStr?.toIntOrNull()
+                if (age == null) {
+                    Toast.makeText(this, "Age not found in profile.", Toast.LENGTH_LONG).show()
+                    return@addOnSuccessListener
+                }
+                lifecycleScope.launch {
+                    try {
+                        val req = RecommendTherapyRequest(
+                            age = age,
+                            disorder = disorderType!!,
+                            severity = disorderSeverity!!,
+                            communication = communicationMode!!,
+                            attention = attentionLevel!!
+                        )
+                        val activities = aiRepository.getTherapyRecommendations(req)
+
+                        if (activities.isNotEmpty()) {
+                            val intent = Intent(this@Education_therapyActivity, TherapyActivitiesActivity::class.java).apply {
+                                putExtra("AGE", age)
+                                putExtra("DISORDER", disorderType)
+                                putExtra("SEVERITY", disorderSeverity)
+                                putExtra("COMM", communicationMode)
+                                putExtra("ATTN", attentionLevel)
+                            }
+                            startActivity(intent)
+                        } else {
+                            Toast.makeText(
+                                this@Education_therapyActivity,
+                                "No therapy activities returned. Try different criteria.",
+                                Toast.LENGTH_LONG
+                            ).show()
+                        }
+                    } catch (e: Exception) {
+                        Toast.makeText(
+                            this@Education_therapyActivity,
+                            "Therapy API error: ${e.message}",
+                            Toast.LENGTH_LONG
+                        ).show()
+                    }
+                }
+            }
+            .addOnFailureListener {
+                Toast.makeText(this, "Error fetching age: ${it.message}", Toast.LENGTH_LONG).show()
+            }
+    }
+
+
+    // ---Child Disorder Profile selection handling ---
     private fun validateDisorderSelection() {
         val userId = auth.currentUser?.uid
         if (userId != null) {
             db.collection("users").document(userId).get()
                 .addOnSuccessListener { document ->
-                    if (document.exists() &&
-                        document.getString("disorderType") != null &&
-                        document.getString("disorderSeverity") != null) {
-                        // Both disorder and severity already exist
+                    if (document.exists()) {
                         disorderType = document.getString("disorderType")
                         disorderSeverity = document.getString("disorderSeverity")
-                        Toast.makeText(
-                            this,
-                            "Disorder: $disorderType ($disorderSeverity)",
-                            Toast.LENGTH_SHORT
-                        ).show()
-                    } else {
-                        // Show disorder selection bottom sheet
+                        communicationMode = document.getString("communicationMode")
+                        attentionLevel = document.getString("attentionLevel")
+                    }
+                    if (!hasAllSelections()) {
                         showDisorderSelectionBottomSheet(userId)
+                    } else {
+                        updateProfileSummary()
                     }
                 }
                 .addOnFailureListener { exception ->
@@ -151,21 +218,31 @@ class Education_therapyActivity : AppCompatActivity() {
             Toast.makeText(this, "User not signed in!", Toast.LENGTH_SHORT).show()
         }
     }
-
-
-    private fun showDisorderSelectionBottomSheet(userId: String) {
-        val disorderBottomSheet = DisorderSelectionBottomSheet { disorder, severity ->
-            saveDisorderToFirestore(userId, disorder, severity)
+    private fun hasAllSelections(): Boolean =
+        !disorderType.isNullOrBlank() &&
+                !disorderSeverity.isNullOrBlank() &&
+                !communicationMode.isNullOrBlank() &&
+                !attentionLevel.isNullOrBlank()
+    private fun showDisorderSelectionBottomSheet(userId: String? = auth.currentUser?.uid) {
+        val disorderBottomSheet = DisorderSelectionBottomSheet { disorder, severity, communication, attention ->
+            if (userId != null) {
+                saveDisorderToFirestore(userId, disorder, severity, communication, attention)
+            } else {
+                Toast.makeText(this, "User not signed in!", Toast.LENGTH_SHORT).show()
+            }
         }
         disorderBottomSheet.isCancelable = false // Prevent dismissing without selection
         disorderBottomSheet.show(supportFragmentManager, "DisorderSelectionBottomSheet")
     }
 
 
-    private fun saveDisorderToFirestore(userId: String, disorder: String, severity: String) {
+    // --- Child Disorder Profile Firestore save/update ---
+    private fun saveDisorderToFirestore(userId: String, disorder: String, severity: String, communication: String, attention: String) {
         val disorderData = mapOf(
             "disorderType" to disorder,
-            "disorderSeverity" to severity
+            "disorderSeverity" to severity,
+            "communicationMode" to communication,
+            "attentionLevel" to attention
         )
 
         db.collection("users").document(userId)
@@ -173,6 +250,9 @@ class Education_therapyActivity : AppCompatActivity() {
             .addOnSuccessListener {
                 disorderType = disorder
                 disorderSeverity = severity
+                communicationMode = communication
+                attentionLevel = attention
+                updateProfileSummary()
                 Toast.makeText(
                     this,
                     "Saved: $disorder ($severity)",
@@ -187,22 +267,21 @@ class Education_therapyActivity : AppCompatActivity() {
                 ).show()
             }
     }
-
-
-    private fun navigateToSubjectsActivity(ageGroup: String) {
-        if (disorderType == null || disorderSeverity == null) {
-            Toast.makeText(this, "Disorder type not set!", Toast.LENGTH_SHORT).show()
-            return
+    private fun updateProfileSummary() {
+        val summary = buildString {
+            append("Disorder: ${disorderType ?: "—"}\n")
+            append("Severity: ${disorderSeverity ?: "—"}\n")
+            append("Communication: ${communicationMode ?: "—"}\n")
+            append("Attention: ${attentionLevel ?: "—"}")
         }
-
-        val intent = Intent(this, Education_subjects_Activity::class.java)
-        intent.putExtra("AGE_GROUP", ageGroup)
-        intent.putExtra("DISORDER_TYPE", disorderType)
-        intent.putExtra("DISORDER_SEVERITY", disorderSeverity)
-        startActivity(intent)
+        tvProfileSummary.text = summary
     }
 
 
+    /**
+     * Navigate to AI recommendations using Flask API
+     * This displays beautiful card UI with all AI-generated therapy tasks --> AITherapyTasksActivity::class.java
+     */
     private fun fetchUserAgeAndNavigate() {
         val userId = auth.currentUser?.uid
 
@@ -249,7 +328,7 @@ class Education_therapyActivity : AppCompatActivity() {
 
     /**
      * Navigate to AI recommendations using Flask API
-     * This displays beautiful card UI with all AI-generated therapy tasks
+     * This displays beautiful card UI with all AI-generated therapy tasks --> AITherapyTasksActivity::class.java
      */
     private fun navigateToAIRecommendations(ageString: String) {
         if (disorderType == null) {
@@ -273,6 +352,36 @@ class Education_therapyActivity : AppCompatActivity() {
     }
 
 
+    /**
+     * Navigate to AI recommendations using Flask API
+     * This displays beautiful card UI with all AI-generated therapy tasks --> AITherapyTasksActivity::class.java
+     */
+    private fun navigateToTextRecommendations(description: String) {
+        val intent = Intent(this, AITherapyTasksActivity::class.java).apply {
+            putExtra(EXTRA_TEXT_DESCRIPTION, description)
+            // Optional: still pass disorder for display if you want
+            putExtra("DISORDER", disorderType)
+        }
+        startActivity(intent)
+    }
+
+
+    private fun navigateToSubjectsActivity(ageGroup: String) {
+        if (disorderType == null || disorderSeverity == null) {
+            Toast.makeText(this, "Disorder type not set!", Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        val intent = Intent(this, Education_subjects_Activity::class.java)
+        intent.putExtra("AGE_GROUP", ageGroup)
+        intent.putExtra("DISORDER_TYPE", disorderType)
+        intent.putExtra("DISORDER_SEVERITY", disorderSeverity)
+        startActivity(intent)
+    }
+
+}
+
+
 //    private fun navigateToRecommendListActivity(ageGroup: String) {
 //        if (disorderType == null || disorderSeverity == null) {
 //            Toast.makeText(this, "Disorder type not set!", Toast.LENGTH_SHORT).show()
@@ -287,57 +396,55 @@ class Education_therapyActivity : AppCompatActivity() {
 //    }
 
 
-
-
 //     * Navigate to lesson list with AI recommendation. This function uses the ML model to predict the best subject
-    private fun navigateToRecommendListActivity(ageGroup: String) {
-    if (disorderType == null || disorderSeverity == null) {
-        Toast.makeText(this, "Disorder type not set!", Toast.LENGTH_SHORT).show()
-        return
-    }
-
-    try {
-        // Step 1: Encode inputs for ML model
-        val ageInt = ageGroup.toIntOrNull() ?: 6
-        val disorderIndex = encodeDisorder(disorderType!!)
-        val severityIndex = encodeSeverity(disorderSeverity!!)
-
-        // Step 2: Get AI prediction (4 features: age, disorder, severity, subject)
-        val (predictedIndex, confidence) = recommender.predict(
-            age = ageInt,
-            disorderType = disorderIndex,
-            severity = severityIndex,
-            subject = 0  // Default to Math (0), can be made dynamic later
-        )
-
-        // Step 3: Decode prediction to subject name
-        val recommendedSubject = decodeSubject(predictedIndex)
-
-        // Step 4: Show AI recommendation to user
-        Toast.makeText(
-            this,
-            "🤖 AI Recommends: $recommendedSubject\nConfidence: ${(confidence * 100).toInt()}%",
-            Toast.LENGTH_LONG
-        ).show()
-
-        // Step 5: Navigate to recommended lessons
-        val intent = Intent(this, Edu_LessonListActivity::class.java)
-        intent.putExtra("AGE_GROUP", ageGroup)
-        intent.putExtra("SUBJECT", recommendedSubject)
-        intent.putExtra("DISORDER_TYPE", disorderType)
-        intent.putExtra("DISORDER_SEVERITY", disorderSeverity)
-        intent.putExtra("IS_AI_RECOMMENDED", true)
-        intent.putExtra("AI_CONFIDENCE", confidence)
-        startActivity(intent)
-
-    } catch (e: Exception) {
-        Toast.makeText(this, "AI Error: ${e.message}", Toast.LENGTH_SHORT).show()
-        e.printStackTrace()
-
-        // Fallback: Navigate without AI recommendation
-        navigateToSubjectsActivity(ageGroup)
-    }
-}
+//    private fun navigateToRecommendListActivity(ageGroup: String) {
+//        if (disorderType == null || disorderSeverity == null) {
+//            Toast.makeText(this, "Disorder type not set!", Toast.LENGTH_SHORT).show()
+//            return
+//        }
+//
+//        try {
+//            // Step 1: Encode inputs for ML model
+//            val ageInt = ageGroup.toIntOrNull() ?: 6
+//            val disorderIndex = encodeDisorder(disorderType!!)
+//            val severityIndex = encodeSeverity(disorderSeverity!!)
+//
+//            // Step 2: Get AI prediction (4 features: age, disorder, severity, subject)
+//            val (predictedIndex, confidence) = recommender.predict(
+//                age = ageInt,
+//                disorderType = disorderIndex,
+//                severity = severityIndex,
+//                subject = 0  // Default to Math (0), can be made dynamic later
+//            )
+//
+//            // Step 3: Decode prediction to subject name
+//            val recommendedSubject = decodeSubject(predictedIndex)
+//
+//            // Step 4: Show AI recommendation to user
+//            Toast.makeText(
+//                this,
+//                "🤖 AI Recommends: $recommendedSubject\nConfidence: ${(confidence * 100).toInt()}%",
+//                Toast.LENGTH_LONG
+//            ).show()
+//
+//            // Step 5: Navigate to recommended lessons
+//            val intent = Intent(this, Edu_LessonListActivity::class.java)
+//            intent.putExtra("AGE_GROUP", ageGroup)
+//            intent.putExtra("SUBJECT", recommendedSubject)
+//            intent.putExtra("DISORDER_TYPE", disorderType)
+//            intent.putExtra("DISORDER_SEVERITY", disorderSeverity)
+//            intent.putExtra("IS_AI_RECOMMENDED", true)
+//            intent.putExtra("AI_CONFIDENCE", confidence)
+//            startActivity(intent)
+//
+//        } catch (e: Exception) {
+//            Toast.makeText(this, "AI Error: ${e.message}", Toast.LENGTH_SHORT).show()
+//            e.printStackTrace()
+//
+//            // Fallback: Navigate without AI recommendation
+//            navigateToSubjectsActivity(ageGroup)
+//        }
+//    }
 
 
 //     * Encode disorder type to integer for ML model.  Must match the encoding used during model training
@@ -371,7 +478,7 @@ class Education_therapyActivity : AppCompatActivity() {
     }
 
 
-//     * Decode ML model output to subject name. 
+//     * Decode ML model output to subject name.
     // IMPORTANT: These must match EXACTLY with the "subject" field in lessons04.json
     private fun decodeSubject(predictedIndex: Int): String {
         // Map based on actual subjects in lessons04.json
@@ -390,14 +497,3 @@ class Education_therapyActivity : AppCompatActivity() {
         return subjects.getOrElse(predictedIndex) { "General" }
     }
 
-
-    private fun navigateToTextRecommendations(description: String) {
-        val intent = Intent(this, AITherapyTasksActivity::class.java).apply {
-            putExtra(EXTRA_TEXT_DESCRIPTION, description)
-            // Optional: still pass disorder for display if you want
-            putExtra("DISORDER", disorderType)
-        }
-        startActivity(intent)
-    }
-
-}

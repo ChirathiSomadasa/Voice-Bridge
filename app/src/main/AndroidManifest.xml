@@ -114,7 +114,7 @@
             android:name=".Edu_LessonListActivity"
             android:exported="false" />
         <activity
-            android:name=".Edu_SubLessonDetailActivity"
+            android:name=".TherapyActivitiesActivity"
             android:exported="false" />
         <activity
             android:name=".AITherapyTasksActivity"
