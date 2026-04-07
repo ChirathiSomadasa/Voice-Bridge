@@ -22,6 +22,7 @@ import com.chirathi.voicebridge.repository.AIRepository
 import kotlinx.coroutines.launch
 import android.view.LayoutInflater
 import android.view.ViewGroup
+import android.widget.ImageView
 import com.chirathi.voicebridge.api.models.*
 
 class TherapyActivitiesActivity : AppCompatActivity() {
@@ -31,6 +32,7 @@ class TherapyActivitiesActivity : AppCompatActivity() {
     private lateinit var progress: ProgressBar
     private lateinit var recycler: RecyclerView
     private lateinit var adapter: TherapyActivityAdapter
+    private lateinit var backButton: ImageView
 
     // cache intent values so they’re available inside onItemClicked
     private var age: Int = 8  // default to middle of 6-10 range
@@ -60,6 +62,9 @@ class TherapyActivitiesActivity : AppCompatActivity() {
         recycler.adapter = adapter
 
         loadActivities()
+
+        // Setup back button
+        backButton.setOnClickListener { finish() }
     }
 
     private fun loadActivities() {
