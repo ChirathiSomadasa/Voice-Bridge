@@ -167,7 +167,7 @@ class SpeechLevel2TaskActivity : AppCompatActivity(), TextToSpeech.OnInitListene
             }
 
             if (audioData != null) {
-                val (pronunciationType, score) = wav2Vec2Scorer.predict(audioData, targetWord)
+                val (pronunciationType, score, predictedText) = wav2Vec2Scorer.predict(audioData, targetWord)
 
                 val category = when {
                     score >= 75 -> "good"
@@ -191,6 +191,8 @@ class SpeechLevel2TaskActivity : AppCompatActivity(), TextToSpeech.OnInitListene
                             score = score,
                             category = category,
                             feedbackMessage = aiFeedbackText,
+                            targetText = targetWord,
+                            predictedText = predictedText,
                             onClose = {
                                 tts?.stop()
                             }

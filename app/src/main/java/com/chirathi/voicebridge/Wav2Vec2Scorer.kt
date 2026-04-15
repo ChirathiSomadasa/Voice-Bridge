@@ -11,7 +11,6 @@ import okhttp3.*
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.RequestBody.Companion.toRequestBody
 import org.json.JSONObject
-import java.io.IOException
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
 import java.nio.FloatBuffer
@@ -75,8 +74,8 @@ class Wav2Vec2Scorer(private val context: Context) {
     }
 
     // 2. Server Prediction Function (Synchronous)
-    // This executes on the background thread provided by the Activity's executor.
-    fun predict(audioData: FloatArray, targetWord: String): Pair<String, Int> {
+    // 🌟 වෙනස: Pair එක වෙනුවට Triple එකක් return කරයි (Status, Score, PredictedWord)
+    fun predict(audioData: FloatArray, targetWord: String): Triple<String, Int, String> {
         try {
             Log.d("VoiceBridge", "Preparing to send audio to server...")
 
@@ -100,7 +99,7 @@ class Wav2Vec2Scorer(private val context: Context) {
             client.newCall(request).execute().use { response ->
                 if (!response.isSuccessful) {
                     Log.e("VoiceBridge", "Server Error: ${response.code}")
-                    return Pair("SERVER_ERROR", 0)
+                    return Triple("SERVER_ERROR", 0, "")
                 }
 
                 val responseBody = response.body?.string() ?: "{}"
@@ -108,16 +107,17 @@ class Wav2Vec2Scorer(private val context: Context) {
 
                 val score = json.optInt("score", 0)
                 val status = json.optString("status", "POOR_PRONUNCIATION")
+                // Backend එකෙන් එන predicted වචනය ලබා ගැනීම
                 val predicted = json.optString("predicted", "")
 
                 Log.d("VoiceBridge", "Result: $predicted | Score: $score")
 
-                return Pair(status, score)
+                return Triple(status, score, predicted)
             }
 
         } catch (e: Exception) {
             Log.e("VoiceBridge", "Network Error", e)
-            return Pair("CONNECTION_ERROR", 0)
+            return Triple("CONNECTION_ERROR", 0, "")
         }
     }
 
@@ -135,8 +135,6 @@ class Wav2Vec2Scorer(private val context: Context) {
         // Add the WAV Header so the server recognizes it as a valid audio file
         return addWavHeader(pcmData)
     }
-
-
 
     // Manually constructs the 44-byte WAV (RIFF) header
     private fun addWavHeader(pcmData: ByteArray): ByteArray {
