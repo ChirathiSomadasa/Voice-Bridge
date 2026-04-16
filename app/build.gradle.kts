@@ -110,6 +110,9 @@ dependencies {
     // 2. Updated OkHttp & Logging Interceptor
     implementation("com.squareup.okhttp3:okhttp:4.12.0")
     implementation("com.squareup.okhttp3:logging-interceptor:4.12.0")
+    //charts
+    implementation ("com.github.PhilJay:MPAndroidChart:v3.1.0")
+
     androidTestImplementation ("androidx.test:rules:1.5.0")
     androidTestImplementation ("androidx.benchmark:benchmark-macro-junit4:1.2.2")
     androidTestImplementation("androidx.startup:startup-runtime:1.1.1")
