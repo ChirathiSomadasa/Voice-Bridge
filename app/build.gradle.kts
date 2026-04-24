@@ -49,6 +49,7 @@ android {
 
     aaptOptions {
         noCompress += "tflite"
+        noCompress += "pt"
     }
     buildFeatures {
         mlModelBinding = true
@@ -56,6 +57,24 @@ android {
 
     buildFeatures {
         buildConfig = true
+    }
+
+    packaging {
+        // Merge strategy for duplicate native libraries
+        resources {
+            merges += "**/*.so"
+            excludes += "META-INF/**"
+            excludes += "**/META-INF/**"
+            excludes += "**/libc++_shared.so"  // We'll handle this separately
+        }
+
+        // For each architecture, pick the first occurrence of libc++_shared.so
+        jniLibs {
+            pickFirsts += "**/libc++_shared.so"
+            pickFirsts += "**/libc++_shared.so"
+            pickFirsts += "**/libfbjni.so"
+            pickFirsts += "**/librealm-jni.so"
+        }
     }
 }
 
@@ -83,6 +102,7 @@ dependencies {
     implementation("androidx.biometric:biometric:1.1.0")
     implementation("com.google.ai.client.generativeai:generativeai:0.9.0")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3")
+    implementation("com.google.mlkit:translate:17.0.3")
 
     testImplementation("junit:junit:4.13.2")
     testImplementation ("io.mockk:mockk:1.13.5")
@@ -96,7 +116,7 @@ dependencies {
     // Guava for ListenableFuture
     implementation("com.google.guava:guava:32.1.2-android")
 
-    implementation ("com.squareup.retrofit2:retrofit:2.9.0")
+    //implementation ("com.squareup.retrofit2:retrofit:2.9.0")
     implementation ("com.squareup.retrofit2:converter-gson:2.9.0")
     implementation ("com.squareup.okhttp3:okhttp:4.9.3")
 
@@ -126,4 +146,8 @@ dependencies {
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.6.2")
     // Import the Firebase BoM (Current 2026 version)
     implementation(platform("com.google.firebase:firebase-bom:33.3.0"))
+
+    //Import the pytorch
+    implementation ("org.pytorch:pytorch_android_lite:1.13.1")
+    implementation ("org.pytorch:pytorch_android_torchvision_lite:1.13.1")
 }
