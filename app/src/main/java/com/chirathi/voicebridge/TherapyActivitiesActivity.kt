@@ -54,6 +54,7 @@ class TherapyActivitiesActivity : AppCompatActivity() {
 
         progress = findViewById(R.id.progressTherapyActivities)
         recycler = findViewById(R.id.rvTherapyActivities)
+        backButton = findViewById(R.id.back)
 
         adapter = TherapyActivityAdapter(
             onDetailsClick = { item -> onItemClicked(item) }
