@@ -74,7 +74,7 @@ class Wav2Vec2Scorer(private val context: Context) {
     }
 
     // 2. Server Prediction Function (Synchronous)
-    // 🌟 වෙනස: Pair එක වෙනුවට Triple එකක් return කරයි (Status, Score, PredictedWord)
+    //  return (Status, Score, PredictedWord)
     fun predict(audioData: FloatArray, targetWord: String): Triple<String, Int, String> {
         try {
             Log.d("VoiceBridge", "Preparing to send audio to server...")
@@ -107,7 +107,7 @@ class Wav2Vec2Scorer(private val context: Context) {
 
                 val score = json.optInt("score", 0)
                 val status = json.optString("status", "POOR_PRONUNCIATION")
-                // Backend එකෙන් එන predicted වචනය ලබා ගැනීම
+                // Getting Predicted word from Backend
                 val predicted = json.optString("predicted", "")
 
                 Log.d("VoiceBridge", "Result: $predicted | Score: $score")
