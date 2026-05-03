@@ -50,6 +50,7 @@ class GameMasterModel(private val context: Context) {
         private const val MAPPING_FILE      = "output_mapping.json"
         private const val NUM_FEATURES      = 17
         private const val HISTORY_STEPS     = 5
+        private var _lastRawFeatures = FloatArray(NUM_FEATURES)
 
         // Fallback expected output sizes — used only if JSON fails to load.
         // Keep in sync with EXPECTED_OUTPUT_SIZES in Python.
@@ -235,6 +236,19 @@ class GameMasterModel(private val context: Context) {
             false
         }
     }
+
+    fun seedHistory(tensor: Array<Array<FloatArray>>) {
+        historyBuffer.clear()
+        val rows = tensor.firstOrNull() ?: return
+        for (row in rows) {
+            if (row.any { it != 0f }) {   // skip zero-padding rows
+                historyBuffer.addLast(row.copyOf())
+            }
+        }
+        Log.d(TAG, "History seeded: ${historyBuffer.size} non-zero steps from previous session")
+    }
+
+
 
     // ── Runtime Output Discovery (fallback if JSON missing) ────────────────────
 
@@ -436,6 +450,7 @@ class GameMasterModel(private val context: Context) {
         if (!scalerLoaded) {
             Log.e(TAG, "   ❌ WARNING: scaler not loaded — features are raw, predictions are garbage!")
         }
+        _lastRawFeatures = currentFeatures.copyOf()
 
         // Inputs — history buffer already contains scaled values (see updateHistory)
         val childIdBuf: Array<FloatArray>        = Array(1) { floatArrayOf(childId.toFloat()) }
@@ -463,6 +478,7 @@ class GameMasterModel(private val context: Context) {
         return prediction
     }
 
+    fun lastFeatureVector(): FloatArray = _lastRawFeatures.copyOf()
     private fun logRawOutputs(outputMap: HashMap<Int, Any>) {
         Log.d(TAG, "  Raw output values (by logical name):")
         // Log in LABEL_COLS order for easier reading

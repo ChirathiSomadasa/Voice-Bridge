@@ -108,7 +108,7 @@
             android:gravity="center_horizontal"
             android:padding="16dp">
 
-            <!-- Emotion image (size adjusted in code for older group) -->
+            <!-- Emotion image -->
             <ImageView
                 android:id="@+id/emotionImage"
                 android:layout_width="260dp"
@@ -143,16 +143,18 @@
                         <Button
                             android:id="@+id/btnOption1"
                             app:backgroundTint="@color/dark_orange"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent"
                             android:layout_gravity="center"
-                            android:minWidth="180dp"
-                            android:minHeight="75dp"
                             android:text="Happy"
                             android:textAllCaps="false"
                             android:textColor="@color/white"
-                            android:textSize="24sp"
-                            android:textStyle="bold" />
+                            android:textStyle="bold"
+                            android:maxLines="1"
+                            app:autoSizeTextType="uniform"
+                            app:autoSizeMinTextSize="14sp"
+                            app:autoSizeMaxTextSize="24sp"
+                            app:autoSizeStepGranularity="2sp" />
                     </FrameLayout>
 
                     <LinearLayout
@@ -199,16 +201,18 @@
                         <Button
                             android:id="@+id/btnOption2"
                             app:backgroundTint="@color/dark_orange"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent"
                             android:layout_gravity="center"
-                            android:minWidth="180dp"
-                            android:minHeight="75dp"
                             android:text="Sad"
                             android:textAllCaps="false"
                             android:textColor="@color/white"
-                            android:textSize="24sp"
-                            android:textStyle="bold" />
+                            android:textStyle="bold"
+                            android:maxLines="1"
+                            app:autoSizeTextType="uniform"
+                            app:autoSizeMinTextSize="14sp"
+                            app:autoSizeMaxTextSize="24sp"
+                            app:autoSizeStepGranularity="2sp" />
                     </FrameLayout>
 
                     <LinearLayout
@@ -240,10 +244,9 @@
                 </LinearLayout>
 
             </LinearLayout>
-            <!-- end layoutYoung -->
 
             <!-- ══════════════════════════════════
-                 AGE 8-10: 2x2 grid (no sound)
+                 AGE 8-10 / 4-OPTION: 2x2 grid (no sound)
                  ══════════════════════════════════ -->
             <LinearLayout
                 android:id="@+id/layoutOlder"
@@ -272,8 +275,12 @@
                         android:text="Happy"
                         android:textAllCaps="false"
                         android:textColor="@color/white"
-                        android:textSize="18sp"
-                        android:textStyle="bold" />
+                        android:textStyle="bold"
+                        android:maxLines="1"
+                        app:autoSizeTextType="uniform"
+                        app:autoSizeMinTextSize="12sp"
+                        app:autoSizeMaxTextSize="18sp"
+                        app:autoSizeStepGranularity="1sp" />
 
                     <Button
                         android:id="@+id/btnGrid2"
@@ -285,8 +292,12 @@
                         android:text="Sad"
                         android:textAllCaps="false"
                         android:textColor="@color/white"
-                        android:textSize="18sp"
-                        android:textStyle="bold" />
+                        android:textStyle="bold"
+                        android:maxLines="1"
+                        app:autoSizeTextType="uniform"
+                        app:autoSizeMinTextSize="12sp"
+                        app:autoSizeMaxTextSize="18sp"
+                        app:autoSizeStepGranularity="1sp" />
                 </LinearLayout>
 
                 <!-- Row 2 -->
@@ -307,8 +318,12 @@
                         android:text="Angry"
                         android:textAllCaps="false"
                         android:textColor="@color/white"
-                        android:textSize="18sp"
-                        android:textStyle="bold" />
+                        android:textStyle="bold"
+                        android:maxLines="1"
+                        app:autoSizeTextType="uniform"
+                        app:autoSizeMinTextSize="12sp"
+                        app:autoSizeMaxTextSize="18sp"
+                        app:autoSizeStepGranularity="1sp" />
 
                     <Button
                         android:id="@+id/btnGrid4"
@@ -320,14 +335,17 @@
                         android:text="Scared"
                         android:textAllCaps="false"
                         android:textColor="@color/white"
-                        android:textSize="18sp"
-                        android:textStyle="bold" />
+                        android:textStyle="bold"
+                        android:maxLines="1"
+                        app:autoSizeTextType="uniform"
+                        app:autoSizeMinTextSize="12sp"
+                        app:autoSizeMaxTextSize="18sp"
+                        app:autoSizeStepGranularity="1sp" />
                 </LinearLayout>
 
             </LinearLayout>
-            <!-- end layoutOlder -->
 
-            <!-- Next button (shared) -->
+            <!-- Next button -->
             <Button
                 android:id="@+id/btnNext"
                 android:layout_width="200dp"
