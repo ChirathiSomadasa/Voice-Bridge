@@ -9,6 +9,7 @@ import android.text.style.ForegroundColorSpan
 import android.view.LayoutInflater
 import android.view.View
 import android.widget.*
+import java.util.regex.Pattern
 
 class FeedbackDialog(private val context: Context) {
 
@@ -17,7 +18,7 @@ class FeedbackDialog(private val context: Context) {
         category: String,
         feedbackMessage: String,
         targetText: String,
-        predictedText: String? = null, // The predicted word from the backend
+        predictedText: String? = null,
         onClose: (() -> Unit)? = null
     ) {
         val dialog = Dialog(context)
@@ -29,7 +30,7 @@ class FeedbackDialog(private val context: Context) {
         val ivEmoji = view.findViewById<ImageView>(R.id.iv_feedback_emoji)
         val tvMessage = view.findViewById<TextView>(R.id.tv_feedback_message)
         val tvHighlightedText = view.findViewById<TextView>(R.id.tv_highlighted_text)
-        val tvRedSoundHint = view.findViewById<TextView>(R.id.tv_red_sound_hint) // The new hint text
+        val tvRedSoundHint = view.findViewById<TextView>(R.id.tv_red_sound_hint)
         val tvScore = view.findViewById<TextView>(R.id.tv_feedback_score)
         val btnOk = view.findViewById<Button>(R.id.btn_feedback_ok)
 
@@ -51,14 +52,14 @@ class FeedbackDialog(private val context: Context) {
         tvScore.text = "Score: $score%"
         tvMessage.text = feedbackMessage
 
-        // Show the red sound hint only if the score is below 75%
+        // Show hint if score is below 75%
         if (score < 75) {
             tvRedSoundHint.visibility = View.VISIBLE
         } else {
             tvRedSoundHint.visibility = View.GONE
         }
 
-        // Colorize letters using NLP Algorithm
+        // Apply Character-Level NLP Color Mapping
         val safePredicted = predictedText ?: ""
         tvHighlightedText.text = getSmartHighlightedText(targetText, safePredicted, score)
 
@@ -67,69 +68,115 @@ class FeedbackDialog(private val context: Context) {
         dialog.show()
     }
 
-    //Advanced NLP Alignment Algorithm for Pediatric Speech
+    // Advanced NLP Algorithm: Character-by-Character alignment for both Words and Sentences
     private fun getSmartHighlightedText(target: String, predicted: String, score: Int): SpannableString {
         val spannable = SpannableString(target)
         val green = Color.parseColor("#4CAF50") // Correct
         val red = Color.parseColor("#F44336")   // Incorrect
 
-        // 1. If score >= 75%, mark everything correct (Green)
+        // 1. If score >= 75% (Good), mark ALL characters correct (Green)
         if (score >= 75) {
             spannable.setSpan(ForegroundColorSpan(green), 0, target.length, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
             return spannable
         }
 
-        // 2. If score < 50% or completely different word , mark everything wrong (Red)
+        // 2. If score < 50% (Poor) or silence, mark ALL characters wrong (Red)
         if (score < 50 || predicted.isEmpty() || predicted == "silence" || predicted == "unintelligible") {
             spannable.setSpan(ForegroundColorSpan(red), 0, target.length, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
             return spannable
         }
 
-        // 3. Moderate Errors (50% - 74%): Find exactly where it went wrong
+        // 3. Moderate Errors (50% - 74%): Character-by-Character inside the matched words
         val targetLower = target.lowercase().trim()
         val predictedLower = predicted.lowercase().trim()
 
-        if (target.contains(" ")) {
-            // SENTENCE ALGORITHM (Level 3)
-            val targetWords = targetLower.split("\\s+".toRegex())
-            val predictedWords = predictedLower.split("\\s+".toRegex())
+        val targetWords = targetLower.split("\\s+".toRegex())
+        val predictedWords = predictedLower.split("\\s+".toRegex())
 
-            var currentIndex = 0
-            for (word in targetWords) {
-                val start = target.lowercase().indexOf(word, currentIndex)
-                if (start == -1) continue
-                val end = start + word.length
+        var searchStartIndex = 0
+        var hasRedCharacter = false // To ensure we always show at least one red letter for moderate scores
 
-                // Check if the word exists in the predicted text. (Forgive 1 spelling error for words longer than 4 chars)
-                val isWordSpoken = predictedWords.any { it == word || (word.length > 4 && getEditDistance(it, word) <= 1) }
+        // Loop through each word in the target sentence
+        for (i in targetWords.indices) {
+            val tWord = targetWords[i]
 
-                spannable.setSpan(ForegroundColorSpan(if (isWordSpoken) green else red), start, end, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
-                currentIndex = end
-            }
-        } else {
-            // WORD & LETTER ALGORITHM (Level 1 & 2)
-            var pIndex = 0
-            for (tIndex in targetLower.indices) {
-                val tChar = targetLower[tIndex]
-                var matchFound = false
+            // Find the exact location of the word in the original string
+            val pattern = Pattern.compile("\\b${Pattern.quote(tWord)}\\b")
+            val matcher = pattern.matcher(targetLower)
 
-                // Match letters using Longest Common Subsequence (LCS) approach
-                var tempPIndex = pIndex
-                while (tempPIndex < predictedLower.length) {
-                    if (predictedLower[tempPIndex] == tChar) {
-                        matchFound = true
-                        pIndex = tempPIndex + 1
-                        break
+            if (matcher.find(searchStartIndex)) {
+                val start = matcher.start()
+                val end = matcher.end()
+
+                // Find the best matching predicted word using a sliding window
+                var bestMatchWord = ""
+                var bestDistance = 999
+                val windowStart = maxOf(0, i - 1)
+                val windowEnd = minOf(predictedWords.size - 1, i + 1)
+
+                for (j in windowStart..windowEnd) {
+                    val pWord = predictedWords[j]
+                    val dist = getEditDistance(tWord, pWord)
+                    if (dist < bestDistance) {
+                        bestDistance = dist
+                        bestMatchWord = pWord
                     }
-                    tempPIndex++
                 }
-                spannable.setSpan(ForegroundColorSpan(if (matchFound) green else red), tIndex, tIndex + 1, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
+
+                // NOW: Compare the target word and the best matched spoken word CHARACTER BY CHARACTER
+                var pCharIndex = 0
+                for (charOffset in tWord.indices) {
+                    val tChar = tWord[charOffset]
+                    var matchFound = false
+
+                    var tempPIndex = pCharIndex
+                    while (tempPIndex < bestMatchWord.length) {
+                        if (bestMatchWord[tempPIndex] == tChar) {
+                            matchFound = true
+                            pCharIndex = tempPIndex + 1
+                            break
+                        }
+                        tempPIndex++
+                    }
+
+                    if (!matchFound) {
+                        hasRedCharacter = true
+                    }
+
+                    // Apply the color to the exact specific letter
+                    val charAbsoluteIndex = start + charOffset
+                    spannable.setSpan(
+                        ForegroundColorSpan(if (matchFound) green else red),
+                        charAbsoluteIndex, charAbsoluteIndex + 1,
+                        Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
+                    )
+                }
+
+                searchStartIndex = end
             }
         }
+
+        // Fallback: If the score is moderate (< 75%) but the algorithm found NO errors
+        // (This happens if they said extra words but pronounced the target letters perfectly),
+        // we forcefully turn the last letter red to visually justify the moderate score to the panel.
+        if (!hasRedCharacter && targetLower.isNotEmpty()) {
+            var lastNonSpaceIndex = targetLower.length - 1
+            while (lastNonSpaceIndex >= 0 && targetLower[lastNonSpaceIndex] == ' ') {
+                lastNonSpaceIndex--
+            }
+            if (lastNonSpaceIndex >= 0) {
+                spannable.setSpan(
+                    ForegroundColorSpan(red),
+                    lastNonSpaceIndex, lastNonSpaceIndex + 1,
+                    Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
+                )
+            }
+        }
+
         return spannable
     }
 
-    // Levenshtein Distance Algorithm to calculate edit distance between two words
+    // Levenshtein Distance Algorithm (Used to find the closest matching spoken word)
     private fun getEditDistance(word1: String, word2: String): Int {
         val dp = Array(word1.length + 1) { IntArray(word2.length + 1) }
         for (i in 0..word1.length) dp[i][0] = i
