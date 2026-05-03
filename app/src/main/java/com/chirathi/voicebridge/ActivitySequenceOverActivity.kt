@@ -18,13 +18,18 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.*
 import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.lifecycleScope
+import kotlinx.coroutines.launch
 import java.util.Locale
 
 class ActivitySequenceOverActivity : AppCompatActivity() {
 
-    // ── Model ──────────────────────────────────────────────────────────────
+    // ── Model & Tracking ───────────────────────────────────────────────────
     private lateinit var gameMaster: GameMasterModel
     private var currentPrediction: Prediction = Prediction.defaults()
+
+    private lateinit var tracker: SessionStateTracker
+    private var seqSpec: PersonalizedContentSelector.SequenceRoundSpec? = null
 
     // ── TTS ────────────────────────────────────────────────────────────────
     private lateinit var tts: TextToSpeech
@@ -46,6 +51,7 @@ class ActivitySequenceOverActivity : AppCompatActivity() {
     private var gameStartTime       = 0L
     private var elapsedTime         = 0L
     private val tapTimes            = mutableListOf<Long>()
+    private var isGameComplete      = false
 
     // ── Mini-game state ────────────────────────────────────────────────────
     private var miniGameTriggeredThisRound = false
@@ -73,10 +79,15 @@ class ActivitySequenceOverActivity : AppCompatActivity() {
     private lateinit var dropText2: TextView
     private lateinit var dropText3: TextView
 
-    // ── Timer ──────────────────────────────────────────────────────────────
+    // ── Timers ──────────────────────────────────────────────────────────────
     private val timerHandler = Handler(Looper.getMainLooper())
     private lateinit var timerRunnable: Runnable
     private var isTimerRunning = false
+
+    // Idle Timer (Triggers hint if child does nothing for 6 seconds)
+    private val idleHandler = Handler(Looper.getMainLooper())
+    private var idleRunnable: Runnable? = null
+    private val IDLE_TIMEOUT_MS = 6000L
 
     // ── Drag-drop state ────────────────────────────────────────────────────
     private data class SentenceItem(val id: String, val text: String)
@@ -101,7 +112,8 @@ class ActivitySequenceOverActivity : AppCompatActivity() {
         currentRoutineId = intent.getIntExtra("SELECTED_ROUTINE_ID", 0)
         prefs            = getSharedPreferences(BUBBLE_PREFS, Context.MODE_PRIVATE)
 
-        // Load sequences — custom ones if parent saved any, otherwise defaults
+        tracker = SessionStateTracker(ageGroup = userAge)
+
         routineSentences = SequenceDataManager.getSequences(this)
 
         gameMaster = GameMasterModel(this)
@@ -116,16 +128,21 @@ class ActivitySequenceOverActivity : AppCompatActivity() {
     override fun onResume() {
         super.onResume()
         CalmMusicManager.onActivityResume(this)
+        if (dropZonesContainer.visibility == View.VISIBLE && !isGameComplete) {
+            startIdleTimer()
+        }
     }
 
     override fun onPause() {
         super.onPause()
         CalmMusicManager.onActivityPause()
+        cancelIdleTimer()
     }
 
     override fun onDestroy() {
         isTimerRunning = false
         timerHandler.removeCallbacks(timerRunnable)
+        cancelIdleTimer()
         if (::tts.isInitialized) { tts.stop(); tts.shutdown() }
         gameMaster.close()
         super.onDestroy()
@@ -196,7 +213,7 @@ class ActivitySequenceOverActivity : AppCompatActivity() {
 
     private fun sessionStart() {
         currentPrediction = gameMaster.predictSafe(
-            childId     = 0,
+            childId     = ChildSession.childId,
             age         = userAge.toFloat(),
             accuracy    = 0.5f,
             engagement  = 0.7f,
@@ -298,6 +315,7 @@ class ActivitySequenceOverActivity : AppCompatActivity() {
             verticalImagesContainer.addView(card)
         }
 
+        startIdleTimer()
         Handler(Looper.getMainLooper()).postDelayed({ maybeLaunchMiniGame() }, 600)
     }
 
@@ -345,7 +363,10 @@ class ActivitySequenceOverActivity : AppCompatActivity() {
         zone: LinearLayout, zoneIndex: Int, event: DragEvent, dropText: TextView
     ): Boolean {
         return when (event.action) {
-            DragEvent.ACTION_DRAG_STARTED -> true
+            DragEvent.ACTION_DRAG_STARTED -> {
+                cancelIdleTimer()
+                true
+            }
             DragEvent.ACTION_DRAG_ENTERED -> {
                 zone.setBackgroundColor(Color.parseColor("#BBDEFB")); true
             }
@@ -362,6 +383,10 @@ class ActivitySequenceOverActivity : AppCompatActivity() {
 
                 if (droppedId == expectedId) {
                     correctCount++
+
+                    tracker.update(true, 1, currentPrediction.frustrationRisk, 0)
+                    tracker.recordFeatureVector(gameMaster.lastFeatureVector())
+
                     droppedView.visibility = View.GONE
                     dropZoneContents[zoneIndex] = droppedId
                     zone.setBackgroundColor(Color.parseColor("#C8E6C9"))
@@ -371,41 +396,140 @@ class ActivitySequenceOverActivity : AppCompatActivity() {
                     speak("Well done!")
 
                     if (dropZoneContents.values.all { it != null }) {
+                        isGameComplete = true
                         Handler(Looper.getMainLooper()).postDelayed({ onGameSuccess() }, 500)
+                    } else {
+                        startIdleTimer()
                     }
                 } else {
                     errorCount++
+                    updatePrediction()
+
+                    tracker.update(false, 1, currentPrediction.frustrationRisk, errorCount)
+                    deliverHint(zoneIndex, isIdle = false)
+
                     zone.setBackgroundColor(Color.parseColor("#FFCDD2"))
                     Handler(Looper.getMainLooper()).postDelayed({
                         zone.setBackgroundResource(R.drawable.order_display_bg)
                     }, 600)
-                    speak("Try again!")
-                    updatePrediction()
+
                     if (currentPrediction.whatsMissingTrigger) {
                         Toast.makeText(this,
                             "Hint: Box ${zoneIndex + 1} → \"${correctOrder[zoneIndex].text}\"",
                             Toast.LENGTH_LONG).show()
                     }
                     Handler(Looper.getMainLooper()).postDelayed({ maybeLaunchMiniGame() }, 800)
+                    startIdleTimer()
                 }
                 true
             }
-            DragEvent.ACTION_DRAG_ENDED -> true
+            DragEvent.ACTION_DRAG_ENDED -> {
+                // If they dropped it outside a zone and it bounced back
+                if (!isGameComplete) startIdleTimer()
+                true
+            }
             else -> false
         }
     }
 
     private fun updatePrediction() {
-        val accuracy = if (attemptsCount > 0) correctCount.toFloat() / attemptsCount else 0.5f
         currentPrediction = gameMaster.predictSafe(
-            childId            = 0,
+            childId            = ChildSession.childId,
             age                = userAge.toFloat(),
-            accuracy           = accuracy,
-            engagement         = if (accuracy > 0.6f) 0.8f else 0.5f,
-            frustration        = if (errorCount >= 2) 0.7f else 0.2f,
+            accuracy           = if (attemptsCount > 0) correctCount.toFloat() / attemptsCount else 0.5f,
+            engagement         = tracker.engagement,
+            frustration        = tracker.frustration,
+            jitter             = calculateJitter(),
+            rt                 = avgReactionTime(),
             consecutiveCorrect = correctCount.toFloat(),
             consecutiveWrong   = errorCount.toFloat()
         )
+        seqSpec = PersonalizedContentSelector.selectSequenceRound(userAge, currentPrediction)
+    }
+
+    // Idle Timer Logic
+    private fun startIdleTimer() {
+        cancelIdleTimer()
+        if (isGameComplete) return
+
+        idleRunnable = Runnable { deliverIdleHint() }
+        idleHandler.postDelayed(idleRunnable!!, IDLE_TIMEOUT_MS)
+    }
+
+    private fun cancelIdleTimer() {
+        idleRunnable?.let { idleHandler.removeCallbacks(it) }
+        idleRunnable = null
+    }
+
+    private fun deliverIdleHint() {
+        if (isGameComplete) return
+        val targetIndex = (0..2).firstOrNull { dropZoneContents[it] == null } ?: return
+
+        Log.d(TAG, "Child is idle. Triggering idle hint for index: $targetIndex")
+        deliverHint(targetIndex, isIdle = true)
+
+        startIdleTimer()
+    }
+
+    private fun deliverHint(wrongZoneIndex: Int = -1, isIdle: Boolean = false) {
+        val spec = seqSpec ?: return
+
+        // Get target step
+        val expectedStepId = if (wrongZoneIndex >= 0) correctOrder.getOrNull(wrongZoneIndex)?.id else null
+        val stepName = expectedStepId?.let { displayName(it) } ?: "the next step"
+
+        // Get previous step
+        val previousStepId = if (wrongZoneIndex > 0) correctOrder.getOrNull(wrongZoneIndex - 1)?.id else null
+        val previousStepName = previousStepId?.let { displayName(it) }
+
+        val routineName = when (currentRoutineId) {
+            0 -> "Morning Routine"
+            1 -> "Mealtime Routine"
+            2 -> "School Routine"
+            else -> "Daily Activity"
+        }
+
+        // Highlight correct drop zone only on actual mistakes, not just idling
+        if (!isIdle && (spec.hintLevel >= 2 || errorCount > 1) && wrongZoneIndex >= 0) {
+            dropZoneViews.getOrNull(wrongZoneIndex)?.setBackgroundColor(
+                Color.parseColor("#C8E6C9"))
+        }
+
+        lifecycleScope.launch {
+            val hintText = DynamicHintGenerator.generateSequenceHint(
+                context = this@ActivitySequenceOverActivity,
+                targetStepName = stepName,
+                previousStepName = previousStepName,
+                routineName = routineName,
+                childAge = userAge,
+                isIdle = isIdle
+            )
+            if (isTtsReady) {
+                tts.speak(hintText, TextToSpeech.QUEUE_FLUSH, null, "hint")
+            }
+        }
+    }
+
+    private fun displayName(id: String): String = when (id) {
+        "rtn0_sub1_wake"   -> "Wake Up"
+        "rtn0_sub1_bed"    -> "Make Bed"
+        "rtn0_sub1_drink"  -> "Drink Water"
+        "rtn0_sub2_brush"  -> "Brush Teeth"
+        "rtn0_sub2_wash"   -> "Wash Face"
+        "rtn0_sub2_dry"    -> "Dry with Towel"
+        "rtn0_sub3_change" -> "Get Dressed"
+        "rtn0_sub3_cream"  -> "Apply Lotion"
+        "rtn0_sub3_wash"   -> "Put Pajamas Away"
+        "rtn1_sub1_wash"   -> "Wash Hands"
+        "rtn1_sub1_sit"    -> "Sit Down"
+        "rtn1_sub1_napkin" -> "Put on Napkin"
+        "rtn1_sub2_eat"    -> "Eat Food"
+        "rtn1_sub2_wipe"   -> "Wipe Mouth"
+        "rtn1_sub2_wash"   -> "Wash Hands"
+        "rtn2_sub1_books"  -> "Pack Books"
+        "rtn2_sub1_lunch"  -> "Pack Lunch"
+        "rtn2_sub1_pack"   -> "Pack Bag"
+        else               -> "Step"
     }
 
     // ======================================================================
@@ -414,12 +538,18 @@ class ActivitySequenceOverActivity : AppCompatActivity() {
 
     private fun maybeLaunchMiniGame() {
         if (miniGameTriggeredThisRound) return
-        if (!currentPrediction.minigameTrigger && !currentPrediction.whatsMissingTrigger) return
-        miniGameTriggeredThisRound = true
 
+        if (attemptsCount == 0 || errorCount < 2) return
+
+        val spec = seqSpec ?: return
+        if (!currentPrediction.minigameTrigger && !currentPrediction.whatsMissingTrigger
+            && !currentPrediction.connectDotsTrigger) return
+
+        miniGameTriggeredThisRound = true
         startActivityForResult(
             Intent(this, MiniGamesActivitySequence::class.java).apply {
-                putExtra(MiniGamesActivitySequence.EXTRA_TYPE,           MiniGamesActivitySequence.TYPE_WHATS_MISSING)
+                putExtra(MiniGamesActivitySequence.EXTRA_TYPE,           spec.miniGameType)
+                putExtra(MiniGamesActivitySequence.EXTRA_HIDDEN_INDEX,   spec.hiddenStepIndex)
                 putExtra(MiniGamesActivitySequence.EXTRA_ROUTINE_ID,     currentRoutineId)
                 putExtra(MiniGamesActivitySequence.EXTRA_SUB_ROUTINE_ID, currentSubRoutineId)
                 putExtra(MiniGamesActivitySequence.EXTRA_USER_AGE,       userAge)
@@ -445,11 +575,27 @@ class ActivitySequenceOverActivity : AppCompatActivity() {
             errorCount   = errorCount
         )
 
-        val isBestPerformance = accuracy >= 0.85f && errorCount <= 1
+        val isBestPerformance = errorCount == 0
         val stickerKey   = "sub_${currentRoutineId}_${currentSubRoutineId}"
         val alreadyWon   = prefs.getBoolean("sticker_won_$stickerKey", false)
         val awardSticker = isBestPerformance && !alreadyWon && !StickerManager.isPoolExhausted(this)
+
         if (awardSticker) prefs.edit().putBoolean("sticker_won_$stickerKey", true).apply()
+
+        ChildProfileManager.updateAfterSession(
+            context                = this,
+            childId                = ChildSession.childId,
+            ageGroup               = userAge,
+            gameType               = "sequence",
+            sessionAccuracy        = correctCount.toFloat() / attemptsCount.coerceAtLeast(1),
+            sessionFrustration     = tracker.frustration,
+            sessionEngagement      = tracker.engagement,
+            sessionJitter          = calculateJitter(),
+            sessionRt              = avgReactionTime(),
+            sessionAlpha           = finalAlpha,
+            peakConsecWrong        = tracker.peakConsecWrong,
+            lastFiveFeatureVectors = tracker.getFlatHistory()
+        )
 
         Handler(Looper.getMainLooper()).postDelayed({
             startActivity(Intent(this, ASequenceScoreboardActivity::class.java).apply {
@@ -477,6 +623,24 @@ class ActivitySequenceOverActivity : AppCompatActivity() {
             ?: mutableSetOf()
         set.add("${currentRoutineId}_${currentSubRoutineId}")
         prefs.edit().putStringSet(KEY_COMPLETED_SUBROUTINES, set).apply()
+    }
+
+    // ======================================================================
+    // Tracking Helpers (Calculations)
+    // ======================================================================
+
+    private fun calculateJitter(): Float {
+        if (tapTimes.size < 2) return 0.15f
+        var totalDiff = 0L
+        for (i in 1 until tapTimes.size) {
+            totalDiff += Math.abs(tapTimes[i] - tapTimes[i - 1])
+        }
+        return (totalDiff.toFloat() / (tapTimes.size - 1) / 1000f).coerceIn(0.01f, 1.0f)
+    }
+
+    private fun avgReactionTime(): Float {
+        if (attemptsCount <= 0) return 3000f
+        return (elapsedTime.toFloat() / attemptsCount).coerceIn(1000f, 10000f)
     }
 
     // ======================================================================
