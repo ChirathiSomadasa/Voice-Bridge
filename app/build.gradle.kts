@@ -28,6 +28,8 @@ android {
         properties.load(project.rootProject.file("local.properties").inputStream())
         buildConfigField("String", "GEMINI_FEEDBACK_API_KEY", "\"${properties.getProperty("GEMINI_FEEDBACK_API_KEY")}\"")
         buildConfigField("String", "GEMINI_Therapy_API_KEY", "\"${properties.getProperty("GEMINI_Therapy_API_KEY")}\"")
+        buildConfigField("String", "GEMINI_SENTENCE_GENERATE_API_KEY", "\"${properties.getProperty("GEMINI_SENTENCE_GENERATE_API_KEY")}\"")
+
     }
 
     buildTypes {
@@ -47,9 +49,9 @@ android {
         jvmTarget="1.8"
     }
 
-    aaptOptions {
-        noCompress += "tflite"
-        noCompress += "pt"
+    androidResources {
+        noCompress.add("tflite")
+        noCompress.add("pt")
     }
     buildFeatures {
         mlModelBinding = true
@@ -150,4 +152,6 @@ dependencies {
     //Import the pytorch
     implementation ("org.pytorch:pytorch_android_lite:1.13.1")
     implementation ("org.pytorch:pytorch_android_torchvision_lite:1.13.1")
+    implementation ("com.google.android.flexbox:flexbox:3.0.0")
+    implementation ("com.airbnb.android:lottie:6.0.0")
 }
