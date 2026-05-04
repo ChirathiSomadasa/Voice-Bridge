@@ -134,11 +134,6 @@ class ASequenceScoreboardActivity : AppCompatActivity(), TextToSpeech.OnInitList
         }
     }
 
-    /**
-     * Speaks message and encouragement as two separate utterances with a
-     * 700 ms silent gap so the child can absorb each sentence naturally.
-     * Punctuation is preserved so the TTS engine pauses at sentence ends.
-     */
     private fun speakFeedback(message: String, encouragement: String) {
         if (!isTtsReady) return
         fun clean(s: String) = s.replace(Regex("[^a-zA-Z0-9 .,!?']"), "").trim()
@@ -176,21 +171,20 @@ class ASequenceScoreboardActivity : AppCompatActivity(), TextToSpeech.OnInitList
     private enum class Tier { BEST, HIGH, MODERATE, LOW }
 
     private fun performanceTier(): Tier {
-        val attempts = attemptsCount.coerceAtLeast(1)
         return when {
-            errorCount == 0 && attempts <= 3 -> Tier.BEST
-            errorCount <= 2 && attempts <= 3 -> Tier.HIGH
-            errorCount <= 3 && attempts <= 7 -> Tier.MODERATE
-            else                             -> Tier.LOW
+            errorCount == 0 -> Tier.BEST
+            errorCount == 1 -> Tier.HIGH
+            errorCount == 2 -> Tier.MODERATE
+            else            -> Tier.LOW
         }
     }
 
     private fun calculateStairCount() {
         totalSteps = when (performanceTier()) {
-            Tier.BEST            -> 5
-            Tier.HIGH            -> 5
-            Tier.MODERATE        -> 3
-            Tier.LOW             -> 1
+            Tier.BEST     -> 5
+            Tier.HIGH     -> 5
+            Tier.MODERATE -> 3
+            Tier.LOW      -> 1
         }
         totalSteps    = totalSteps.coerceIn(1, 5)
         starFinalStep = totalSteps - 1
@@ -255,16 +249,12 @@ class ASequenceScoreboardActivity : AppCompatActivity(), TextToSpeech.OnInitList
     private fun fetchAIFeedback() {
         therapeuticMessage.text = "Well done"
 
-        val apiKey = getString(R.string.groq_api_key)
-        Log.d(TAG, "DIAG 1 - API key: isBlank=${apiKey.isBlank()}, length=${apiKey.length}, starts=${apiKey.take(8)}")
-
         val level = TherapeuticFeedbackGenerator.classify(
             correctCount = correctCount,
             errorCount   = errorCount,
             attempts     = attemptsCount.coerceAtLeast(correctCount + errorCount),
             finalAlpha   = finalAlpha
         )
-        Log.d(TAG, "DIAG 2 - Performance level classified as: $level (correct=$correctCount, errors=$errorCount, attempts=$attemptsCount, alpha=$finalAlpha)")
 
         val routineName = when (userSelectedRoutine) {
             0    -> "Morning Routine"
@@ -284,23 +274,17 @@ class ASequenceScoreboardActivity : AppCompatActivity(), TextToSpeech.OnInitList
             previousAlpha    = previousAlpha,
             sessionNumber    = completedSubroutines
         )
-        Log.d(TAG, "DIAG 3 - SessionContext built: age=$userAge, routine=$routineName, session=$completedSubroutines")
-        Log.d(TAG, "DIAG 4 - Launching coroutine for AI feedback...")
 
         lifecycleScope.launch {
-            Log.d(TAG, "DIAG 5 - Inside coroutine, calling TherapeuticFeedbackGenerator.generate()")
             try {
                 val feedback = TherapeuticFeedbackGenerator.generate(
                     context = this@ASequenceScoreboardActivity,
                     session = session
                 )
-                Log.d(TAG, "DIAG 6 - generate() returned: fromAI=${feedback.fromAI}, headline='${feedback.headline}'")
-                Log.d(TAG, "DIAG 6 - message='${feedback.message}', encouragement='${feedback.encouragement}'")
 
                 aiFeedback    = feedback
                 feedbackReady = true
                 applyFeedbackToUI(feedback)
-                Log.d(TAG, "AI feedback (fromAI=${feedback.fromAI}): ${feedback.headline}")
 
             } catch (e: Exception) {
                 Log.e(TAG, "DIAG ERROR - Exception during AI feedback generation: ${e::class.simpleName}: ${e.message}", e)
@@ -310,20 +294,17 @@ class ASequenceScoreboardActivity : AppCompatActivity(), TextToSpeech.OnInitList
 
     private fun applyFeedbackToUI(feedback: TherapeuticFeedback) {
         runOnUiThread {
-            // Update headline
             therapeuticMessage.text  = feedback.headline
             therapeuticMessage.alpha = 0f
             therapeuticMessage.visibility = View.VISIBLE
             therapeuticMessage.animate().alpha(1f).setDuration(800).start()
 
-            // If star is already visible, reposition the quote next to it
             if (starCharacter.visibility == View.VISIBLE) {
                 showQuoteForStar()
             } else {
                 motivationalQuote.text = "${feedback.message}\n\n${feedback.encouragement}"
             }
 
-            // ── Speak feedback (message + encouragement only, no headline) ────
             if (isTtsReady) {
                 speakFeedback(feedback.message, feedback.encouragement)
             } else {
@@ -351,7 +332,6 @@ class ASequenceScoreboardActivity : AppCompatActivity(), TextToSpeech.OnInitList
         val maxWait = 1000L + (totalSteps * 400L) + 600L + 2500L + 3000L
         Handler(Looper.getMainLooper()).postDelayed({
             if (!btnContinue.isEnabled && !isFinishing) {
-                Log.w(TAG, "Fallback timer fired")
                 if (shouldAwardSticker && performanceTier() == Tier.BEST) {
                     navigateToStickerScreen()
                 } else {
@@ -604,22 +584,18 @@ class ASequenceScoreboardActivity : AppCompatActivity(), TextToSpeech.OnInitList
     private fun navigateToStickerScreen() {
         if (isFinishing) return
 
-        // 1. Stop TTS before leaving
         if (::tts.isInitialized && isTtsReady) tts.stop()
 
-        // 2. Cancel all animators
         starGlowAnimator?.cancel()
         starBounceAnimator?.cancel()
         blockDropAnimators.forEach { it.cancel() }
         stepBlocks.forEach { it.animate().cancel() }
         starCharacter.animate().cancel()
 
-        // 3. Release media players
         try { blockDropSound.stop() } catch (_: Exception) {}
         try { starBounceSound.stop() } catch (_: Exception) {}
         try { completionSound.stop() } catch (_: Exception) {}
 
-        // 4. Navigate
         startActivity(Intent(this, UnlockStickerActivity::class.java).apply {
             putExtra("GAME_MODE",             gameMode)
             putExtra("FINAL_ALPHA",           finalAlpha)
@@ -657,10 +633,6 @@ class ASequenceScoreboardActivity : AppCompatActivity(), TextToSpeech.OnInitList
         finish()
     }
 
-    // =========================================================================
-    // Sounds init
-    // =========================================================================
-
     private fun initializeSounds() {
         blockDropSound  = MediaPlayer.create(this, R.raw.block_drop)
         starBounceSound = MediaPlayer.create(this, R.raw.star_bounce)
@@ -669,10 +641,6 @@ class ASequenceScoreboardActivity : AppCompatActivity(), TextToSpeech.OnInitList
         starBounceSound.setVolume(0.5f, 0.5f)
         completionSound.setVolume(0.7f, 0.7f)
     }
-
-    // =========================================================================
-    // Lifecycle
-    // =========================================================================
 
     override fun onPause() {
         super.onPause()

@@ -19,16 +19,16 @@ import java.util.Locale
 /**
  * MiniGamesActivitySequence — updated mini-games.
  *
- *  GAME 0 — What's Missing?
- *    Shows steps 1-3 with ONE hidden behind "?".
- *    THREE option cards (2 wrong distractors + 1 correct). optionD hidden.
+ * GAME 0 — What's Missing?
+ * Shows steps 1-3 with ONE hidden behind "?".
+ * THREE option cards (2 wrong distractors + 1 correct). optionD hidden.
  *
- *  GAME 1 — Connect the Mesh
- *    Shows 3 step images arranged in a triangle.
- *    Dashed lines connect them initially (mesh look).
- *    Child taps steps in correct order — each correct tap turns the
- *    connecting line solid green and locks that node.
- *    Wrong tap: red flash + shake. No penalty skipping.
+ * GAME 1 — Connect the Mesh
+ * Shows 3 step images arranged in a triangle.
+ * Dashed lines connect them initially (mesh look).
+ * Child taps steps in correct order — each correct tap turns the
+ * connecting line solid green and locks that node.
+ * Wrong tap: red flash + shake. No penalty skipping.
  */
 class MiniGamesActivitySequence : AppCompatActivity() {
 
@@ -38,6 +38,7 @@ class MiniGamesActivitySequence : AppCompatActivity() {
         const val EXTRA_ROUTINE_ID     = "ROUTINE_ID"
         const val EXTRA_SUB_ROUTINE_ID = "SUB_ROUTINE_ID"
         const val EXTRA_USER_AGE       = "USER_AGE"
+        const val EXTRA_HIDDEN_INDEX   = "HIDDEN_STEP_INDEX"
         const val RESULT_PASSED        = "MINI_GAME_PASSED"
         const val RESULT_SCORE         = "MINI_GAME_SCORE"
         const val REQUEST_CODE         = 888
@@ -70,6 +71,7 @@ class MiniGamesActivitySequence : AppCompatActivity() {
     private var routineId    = 0
     private var subRoutineId = 0
     private var userAge      = 6
+    private var modelHiddenIndex = -1
     private var steps        = listOf<Step>()
     private var mistakeCount = 0
     private var tts          : TextToSpeech? = null
@@ -104,11 +106,12 @@ class MiniGamesActivitySequence : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_mini_game_activity_sequence)
 
-        miniGameType = intent.getIntExtra(EXTRA_TYPE, TYPE_WHATS_MISSING)
-        routineId    = intent.getIntExtra(EXTRA_ROUTINE_ID, 0)
-        subRoutineId = intent.getIntExtra(EXTRA_SUB_ROUTINE_ID, 0)
-        userAge      = intent.getIntExtra(EXTRA_USER_AGE, 6)
-        steps        = routineSteps[routineId]?.get(subRoutineId) ?: routineSteps[0]!![0]!!
+        miniGameType     = intent.getIntExtra(EXTRA_TYPE, TYPE_WHATS_MISSING)
+        routineId        = intent.getIntExtra(EXTRA_ROUTINE_ID, 0)
+        subRoutineId     = intent.getIntExtra(EXTRA_SUB_ROUTINE_ID, 0)
+        userAge          = intent.getIntExtra(EXTRA_USER_AGE, 6)
+        modelHiddenIndex = intent.getIntExtra(EXTRA_HIDDEN_INDEX, -1)
+        steps            = routineSteps[routineId]?.get(subRoutineId) ?: routineSteps[0]!![0]!!
 
         bindViews()
         initTts()
@@ -168,7 +171,11 @@ class MiniGamesActivitySequence : AppCompatActivity() {
         // Hide the 4th option — we only show 3 choices
         optionD.visibility = View.GONE
 
-        val missingIndex = steps.indices.random()
+        val missingIndex = if (modelHiddenIndex in steps.indices) {
+            modelHiddenIndex
+        } else {
+            steps.indices.random()
+        }
         val missingStep  = steps[missingIndex]
         speak("One step is hiding! Which one is it?")
 

@@ -1,5 +1,6 @@
 package com.chirathi.voicebridge
 
+import android.content.Context
 import android.content.Intent
 import android.media.MediaPlayer
 import android.os.Bundle
@@ -7,10 +8,10 @@ import android.speech.tts.TextToSpeech
 import android.util.Log
 import android.view.View
 import android.widget.*
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import java.util.Locale
-import kotlin.random.Random
 
 class MoodMatchSevenDownActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
 
@@ -20,47 +21,45 @@ class MoodMatchSevenDownActivity : AppCompatActivity(), TextToSpeech.OnInitListe
     private var ageGroup = 6
     private val isOlderGroup get() = ageGroup >= 8
 
+    private var childProfile: ChildProfileManager.ChildProfile? = null
+    private lateinit var tracker: SessionStateTracker
+    private var currentRoundSpec: PersonalizedContentSelector.MoodRoundSpec? = null
+
+    // ── Strict Cross-Session Memory ───────────────────────────────────────────
+    private val PREFS_NAME = "MoodMatchState"
+    private var difficultyState = 0 // 0 to 4
+    private val recentEmotions = mutableSetOf<String>()
+
+    // Streaks for Difficulty Graduation (First Try Only)
+    private var streakFirstTryCorrect = 0
+    private var streakFirstTryWrong   = 0
+    private var isFirstAttemptThisRound = true
+
+    // Shuffling Minigames
+    private var nextMinigameType = 0
+
+    // ── Round state ───────────────────────────────────────────────────────────
     private var roundStartTime: Long = 0
-    private var consecutiveCorrect = 0
-    private var consecutiveWrong = 0
-    private var totalJitter = 0f
-    private var jitterSamples = 0
-    private var tapCount = 0
-    private var isPulsing = false
-    private var minigameLaunchedThisSession = false
+    private var lastResponseTime: Long = 3000L
+    private var consecutiveCorrect   = 0
+    private var consecutiveWrong     = 0
+    private var jitterSamples        = 0
+    private var tapCount             = 0
+    private var isPulsing            = false
 
-    // ── Session-level frustration tracking (never reset mid-session) ──────────
-    //
-    // These accumulate across ALL rounds and are used to make the final
-    // session-end prediction that determines friendAction / gift unlock.
-    // They are intentionally NOT reset when the child gets a correct answer —
-    // a child who struggled all game and then scraped a correct answer on
-    // attempt 3 should still trigger a comfort friend.
+    private val tapVariances = mutableListOf<Float>()
 
-    /** Total wrong taps across the entire session (never resets). */
-    private var sessionTotalWrong = 0
-
-    /** Highest consecutiveWrong value seen at any point in the session. */
+    // ── Observation-only session state ───────────────────────────────────────
+    private var sessionTotalWrong             = 0
     private var sessionPeakConsecutiveWrong = 0
+    private var sessionFrustration          = 0.2f
+    private var sessionEngagement           = 0.6f
+    private var roundsCompleted             = 0
 
-    /**
-     * Running weighted frustration score 0..1, updated each round.
-     * Increases on wrong attempts, decays slightly on first-attempt correct answers.
-     * Never resets to 0 — preserves memory of earlier struggle.
-     */
-    private var sessionFrustration = 0.2f   // start at a mild baseline
-
-    /**
-     * Running weighted engagement score 0..1.
-     * Decreases when child is struggling, recovers on correct answers.
-     */
-    private var sessionEngagement = 0.6f
-
-    /** Total rounds completed (used for ratio calculations). */
-    private var roundsCompleted = 0
-
-    // ── Per-round wrong tracking ──────────────────────────────────────────────
     private val wrongTappedOptions = mutableSetOf<Int>()
+
+    // ── Completion guard ──────────────────────────────────────────────────────
+    private var gameCompletedNormally = false
 
     // ── Views ─────────────────────────────────────────────────────────────────
     private lateinit var emotionImage: ImageView
@@ -82,7 +81,6 @@ class MoodMatchSevenDownActivity : AppCompatActivity(), TextToSpeech.OnInitListe
     private lateinit var guessText:    TextView
 
     // ── Game state ────────────────────────────────────────────────────────────
-    private var currentEmotion        = ""
     private var currentEmotionDisplay = ""
     private var correctOption         = 1
     private var score                 = 0
@@ -91,9 +89,7 @@ class MoodMatchSevenDownActivity : AppCompatActivity(), TextToSpeech.OnInitListe
     private val totalRounds           = 5
     private var isAnswerSelected      = false
     private var nextButtonVisible     = false
-    private val usedImages            = mutableSetOf<String>()
     private var wrongAttempts         = 0
-    private val roundDistractors      = mutableListOf<String>()
 
     private lateinit var tts: TextToSpeech
     private var isTtsInitialized = false
@@ -102,22 +98,30 @@ class MoodMatchSevenDownActivity : AppCompatActivity(), TextToSpeech.OnInitListe
 
     companion object {
         private const val TAG = "MoodMatchActivity"
-
-        // Frustration thresholds for session-end gift decision
-        private const val FRUSTRATION_HIGH_THRESHOLD  = 0.55f  // comfort friend
-        private const val FRUSTRATION_PEAK_THRESHOLD  = 0.70f  // strong comfort friend
-        private const val PERFORMANCE_HIGH_THRESHOLD  = 0.82f  // trophy friend
     }
 
-    // =========================================================================
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_mood_match_seven_down)
 
         ageGroup = intent.getIntExtra("AGE_GROUP", 6)
-        Log.d(TAG, "ageGroup=$ageGroup isOlderGroup=$isOlderGroup")
+
+        if (!ChildSession.isInitialized) ChildSession.restore(this)
+
+        loadCrossSessionMemory()
+
+        childProfile = ChildProfileManager.load(this, ChildSession.childId)
+        tracker = SessionStateTracker(
+            ageGroup           = ageGroup,
+            initialFrustration = childProfile?.avgFrustration ?: 0.20f,
+            initialEngagement  = childProfile?.avgEngagement  ?: 0.60f
+        )
 
         gameMaster = GameMasterModel(this)
+        if (childProfile != null) {
+            gameMaster.seedHistory(ChildProfileManager.getHistoryTensor(this, ChildSession.childId))
+        }
+
         tts = TextToSpeech(this, this)
         try { correctSoundPlayer = MediaPlayer.create(this, R.raw.correct_sound) }
         catch (e: Exception) { Log.w(TAG, "Sound init failed") }
@@ -127,6 +131,26 @@ class MoodMatchSevenDownActivity : AppCompatActivity(), TextToSpeech.OnInitListe
         showHeader()
         setupGame()
     }
+
+    private fun loadCrossSessionMemory() {
+        val prefs = getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        difficultyState = prefs.getInt("difficultyState_${ChildSession.childId}", 0)
+
+        val savedEmotions = prefs.getString("recentEmotions_${ChildSession.childId}", "")
+        if (!savedEmotions.isNullOrEmpty()) {
+            recentEmotions.addAll(savedEmotions.split(","))
+        }
+        Log.d(TAG, "Loaded memory: state=$difficultyState, recentEmotions=$recentEmotions")
+    }
+
+    private fun saveCrossSessionMemory() {
+        val prefs = getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        prefs.edit()
+            .putInt("difficultyState_${ChildSession.childId}", difficultyState)
+            .putString("recentEmotions_${ChildSession.childId}", recentEmotions.joinToString(","))
+            .apply()
+    }
+
     override fun onResume() {
         super.onResume()
         CalmMusicManager.onActivityResume(this)
@@ -139,6 +163,11 @@ class MoodMatchSevenDownActivity : AppCompatActivity(), TextToSpeech.OnInitListe
 
     override fun onDestroy() {
         super.onDestroy()
+        // Only persist cross-session state if the game was completed normally.
+        // Mid-game exits (back button) must not save progress.
+        if (gameCompletedNormally) {
+            saveCrossSessionMemory()
+        }
         if (::tts.isInitialized) { tts.stop(); tts.shutdown() }
         correctSoundPlayer?.release()
         gameMaster.close()
@@ -147,13 +176,30 @@ class MoodMatchSevenDownActivity : AppCompatActivity(), TextToSpeech.OnInitListe
     @Deprecated("Using deprecated startActivityForResult")
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
-        if (requestCode == MiniGameMoodMatchActivity.REQUEST_CODE)
+        if (requestCode == MiniGameMoodMatchActivity.REQUEST_CODE) {
             Log.d(TAG, "🎮 Mini-game returned")
+            tracker.update(true, 1, currentPrediction.frustrationRisk, consecutiveWrong)
+        }
     }
 
-    // =========================================================================
-    // Header
-    // =========================================================================
+    @Deprecated("Deprecated in Java")
+    override fun onBackPressed() {
+        showExitConfirmation()
+    }
+
+    private fun showExitConfirmation() {
+        AlertDialog.Builder(this)
+            .setTitle("Leave Game?")
+            .setMessage("Your progress won't be saved if you leave now.")
+            .setPositiveButton("Leave") { _, _ ->
+                startActivity(Intent(this, GameDashboardActivity::class.java).apply {
+                    flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
+                })
+                finish()
+            }
+            .setNegativeButton("Keep Playing", null)
+            .show()
+    }
 
     private fun showHeader() {
         listOf(topGameImage1, pandaImage, guessText).forEach { v ->
@@ -162,28 +208,15 @@ class MoodMatchSevenDownActivity : AppCompatActivity(), TextToSpeech.OnInitListe
         }
     }
 
-    // =========================================================================
-    // Age UI
-    // =========================================================================
-
     private fun applyAgeUI() {
         if (isOlderGroup) {
-            layoutYoung.visibility = View.GONE
-            layoutOlder.visibility = View.VISIBLE
             val p = emotionImage.layoutParams
             p.width = dpToPx(260); p.height = dpToPx(260)
             emotionImage.layoutParams = p
-        } else {
-            layoutYoung.visibility = View.VISIBLE
-            layoutOlder.visibility = View.GONE
         }
     }
 
     private fun dpToPx(dp: Int) = (dp * resources.displayMetrics.density).toInt()
-
-    // =========================================================================
-    // View binding
-    // =========================================================================
 
     private fun initializeViews() {
         emotionImage   = findViewById(R.id.emotionImage)
@@ -204,34 +237,11 @@ class MoodMatchSevenDownActivity : AppCompatActivity(), TextToSpeech.OnInitListe
         pandaImage     = findViewById(R.id.pandaImage)
         guessText      = findViewById(R.id.guessText)
 
+        // Back button now routes through confirmation dialog
         findViewById<ImageView>(R.id.backBtn).setOnClickListener {
-            if (currentRound > 1 || isAnswerSelected || wrongAttempts > 0) {
-                android.app.AlertDialog.Builder(this)
-                    .setMessage("Leave this game? Your progress will be lost.")
-                    .setPositiveButton("Leave") { _, _ ->
-                        startActivity(Intent(this, GameDashboardActivity::class.java).apply {
-                            flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
-                        })
-                        finish()
-                    }
-                    .setNegativeButton("Stay", null)
-                    .show()
-            } else {
-                startActivity(Intent(this, GameDashboardActivity::class.java).apply {
-                    flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
-                })
-                finish()
-            }
+            showExitConfirmation()
         }
-
-        topGameImage1.visibility = View.INVISIBLE
-        pandaImage.visibility    = View.INVISIBLE
-        guessText.visibility     = View.INVISIBLE
     }
-
-    // =========================================================================
-    // Game setup
-    // =========================================================================
 
     private fun setupGame() {
         setupClickListeners()
@@ -243,19 +253,18 @@ class MoodMatchSevenDownActivity : AppCompatActivity(), TextToSpeech.OnInitListe
         btnOption2.setOnClickListener { onOptionTapped(2) }
         soundOption1.setOnClickListener { if (!nextButtonVisible) speakText(btnOption1.text.toString()) }
         soundOption2.setOnClickListener { if (!nextButtonVisible) speakText(btnOption2.text.toString()) }
-
         btnGrid1.setOnClickListener { onOptionTapped(1) }
         btnGrid2.setOnClickListener { onOptionTapped(2) }
         btnGrid3.setOnClickListener { onOptionTapped(3) }
         btnGrid4.setOnClickListener { onOptionTapped(4) }
-
-        btnNext.setOnClickListener { goToNextRound() }
+        btnNext.setOnClickListener  { goToNextRound() }
     }
 
     private fun onOptionTapped(option: Int) {
-        if (nextButtonVisible) return
-        if (isAnswerSelected) return
-        checkAnswer(option, System.currentTimeMillis() - roundStartTime)
+        if (nextButtonVisible || isAnswerSelected) return
+        val responseTime = System.currentTimeMillis() - roundStartTime
+        lastResponseTime = responseTime
+        checkAnswer(option, responseTime)
     }
 
     override fun onUserInteraction() {
@@ -263,268 +272,222 @@ class MoodMatchSevenDownActivity : AppCompatActivity(), TextToSpeech.OnInitListe
         if (!isAnswerSelected && !nextButtonVisible) { tapCount++; jitterSamples++ }
     }
 
-    // =========================================================================
-    // Round
-    // =========================================================================
-
     private fun startNewRound() {
-        Log.d(TAG, "=== ROUND $currentRound/$totalRounds ===")
-
         isAnswerSelected  = false
+        isFirstAttemptThisRound = true
         wrongAttempts     = 0
         nextButtonVisible = false
         roundStartTime    = System.currentTimeMillis()
-        tapCount          = 0
-        roundDistractors.clear()
         wrongTappedOptions.clear()
-
         btnNext.visibility = View.GONE
         resetButtonColors()
         enableGameButtons(true)
 
-        val jitter = if (jitterSamples > 0) totalJitter / jitterSamples else 0.10f
+        val jitter = tracker.avgJitter(tapVariances)
+        val roundAccuracy = if (currentRound == 1) childProfile?.moodMatchAccuracy ?: 0.5f else tracker.liveAccuracy(currentRound - 1)
 
-        // Use SESSION-LEVEL frustration and engagement for per-round prediction
-        // so the model sees accumulated state, not just this round's snapshot.
         currentPrediction = gameMaster.predictSafe(
-            childId             = 0,
-            age                 = ageGroup.toFloat(),
-            accuracy            = liveAccuracy(),
-            engagement          = sessionEngagement,
-            frustration         = sessionFrustration,
-            jitter              = jitter,
-            rt                  = 3000f,
-            consecutiveCorrect  = consecutiveCorrect.toFloat(),
-            consecutiveWrong    = consecutiveWrong.toFloat()
+            childId            = ChildSession.childId,
+            age                = ageGroup.toFloat(),
+            accuracy           = roundAccuracy,
+            engagement         = tracker.engagement,
+            frustration        = tracker.frustration,
+            jitter             = jitter,
+            rt                 = lastResponseTime.toFloat(),
+            consecutiveCorrect = streakFirstTryCorrect.toFloat(),
+            consecutiveWrong   = streakFirstTryWrong.toFloat()
         )
 
-        if (isOlderGroup) {
-            val correctArrayId = when (currentPrediction.emotionLevel) {
-                1    -> R.array.mood_age8_lvl1_correct
-                else -> R.array.mood_age8_lvl0_correct
-            }
-            val possibleCorrect = resources.getStringArray(correctArrayId)
-            val allAge8 = resources.getStringArray(R.array.mood_age8_lvl0_correct) +
-                    resources.getStringArray(R.array.mood_age8_lvl1_correct)
+        tracker.recordFeatureVector(gameMaster.lastFeatureVector())
 
-            val available = possibleCorrect.map { extractEmotionName(it) }.filter { it !in usedImages }
-            if (available.isEmpty()) usedImages.clear()
-            val pool = if (available.isNotEmpty()) available
-            else possibleCorrect.map { extractEmotionName(it) }
+        val spec = PersonalizedContentSelector.selectMoodRound(
+            ageGroup        = ageGroup,
+            prediction      = currentPrediction,
+            difficultyState = difficultyState,
+            recentEmotions  = recentEmotions
+        )
 
-            currentEmotion        = pool.random()
-            usedImages.add(currentEmotion)
-            currentEmotionDisplay = formatEmotionText(currentEmotion)
+        currentRoundSpec = spec
 
-            val rawSelection = findImageForEmotion(currentEmotion, possibleCorrect)
-            setEmotionImage(extractResourceName(rawSelection, removeExtension = true))
-
-            val distractors = allAge8
-                .map { extractEmotionName(it) }
-                .distinct()
-                .filter { !it.equals(currentEmotion, ignoreCase = true) }
-                .shuffled()
-                .take(3)
-                .map { formatEmotionText(it) }
-
-            roundDistractors.clear()
-            roundDistractors.addAll(distractors)
-
-            val options = (listOf(currentEmotionDisplay) + roundDistractors).shuffled()
-            correctOption = options.indexOf(currentEmotionDisplay) + 1
-            btnGrid1.text = options[0]; btnGrid2.text = options[1]
-            btnGrid3.text = options[2]; btnGrid4.text = options[3]
-
-        } else {
-            val arrayId = when (currentPrediction.emotionLevel) {
-                1    -> R.array.mood_age6_lvl1_correct
-                2    -> R.array.mood_age6_lvl2_scenarios
-                else -> R.array.mood_age6_lvl0_correct
-            }
-            val possibleCorrect     = resources.getStringArray(arrayId)
-            val possibleDistractors = resources.getStringArray(R.array.mood_age6_lvl0_distractors)
-
-            val available = possibleCorrect.map { extractEmotionName(it) }.filter { it !in usedImages }
-            if (available.isEmpty()) usedImages.clear()
-            val pool = if (available.isNotEmpty()) available else possibleCorrect.map { extractEmotionName(it) }
-
-            currentEmotion = pool.random()
-            usedImages.add(currentEmotion)
-
-            val rawSelection = findImageForEmotion(currentEmotion, possibleCorrect)
-
-            if (currentPrediction.emotionLevel == 2) {
-                val idx     = possibleCorrect.indexOf(rawSelection)
-                val answers = resources.getStringArray(R.array.mood_age6_lvl2_answers)
-                if (idx < answers.size) currentEmotion = extractEmotionName(answers[idx])
-            }
-
-            currentEmotionDisplay = formatEmotionText(currentEmotion)
-            setEmotionImage(extractResourceName(rawSelection, removeExtension = true))
-
-            var rawD  = possibleDistractors.random()
-            var nameD = extractEmotionName(rawD)
-            var att   = 0
-            while (nameD.equals(currentEmotion, ignoreCase = true) && att < 10) {
-                rawD = possibleDistractors.random(); nameD = extractEmotionName(rawD); att++
-            }
-            val dispD = formatEmotionText(nameD)
-            correctOption = Random.nextInt(1, 3)
-            if (correctOption == 1) { btnOption1.text = currentEmotionDisplay; btnOption2.text = dispD }
-            else                    { btnOption1.text = dispD; btnOption2.text = currentEmotionDisplay }
+        recentEmotions.add(spec.correctEmotionDrawable)
+        if (recentEmotions.size > 5) {
+            val iterator = recentEmotions.iterator()
+            iterator.next()
+            iterator.remove()
         }
 
+        applyRoundLayout(spec)
+
+        SessionLogger.logPrediction(
+            context   = this,
+            childId   = ChildSession.childId,
+            round     = currentRound,
+            gameType  = "mood_match",
+            ageGroup  = ageGroup,
+            features  = gameMaster.lastFeatureVector(),
+            pred      = currentPrediction,
+            diffLabel = "State:$difficultyState"
+        )
+
+        tracker.recordRound()
         tvRound.text = "Round: $currentRound/$totalRounds"
+        Log.d(TAG, "Starting Round $currentRound: State=$difficultyState")
     }
 
-    private fun liveAccuracy() = if (currentRound > 1)
-        correctAnswersCount.toFloat() / (currentRound - 1) else 0.5f
+    private fun applyRoundLayout(spec: PersonalizedContentSelector.MoodRoundSpec) {
+        when (spec.layout) {
+            PersonalizedContentSelector.MoodLayout.TWO_BUTTON -> {
+                layoutYoung.visibility = View.VISIBLE
+                layoutOlder.visibility = View.GONE
 
-    // =========================================================================
-    // Session state updater
-    //
-    // Called after every answer (correct or wrong) to keep session-level
-    // frustration and engagement signals up to date.
-    //
-    // KEY RULE: frustration can only increase quickly but decreases slowly.
-    // A single correct answer on attempt 3 does NOT wipe out a session of
-    // struggling — it only nudges frustration down slightly.
-    // =========================================================================
+                val options = listOf(
+                    spec.correctEmotionWord to spec.correctEmotionDrawable,
+                    spec.distractorWords.first() to spec.distractors.first()
+                ).shuffled()
 
-    private fun updateSessionState(wasCorrect: Boolean, attemptNumber: Int) {
-        roundsCompleted = currentRound
+                correctOption = options.indexOfFirst { it.second == spec.correctEmotionDrawable } + 1
 
-        if (wasCorrect) {
-            when (attemptNumber) {
-                1 -> {
-                    // First-attempt correct: child is doing well
-                    // Frustration decreases noticeably, engagement increases
-                    sessionFrustration = (sessionFrustration - 0.10f).coerceAtLeast(0.10f)
-                    sessionEngagement  = (sessionEngagement  + 0.10f).coerceAtMost(1.00f)
-                }
-                2 -> {
-                    // Needed a hint but got there: small frustration nudge down
-                    sessionFrustration = (sessionFrustration - 0.05f).coerceAtLeast(0.10f)
-                    sessionEngagement  = (sessionEngagement  + 0.05f).coerceAtMost(1.00f)
-                }
-                else -> {
-                    // Correct after 3+ attempts: barely moves frustration down
-                    // The struggle this round still counts
-                    sessionFrustration = (sessionFrustration - 0.02f).coerceAtLeast(0.10f)
-                    sessionEngagement  = (sessionEngagement  + 0.02f).coerceAtMost(1.00f)
+                if (correctOption == 1) {
+                    btnOption1.text = spec.correctEmotionWord
+                    btnOption2.text = spec.distractorWords.first()
+                } else {
+                    btnOption1.text = spec.distractorWords.first()
+                    btnOption2.text = spec.correctEmotionWord
                 }
             }
-        } else {
-            // Wrong answer: frustration rises, engagement drops
-            // Each successive wrong in the session hits harder
-            val wrongWeight = when (attemptNumber) {
-                1    -> 0.08f   // first miss in a round
-                2    -> 0.12f   // second miss: more frustrated
-                else -> 0.16f   // third miss: significant frustration signal
-            }
-            sessionFrustration = (sessionFrustration + wrongWeight).coerceAtMost(1.00f)
-            sessionEngagement  = (sessionEngagement  - wrongWeight * 0.5f).coerceAtLeast(0.10f)
+            PersonalizedContentSelector.MoodLayout.FOUR_BUTTON,
+            PersonalizedContentSelector.MoodLayout.SCENARIO -> {
+                layoutYoung.visibility = View.GONE
+                layoutOlder.visibility = View.VISIBLE
 
-            // Track session-level peaks
-            sessionTotalWrong++
-            if (consecutiveWrong > sessionPeakConsecutiveWrong) {
-                sessionPeakConsecutiveWrong = consecutiveWrong
+                val combinedPairs = mutableListOf<Pair<String, String>>()
+                combinedPairs.add(spec.correctEmotionWord to spec.correctEmotionDrawable)
+                for (i in spec.distractorWords.indices) {
+                    combinedPairs.add(spec.distractorWords[i] to spec.distractors[i])
+                }
+
+                val options = combinedPairs.shuffled()
+                correctOption = options.indexOfFirst { it.second == spec.correctEmotionDrawable } + 1
+                val buttons = listOf(btnGrid1, btnGrid2, btnGrid3, btnGrid4)
+                options.forEachIndexed { i, pair ->
+                    if (i < buttons.size) buttons[i].text = pair.first
+                }
             }
         }
 
-        Log.d(TAG, "Session state → frustration=${"%.2f".format(sessionFrustration)} " +
-                "engagement=${"%.2f".format(sessionEngagement)} " +
-                "totalWrong=$sessionTotalWrong peakConsecWrong=$sessionPeakConsecutiveWrong")
-    }
+        val imageName = if (spec.isScenario)
+            extractResourceName(spec.scenarioImageDrawable, removeExtension = true)
+        else
+            extractResourceName(spec.correctEmotionDrawable, removeExtension = true)
 
-    // =========================================================================
-    // Answer checking
-    // =========================================================================
+        setEmotionImage(imageName)
+        currentEmotionDisplay = spec.correctEmotionWord
+    }
 
     private fun checkAnswer(selectedOption: Int, responseTime: Long) {
         val isCorrect = selectedOption == correctOption
+        var minigameTriggeredNow = false
+
+        if (isFirstAttemptThisRound) {
+            isFirstAttemptThisRound = false
+
+            if (isCorrect) {
+                streakFirstTryCorrect++
+                streakFirstTryWrong = 0
+                consecutiveCorrect++
+                consecutiveWrong = 0
+            } else {
+                streakFirstTryWrong++
+                streakFirstTryCorrect = 0
+                consecutiveWrong++
+                consecutiveCorrect = 0
+            }
+
+            val oldState = difficultyState
+            difficultyState = PersonalizedContentSelector.getNewDifficultyState(difficultyState, streakFirstTryCorrect, streakFirstTryWrong)
+
+            if (difficultyState != oldState) {
+                // Note: we do NOT call saveCrossSessionMemory() here mid-game.
+                // It will only be persisted when the game completes normally.
+                if (difficultyState > oldState) {
+                    Log.d(TAG, "State Upgraded! $oldState -> $difficultyState")
+                    streakFirstTryCorrect = 0
+                } else {
+                    Log.d(TAG, "State Downgraded! $oldState -> $difficultyState. Triggering minigame.")
+                    streakFirstTryWrong = 0
+                    minigameTriggeredNow = true
+                }
+            }
+        }
 
         if (isCorrect) {
             isAnswerSelected = true
+            tracker.update(true, wrongAttempts + 1, currentPrediction.frustrationRisk, consecutiveWrong)
 
             val points = when (wrongAttempts) {
-                0    -> { correctAnswersCount++; consecutiveCorrect++; consecutiveWrong = 0; 10 }
-                1    -> { consecutiveCorrect = 0; consecutiveWrong = 0; 6 }
-                2    -> { consecutiveCorrect = 0; consecutiveWrong = 0; 3 }
-                else -> { consecutiveCorrect = 0; consecutiveWrong = 0; 1 }
+                0 -> 10; 1 -> 6; 2 -> 3; else -> 1
             }
             score += points
+            correctAnswersCount++
             tvScore.text = "Score: $score"
+            updateSessionStateObservation(true, wrongAttempts + 1)
 
-            // Update session state BEFORE resetting wrongAttempts
-            updateSessionState(wasCorrect = true, attemptNumber = wrongAttempts + 1)
-
+            val praise = if (ageGroup <= 7) "Well done!" else "Correct!"
+            speakText(praise)
             playCorrectSound()
-            highlightButton(selectedOption, correct = true)
-            darkenAllButtons(keepCorrectBright = true)
+            highlightButton(selectedOption, true)
+            darkenAllButtons(true)
             showNextButton()
-            Log.d(TAG, "CORRECT attempt=${wrongAttempts + 1} +${points}pts score=$score")
 
         } else {
             wrongAttempts++
-            consecutiveWrong++
-            consecutiveCorrect = 0
+            updateSessionStateObservation(false, wrongAttempts)
+            highlightButton(selectedOption, false)
 
-            // Update session state immediately on each wrong tap
-            updateSessionState(wasCorrect = false, attemptNumber = wrongAttempts)
-
-            Log.d(TAG, "WRONG attempt $wrongAttempts")
-
-            highlightButton(selectedOption, correct = false)
-
-            when (wrongAttempts) {
-                1 -> {
-                    speakText("Try again")
-                    roundStartTime = System.currentTimeMillis()
-                }
-                2 -> {
-                    speakText("It's $currentEmotionDisplay")
-                    roundStartTime = System.currentTimeMillis()
-                    breatheCorrectButton(pulses = 3)
-                    if (shouldLaunchMiniGame()) {
-                        minigameLaunchedThisSession = true
-                        btnForOption(selectedOption).postDelayed({ launchMiniGame() }, 900)
-                    }
-                }
-                3 -> {
-                    isAnswerSelected = true
-                    wrongTappedOptions.add(selectedOption)
-                    speakText("Let's try another one")
-                    darkenAllButtons(keepCorrectBright = false)
-                    if (shouldLaunchMiniGame()) {
-                        minigameLaunchedThisSession = true
-                        btnForOption(selectedOption).postDelayed({ launchMiniGame() }, 800)
-                    }
-                    btnNext.postDelayed({ goToNextRound() }, 2000)
-                }
+            if (minigameTriggeredNow) {
+                val msg = "Let's take a quick brain break!"
+                speakText(msg)
+                btnForOption(selectedOption).postDelayed({ launchMiniGame() }, 1000)
+                tracker.update(false, 1, currentPrediction.frustrationRisk, consecutiveWrong)
+            } else if (wrongAttempts == 1) {
+                val msg = if (ageGroup <= 7) "Try again!" else "Good try! Try once more."
+                speakText(msg)
+                roundStartTime = System.currentTimeMillis()
+                tracker.update(false, 1, currentPrediction.frustrationRisk, consecutiveWrong)
+            } else if (wrongAttempts == 2) {
+                deliverTherapeuticHint()
+                tracker.update(false, 2, currentPrediction.frustrationRisk, consecutiveWrong)
+            } else {
+                isAnswerSelected = true
+                wrongTappedOptions.add(selectedOption)
+                val reveal = if (ageGroup <= 7) "This face shows $currentEmotionDisplay!" else "The answer is $currentEmotionDisplay."
+                speakText(reveal)
+                darkenAllButtons(true)
+                tracker.update(false, 3, currentPrediction.frustrationRisk, consecutiveWrong)
+                btnNext.postDelayed({ goToNextRound() }, 2500)
             }
         }
     }
 
-    // =========================================================================
-    // Mini-game
-    // =========================================================================
-
-    private fun shouldLaunchMiniGame(): Boolean {
-        if (minigameLaunchedThisSession) return false
-        if (currentRound < 2)           return false
-        val modelSaysYes = currentPrediction.minigameTrigger &&
-                (wrongAttempts >= 2 || consecutiveWrong >= 2)
-        val fallback = consecutiveWrong >= 3
-        return modelSaysYes || fallback
+    private fun deliverTherapeuticHint() {
+        breatheCorrectButton(pulses = 3)
+        val isTextOptions = layoutYoung.visibility == View.VISIBLE
+        val speech = when (currentPrediction.optimalHint) {
+            0 -> if (isTextOptions) "Tap the speakers to hear the words carefully..." else "Look at all the faces..."
+            1 -> if (isTextOptions) "Listen to the sounds again..." else "Think about how the face looks..."
+            else -> "It's $currentEmotionDisplay!"
+        }
+        speakText(speech)
     }
 
     @Suppress("DEPRECATION")
     private fun launchMiniGame() {
-        Log.d(TAG, "🎮 Launching mini-game")
+        val typeToLaunch = nextMinigameType
+        nextMinigameType = if (nextMinigameType == 0) 1 else 0
+
         startActivityForResult(
             Intent(this, MiniGameMoodMatchActivity::class.java).apply {
-                putExtra(MiniGameMoodMatchActivity.EXTRA_TYPE, (0..1).random())
+                putExtra(MiniGameMoodMatchActivity.EXTRA_TYPE, typeToLaunch)
                 putExtra(MiniGameMoodMatchActivity.EXTRA_DIFF, currentPrediction.minigameDifficulty)
                 putExtra(MiniGameMoodMatchActivity.EXTRA_AGE,  ageGroup)
             },
@@ -533,9 +496,21 @@ class MoodMatchSevenDownActivity : AppCompatActivity(), TextToSpeech.OnInitListe
         overridePendingTransition(android.R.anim.slide_in_left, android.R.anim.slide_out_right)
     }
 
-    // =========================================================================
-    // Navigation — session-end prediction determines gift/friend
-    // =========================================================================
+    private fun updateSessionStateObservation(wasCorrect: Boolean, attemptNumber: Int) {
+        roundsCompleted = currentRound
+        if (wasCorrect) {
+            val decay = when (attemptNumber) { 1 -> 0.10f; 2 -> 0.05f; else -> 0.02f }
+            sessionFrustration = (sessionFrustration - decay).coerceAtLeast(0.10f)
+            sessionEngagement  = (sessionEngagement  + decay).coerceAtMost(1.00f)
+        } else {
+            val growth = when (attemptNumber) { 1 -> 0.08f; 2 -> 0.12f; else -> 0.16f }
+            sessionFrustration = (sessionFrustration + growth).coerceAtMost(1.00f)
+            sessionEngagement  = (sessionEngagement  - growth * 0.5f).coerceAtLeast(0.10f)
+            sessionTotalWrong++
+            if (consecutiveWrong > sessionPeakConsecutiveWrong)
+                sessionPeakConsecutiveWrong = consecutiveWrong
+        }
+    }
 
     private fun goToNextRound() {
         isPulsing = false
@@ -544,6 +519,9 @@ class MoodMatchSevenDownActivity : AppCompatActivity(), TextToSpeech.OnInitListe
     }
 
     private fun showFeedbackPopup() {
+        // Mark game as properly completed before saving anything
+        gameCompletedNormally = true
+        saveCrossSessionMemory()
         FeedbackPopupDialog(
             context        = this,
             isGoodFeedback = correctAnswersCount >= 4,
@@ -553,104 +531,38 @@ class MoodMatchSevenDownActivity : AppCompatActivity(), TextToSpeech.OnInitListe
         ) { navigateToScoreboard() }.show()
     }
 
-    /**
-     * Makes a FINAL session-end prediction using the accumulated session state,
-     * not the last round's instantaneous snapshot.
-     *
-     * This is the prediction that determines friendAction / gift unlock.
-     *
-     * We use sessionFrustration and sessionEngagement which have been updated
-     * after every single tap throughout the game — they represent the true
-     * emotional arc of the session, not just the last moment.
-     */
     private fun navigateToScoreboard() {
-        val jitter = if (jitterSamples > 0) totalJitter / jitterSamples else 0.10f
+        val jitter = tracker.avgJitter(tapVariances)
+        val sessionAccuracy = tracker.liveAccuracy(totalRounds)
 
-        // Session accuracy: first-attempt correct / total rounds
-        val sessionAccuracy = correctAnswersCount.toFloat() / totalRounds.toFloat()
-
-        // Wrong ratio: total wrong taps / (totalRounds * 3 max attempts)
-        val wrongRatio = sessionTotalWrong.toFloat() / (totalRounds * 3).toFloat()
-
-        Log.d(TAG, "──────────────────────────────────────────")
-        Log.d(TAG, "SESSION SUMMARY (for final prediction):")
-        Log.d(TAG, "  correctAnswers       = $correctAnswersCount / $totalRounds")
-        Log.d(TAG, "  sessionAccuracy      = ${"%.2f".format(sessionAccuracy)}")
-        Log.d(TAG, "  sessionFrustration   = ${"%.2f".format(sessionFrustration)}")
-        Log.d(TAG, "  sessionEngagement    = ${"%.2f".format(sessionEngagement)}")
-        Log.d(TAG, "  sessionTotalWrong    = $sessionTotalWrong")
-        Log.d(TAG, "  sessionPeakConsecW   = $sessionPeakConsecutiveWrong")
-        Log.d(TAG, "  wrongRatio           = ${"%.2f".format(wrongRatio)}")
-        Log.d(TAG, "──────────────────────────────────────────")
-
-        // Make a fresh prediction using the full session's accumulated state
         val sessionPrediction = gameMaster.predictSafe(
-            childId             = 0,
-            age                 = ageGroup.toFloat(),
-            accuracy            = sessionAccuracy,
-            engagement          = sessionEngagement,
-            frustration         = sessionFrustration,      // ← full session frustration
-            jitter              = jitter,
-            rt                  = 3000f,
-            consecutiveCorrect  = consecutiveCorrect.toFloat(),
-            consecutiveWrong    = sessionPeakConsecutiveWrong.toFloat()  // ← session peak, not current
+            childId            = ChildSession.childId,
+            age                = ageGroup.toFloat(),
+            accuracy           = sessionAccuracy,
+            engagement         = tracker.engagement,
+            frustration        = tracker.frustration,
+            jitter             = jitter,
+            rt                 = lastResponseTime.toFloat(),
+            consecutiveCorrect = consecutiveCorrect.toFloat(),
+            consecutiveWrong   = tracker.peakConsecWrong.toFloat()
         )
 
-        // ── Determine friendAction ────────────────────────────────────────────
-        //
-        // Priority order:
-        //   1. Model explicitly assigned a frustration-based friend (1, 2, 5)
-        //      → trust the model
-        //   2. Model assigned trophy friend (9) → trust the model
-        //   3. Model returned 0 but session signals clearly show high frustration
-        //      → override with a comfort friend based on session data
-        //   4. Model returned 0 and session was genuinely fine → no gift
+        val effectiveFriendAction = PersonalizedContentSelector.resolveFriendAction(sessionPrediction.frustrationRisk, tracker)
 
-        val modelFriendAction = sessionPrediction.friendAction
-
-        val effectiveFriendAction: Int = when {
-
-            // Model explicitly triggered a friend → use it
-            modelFriendAction > 0 -> {
-                Log.d(TAG, "friendAction=$modelFriendAction from model prediction")
-                modelFriendAction
-            }
-
-            // Model returned 0 but session frustration was clearly high
-            // This catches cases where the model's threshold wasn't reached
-            // even though the child visibly struggled (e.g. all questions needed
-            // 2–3 attempts, consecutiveWrong peaked at 3, etc.)
-            sessionFrustration >= FRUSTRATION_PEAK_THRESHOLD -> {
-                // Very high frustration → Blanket Panda (most comforting)
-                Log.d(TAG, "friendAction=1 overridden: sessionFrustration=${"%.2f".format(sessionFrustration)} >= $FRUSTRATION_PEAK_THRESHOLD")
-                1
-            }
-            sessionFrustration >= FRUSTRATION_HIGH_THRESHOLD -> {
-                // High frustration → random comfort friend (1, 2, or 5)
-                val comfortFriend = listOf(1, 2, 5).random()
-                Log.d(TAG, "friendAction=$comfortFriend overridden: sessionFrustration=${"%.2f".format(sessionFrustration)} >= $FRUSTRATION_HIGH_THRESHOLD")
-                comfortFriend
-            }
-            sessionPeakConsecutiveWrong >= 3 && wrongRatio >= 0.4f -> {
-                // Child had a streak of 3+ wrong AND overall got many wrong
-                // → Hug Panda (persistence recognition)
-                Log.d(TAG, "friendAction=2 overridden: peakConsecWrong=$sessionPeakConsecutiveWrong wrongRatio=${"%.2f".format(wrongRatio)}")
-                2
-            }
-
-            // Session was fine → no gift
-            else -> {
-                Log.d(TAG, "friendAction=0: session frustration=${"%.2f".format(sessionFrustration)} below thresholds, no gift")
-                0
-            }
-        }
-
-        val unlockGift = effectiveFriendAction > 0
-
-        Log.d(TAG, "navigateToScoreboard: correct=$correctAnswersCount/$totalRounds " +
-                "modelFriendAction=$modelFriendAction effectiveFriendAction=$effectiveFriendAction " +
-                "unlockGift=$unlockGift " +
-                "frustration=${"%.2f".format(sessionFrustration)} engagement=${"%.2f".format(sessionEngagement)}")
+        ChildProfileManager.updateAfterSession(
+            context                = this,
+            childId                = ChildSession.childId,
+            ageGroup               = ageGroup,
+            gameType               = "mood_match",
+            sessionAccuracy        = sessionAccuracy,
+            sessionFrustration     = tracker.frustration,
+            sessionEngagement      = tracker.engagement,
+            sessionJitter          = jitter,
+            sessionRt              = lastResponseTime.toFloat(),
+            sessionAlpha           = sessionPrediction.nextAccuracy * 10f,
+            peakConsecWrong        = tracker.peakConsecWrong,
+            lastFiveFeatureVectors = tracker.getFlatHistory()
+        )
 
         startActivity(Intent(this, MMScoreboardActivity::class.java).apply {
             putExtra("CORRECT_ANSWERS", correctAnswersCount)
@@ -658,22 +570,18 @@ class MoodMatchSevenDownActivity : AppCompatActivity(), TextToSpeech.OnInitListe
             putExtra("SCORE",           score)
             putExtra("AGE_GROUP",       ageGroup)
             putExtra("MOTIVATION_ID",   sessionPrediction.motivation)
-            putExtra("UNLOCK_GIFT",     unlockGift)
+            putExtra("UNLOCK_GIFT",     effectiveFriendAction > 0)
             putExtra("FRIEND_ACTION",   effectiveFriendAction)
             putExtra("GAME_MODE",       "seven_down")
         })
         finish()
     }
 
-    // =========================================================================
-    // UI helpers
-    // =========================================================================
-
-    private fun allOptionButtons(): List<Button> = if (isOlderGroup)
+    private fun allOptionButtons(): List<Button> = if (isOlderGroup || layoutOlder.visibility == View.VISIBLE)
         listOf(btnGrid1, btnGrid2, btnGrid3, btnGrid4)
     else listOf(btnOption1, btnOption2)
 
-    private fun btnForOption(opt: Int): Button = if (isOlderGroup) when (opt) {
+    private fun btnForOption(opt: Int): Button = if (isOlderGroup || layoutOlder.visibility == View.VISIBLE) when (opt) {
         1 -> btnGrid1; 2 -> btnGrid2; 3 -> btnGrid3; else -> btnGrid4
     } else when (opt) { 1 -> btnOption1; else -> btnOption2 }
 
@@ -681,29 +589,22 @@ class MoodMatchSevenDownActivity : AppCompatActivity(), TextToSpeech.OnInitListe
         val orange = ContextCompat.getColor(this, R.color.dark_orange)
         allOptionButtons().forEach { btn ->
             btn.backgroundTintList = android.content.res.ColorStateList.valueOf(orange)
-            btn.alpha = 1f
-            btn.isEnabled = true
+            btn.alpha = 1f; btn.isEnabled = true
         }
     }
 
     private fun highlightButton(option: Int, correct: Boolean) {
-        val color = ContextCompat.getColor(this,
-            if (correct) R.color.dark_orange else R.color.dark_orange)
+        val color = ContextCompat.getColor(this, R.color.dark_orange)
         btnForOption(option).backgroundTintList = android.content.res.ColorStateList.valueOf(color)
     }
 
     private fun breatheCorrectButton(pulses: Int) {
         val btn = btnForOption(correctOption)
-        btn.backgroundTintList = android.content.res.ColorStateList.valueOf(
-            ContextCompat.getColor(this, R.color.dark_orange))
+        btn.backgroundTintList = android.content.res.ColorStateList.valueOf(ContextCompat.getColor(this, R.color.dark_orange))
         btn.alpha = 1f
         isPulsing = true
         fun doPulse(remaining: Int) {
-            if (remaining <= 0 || !isPulsing) {
-                btn.alpha = 1f
-                isPulsing = false
-                return
-            }
+            if (remaining <= 0 || !isPulsing) { btn.alpha = 1f; isPulsing = false; return }
             btn.animate().alpha(0.3f).setDuration(400).withEndAction {
                 if (!isPulsing) { btn.alpha = 1f; return@withEndAction }
                 btn.animate().alpha(1f).setDuration(400).withEndAction { doPulse(remaining - 1) }.start()
@@ -714,18 +615,18 @@ class MoodMatchSevenDownActivity : AppCompatActivity(), TextToSpeech.OnInitListe
 
     private fun darkenAllButtons(keepCorrectBright: Boolean) {
         isPulsing = false
-        val darkGreen   = android.graphics.Color.parseColor("#FFA726")
+        val highlighted = android.graphics.Color.parseColor("#FFA726")
         val darkRed     = android.graphics.Color.parseColor("#B71C1C")
-        val fullGreen   = ContextCompat.getColor(this, R.color.light_orange)
+        val fullBright  = ContextCompat.getColor(this, R.color.light_orange)
         val lightOrange = ContextCompat.getColor(this, R.color.light_orange)
 
-        allOptionButtons().forEach { btn -> btn.isEnabled = false }
+        allOptionButtons().forEach { it.isEnabled = false }
 
         for (opt in 1..allOptionButtons().size) {
             val btn = btnForOption(opt)
             val color = when {
-                opt == correctOption && keepCorrectBright -> fullGreen
-                opt == correctOption                      -> darkGreen
+                opt == correctOption && keepCorrectBright -> fullBright
+                opt == correctOption                      -> highlighted
                 opt in wrongTappedOptions                 -> darkRed
                 else                                      -> lightOrange
             }
@@ -751,27 +652,10 @@ class MoodMatchSevenDownActivity : AppCompatActivity(), TextToSpeech.OnInitListe
         catch (e: Exception) { Log.w(TAG, "Sound error") }
     }
 
-    // =========================================================================
-    // Helpers
-    // =========================================================================
-
-    private fun findImageForEmotion(emotion: String, pool: Array<String>) =
-        pool.firstOrNull { extractEmotionName(it).equals(emotion, ignoreCase = true) } ?: pool.first()
-
-    private fun formatEmotionText(emotion: String) =
-        emotion.replace(".png","").replace(".jpg","")
-            .replaceFirstChar { if (it.isLowerCase()) it.titlecase(Locale.ROOT) else it.toString() }
-
     private fun extractResourceName(fullPath: String, removeExtension: Boolean = false): String {
         var name = fullPath.substringAfterLast("/")
         if (removeExtension) name = name.substringBeforeLast(".")
         return name
-    }
-
-    private fun extractEmotionName(fullPath: String): String {
-        val res   = extractResourceName(fullPath, removeExtension = true)
-        val parts = res.split("_")
-        return if (parts.size >= 2) parts.last() else res
     }
 
     private fun setEmotionImage(resourceName: String) {
@@ -783,22 +667,24 @@ class MoodMatchSevenDownActivity : AppCompatActivity(), TextToSpeech.OnInitListe
         if (resId == 0) Log.w(TAG, "No drawable found for '$resourceName'")
         emotionImage.setImageResource(if (resId != 0) resId else R.drawable.panda_confused)
         emotionImage.visibility = View.VISIBLE
-        emotionImage.alpha = 1.0f
+        emotionImage.alpha      = 1.0f
     }
 
     override fun onInit(status: Int) {
         if (status == TextToSpeech.SUCCESS) {
-            tts.setLanguage(Locale.US); tts.setPitch(1.8f); tts.setSpeechRate(0.9f)
+            tts.setLanguage(Locale.US)
+            tts.setPitch(if (ageGroup <= 7) 1.8f else 1.4f)
+            tts.setSpeechRate(if (ageGroup <= 7) 0.85f else 0.90f)
             isTtsInitialized = true
-            pendingSpeech?.let { tts.speak(it, TextToSpeech.QUEUE_FLUSH, null, ""); pendingSpeech = null }
+            pendingSpeech?.let {
+                tts.speak(it, TextToSpeech.QUEUE_FLUSH, null, "")
+                pendingSpeech = null
+            }
         }
     }
 
     private fun speakText(text: String) {
-        if (isTtsInitialized) {
-            tts.speak(text, TextToSpeech.QUEUE_FLUSH, null, "")
-        } else {
-            pendingSpeech = text
-        }
+        if (isTtsInitialized) tts.speak(text, TextToSpeech.QUEUE_FLUSH, null, "")
+        else pendingSpeech = text
     }
 }

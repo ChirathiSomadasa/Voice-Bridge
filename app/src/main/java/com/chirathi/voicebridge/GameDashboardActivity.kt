@@ -29,7 +29,7 @@ class GameDashboardActivity : AppCompatActivity() {
     private val KEY_CALM_MUSIC  = "pref_calm_music_enabled"
     private val KEY_CALM_VOLUME = "pref_calm_music_volume"
 
-    private var currentUserAge: Int = 6  // stored after Firestore fetch
+    private var currentUserAge: Int = 6
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -37,6 +37,13 @@ class GameDashboardActivity : AppCompatActivity() {
 
         auth  = FirebaseAuth.getInstance()
         prefs = getSharedPreferences("voicebridge_prefs", MODE_PRIVATE)
+
+        // ── Restore ChildSession in case process was killed ──────────────────
+        // This is the safety net. Primary init happens in fetchAgeAndLaunch().
+        if (!ChildSession.isInitialized) {
+            ChildSession.restore(this)
+            Log.d(TAG, "ChildSession restored from prefs: childId=${ChildSession.childId} age=${ChildSession.age}")
+        }
 
         val moodMatchBtn = findViewById<Button>(R.id.btn_game1)
         val myDayBtn     = findViewById<Button>(R.id.btn_level2)
@@ -46,12 +53,20 @@ class GameDashboardActivity : AppCompatActivity() {
         moodMatchBtn.setOnClickListener { handleMoodMatchClick() }
 
         myDayBtn.setOnClickListener {
-            startActivity(Intent(this, RoutineSelectionActivity::class.java))
+            // ── Pass age to ActivitySequenceUnder/Over via RoutineSelection ──
+            startActivity(Intent(this, RoutineSelectionActivity::class.java).apply {
+                putExtra("USER_AGE", ChildSession.age)
+            })
             overridePendingTransition(R.drawable.slide_in_right, R.drawable.slide_out_left)
         }
 
         singTimeBtn.setOnClickListener {
-            startActivity(Intent(this, SongSelectionActivity::class.java))
+            // ── Song selection: child picks freely, age passed for tier calc ─
+            startActivity(Intent(this, SongSelectionActivity::class.java).apply {
+                putExtra("USER_AGE",    ChildSession.age)
+                putExtra("CHILD_ID",    ChildSession.childId)
+                putExtra("AGE_GROUP",   ChildSession.ageGroup)
+            })
         }
 
         backBtn.setOnClickListener {
@@ -62,12 +77,14 @@ class GameDashboardActivity : AppCompatActivity() {
         }
 
         setupGameSettings()
-        prefetchUserAge()  // fetch age early so settings dialog has it ready
+        prefetchUserAge()
     }
 
     override fun onResume() {
         super.onResume()
         CalmMusicManager.onActivityResume(this)
+        // Re-log session state on every resume for debugging
+        ChildSession.log()
     }
 
     override fun onPause() {
@@ -75,13 +92,15 @@ class GameDashboardActivity : AppCompatActivity() {
         CalmMusicManager.onActivityPause()
     }
 
-    /** Fetches the user's age from Firestore and caches it in [currentUserAge]. */
     private fun prefetchUserAge() {
         val uid = auth.currentUser?.uid ?: return
         db.collection("users").document(uid).get()
             .addOnSuccessListener { document ->
-                currentUserAge = document.getString("age")?.toIntOrNull() ?: 6
-                Log.d(TAG, "prefetchUserAge: $currentUserAge")
+                val age = document.getString("age")?.toIntOrNull() ?: 6
+                currentUserAge = age
+                // ── Initialize ChildSession from Firestore age ───────────────
+                ChildSession.set(this, uid, age)
+                Log.d(TAG, "prefetchUserAge: age=$age → ChildSession initialized")
             }
             .addOnFailureListener { e ->
                 Log.e(TAG, "prefetchUserAge failed: ${e.message}")
@@ -105,15 +124,20 @@ class GameDashboardActivity : AppCompatActivity() {
         val currentUser = auth.currentUser
         if (currentUser == null) {
             startActivity(Intent(this, LoginActivity::class.java))
-            finish()
-            return
+            finish(); return
         }
 
         db.collection("users").document(currentUser.uid).get()
             .addOnSuccessListener { document ->
                 val age = document.getString("age")?.toIntOrNull() ?: 6
-                currentUserAge = age  // keep cache in sync
-                Log.d(TAG, "Age fetched: $age  viaPandaIntro=$viaPandaIntro")
+                currentUserAge = age
+
+                // ── PRIMARY ChildSession initialization point ────────────────
+                // This runs every time the child launches a game from the dashboard.
+                // LoginActivity is not modified — this is the equivalent hook.
+                ChildSession.set(this, currentUser.uid, age)
+                Log.d(TAG, "fetchAgeAndLaunch: age=$age childId=${ChildSession.childId} via=${ if (viaPandaIntro) "panda" else "direct"}")
+
                 if (viaPandaIntro) {
                     startActivity(Intent(this, PandaIntroActivity::class.java).apply {
                         putExtra("AGE_GROUP", age)
@@ -125,12 +149,12 @@ class GameDashboardActivity : AppCompatActivity() {
             .addOnFailureListener { e ->
                 Log.e(TAG, "Firestore error: ${e.message}")
                 Toast.makeText(this, "Error loading profile", Toast.LENGTH_SHORT).show()
+                val fallbackAge = if (ChildSession.isInitialized) ChildSession.age else 6
                 if (viaPandaIntro) {
                     startActivity(Intent(this, PandaIntroActivity::class.java).apply {
-                        putExtra("AGE_GROUP", 6)
-                    })
+                        putExtra("AGE_GROUP", fallbackAge) })
                 } else {
-                    launchMoodMatch(6)
+                    launchMoodMatch(fallbackAge)
                 }
             }
     }
@@ -144,10 +168,7 @@ class GameDashboardActivity : AppCompatActivity() {
     private fun setupGameSettings() {
         settingsPrefs = getSharedPreferences("game_settings_prefs", MODE_PRIVATE)
         audioManager  = getSystemService(AUDIO_SERVICE) as AudioManager
-
-        // Init the singleton — checks resource existence, respects saved pref
         CalmMusicManager.init(this)
-
         findViewById<FrameLayout>(R.id.btnGameSettings).setOnClickListener {
             showGameSettingsDialog()
         }
@@ -156,7 +177,6 @@ class GameDashboardActivity : AppCompatActivity() {
     private fun showGameSettingsDialog() {
         try {
             val dialogView = layoutInflater.inflate(R.layout.activity_dialog_game_settings, null)
-
             val switchCalmMusic = dialogView.findViewById<SwitchCompat>(R.id.switchCalmMusic)
             val seekVolume      = dialogView.findViewById<SeekBar>(R.id.seekMasterVolume)
 
@@ -165,7 +185,6 @@ class GameDashboardActivity : AppCompatActivity() {
             } catch (_: Exception) { false }
 
             switchCalmMusic.isChecked = settingsPrefs.getBoolean(KEY_CALM_MUSIC, false)
-
             if (!hasCalmResource) {
                 switchCalmMusic.isChecked = false
                 switchCalmMusic.isEnabled = false
@@ -203,7 +222,6 @@ class GameDashboardActivity : AppCompatActivity() {
                     CalmMusicManager.applySystemVolume(this)
                 }
 
-            // "Customize Routines" is only available for the 8–10 age group
             if (currentUserAge in 8..10) {
                 builder.setNeutralButton("Customize Routines") { _, _ ->
                     startActivityForResult(
@@ -212,23 +230,19 @@ class GameDashboardActivity : AppCompatActivity() {
                     )
                 }
             }
-
             builder.show()
-
         } catch (e: Exception) {
             Log.e(TAG, "showGameSettingsDialog failed: ${e.message}", e)
             Toast.makeText(this, "Could not open settings", Toast.LENGTH_SHORT).show()
         }
     }
+
     companion object {
         private const val REQUEST_CUSTOMIZE_ROUTINES = 1001
     }
 
-    // Add this override:
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
-        if (requestCode == REQUEST_CUSTOMIZE_ROUTINES) {
-            showGameSettingsDialog()   // reopen settings dialog automatically
-        }
+        if (requestCode == REQUEST_CUSTOMIZE_ROUTINES) showGameSettingsDialog()
     }
 }
