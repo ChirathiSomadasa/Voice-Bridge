@@ -1,6 +1,7 @@
 package com.chirathi.voicebridge.api.models
 
 import com.google.gson.annotations.SerializedName
+import com.google.logging.type.LogSeverity
 
 
 // CHATBOT API MODELS
@@ -47,4 +48,23 @@ data class TherapyTask(
 
 data class RecommendationsResponse(
     val recommendations: List<TherapyTask>
+)
+
+data class RecommendTherapyRequest(
+    val age: Int,
+    val disorder: String,
+    val severity: String,
+    val communication: String,
+    val attention: String,
+)
+
+data class RecommendTherapyResponse(
+    val success: Boolean,
+    @SerializedName("activities")
+    val activities: List<RecommendTherapyItem>
+)
+
+data class RecommendTherapyItem(
+    val activity: String,
+    val score: Double? = null,
 )

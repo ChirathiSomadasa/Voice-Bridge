@@ -74,10 +74,11 @@ class Edu_GeminiHelper(private val apiKey: String = BuildConfig.GEMINI_Therapy_A
         Materials: ${task.materials ?: "None"}
         Tips: ${task.tips ?: "None"}
         Description: ${task.description ?: task.activity}
+        child matches ${task.score} the above information with the activity and goal.
 
         Output format:
         display these - ${task.title ?: task.activity}
-
+        short description of the activity in 1-2 sentences. for parent to read to child. Avoid complex sentences.
         STEP 1: 
         STEP 2: 
         STEP 3: 
@@ -87,6 +88,7 @@ class Edu_GeminiHelper(private val apiKey: String = BuildConfig.GEMINI_Therapy_A
         Tools & Materials : bullet marks mention tools, materials needed for the activity if any according to ${task.title ?: task.activity}, and how to use them in simple terms.
         
         Goal: Help the child practice ${task.goal}. after one line space place the goal in simple words. like "Goal: Practice saying 's' sound". Avoid complex sentences.
+        Next Steps: Provide what the parent can do after the activity to improve the child. like "Next Steps: how to go on forward with this activity.
         
         don't add any * mark or - mark in the steps, just write STEP 1: and then the instruction. Avoid any extra formatting. Keep it very simple and clear for a child to understand.
     """.trimIndent()

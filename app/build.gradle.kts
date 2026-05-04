@@ -110,6 +110,10 @@ dependencies {
     testImplementation ("io.mockk:mockk:1.13.5")
     androidTestImplementation("androidx.test.ext:junit:1.3.0")
     androidTestImplementation("androidx.test.espresso:espresso-core:3.7.0")
+    testImplementation("org.robolectric:robolectric:4.12.1")
+    testImplementation("androidx.arch.core:core-testing:2.2.0")
+    testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.7.3")
+    androidTestImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.7.3")
 
     implementation ("androidx.camera:camera-core:1.3.0")
     implementation ("androidx.camera:camera-camera2:1.3.0")
@@ -128,6 +132,9 @@ dependencies {
     // 2. Updated OkHttp & Logging Interceptor
     implementation("com.squareup.okhttp3:okhttp:4.12.0")
     implementation("com.squareup.okhttp3:logging-interceptor:4.12.0")
+    //charts
+    implementation ("com.github.PhilJay:MPAndroidChart:v3.1.0")
+
     androidTestImplementation ("androidx.test:rules:1.5.0")
     androidTestImplementation ("androidx.benchmark:benchmark-macro-junit4:1.2.2")
     androidTestImplementation("androidx.startup:startup-runtime:1.1.1")
@@ -154,4 +161,5 @@ dependencies {
     implementation ("org.pytorch:pytorch_android_torchvision_lite:1.13.1")
     implementation ("com.google.android.flexbox:flexbox:3.0.0")
     implementation ("com.airbnb.android:lottie:6.0.0")
+    implementation("androidx.recyclerview:recyclerview:1.3.2")
 }

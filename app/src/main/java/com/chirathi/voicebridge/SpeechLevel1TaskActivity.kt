@@ -182,7 +182,7 @@ class SpeechLevel1TaskActivity : AppCompatActivity(), TextToSpeech.OnInitListene
 
             if (audioData != null) {
                 // 3. Get Wav2Vec2 Score
-                val (pronunciationType, score) = wav2Vec2Scorer.predict(audioData, targetLabel)
+                val (pronunciationType, score, predictedText) = wav2Vec2Scorer.predict(audioData, letter)
 
                 val category = when {
                     score >= 75 -> "good"
@@ -197,7 +197,7 @@ class SpeechLevel1TaskActivity : AppCompatActivity(), TextToSpeech.OnInitListene
                 CoroutineScope(Dispatchers.IO).launch {
 
                     // Call the suspend function from FeedbackGenerator
-                    val aiFeedbackText = FeedbackGenerator.getDynamicFeedback(score, category)
+                    val aiFeedbackText = FeedbackGenerator.getDynamicFeedback(score, category, "letter", letter)
 
                     // 5. Switch back to Main Thread to update UI
                     withContext(Dispatchers.Main) {
@@ -213,8 +213,14 @@ class SpeechLevel1TaskActivity : AppCompatActivity(), TextToSpeech.OnInitListene
                         FeedbackDialog(this@SpeechLevel1TaskActivity).show(
                             score = score,
                             category = category,
-                            feedbackMessage = aiFeedbackText
+                            feedbackMessage = aiFeedbackText,
+                            targetText = letter,
+                            predictedText = predictedText,
+                            onClose = {
+                                tts?.stop()
+                            }
                         )
+                        tts?.speak(aiFeedbackText, TextToSpeech.QUEUE_FLUSH, null, "feedbackTTS")
                         btnNext.isEnabled = true
                     }
                 }

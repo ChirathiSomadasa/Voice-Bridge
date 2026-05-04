@@ -11,9 +11,9 @@ object TherapyDataPool {
     val articulationWords = listOf(
         WordItem("ball", R.drawable.ball), WordItem("cat", R.drawable.cat),
         WordItem("spoon", R.drawable.spoon), WordItem("rabbit", R.drawable.rabbit),
-        WordItem("chair", R.drawable.chair), WordItem("tap", R.drawable.tap),
+        WordItem("chair", R.drawable.chair),WordItem("goat", R.drawable.goat),
         WordItem("leaf", R.drawable.leaf), WordItem("shoe", R.drawable.shoe),
-        WordItem("bottle", R.drawable.bottle), WordItem("goat", R.drawable.goat),
+        WordItem("bottle", R.drawable.bottle),  WordItem("carrot", R.drawable.carrot),
         WordItem("sun", R.drawable.sun2), WordItem("star", R.drawable.star),
         WordItem("bed", R.drawable.bed), WordItem("duck", R.drawable.duck),
         WordItem("lamp", R.drawable.lamp), WordItem("waterfall", R.drawable.waterfall),

@@ -2,43 +2,46 @@
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
+    android:fillViewport="true"
     android:background="@drawable/bottom_sheet_rounded_bg">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:padding="16dp">
+        android:padding="18dp">
 
         <TextView
             android:id="@+id/tvTitle"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:gravity="center"
-            android:text="Select Child's Disorder"
+            android:text="Child Profile"
             android:textColor="@android:color/black"
             android:textSize="20sp"
             android:textStyle="bold" />
 
+
+        <!-- Disorder Type Selection -->
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="14dp"
+            android:layout_marginTop="12dp"
             android:text="Disorder Type"
             android:textColor="@android:color/black"
-            android:textSize="18sp"
+            android:textSize="16sp"
             android:textStyle="bold" />
 
         <RadioGroup
             android:id="@+id/radioGroupDisorders"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
+            android:paddingTop="4dp"
             android:orientation="vertical"
             android:textStyle="bold">
 
             <RadioButton
-                android:id="@+id/radioASD"
+                android:id="@+id/rbDisorderASD"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:padding="12dp"
@@ -47,7 +50,7 @@
                 android:textSize="15sp" />
 
             <RadioButton
-                android:id="@+id/radioDS"
+                android:id="@+id/rbDisorderDS"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:padding="12dp"
@@ -56,7 +59,16 @@
                 android:textSize="15sp" />
 
             <RadioButton
-                android:id="@+id/radioPhonologicalDisorder"
+                android:id="@+id/rbDisorderArticulation"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:padding="12dp"
+                android:text="Articulation Disorder"
+                android:textStyle="bold"
+                android:textSize="15sp" />
+
+            <RadioButton
+                android:id="@+id/rbDisorderPhono"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:padding="12dp"
@@ -65,16 +77,7 @@
                 android:textSize="15sp" />
 
             <RadioButton
-                android:id="@+id/radioArticulationDisorder"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:padding="12dp"
-                android:text="Articulation"
-                android:textStyle="bold"
-                android:textSize="15sp" />
-
-            <RadioButton
-                android:id="@+id/radioSpeechDelay"
+                android:id="@+id/rbDisorderSpeechDelay"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:padding="12dp"
@@ -83,7 +86,7 @@
                 android:textSize="15sp" />
 
             <RadioButton
-                android:id="@+id/radioStuttering"
+                android:id="@+id/rbDisorderStuttering"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:padding="12dp"
@@ -92,57 +95,64 @@
                 android:textSize="15sp" />
 
             <RadioButton
-                android:id="@+id/radioLanguage"
+                android:id="@+id/rbDisorderLanguage"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:padding="12dp"
-                android:text="Language Development"
+                android:text="Language Disorder"
                 android:textStyle="bold"
                 android:textSize="15sp" />
 
         </RadioGroup>
+
 
         <!-- Severity Selection (Initially Hidden) -->
         <TextView
             android:id="@+id/tvSeverityTitle"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
+            android:layout_marginTop="12dp"
             android:text="Severity Level"
             android:textColor="@android:color/black"
-            android:textSize="18sp"
+            android:textSize="16sp"
             android:textStyle="bold" />
 
         <RadioGroup
             android:id="@+id/radioGroupSeverity"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
-            android:orientation="vertical"
+            android:paddingTop="4dp"
+            android:orientation="horizontal"
             android:textStyle="bold">
 
             <RadioButton
-                android:id="@+id/radioMild"
-                android:layout_width="match_parent"
+                android:id="@+id/rbSeverityMild"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:singleLine="true"
                 android:padding="12dp"
                 android:text="Mild"
                 android:textStyle="bold"
                 android:textSize="15sp" />
 
             <RadioButton
-                android:id="@+id/radioModerate"
-                android:layout_width="match_parent"
+                android:id="@+id/rbSeverityModerate"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:singleLine="true"
                 android:padding="12dp"
                 android:text="Moderate"
                 android:textStyle="bold"
                 android:textSize="15sp" />
 
             <RadioButton
-                android:id="@+id/radioSevere"
-                android:layout_width="match_parent"
+                android:id="@+id/rbSeveritySevere"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:singleLine="true"
                 android:padding="12dp"
                 android:text="Severe"
                 android:textStyle="bold"
@@ -150,13 +160,147 @@
 
         </RadioGroup>
 
+
+        <!-- Communication Diff Selection (Initially Hidden) -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:text="Communication"
+            android:textColor="@android:color/black"
+            android:textSize="16sp"
+            android:textStyle="bold" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:paddingTop="4dp">
+
+            <RadioGroup
+                android:id="@+id/radioGroupCommunicationRow1"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:paddingTop="4dp"
+                android:orientation="horizontal"
+                android:textStyle="bold">
+
+                <RadioButton
+                    android:id="@+id/rbCommNonVerbal"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:padding="12dp"
+                    android:text="Non-verbal"
+                    android:textStyle="bold"
+                    android:textSize="15sp" />
+
+                <RadioButton
+                    android:id="@+id/rbCommFewWords"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:padding="12dp"
+                    android:text="Few Words"
+                    android:textStyle="bold"
+                    android:textSize="15sp" />
+
+            </RadioGroup>
+
+            <RadioGroup
+                android:id="@+id/radioGroupCommunicationRow2"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:paddingTop="4dp"
+                android:orientation="horizontal"
+                android:textStyle="bold">
+
+                <RadioButton
+                    android:id="@+id/rbCommPhrases"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:padding="12dp"
+                    android:text="Phrases"
+                    android:textStyle="bold"
+                    android:textSize="15sp" />
+
+                <RadioButton
+                    android:id="@+id/rbCommSentences"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:padding="12dp"
+                    android:text="Sentences"
+                    android:textStyle="bold"
+                    android:textSize="15sp" />
+
+            </RadioGroup>
+        </LinearLayout>
+
+
+        <!-- Attention Selection (Initially Hidden) -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:text="Attention"
+            android:textColor="@android:color/black"
+            android:textSize="16sp"
+            android:textStyle="bold" />
+
+        <RadioGroup
+            android:id="@+id/radioGroupAttention"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:paddingTop="4dp"
+            android:orientation="horizontal"
+            android:textStyle="bold">
+
+            <RadioButton
+                android:id="@+id/rbAttLow"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:singleLine="true"
+                android:padding="12dp"
+                android:text="Low"
+                android:textStyle="bold"
+                android:textSize="15sp" />
+
+            <RadioButton
+                android:id="@+id/rbAttMedium"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:singleLine="true"
+                android:padding="12dp"
+                android:text="Medium"
+                android:textStyle="bold"
+                android:textSize="15sp" />
+
+            <RadioButton
+                android:id="@+id/rbAttHigh"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:singleLine="true"
+                android:padding="12dp"
+                android:text="High"
+                android:textStyle="bold"
+                android:textSize="15sp" />
+
+        </RadioGroup>
+
+
+
         <Button
             android:id="@+id/btnApplyDisorder"
             android:layout_width="match_parent"
             android:layout_height="55dp"
             android:layout_marginTop="16dp"
             android:backgroundTint="@color/green"
-            android:text="Apply"
+            android:text="Save and Continue"
             android:textAllCaps="false"
             android:textColor="@color/white"
             android:textSize="20sp"

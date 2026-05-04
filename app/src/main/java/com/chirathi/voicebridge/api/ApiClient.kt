@@ -20,7 +20,8 @@ object ApiClient {
      * To find your Mac IP: Open Terminal and run: ipconfig getifaddr en0
      */
 //    private const val BASE_URL = "http://10.0.2.2:5002/"
-    private const val BASE_URL = "https://thamindud-voiceb-flask-api.hf.space"
+//    private const val BASE_URL = "https://thamindud-voiceb-flask-api.hf.space"
+    private const val BASE_URL = "https://thamindud-voiceb-flask-api-2.hf.space"
 //    private const val BASE_URL = "http://192.168.8.113:5002/"
 //    private const val BASE_URL = "http://172.28.120.163:5002/"   phone hotspot
     
