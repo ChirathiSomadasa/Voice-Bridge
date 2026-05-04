@@ -135,7 +135,7 @@ class PhraseActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
         return withContext(Dispatchers.IO) {
             Log.d("GEMINI_CHECK", "LLM process started for: $verb + $obj")
             try {
-                val prompt =  """
+                val prompt = """
     You are a smart AAC assistant for a child. 
     Generate a simple, natural 4-6 word sentence using the input.
     Input:
