@@ -8,6 +8,7 @@ import android.os.Looper
 import android.util.Log
 import android.view.View
 import android.widget.*
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.cardview.widget.CardView
 import androidx.core.content.ContextCompat
@@ -122,6 +123,27 @@ class RhythmSummaryActivity : AppCompatActivity() {
         try { gameMaster.close() } catch (_: Exception) {}
     }
 
+    @Deprecated("Deprecated in Java")
+    override fun onBackPressed() {
+        showExitConfirmation()
+    }
+
+    private fun showExitConfirmation() {
+        AlertDialog.Builder(this)
+            .setTitle("Leave Game?")
+            .setMessage("Your progress won't be saved if you leave now.")
+            .setPositiveButton("Leave") { _, _ ->
+                isGameFinished = true
+                handler.removeCallbacksAndMessages(null)
+                startActivity(Intent(this, SongSelectionActivity::class.java).apply {
+                    flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
+                })
+                finish()
+            }
+            .setNegativeButton("Keep Playing", null)
+            .show()
+    }
+
     private fun initializeViews() {
         backButton        = findViewById(R.id.backBtn)
         wordTitle         = findViewById(R.id.wordTitle)
@@ -134,13 +156,9 @@ class RhythmSummaryActivity : AppCompatActivity() {
         levelBadge        = findViewById(R.id.levelBadge)
         levelIndicator    = findViewById(R.id.levelIndicator)
 
+        // Back button now routes through confirmation dialog
         backButton.setOnClickListener {
-            isGameFinished = true
-            handler.removeCallbacksAndMessages(null)
-            startActivity(Intent(this, SongSelectionActivity::class.java).apply {
-                flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
-            })
-            finish()
+            showExitConfirmation()
         }
     }
 

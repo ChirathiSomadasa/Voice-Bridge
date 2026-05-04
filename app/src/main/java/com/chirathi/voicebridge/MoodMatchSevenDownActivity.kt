@@ -8,6 +8,7 @@ import android.speech.tts.TextToSpeech
 import android.util.Log
 import android.view.View
 import android.widget.*
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import java.util.Locale
@@ -56,6 +57,9 @@ class MoodMatchSevenDownActivity : AppCompatActivity(), TextToSpeech.OnInitListe
     private var roundsCompleted             = 0
 
     private val wrongTappedOptions = mutableSetOf<Int>()
+
+    // ── Completion guard ──────────────────────────────────────────────────────
+    private var gameCompletedNormally = false
 
     // ── Views ─────────────────────────────────────────────────────────────────
     private lateinit var emotionImage: ImageView
@@ -159,7 +163,11 @@ class MoodMatchSevenDownActivity : AppCompatActivity(), TextToSpeech.OnInitListe
 
     override fun onDestroy() {
         super.onDestroy()
-        saveCrossSessionMemory()
+        // Only persist cross-session state if the game was completed normally.
+        // Mid-game exits (back button) must not save progress.
+        if (gameCompletedNormally) {
+            saveCrossSessionMemory()
+        }
         if (::tts.isInitialized) { tts.stop(); tts.shutdown() }
         correctSoundPlayer?.release()
         gameMaster.close()
@@ -172,6 +180,25 @@ class MoodMatchSevenDownActivity : AppCompatActivity(), TextToSpeech.OnInitListe
             Log.d(TAG, "🎮 Mini-game returned")
             tracker.update(true, 1, currentPrediction.frustrationRisk, consecutiveWrong)
         }
+    }
+
+    @Deprecated("Deprecated in Java")
+    override fun onBackPressed() {
+        showExitConfirmation()
+    }
+
+    private fun showExitConfirmation() {
+        AlertDialog.Builder(this)
+            .setTitle("Leave Game?")
+            .setMessage("Your progress won't be saved if you leave now.")
+            .setPositiveButton("Leave") { _, _ ->
+                startActivity(Intent(this, GameDashboardActivity::class.java).apply {
+                    flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
+                })
+                finish()
+            }
+            .setNegativeButton("Keep Playing", null)
+            .show()
     }
 
     private fun showHeader() {
@@ -210,11 +237,9 @@ class MoodMatchSevenDownActivity : AppCompatActivity(), TextToSpeech.OnInitListe
         pandaImage     = findViewById(R.id.pandaImage)
         guessText      = findViewById(R.id.guessText)
 
+        // Back button now routes through confirmation dialog
         findViewById<ImageView>(R.id.backBtn).setOnClickListener {
-            startActivity(Intent(this, GameDashboardActivity::class.java).apply {
-                flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
-            })
-            finish()
+            showExitConfirmation()
         }
     }
 
@@ -382,7 +407,8 @@ class MoodMatchSevenDownActivity : AppCompatActivity(), TextToSpeech.OnInitListe
             difficultyState = PersonalizedContentSelector.getNewDifficultyState(difficultyState, streakFirstTryCorrect, streakFirstTryWrong)
 
             if (difficultyState != oldState) {
-                saveCrossSessionMemory()
+                // Note: we do NOT call saveCrossSessionMemory() here mid-game.
+                // It will only be persisted when the game completes normally.
                 if (difficultyState > oldState) {
                     Log.d(TAG, "State Upgraded! $oldState -> $difficultyState")
                     streakFirstTryCorrect = 0
@@ -456,7 +482,6 @@ class MoodMatchSevenDownActivity : AppCompatActivity(), TextToSpeech.OnInitListe
 
     @Suppress("DEPRECATION")
     private fun launchMiniGame() {
-        // Toggle the minigame type dynamically between 0 and 1
         val typeToLaunch = nextMinigameType
         nextMinigameType = if (nextMinigameType == 0) 1 else 0
 
@@ -494,6 +519,8 @@ class MoodMatchSevenDownActivity : AppCompatActivity(), TextToSpeech.OnInitListe
     }
 
     private fun showFeedbackPopup() {
+        // Mark game as properly completed before saving anything
+        gameCompletedNormally = true
         saveCrossSessionMemory()
         FeedbackPopupDialog(
             context        = this,
