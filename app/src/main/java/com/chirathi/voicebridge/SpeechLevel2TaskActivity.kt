@@ -167,7 +167,7 @@ class SpeechLevel2TaskActivity : AppCompatActivity(), TextToSpeech.OnInitListene
             }
 
             if (audioData != null) {
-                val (pronunciationType, score) = wav2Vec2Scorer.predict(audioData, targetWord)
+                val (pronunciationType, score, predictedText) = wav2Vec2Scorer.predict(audioData, targetWord)
 
                 val category = when {
                     score >= 75 -> "good"
@@ -178,7 +178,7 @@ class SpeechLevel2TaskActivity : AppCompatActivity(), TextToSpeech.OnInitListene
                 saveToHistory(targetWord, score, 2, pronunciationType)
 
                 CoroutineScope(Dispatchers.IO).launch {
-                    val aiFeedbackText = FeedbackGenerator.getDynamicFeedback(score, category)
+                    val aiFeedbackText = FeedbackGenerator.getDynamicFeedback(score, category, "word", targetWord)
 
                     withContext(Dispatchers.Main) {
                         if (::processingDialog.isInitialized && processingDialog.isShowing) {
@@ -190,8 +190,14 @@ class SpeechLevel2TaskActivity : AppCompatActivity(), TextToSpeech.OnInitListene
                         FeedbackDialog(this@SpeechLevel2TaskActivity).show(
                             score = score,
                             category = category,
-                            feedbackMessage = aiFeedbackText
+                            feedbackMessage = aiFeedbackText,
+                            targetText = targetWord,
+                            predictedText = predictedText,
+                            onClose = {
+                                tts?.stop()
+                            }
                         )
+                        tts?.speak(aiFeedbackText, TextToSpeech.QUEUE_FLUSH, null, "feedbackTTS")
                         btnNext.isEnabled = true
                     }
                 }

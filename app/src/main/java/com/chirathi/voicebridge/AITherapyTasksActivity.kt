@@ -147,7 +147,7 @@ class AITherapyTasksActivity : AppCompatActivity() {
         }
     }
 
-    private fun showTaskDetails(task: TherapyTask) {
+    fun showTaskDetails(task: TherapyTask) {
 //        val taskTitle = task.title ?: task.activity.take(50).split(":").firstOrNull() ?: "Therapy Task"
 //        val matchScore = task.score ?: task.similarity
 //

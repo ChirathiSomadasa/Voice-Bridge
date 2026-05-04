@@ -108,10 +108,13 @@
             android:name=".Education_therapyActivity"
             android:exported="false" />
         <activity
+            android:name=".Education_subjects_Activity"
+            android:exported="false" />
+        <activity
             android:name=".Edu_LessonListActivity"
             android:exported="false" />
         <activity
-            android:name=".Edu_SubLessonDetailActivity"
+            android:name=".TherapyActivitiesActivity"
             android:exported="false" />
         <activity
             android:name=".AITherapyTasksActivity"

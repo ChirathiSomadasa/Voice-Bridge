@@ -18,6 +18,13 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.FileProvider
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.github.mikephil.charting.charts.BarChart
+import com.github.mikephil.charting.components.XAxis
+import com.github.mikephil.charting.data.BarData
+import com.github.mikephil.charting.data.BarDataSet
+import com.github.mikephil.charting.data.BarEntry
+import com.github.mikephil.charting.formatter.IndexAxisValueFormatter
+import com.github.mikephil.charting.utils.ColorTemplate
 import com.google.android.material.button.MaterialButton
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
@@ -25,6 +32,8 @@ import java.io.File
 import java.io.FileOutputStream
 import java.text.SimpleDateFormat
 import java.util.*
+import kotlin.collections.ArrayList
+import kotlin.collections.HashMap
 
 class ParentReportActivity : AppCompatActivity() {
 
@@ -39,6 +48,9 @@ class ParentReportActivity : AppCompatActivity() {
     private lateinit var tvLevel2Progress: TextView
     private lateinit var tvLevel3Progress: TextView
     private lateinit var tvCourseNote: TextView
+
+    // Phoneme Progress Chart
+    private lateinit var phonemeChart: BarChart
 
     // Card views for Average Accuracy
     private lateinit var cardLetters: View
@@ -85,7 +97,7 @@ class ParentReportActivity : AppCompatActivity() {
 
         loadCourseCompletion()
         loadAverageScores()
-        loadAnalysisData()
+        loadAnalysisData() // This also loads the Phoneme Chart data
 
         btnBack.setOnClickListener { finish() }
 
@@ -111,6 +123,8 @@ class ParentReportActivity : AppCompatActivity() {
         tvLevel2Progress = findViewById(R.id.tvLevel2Progress)
         tvLevel3Progress = findViewById(R.id.tvLevel3Progress)
         tvCourseNote = findViewById(R.id.tvCourseNote)
+
+        phonemeChart = findViewById(R.id.phonemeChart)
 
         cardLetters = findViewById(R.id.cardLetters)
         cardWords = findViewById(R.id.cardWords)
@@ -205,17 +219,14 @@ class ParentReportActivity : AppCompatActivity() {
     }
 
     private fun updateScoreCard(view: View, score: Int, label: String) {
-        // Find TextViews inside the card
         val tvScore = view.findViewById<TextView>(R.id.tvScore)
         val tvLabel = view.findViewById<TextView>(R.id.tvLabel)
-
-        // The 'view' passed here IS the CardView itself due to the <include> tag
         val mainCard = view as androidx.cardview.widget.CardView
 
         tvScore.text = "$score%"
         tvLabel.text = label
 
-        // Dynamic Color Logic
+        // Dynamic Color Logic based on performance
         val (bgColor, textColor) = when {
             score >= 75 -> Pair("#E8F5E9", "#2E7D32") // Light Green
             score >= 50 -> Pair("#FFF3E0", "#EF6C00") // Light Orange
@@ -226,7 +237,7 @@ class ParentReportActivity : AppCompatActivity() {
         tvScore.setTextColor(Color.parseColor(textColor))
     }
 
-    // --- 3. ANALYSIS WEAKNESSES ---
+    // --- 3. ANALYSIS WEAKNESSES & PHONEME CHART ---
     private fun loadAnalysisData() {
         val userId = auth.currentUser?.uid ?: return
 
@@ -237,15 +248,35 @@ class ParentReportActivity : AppCompatActivity() {
                 insightList.clear()
                 val allHistory = ArrayList<FeedbackItem>()
 
+                // HashMap to store phoneme data (Letter -> Pair<TotalScore, Count>)
+                val phonemeStats = HashMap<String, Pair<Int, Int>>()
+
                 for (doc in documents) {
                     try {
-                        val content = doc.getString("content") ?: ""
+                        val rawContent = doc.getString("content") ?: ""
                         val score = doc.getLong("score")?.toInt() ?: 0
                         val rawType = doc.getString("item_type")
-                        val type = rawType ?: if (content.contains(" ")) "sentence" else "word"
+                        val type = rawType ?: if (rawContent.contains(" ")) "sentence" else "word"
                         val timestamp = doc.getDate("timestamp") ?: Date(0)
 
+                        // Format the text correctly based on the type
+                        val content = if (type == "sentence") {
+                            // If it's a sentence: Capitalize only the first letter, rest lowercase
+                            rawContent.lowercase().replaceFirstChar { it.uppercase() }
+                        } else {
+                            // If it's a word or letter: All lowercase
+                            rawContent.lowercase()
+                        }
+
                         allHistory.add(FeedbackItem(content, score, type, timestamp))
+
+                        // Extract data specifically for the Phoneme Chart (Level 1 items)
+                        if (type == "letter") {
+                            val letterKey = content.uppercase() // Send uppercase letter to the chart for better readability
+                            val currentStat = phonemeStats[letterKey] ?: Pair(0, 0)
+                            phonemeStats[letterKey] = Pair(currentStat.first + score, currentStat.second + 1)
+                        }
+
                     } catch (e: Exception) { e.printStackTrace() }
                 }
 
@@ -253,6 +284,7 @@ class ParentReportActivity : AppCompatActivity() {
 
                 val processedWords = HashSet<String>()
 
+                // Populate the Weakness List for the RecyclerView
                 for (item in allHistory) {
                     if (!processedWords.contains(item.content)) {
                         processedWords.add(item.content)
@@ -264,6 +296,7 @@ class ParentReportActivity : AppCompatActivity() {
                     if (insightList.size >= 20) break
                 }
 
+                // Handle UI visibility for Empty State
                 if (insightList.isEmpty()) {
                     rvInsights.visibility = View.GONE
                     tvEmptyState.visibility = View.VISIBLE
@@ -273,15 +306,77 @@ class ParentReportActivity : AppCompatActivity() {
                 }
 
                 insightAdapter.notifyDataSetChanged()
+
+                // Render the Bar Chart with the gathered data
+                setupPhonemeChart(phonemeStats)
+
             }
             .addOnFailureListener { e ->
                 Toast.makeText(this, "Error: ${e.message}", Toast.LENGTH_LONG).show()
             }
     }
 
+    // --- 4. MPANDROIDCHART RENDERING ---
+    private fun setupPhonemeChart(phonemeStats: HashMap<String, Pair<Int, Int>>) {
+        if (phonemeStats.isEmpty()) {
+            phonemeChart.visibility = View.GONE
+            return
+        }
+
+        phonemeChart.visibility = View.VISIBLE
+        val entries = ArrayList<BarEntry>()
+        val labels = ArrayList<String>()
+        var index = 0f
+
+        // Sort by average score (lowest first to highlight weaknesses) and take top 6
+        val sortedPhonemes = phonemeStats.entries.sortedBy { (it.value.first / it.value.second) }.take(6)
+
+        for ((letter, stats) in sortedPhonemes) {
+            val averageScore = (stats.first / stats.second).toFloat()
+            entries.add(BarEntry(index, averageScore))
+            labels.add(letter)
+            index += 1f
+        }
+
+        val dataSet = BarDataSet(entries, "Pronunciation Score %")
+        dataSet.colors = ColorTemplate.MATERIAL_COLORS.toList()
+        dataSet.valueTextSize = 12f
+        dataSet.valueTextColor = Color.BLACK
+
+        val barData = BarData(dataSet)
+        phonemeChart.data = barData
+
+        // --- Chart UI Settings ---
+        phonemeChart.description.isEnabled = false
+        phonemeChart.setDrawGridBackground(false)
+        phonemeChart.legend.isEnabled = false
+
+        phonemeChart.setExtraOffsets(0f, 0f, 0f, 15f)
+
+        val xAxis = phonemeChart.xAxis
+        xAxis.position = XAxis.XAxisPosition.BOTTOM
+        xAxis.valueFormatter = IndexAxisValueFormatter(labels)
+        xAxis.granularity = 1f
+        xAxis.setDrawGridLines(false)
+        xAxis.textSize = 14f
+        xAxis.textColor = Color.DKGRAY
+
+        xAxis.yOffset = 10f
+
+        val yAxisLeft = phonemeChart.axisLeft
+        yAxisLeft.axisMinimum = 0f
+        yAxisLeft.axisMaximum = 100f
+        yAxisLeft.setDrawGridLines(true)
+        phonemeChart.axisRight.isEnabled = false
+
+        // Refresh and animate chart
+        phonemeChart.animateY(1000)
+        phonemeChart.invalidate()
+    }
+
     data class FeedbackItem(val content: String, val score: Int, val type: String, val timestamp: Date)
 
-    // --- 4. PDF GENERATION ---
+    // --- 5. PDF GENERATION ---
     private fun generatePDF(): File? {
         val pdfDocument = PdfDocument()
         val pageInfo = PdfDocument.PageInfo.Builder(595, 842, 1).create() // Standard A4 Size
@@ -294,12 +389,12 @@ class ParentReportActivity : AppCompatActivity() {
         val headerFont = Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
         val normalFont = Typeface.create(Typeface.DEFAULT, Typeface.NORMAL)
 
-        // --- 1. DRAW HEADER BACKGROUND ---
+        // Draw Header Background
         paint.color = Color.parseColor("#4CAF50") // Thematic green banner
         paint.style = Paint.Style.FILL
         canvas.drawRect(0f, 0f, 595f, 100f, paint)
 
-        // --- 2. DRAW HEADER TEXT ---
+        // Draw Header Text
         paint.color = Color.WHITE
         paint.textSize = 28f
         paint.typeface = titleFont
@@ -311,7 +406,7 @@ class ParentReportActivity : AppCompatActivity() {
         paint.typeface = normalFont
         canvas.drawText("Date: $reportDate", 40f, 85f, paint)
 
-        // --- 3. DRAW OVERALL PERFORMANCE METRICS ---
+        // Draw Overall Performance Metrics
         var currentY = 150f
         paint.color = Color.BLACK
         paint.textSize = 18f
@@ -322,14 +417,13 @@ class ParentReportActivity : AppCompatActivity() {
         paint.textSize = 14f
         paint.typeface = normalFont
 
-        // Render calculated average scores for all three levels
         canvas.drawText("Level 1 (Letters Accuracy):  $scoreL1%", 40f, currentY, paint)
         currentY += 25f
         canvas.drawText("Level 2 (Words Accuracy):   $scoreL2%", 40f, currentY, paint)
         currentY += 25f
         canvas.drawText("Level 3 (Sentences Accuracy): $scoreL3%", 40f, currentY, paint)
 
-        // --- 4. DRAW WEAKNESS ANALYSIS TABLE ---
+        // Draw Weakness Analysis Table
         currentY += 50f
         paint.color = Color.parseColor("#D32F2F") // Alert red for weaknesses section
         paint.textSize = 18f
@@ -338,7 +432,6 @@ class ParentReportActivity : AppCompatActivity() {
 
         currentY += 20f
 
-        // Handle case where the student has no recent bad scores
         if (insightList.isEmpty()) {
             paint.color = Color.parseColor("#4CAF50")
             paint.textSize = 14f
@@ -346,7 +439,7 @@ class ParentReportActivity : AppCompatActivity() {
             canvas.drawText("Excellent! No significant weaknesses detected recently.", 40f, currentY + 20f, paint)
         } else {
             // Draw Table Header Background
-            paint.color = Color.parseColor("#F5F5F5") // Light gray header background
+            paint.color = Color.parseColor("#F5F5F5")
             paint.style = Paint.Style.FILL
             canvas.drawRect(40f, currentY, 555f, currentY + 30f, paint)
 
@@ -362,11 +455,10 @@ class ParentReportActivity : AppCompatActivity() {
             currentY += 30f
             paint.typeface = normalFont
 
-            // Iterate through the top 15 most recent weaknesses to generate table rows
             for (item in insightList.take(15)) {
                 paint.color = Color.BLACK
 
-                // Render Column 1: Target Item (With Text Wrapping Logic)
+                // Column 1: Target Item (With Text Wrapping)
                 var targetText = item.content
                 val maxCharsCol1 = 35
                 var lineOffsetTarget = 0f
@@ -383,16 +475,16 @@ class ParentReportActivity : AppCompatActivity() {
                     canvas.drawText(targetText, 50f, currentY + 20f, paint)
                 }
 
-                // Render Column 2: Accuracy Score (Color Coded)
+                // Column 2: Accuracy Score
                 if (item.score < 50) {
-                    paint.color = Color.parseColor("#D32F2F") // Critical Red
+                    paint.color = Color.parseColor("#D32F2F")
                 } else {
-                    paint.color = Color.parseColor("#F57C00") // Moderate Orange
+                    paint.color = Color.parseColor("#F57C00")
                 }
                 paint.typeface = headerFont
                 canvas.drawText("${item.score}%", 290f, currentY + 20f, paint)
 
-                // Render Column 3: Clinical Diagnosis (With Text Wrapping Logic)
+                // Column 3: Clinical Diagnosis (With Text Wrapping)
                 paint.color = Color.BLACK
                 paint.typeface = normalFont
                 var diagText = item.diagnosis
@@ -411,7 +503,6 @@ class ParentReportActivity : AppCompatActivity() {
                     canvas.drawText(diagText, 350f, currentY + 20f, paint)
                 }
 
-                // Calculate dynamic row height based on text wrapping
                 val rowHeight = 35f + maxOf(lineOffsetTarget, lineOffsetDiag)
 
                 // Draw row separator line
@@ -423,32 +514,25 @@ class ParentReportActivity : AppCompatActivity() {
             }
         }
 
-        // --- 5. DRAW FOOTER ---
+        // Draw Footer
         paint.color = Color.GRAY
         paint.textSize = 10f
         canvas.drawText("Generated by Voice Bridge AI Speech Therapy Assistant", 40f, 800f, paint)
 
-        // Finalize the PDF page rendering
         pdfDocument.finishPage(page)
 
-        // --- 6. SMART SAVING LOGIC (PRIVATE + PUBLIC EXPORT) ---
+        // --- 6. SMART SAVING LOGIC ---
         val fileName = "VoiceBridge_Report_${System.currentTimeMillis()}.pdf"
 
-        // Step 1: Save the file to App's Private Directory first.
-        // This guarantees compatibility with the Android FileProvider for sharing via Intent.
         val privateDir = getExternalFilesDir(Environment.DIRECTORY_DOCUMENTS)
         if (privateDir != null && !privateDir.exists()) privateDir.mkdirs()
         val localFile = File(privateDir, fileName)
 
         try {
-            // Write the generated PDF bytes to the private file
             FileOutputStream(localFile).use { pdfDocument.writeTo(it) }
             pdfDocument.close()
 
-            // Step 2: Silently copy the generated PDF to the user's public 'Downloads' folder.
-            // This allows parents to easily view the downloaded report without file manager restrictions.
             if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q) {
-                // Scoped Storage implementation for Android 10+ using MediaStore API
                 val contentValues = android.content.ContentValues().apply {
                     put(android.provider.MediaStore.MediaColumns.DISPLAY_NAME, fileName)
                     put(android.provider.MediaStore.MediaColumns.MIME_TYPE, "application/pdf")
@@ -463,7 +547,6 @@ class ParentReportActivity : AppCompatActivity() {
                     Toast.makeText(this, "Saved to Downloads/VoiceBridgeReports folder", Toast.LENGTH_LONG).show()
                 }
             } else {
-                // Legacy file saving mechanism for Android 9 and below
                 val downloadsDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
                 val appDir = File(downloadsDir, "VoiceBridgeReports")
                 if (!appDir.exists()) appDir.mkdirs()
@@ -473,7 +556,6 @@ class ParentReportActivity : AppCompatActivity() {
                 Toast.makeText(this, "Saved to Downloads/VoiceBridgeReports folder", Toast.LENGTH_LONG).show()
             }
 
-            // Step 3: Return the Private File object to be consumed by the Share Intent
             return localFile
 
         } catch (e: Exception) {
