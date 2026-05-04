@@ -45,10 +45,10 @@
     <com.google.android.material.button.MaterialButton
         android:id="@+id/btnVerb1"
         style="@style/Widget.Material3.Button"
-        android:layout_width="match_parent"
+        android:layout_width="326dp"
         android:layout_height="75dp"
         android:layout_marginBottom="16dp"
-        android:backgroundTint="#4CAF50"
+        android:backgroundTint="#81C784"
         android:elevation="4dp"
         android:paddingStart="20dp"
         android:textAllCaps="false"
@@ -59,16 +59,18 @@
         app:iconGravity="textStart"
         app:iconPadding="16dp"
         app:iconSize="32dp"
+        tools:icon="@android:drawable/ic_menu_edit"
         tools:text="Eat Banana"
-        tools:icon="@android:drawable/ic_menu_edit" />
+        android:layout_gravity="center"
+        />
 
     <com.google.android.material.button.MaterialButton
         android:id="@+id/btnVerb2"
         style="@style/Widget.Material3.Button"
-        android:layout_width="match_parent"
+        android:layout_width="326dp"
         android:layout_height="75dp"
         android:layout_marginBottom="16dp"
-        android:backgroundTint="#2196F3"
+        android:backgroundTint="#F87692"
         android:elevation="4dp"
         android:paddingStart="20dp"
         android:textAllCaps="false"
@@ -80,14 +82,15 @@
         app:iconPadding="16dp"
         app:iconSize="32dp"
         tools:text="See Banana"
-        tools:icon="@android:drawable/ic_menu_view" />
+        tools:icon="@android:drawable/ic_menu_view"
+        android:layout_gravity="center"/>
 
     <com.google.android.material.button.MaterialButton
         android:id="@+id/btnVerb3"
         style="@style/Widget.Material3.Button"
-        android:layout_width="match_parent"
+        android:layout_width="326dp"
         android:layout_height="75dp"
-        android:backgroundTint="#FF9800"
+        android:backgroundTint="#FFA726"
         android:elevation="4dp"
         android:paddingStart="20dp"
         android:textAllCaps="false"
@@ -99,7 +102,8 @@
         app:iconPadding="16dp"
         app:iconSize="32dp"
         tools:text="Get Banana"
-        tools:icon="@android:drawable/ic_menu_add" />
+        tools:icon="@android:drawable/ic_menu_add"
+        android:layout_gravity="center"/>
 
 
 </LinearLayout>
