@@ -347,127 +347,127 @@
             </androidx.cardview.widget.CardView>
 
             <!-- Jack and Jill Card -->
-            <androidx.cardview.widget.CardView
-                android:id="@+id/jackAndJillLayout"
-                android:layout_width="match_parent"
-                android:layout_height="223dp"
-                android:layout_marginBottom="5dp"
-                android:clickable="true"
-                android:focusable="true"
-                app:cardBackgroundColor="@color/white"
-                app:cardCornerRadius="20dp"
-                app:cardElevation="6dp"
-                app:cardUseCompatPadding="true">
+<!--            <androidx.cardview.widget.CardView-->
+<!--                android:id="@+id/jackAndJillLayout"-->
+<!--                android:layout_width="match_parent"-->
+<!--                android:layout_height="223dp"-->
+<!--                android:layout_marginBottom="5dp"-->
+<!--                android:clickable="true"-->
+<!--                android:focusable="true"-->
+<!--                app:cardBackgroundColor="@color/white"-->
+<!--                app:cardCornerRadius="20dp"-->
+<!--                app:cardElevation="6dp"-->
+<!--                app:cardUseCompatPadding="true">-->
 
-                <RelativeLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="match_parent">
+<!--                <RelativeLayout-->
+<!--                    android:layout_width="match_parent"-->
+<!--                    android:layout_height="match_parent">-->
 
-                    <!-- Heart icon in top-right corner -->
-                    <ImageView
-                        android:id="@+id/heartJack"
-                        android:layout_width="32dp"
-                        android:layout_height="32dp"
-                        android:layout_alignParentTop="true"
-                        android:layout_alignParentEnd="true"
-                        android:layout_marginTop="-2dp"
-                        android:layout_marginEnd="-2dp"
-                        android:background="?attr/selectableItemBackgroundBorderless"
-                        android:contentDescription="Like song"
-                        android:padding="4dp"
-                        android:src="@drawable/heart_red" />
+<!--                    &lt;!&ndash; Heart icon in top-right corner &ndash;&gt;-->
+<!--                    <ImageView-->
+<!--                        android:id="@+id/heartJack"-->
+<!--                        android:layout_width="32dp"-->
+<!--                        android:layout_height="32dp"-->
+<!--                        android:layout_alignParentTop="true"-->
+<!--                        android:layout_alignParentEnd="true"-->
+<!--                        android:layout_marginTop="-2dp"-->
+<!--                        android:layout_marginEnd="-2dp"-->
+<!--                        android:background="?attr/selectableItemBackgroundBorderless"-->
+<!--                        android:contentDescription="Like song"-->
+<!--                        android:padding="4dp"-->
+<!--                        android:src="@drawable/heart_red" />-->
 
-                    <LinearLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="match_parent"
-                        android:gravity="center_vertical"
-                        android:orientation="horizontal"
-                        android:padding="16dp">
+<!--                    <LinearLayout-->
+<!--                        android:layout_width="match_parent"-->
+<!--                        android:layout_height="match_parent"-->
+<!--                        android:gravity="center_vertical"-->
+<!--                        android:orientation="horizontal"-->
+<!--                        android:padding="16dp">-->
 
-                        <!-- Larger Song Image -->
-                        <ImageView
-                            android:layout_width="141dp"
-                            android:layout_height="130dp"
-                            android:layout_weight="1.6"
-                            android:adjustViewBounds="true"
-                            android:background="@drawable/rounded_white_shadow"
-                            android:contentDescription="Jack and Jill"
-                            android:scaleType="centerCrop"
-                            android:src="@drawable/jack" />
+<!--                        &lt;!&ndash; Larger Song Image &ndash;&gt;-->
+<!--                        <ImageView-->
+<!--                            android:layout_width="141dp"-->
+<!--                            android:layout_height="130dp"-->
+<!--                            android:layout_weight="1.6"-->
+<!--                            android:adjustViewBounds="true"-->
+<!--                            android:background="@drawable/rounded_white_shadow"-->
+<!--                            android:contentDescription="Jack and Jill"-->
+<!--                            android:scaleType="centerCrop"-->
+<!--                            android:src="@drawable/jack" />-->
 
-                        <!-- Song Info -->
-                        <LinearLayout
-                            android:layout_width="36dp"
-                            android:layout_height="match_parent"
-                            android:layout_weight="2.0"
-                            android:gravity="center_vertical"
-                            android:orientation="vertical"
-                            android:paddingVertical="8dp"
-                            android:paddingStart="20dp">
+<!--                        &lt;!&ndash; Song Info &ndash;&gt;-->
+<!--                        <LinearLayout-->
+<!--                            android:layout_width="36dp"-->
+<!--                            android:layout_height="match_parent"-->
+<!--                            android:layout_weight="2.0"-->
+<!--                            android:gravity="center_vertical"-->
+<!--                            android:orientation="vertical"-->
+<!--                            android:paddingVertical="8dp"-->
+<!--                            android:paddingStart="20dp">-->
 
-                            <!-- Play Button with Duration below it -->
-                            <RelativeLayout
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:layout_marginTop="16dp">
+<!--                            &lt;!&ndash; Play Button with Duration below it &ndash;&gt;-->
+<!--                            <RelativeLayout-->
+<!--                                android:layout_width="wrap_content"-->
+<!--                                android:layout_height="wrap_content"-->
+<!--                                android:layout_marginTop="16dp">-->
 
-                                <!-- Play Button -->
-                                <FrameLayout
-                                    android:id="@+id/playButtonContainerJack"
-                                    android:layout_width="60dp"
-                                    android:layout_height="60dp"
-                                    android:layout_centerHorizontal="true">
+<!--                                &lt;!&ndash; Play Button &ndash;&gt;-->
+<!--                                <FrameLayout-->
+<!--                                    android:id="@+id/playButtonContainerJack"-->
+<!--                                    android:layout_width="60dp"-->
+<!--                                    android:layout_height="60dp"-->
+<!--                                    android:layout_centerHorizontal="true">-->
 
-                                    <ImageView
-                                        android:layout_width="match_parent"
-                                        android:layout_height="match_parent"
-                                        android:scaleType="fitCenter"
-                                        android:src="@drawable/green_circle" />
+<!--                                    <ImageView-->
+<!--                                        android:layout_width="match_parent"-->
+<!--                                        android:layout_height="match_parent"-->
+<!--                                        android:scaleType="fitCenter"-->
+<!--                                        android:src="@drawable/green_circle" />-->
 
-                                    <ImageButton
-                                        android:id="@+id/playButtonJack"
-                                        android:layout_width="40dp"
-                                        android:layout_height="40dp"
-                                        android:layout_gravity="center"
-                                        android:background="?attr/selectableItemBackgroundBorderless"
-                                        android:contentDescription="Play Jack and Jill"
-                                        android:scaleType="centerInside"
-                                        android:src="@drawable/sound" />
-                                </FrameLayout>
+<!--                                    <ImageButton-->
+<!--                                        android:id="@+id/playButtonJack"-->
+<!--                                        android:layout_width="40dp"-->
+<!--                                        android:layout_height="40dp"-->
+<!--                                        android:layout_gravity="center"-->
+<!--                                        android:background="?attr/selectableItemBackgroundBorderless"-->
+<!--                                        android:contentDescription="Play Jack and Jill"-->
+<!--                                        android:scaleType="centerInside"-->
+<!--                                        android:src="@drawable/sound" />-->
+<!--                                </FrameLayout>-->
 
-                                <!-- Duration below Play Button -->
-                                <LinearLayout
-                                    android:layout_width="wrap_content"
-                                    android:layout_height="wrap_content"
-                                    android:layout_below="@id/playButtonContainerJack"
-                                    android:layout_centerHorizontal="true"
-                                    android:layout_marginTop="8dp"
-                                    android:background="@drawable/duration_badge"
-                                    android:gravity="center_vertical"
-                                    android:orientation="horizontal"
-                                    android:paddingHorizontal="12dp"
-                                    android:paddingVertical="4dp">
+<!--                                &lt;!&ndash; Duration below Play Button &ndash;&gt;-->
+<!--                                <LinearLayout-->
+<!--                                    android:layout_width="wrap_content"-->
+<!--                                    android:layout_height="wrap_content"-->
+<!--                                    android:layout_below="@id/playButtonContainerJack"-->
+<!--                                    android:layout_centerHorizontal="true"-->
+<!--                                    android:layout_marginTop="8dp"-->
+<!--                                    android:background="@drawable/duration_badge"-->
+<!--                                    android:gravity="center_vertical"-->
+<!--                                    android:orientation="horizontal"-->
+<!--                                    android:paddingHorizontal="12dp"-->
+<!--                                    android:paddingVertical="4dp">-->
 
-                                    <ImageView
-                                        android:layout_width="14dp"
-                                        android:layout_height="14dp"
-                                        android:layout_marginEnd="6dp"
-                                        android:contentDescription="Duration"
-                                        android:src="@drawable/clock" />
+<!--                                    <ImageView-->
+<!--                                        android:layout_width="14dp"-->
+<!--                                        android:layout_height="14dp"-->
+<!--                                        android:layout_marginEnd="6dp"-->
+<!--                                        android:contentDescription="Duration"-->
+<!--                                        android:src="@drawable/clock" />-->
 
-                                    <TextView
-                                        android:layout_width="wrap_content"
-                                        android:layout_height="wrap_content"
-                                        android:text="1:27"
-                                        android:textColor="@color/white"
-                                        android:textSize="14sp"
-                                        android:textStyle="bold" />
-                                </LinearLayout>
-                            </RelativeLayout>
-                        </LinearLayout>
-                    </LinearLayout>
-                </RelativeLayout>
-            </androidx.cardview.widget.CardView>
+<!--                                    <TextView-->
+<!--                                        android:layout_width="wrap_content"-->
+<!--                                        android:layout_height="wrap_content"-->
+<!--                                        android:text="1:27"-->
+<!--                                        android:textColor="@color/white"-->
+<!--                                        android:textSize="14sp"-->
+<!--                                        android:textStyle="bold" />-->
+<!--                                </LinearLayout>-->
+<!--                            </RelativeLayout>-->
+<!--                        </LinearLayout>-->
+<!--                    </LinearLayout>-->
+<!--                </RelativeLayout>-->
+<!--            </androidx.cardview.widget.CardView>-->
 
             <!-- Future Songs / Load More Section -->
             <androidx.cardview.widget.CardView

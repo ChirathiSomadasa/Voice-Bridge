@@ -13,29 +13,12 @@ import androidx.cardview.widget.CardView
 import androidx.core.content.ContextCompat
 import android.graphics.Color
 
-/**
- * RhythmSummaryActivity — v9.8.1
- *
- * CHANGES IN THIS VERSION (on top of v9.8.0)
- * ─────────────────────────────────────────
- *  [M] SECOND-WRONG FEEDBACK MESSAGE
- *      showFeedback() now accepts an optional `message` parameter.
- *      The second wrong attempt shows "Oops! Let's try the next one."
- *      instead of "Try again!" (which would be confusing since the round
- *      is about to advance, not retry).
- *      First wrong still shows "Try again!" unchanged.
- */
 class RhythmSummaryActivity : AppCompatActivity() {
-
-    private lateinit var originalSongTitle: String
 
     private val TAG = "RhythmSummary"
 
-    /** Delay after tap before the feedback overlay appears (card colours show first). */
     private val FEEDBACK_DELAY_MS = 1000L
-    /** How long the feedback overlay stays fully visible (ms). */
     private val FEEDBACK_MS       = 950L
-    /** Gap between overlay fade-out and the next round starting (ms). */
     private val ADVANCE_GAP_MS    = 150L
 
     private val handler = Handler(Looper.getMainLooper())
@@ -43,23 +26,13 @@ class RhythmSummaryActivity : AppCompatActivity() {
 
     private lateinit var gameMaster: GameMasterModel
     private var currentPrediction: Prediction = Prediction.defaults()
+    private val tracker = SessionStateTracker(ageGroup = ChildSession.ageGroup)
 
-    private val AGE_GROUP = 6
-    private var consecutiveCorrect = 0
-    private var consecutiveWrong   = 0
-    private var responseStartTime: Long = 0
-    private val responseTimes = mutableListOf<Long>()
+    private lateinit var originalSongTitle: String
+    private var progressTier = RhythmFlashcardManager.ProgressTier.LOW
 
-    private lateinit var backButton:        ImageView
-    private lateinit var wordTitle:         TextView
-    private lateinit var scoreText:         TextView
-    private lateinit var progressContainer: LinearLayout
-    private lateinit var optionsGrid:       GridLayout
-    private lateinit var feedbackIcon:      ImageView
-    private lateinit var feedbackText:      TextView
-    private lateinit var feedbackOverlay:   FrameLayout
-    private lateinit var levelBadge:        LinearLayout
-    private lateinit var levelIndicator:    TextView
+    private var summaryKeywordPool: List<RhythmFlashcardManager.SongKeyword> = emptyList()
+    private val cyclingQueue = mutableListOf<RhythmFlashcardManager.SongKeyword>()
 
     private var currentRound           = 0
     private var score                  = 0
@@ -67,38 +40,74 @@ class RhythmSummaryActivity : AppCompatActivity() {
     private var correctAnswerIndex     = 0
     private var isAnswerSelected       = false
     private var currentDifficultyLevel = 1
+    private var isRetryAttempt         = false
+    private var consecutiveCorrect     = 0
+    private var consecutiveWrong       = 0
 
-    /** True once the child has had one wrong attempt in the current round. */
-    private var isRetryAttempt = false
+    // Tracks failures per whole flashcard round, not per click
+    private var consecutiveFailedFlashcards = 0
 
-    private val usedKeywords     = mutableSetOf<String>()
-    private lateinit var currentKeywords:   List<Keyword>
-    private lateinit var availableKeywords: MutableList<Keyword>
+    private val responseTimes          = mutableListOf<Long>()
+    private var responseStartTime      = 0L
+
+    private lateinit var backButton:        ImageView
+    private lateinit var wordTitle:         TextView
+    private lateinit var scoreText:         TextView
+    private lateinit var progressContainer: LinearLayout
+    private lateinit var optionsGrid:       GridLayout
+    private lateinit var feedbackOverlay:   FrameLayout
+    private lateinit var feedbackIcon:      ImageView
+    private lateinit var feedbackText:      TextView
+    private lateinit var levelBadge:        LinearLayout
+    private lateinit var levelIndicator:    TextView
 
     private var correctSound: MediaPlayer? = null
     private var wrongSound:   MediaPlayer? = null
-
-    data class Keyword  (val word: String, val imageRes: Int, val startTime: Int, val endTime: Int)
-    data class GameRound(val keyword: String, val correctImageRes: Int, val options: List<Pair<String, Int>>)
-
-    private val keywordImages: Map<String, Int> = KeywordImageMapper.primaryKeywords
-
-    // =========================================================================
-    // Lifecycle
-    // =========================================================================
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_rythm_summary)
 
-        Log.d(TAG, "=== Rhythm Summary Starting ===")
+        if (!ChildSession.isInitialized) ChildSession.restore(this)
+
         gameMaster = GameMasterModel(this)
-        Log.d(TAG, "✅ GameMaster initialized  modelLoaded=${gameMaster.modelLoaded}")
+
+        originalSongTitle = intent.getStringExtra("SONG_TITLE") ?: "Row Row Row Your Boat"
+
+        val shownWords = intent.getStringArrayListExtra(
+            RhythmFlashcardManager.EXTRA_SHOWN_KEYWORDS) ?: arrayListOf()
+        val tierName   = intent.getStringExtra(
+            RhythmFlashcardManager.EXTRA_PROGRESS_TIER) ?: "LOW"
+
+        progressTier = runCatching {
+            RhythmFlashcardManager.ProgressTier.valueOf(tierName)
+        }.getOrDefault(RhythmFlashcardManager.ProgressTier.LOW)
+
+        var shownKeywords = RhythmFlashcardManager.fromWordList(shownWords, originalSongTitle)
+
+        if (shownKeywords.isEmpty()) {
+            val profile      = ChildProfileManager.load(this, ChildSession.childId)
+            val fallbackTier = RhythmFlashcardManager.determineTierFromProfile(profile)
+            progressTier     = fallbackTier
+            shownKeywords    = RhythmFlashcardManager.selectSongFlashcards(originalSongTitle, fallbackTier)
+        }
+
+        summaryKeywordPool = RhythmFlashcardManager.selectSummaryKeywords(shownKeywords, progressTier)
+        cyclingQueue.addAll(summaryKeywordPool.shuffled())
+
+        SessionLogger.logRhythmSession(
+            context      = this,
+            childId      = ChildSession.childId,
+            songTitle    = originalSongTitle,
+            tier         = progressTier,
+            shownCount   = shownKeywords.size,
+            summaryWords = summaryKeywordPool.map { it.word },
+            score        = 0,
+            totalRounds  = totalRounds
+        )
 
         initializeViews()
-        originalSongTitle = intent.getStringExtra("SONG_TITLE") ?: "Row Row Row Your Boat"
         initializeAudio()
-        setupSongData()
         setupUI()
 
         handler.postDelayed({ startNewRound() }, 1000)
@@ -112,10 +121,6 @@ class RhythmSummaryActivity : AppCompatActivity() {
         wrongSound?.release()
         try { gameMaster.close() } catch (_: Exception) {}
     }
-
-    // =========================================================================
-    // Init
-    // =========================================================================
 
     private fun initializeViews() {
         backButton        = findViewById(R.id.backBtn)
@@ -132,11 +137,9 @@ class RhythmSummaryActivity : AppCompatActivity() {
         backButton.setOnClickListener {
             isGameFinished = true
             handler.removeCallbacksAndMessages(null)
-            startActivity(
-                Intent(this, SongSelectionActivity::class.java).apply {
-                    flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
-                }
-            )
+            startActivity(Intent(this, SongSelectionActivity::class.java).apply {
+                flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
+            })
             finish()
         }
     }
@@ -150,39 +153,316 @@ class RhythmSummaryActivity : AppCompatActivity() {
         }
     }
 
-    private fun setupSongData() {
-        currentKeywords = when (originalSongTitle) {
-            "Twinkle Twinkle Little Star", "Twinkle Twinkle" -> listOf(
-                Keyword("star",    R.drawable.rhy_song1_star,    8000,  10000),
-                Keyword("world",   R.drawable.rhy_song1_world,   16000, 18000),
-                Keyword("diamond", R.drawable.rhy_song1_diamond, 19000, 20000),
-                Keyword("sun",     R.drawable.rhy_song1_sun,     40000, 42000),
-                Keyword("light",   R.drawable.rhy_song1_light,   48000, 50000),
-                Keyword("night",   R.drawable.rhy_song1_moon,    53000, 55000)
-            )
-            "Jack and Jill" -> listOf(
-                Keyword("hill",  R.drawable.hill_image,  10500, 11000),
-                Keyword("water", R.drawable.water_image, 12500, 14000),
-                Keyword("crown", R.drawable.crown_image, 14500, 16000)
-            )
-            else -> listOf(
-                Keyword("boat",       R.drawable.rhy_song0_boat,       11000, 12000),
-                Keyword("stream",     R.drawable.rhy_song0_stream,     13000, 15000),
-                Keyword("dream",      R.drawable.rhy_song0_dream,      18000, 20000),
-                Keyword("creek",      R.drawable.rhy_song0_creek,      24000, 25000),
-                Keyword("mouse",      R.drawable.rhy_song0_mouse,      27000, 28000),
-                Keyword("river",      R.drawable.rhy_song0_river,      34000, 36000),
-                Keyword("polar bear", R.drawable.rhy_song0_polar_bear, 37000, 38000),
-                Keyword("crocodile",  R.drawable.rhy_song0_crocodile,  48000, 49000)
-            )
-        }
-        availableKeywords = currentKeywords.toMutableList()
-    }
-
     private fun setupUI() {
         setupProgressDots()
         updateScore()
         updateLevelBadge()
+    }
+
+    private fun startNewRound() {
+        if (isGameFinished) return
+        if (currentRound >= totalRounds) {
+            isGameFinished = true; navigateToScoreboard(); return
+        }
+
+        hideFeedbackNow()
+        isAnswerSelected = false
+        isRetryAttempt   = false
+        optionsGrid.removeAllViews()
+
+        val accuracy = if (currentRound > 0) score.toFloat() / currentRound else 0.5f
+        val avgRT    = if (responseTimes.isNotEmpty()) responseTimes.average().toFloat() else 3000f
+
+        currentPrediction = gameMaster.predictSafe(
+            childId            = ChildSession.childId,
+            age                = ChildSession.age.toFloat(),
+            accuracy           = accuracy,
+            engagement         = tracker.engagement,
+            frustration        = tracker.frustration,
+            rt                 = avgRT,
+            consecutiveCorrect = consecutiveCorrect.toFloat(),
+            consecutiveWrong   = consecutiveWrong.toFloat()
+        )
+
+        val keyword = getNextSummaryKeyword()
+
+        // 1. Determine Option Count - STRICTLY 4 BY DEFAULT
+        var optionCount = 4
+
+        // 2. Determine Distractor Type
+        var distractorType = currentPrediction.distractor
+
+        // 3. OVERRIDE RULE: 2 wrong flashcard rounds in a row -> Easy mode!
+        if (consecutiveFailedFlashcards >= 2) {
+            optionCount = 2
+            distractorType = 0 // Forces randomDistractors (apple, ball, cat, etc.)
+            Log.d(TAG, "2+ consecutive failed flashcards! Forcing 2 options and easy distractors.")
+        }
+
+        val wrongOptions = buildDistractors(keyword.word, distractorType, optionCount - 1)
+        val gameRound    = createGameRound(keyword.word, keyword.imageRes, wrongOptions)
+
+        updateLevelBadge()
+        wordTitle.text = "Find: ${keyword.word.uppercase()}"
+        displayOptions(gameRound, optionCount)
+        updateProgressDots()
+        responseStartTime = System.currentTimeMillis()
+
+        SessionLogger.logPrediction(
+            context   = this,
+            childId   = ChildSession.childId,
+            round     = currentRound,
+            gameType  = "rhythm",
+            ageGroup  = ChildSession.ageGroup,
+            features  = gameMaster.lastFeatureVector(),
+            pred      = currentPrediction,
+            diffLabel = "tier=${progressTier.name}-d${keyword.difficulty}"
+        )
+    }
+
+    private fun getNextSummaryKeyword(): RhythmFlashcardManager.SongKeyword {
+        if (summaryKeywordPool.isEmpty()) {
+            val fallback = RhythmFlashcardManager.SONG_KEYWORDS["Row Row Row Your Boat"]!!
+            summaryKeywordPool = fallback.take(5)
+        }
+        if (cyclingQueue.isEmpty()) {
+            cyclingQueue.addAll(summaryKeywordPool.shuffled())
+        }
+        return cyclingQueue.removeFirst()
+    }
+
+    private fun buildDistractors(keyword: String, type: Int, count: Int): List<Pair<String, Int>> {
+        return KeywordImageMapper.getDistractors(
+            keyword = keyword,
+            type    = type,
+            count   = count
+        )
+    }
+
+    private fun createGameRound(
+        keyword:         String,
+        correctImageRes: Int,
+        wrongOptions:    List<Pair<String, Int>>
+    ): Triple<String, Int, List<Pair<String, Int>>> {
+        val allOptions = mutableListOf(Pair(keyword, correctImageRes))
+        allOptions.addAll(wrongOptions)
+        val shuffled = allOptions.shuffled()
+        correctAnswerIndex = shuffled.indexOfFirst { it.first == keyword }
+        return Triple(keyword, correctImageRes, shuffled)
+    }
+
+    private fun displayOptions(
+        gameRound:   Triple<String, Int, List<Pair<String, Int>>>,
+        optionCount: Int
+    ) {
+        val optionSize = resources.displayMetrics.widthPixels / 2 - 48.dpToPx()
+        gameRound.third.take(optionCount).forEachIndexed { i, option ->
+            createOptionCard(i, option.first, option.second, optionSize, gameRound.first)
+        }
+    }
+
+    private fun createOptionCard(
+        index:          Int,
+        word:           String,
+        imageResId:     Int,
+        size:           Int,
+        correctKeyword: String
+    ) {
+        val card = CardView(this).apply {
+            layoutParams = GridLayout.LayoutParams().apply {
+                width      = size; height = size
+                columnSpec = GridLayout.spec(index % 2, 1f)
+                rowSpec    = GridLayout.spec(index / 2)
+                setMargins(8.dpToPx(), 8.dpToPx(), 8.dpToPx(), 8.dpToPx())
+            }
+            radius        = 16.dpToPx().toFloat()
+            cardElevation = 4.dpToPx().toFloat()
+            isClickable   = true
+            tag           = index
+            setCardBackgroundColor(Color.WHITE)
+            setOnClickListener {
+                if (isGameFinished || isAnswerSelected || !isEnabled) return@setOnClickListener
+                val rt = System.currentTimeMillis() - responseStartTime
+                responseTimes.add(rt)
+                handleOptionClick(this, index, word, correctKeyword, rt)
+            }
+        }
+        card.addView(ImageView(this).apply {
+            layoutParams = FrameLayout.LayoutParams(
+                FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.MATCH_PARENT)
+            setImageResource(imageResId)
+            scaleType = ImageView.ScaleType.CENTER_INSIDE
+            setPadding(16, 16, 16, 16)
+        })
+        optionsGrid.addView(card)
+        card.alpha = 0f; card.translationY = 100f
+        card.animate().alpha(1f).translationY(0f).setDuration(500).setStartDelay(index * 100L).start()
+    }
+
+    private fun handleOptionClick(
+        card:           CardView,
+        selectedIndex:  Int,
+        selectedWord:   String,
+        correctKeyword: String,
+        responseTime:   Long
+    ) {
+        if (!card.isClickable || isAnswerSelected) return
+
+        if (selectedIndex == correctAnswerIndex) {
+            isAnswerSelected = true
+            disableAllCards()
+
+            if (!isRetryAttempt) {
+                score++
+                consecutiveCorrect++
+                consecutiveWrong = 0
+                consecutiveFailedFlashcards = 0 // Reset flashcard streak!
+            } else {
+                consecutiveFailedFlashcards++ // They failed the 1st try of this flashcard
+            }
+
+            tracker.update(
+                wasCorrect       = true,
+                attemptNumber    = if (isRetryAttempt) 2 else 1,
+                modelFrustRisk   = currentPrediction.frustrationRisk,
+                consecutiveWrong = consecutiveWrong
+            )
+            tracker.recordFeatureVector(gameMaster.lastFeatureVector())
+
+            card.setCardBackgroundColor(Color.parseColor("#C8E6C9"))
+            playSound(correctSound)
+            updateScore()
+            updateProgressDots()
+
+            handler.postDelayed({
+                showFeedback(correct = true)
+                handler.postDelayed({ hideFeedbackAnimated { advanceRound() } }, FEEDBACK_MS)
+            }, FEEDBACK_DELAY_MS)
+
+        } else {
+            if (!isRetryAttempt) {
+                disableAllCards()
+                consecutiveWrong++
+                consecutiveCorrect = 0
+
+                tracker.update(
+                    wasCorrect       = false,
+                    attemptNumber    = 1,
+                    modelFrustRisk   = currentPrediction.frustrationRisk,
+                    consecutiveWrong = consecutiveWrong
+                )
+
+                card.setCardBackgroundColor(Color.parseColor("#FFCDD2"))
+                colorCorrectCard(green = true)
+                playSound(wrongSound)
+                updateProgressDots()
+                isRetryAttempt = true
+
+                handler.postDelayed({
+                    showFeedback(correct = false)
+                    handler.postDelayed({
+                        hideFeedbackAnimated { resetCardsForRetry(wrongCard = card) }
+                    }, FEEDBACK_MS)
+                }, FEEDBACK_DELAY_MS)
+
+            } else {
+                isAnswerSelected = true
+                disableAllCards()
+                consecutiveWrong++
+                consecutiveCorrect = 0
+                consecutiveFailedFlashcards++ // Failed both tries of this flashcard
+
+                card.setCardBackgroundColor(Color.parseColor("#FFCDD2"))
+                colorCorrectCard(green = true)
+                playSound(wrongSound)
+
+                tracker.update(
+                    wasCorrect       = false,
+                    attemptNumber    = 2,
+                    modelFrustRisk   = currentPrediction.frustrationRisk,
+                    consecutiveWrong = consecutiveWrong
+                )
+
+                handler.postDelayed({
+                    showFeedback(correct = false, message = "Good Try!")
+                    handler.postDelayed({ hideFeedbackAnimated { advanceRound() } }, FEEDBACK_MS)
+                }, FEEDBACK_DELAY_MS)
+            }
+        }
+    }
+
+    private fun colorCorrectCard(green: Boolean) {
+        (optionsGrid.getChildAt(correctAnswerIndex) as? CardView)?.let { c ->
+            c.setCardBackgroundColor(if (green) Color.parseColor("#C8E6C9") else Color.WHITE)
+            c.animate().scaleX(if (green) 1.08f else 1f).scaleY(if (green) 1.08f else 1f)
+                .setDuration(150).start()
+        }
+    }
+
+    private fun resetCardsForRetry(wrongCard: CardView) {
+        if (isGameFinished) return
+        for (i in 0 until optionsGrid.childCount) {
+            val c = optionsGrid.getChildAt(i) as? CardView ?: continue
+            c.setCardBackgroundColor(Color.WHITE)
+            c.animate().scaleX(1f).scaleY(1f).setDuration(100).start()
+            c.isClickable = true
+        }
+    }
+
+    private fun disableAllCards() {
+        for (i in 0 until optionsGrid.childCount)
+            (optionsGrid.getChildAt(i) as? CardView)?.isClickable = false
+    }
+
+    private fun showFeedback(correct: Boolean, message: String? = null) {
+        if (correct) {
+            feedbackIcon.setImageResource(R.drawable.correct_answer)
+            feedbackText.text = message ?: "Well done!"
+            feedbackText.setTextColor(Color.parseColor("#388E3C"))
+        } else {
+            feedbackIcon.setImageResource(R.drawable.delete)
+            feedbackText.text = message ?: "Try again!"
+            feedbackText.setTextColor(Color.parseColor("#D32F2F"))
+        }
+        feedbackIcon.visibility    = View.VISIBLE
+        feedbackText.visibility    = View.VISIBLE
+        feedbackOverlay.visibility = View.VISIBLE
+        feedbackOverlay.animate().cancel()
+        feedbackOverlay.alpha = 0f
+        feedbackOverlay.animate().alpha(1f).setDuration(200).start()
+    }
+
+    private fun hideFeedbackAnimated(onDone: () -> Unit) {
+        if (feedbackOverlay.visibility != View.VISIBLE || feedbackOverlay.alpha == 0f) {
+            feedbackOverlay.visibility = View.GONE
+            feedbackIcon.visibility    = View.GONE
+            feedbackText.visibility    = View.GONE
+            onDone(); return
+        }
+        feedbackOverlay.animate().cancel()
+        feedbackOverlay.animate().alpha(0f).setDuration(200).withEndAction {
+            feedbackOverlay.visibility = View.GONE
+            feedbackIcon.visibility    = View.GONE
+            feedbackText.visibility    = View.GONE
+            onDone()
+        }.start()
+    }
+
+    private fun hideFeedbackNow() {
+        feedbackOverlay.animate().cancel()
+        feedbackOverlay.alpha      = 0f
+        feedbackOverlay.visibility = View.GONE
+        feedbackIcon.visibility    = View.GONE
+        feedbackText.visibility    = View.GONE
+    }
+
+    private fun advanceRound() {
+        if (isGameFinished) return
+        currentRound++
+        if (currentRound >= totalRounds) {
+            isGameFinished = true; navigateToScoreboard(); return
+        }
+        handler.postDelayed({ startNewRound() }, ADVANCE_GAP_MS)
     }
 
     private fun setupProgressDots() {
@@ -211,448 +491,92 @@ class RhythmSummaryActivity : AppCompatActivity() {
         else              -> Color.parseColor("#BDBDBD")
     }
 
-    private fun Int.dpToPx() = (this * resources.displayMetrics.density).toInt()
-
-    // =========================================================================
-    // Round logic
-    // =========================================================================
-
-    private fun startNewRound() {
-        if (isGameFinished) return
-        if (currentRound >= totalRounds) {
-            isGameFinished = true
-            navigateToScoreboard()
-            return
-        }
-
-        Log.d(TAG, "=== ROUND ${currentRound + 1}/$totalRounds ===")
-
-        hideFeedbackNow()
-
-        isAnswerSelected = false
-        isRetryAttempt   = false
-        optionsGrid.removeAllViews()
-
-        val accuracy    = if (currentRound > 0) score.toFloat() / currentRound else 0.5f
-        val avgRT       = if (responseTimes.isNotEmpty()) responseTimes.average().toFloat() else 3000f
-        val engagement  = if (accuracy > 0.7f) 0.8f else 0.5f
-        val frustration = if (consecutiveWrong >= 2) 0.7f else 0.2f
-
-        currentPrediction = gameMaster.predictSafe(
-            childId            = 0,
-            age                = AGE_GROUP.toFloat(),
-            accuracy           = accuracy,
-            engagement         = engagement,
-            frustration        = frustration,
-            rt                 = avgRT,
-            consecutiveCorrect = consecutiveCorrect.toFloat(),
-            consecutiveWrong   = consecutiveWrong.toFloat()
-        )
-
-        Log.d(TAG, "🤖 PREDICTION (fromModel=${currentPrediction.fromModel})")
-        Log.d(TAG, "🎵 Song locked to: $originalSongTitle")
-        updateLevelBadge()
-
-        val isScaffolding = consecutiveWrong >= 2
-        val optionCount   = if (isScaffolding) 2 else 4
-        if (isScaffolding) Log.d(TAG, "⚠️ scaffolding to 2 options")
-
-        val keyword         = getUniqueKeyword()
-        val correctImageRes = keywordImages[keyword.word]
-            ?: KeywordImageMapper.getImageResource(keyword.word)
-
-        val wrongOptions = buildDistractors(keyword.word, accuracy, isScaffolding, optionCount - 1)
-        val gameRound    = createGameRound(keyword.word, correctImageRes, wrongOptions)
-
-        wordTitle.text = "Find: ${keyword.word.uppercase()}"
-        displayOptions(gameRound, optionCount)
-        updateProgressDots()
-        responseStartTime = System.currentTimeMillis()
-    }
-
-    private fun buildDistractors(
-        keyword: String,
-        accuracy: Float,
-        isScaffolding: Boolean,
-        count: Int
-    ): List<Pair<String, Int>> {
-
-        fun padWithRandom(list: List<Pair<String, Int>>): List<Pair<String, Int>> {
-            if (list.size >= count) return list.take(count)
-            val used = list.map { it.first }.toSet() + keyword.lowercase()
-            val extra = KeywordImageMapper.getDistractors(keyword, 0, count - list.size + 3)
-                .filter { it.first !in used }
-                .take(count - list.size)
-            return (list + extra).take(count)
-        }
-
-        return when {
-            isScaffolding || accuracy < 0.40f -> KeywordImageMapper.getDistractors(keyword, 0, count)
-            accuracy < 0.70f -> {
-                val random   = KeywordImageMapper.getDistractors(keyword, 0, 1)
-                val semantic = KeywordImageMapper.getDistractors(keyword, 2, 1)
-                    .filter { it.first != random.firstOrNull()?.first }
-                val phonetic = KeywordImageMapper.getDistractors(keyword, 1, 1)
-                    .filter { p -> p.first !in (random + semantic).map { it.first } }
-                padWithRandom((random + semantic + phonetic).distinctBy { it.first })
-            }
-            else -> {
-                val semantic = KeywordImageMapper.getDistractors(keyword, 2, 2)
-                val phonetic = KeywordImageMapper.getDistractors(keyword, 1, 1)
-                    .filter { p -> p.first !in semantic.map { it.first } }
-                padWithRandom((semantic + phonetic).distinctBy { it.first })
-            }
-        }
-    }
-
-    private fun getUniqueKeyword(): Keyword {
-        if (availableKeywords.isEmpty() || usedKeywords.size >= currentKeywords.size * 0.7) {
-            availableKeywords = currentKeywords.toMutableList()
-            usedKeywords.clear()
-        }
-        val available = availableKeywords.filter { it.word !in usedKeywords }
-        val keyword   = if (available.isNotEmpty()) available.random() else currentKeywords.random()
-        usedKeywords.add(keyword.word)
-        availableKeywords.remove(keyword)
-        return keyword
-    }
-
-    private fun createGameRound(
-        keyword: String,
-        correctImageRes: Int,
-        wrongOptions: List<Pair<String, Int>>
-    ): GameRound {
-        val allOptions = mutableListOf(Pair(keyword, correctImageRes))
-        allOptions.addAll(wrongOptions)
-        val shuffled = allOptions.shuffled()
-        correctAnswerIndex = shuffled.indexOfFirst { it.first == keyword }
-        return GameRound(keyword, correctImageRes, shuffled)
-    }
-
-    // =========================================================================
-    // Option display
-    // =========================================================================
-
-    private fun displayOptions(gameRound: GameRound, optionCount: Int) {
-        val optionSize = resources.displayMetrics.widthPixels / 2 - 48.dpToPx()
-        gameRound.options.take(optionCount).forEachIndexed { i, option ->
-            createOptionCard(i, option.first, option.second, optionSize, gameRound.keyword)
-        }
-    }
-
-    private fun createOptionCard(
-        index: Int,
-        word: String,
-        imageResId: Int,
-        size: Int,
-        correctKeyword: String
-    ) {
-        val card = CardView(this).apply {
-            layoutParams = GridLayout.LayoutParams().apply {
-                width      = size
-                height     = size
-                columnSpec = GridLayout.spec(index % 2, 1f)
-                rowSpec    = GridLayout.spec(index / 2)
-                setMargins(8.dpToPx(), 8.dpToPx(), 8.dpToPx(), 8.dpToPx())
-            }
-            radius        = 16.dpToPx().toFloat()
-            cardElevation = 4.dpToPx().toFloat()
-            isClickable   = true
-            tag           = index
-            setCardBackgroundColor(Color.WHITE)
-
-            setOnClickListener {
-                if (isGameFinished) return@setOnClickListener
-                if (!isAnswerSelected && isEnabled) {
-                    val rt = System.currentTimeMillis() - responseStartTime
-                    responseTimes.add(rt)
-                    handleOptionClick(this, index, word, correctKeyword, rt)
-                }
-            }
-        }
-
-        val imageView = ImageView(this).apply {
-            layoutParams = FrameLayout.LayoutParams(
-                FrameLayout.LayoutParams.MATCH_PARENT,
-                FrameLayout.LayoutParams.MATCH_PARENT
-            )
-            setImageResource(imageResId)
-            scaleType = ImageView.ScaleType.CENTER_INSIDE
-            setPadding(16, 16, 16, 16)
-        }
-
-        card.addView(imageView)
-        optionsGrid.addView(card)
-
-        card.alpha = 0f; card.translationY = 100f
-        card.animate().alpha(1f).translationY(0f)
-            .setDuration(500).setStartDelay(index * 100L).start()
-    }
-
-    // =========================================================================
-    // Click handling
-    // =========================================================================
-
-    private fun handleOptionClick(
-        card: CardView,
-        selectedIndex: Int,
-        selectedWord: String,
-        correctKeyword: String,
-        responseTime: Long
-    ) {
-        if (!card.isClickable || isAnswerSelected) return
-
-        if (selectedIndex == correctAnswerIndex) {
-            // ── CORRECT ────────────────────────────────────────────────────
-            isAnswerSelected = true
-            disableAllCards()
-
-            if (!isRetryAttempt) {
-                score++
-                consecutiveCorrect++
-                consecutiveWrong = 0
-            }
-
-            card.setCardBackgroundColor(Color.parseColor("#C8E6C9"))
-            playSound(correctSound)
-            updateScore()
-            updateProgressDots()
-
-            handler.postDelayed({
-                showFeedback(correct = true)
-                handler.postDelayed({
-                    hideFeedbackAnimated { advanceRound() }
-                }, FEEDBACK_MS)
-            }, FEEDBACK_DELAY_MS)
-
-        } else {
-            // ── WRONG ──────────────────────────────────────────────────────
-            if (!isRetryAttempt) {
-                // First wrong — give the child a retry
-                disableAllCards()
-                consecutiveWrong++
-                consecutiveCorrect = 0
-
-                card.setCardBackgroundColor(Color.parseColor("#FFCDD2"))
-                colorCorrectCard(green = true)
-                playSound(wrongSound)
-                updateProgressDots()
-
-                isRetryAttempt = true
-
-                handler.postDelayed({
-                    showFeedback(correct = false)   // shows "Try again!"
-                    handler.postDelayed({
-                        hideFeedbackAnimated { resetCardsForRetry(wrongCard = card) }
-                    }, FEEDBACK_MS)
-                }, FEEDBACK_DELAY_MS)
-
-            } else {
-                // Second wrong — move on to the next round
-                isAnswerSelected = true
-                disableAllCards()
-                card.setCardBackgroundColor(Color.parseColor("#FFCDD2"))
-                colorCorrectCard(green = true)
-                playSound(wrongSound)
-
-                handler.postDelayed({
-                    showFeedback(correct = false, message = "Good Try!")
-                    handler.postDelayed({
-                        hideFeedbackAnimated { advanceRound() }
-                    }, FEEDBACK_MS)
-                }, FEEDBACK_DELAY_MS)
-            }
-        }
-    }
-
-    // =========================================================================
-    // Card colour helpers
-    // =========================================================================
-
-    private fun colorCorrectCard(green: Boolean) {
-        (optionsGrid.getChildAt(correctAnswerIndex) as? CardView)?.let { c ->
-            if (green) {
-                c.setCardBackgroundColor(Color.parseColor("#C8E6C9"))
-                c.animate().scaleX(1.08f).scaleY(1.08f).setDuration(150).start()
-            } else {
-                c.setCardBackgroundColor(Color.WHITE)
-                c.animate().scaleX(1f).scaleY(1f).setDuration(100).start()
-            }
-        }
-    }
-
-    private fun resetCardsForRetry(wrongCard: CardView) {
-        if (isGameFinished) return
-        for (i in 0 until optionsGrid.childCount) {
-            val c = optionsGrid.getChildAt(i) as? CardView ?: continue
-            c.setCardBackgroundColor(Color.WHITE)
-            c.animate().scaleX(1f).scaleY(1f).setDuration(100).start()
-            c.isClickable = true
-        }
-    }
-
-    private fun disableAllCards() {
-        for (i in 0 until optionsGrid.childCount)
-            (optionsGrid.getChildAt(i) as? CardView)?.isClickable = false
-    }
-
-    // =========================================================================
-    // Feedback overlay
-    // =========================================================================
-
-    /**
-     * @param correct  true = correct answer, false = wrong answer
-     * @param message  optional override for the feedback text label.
-     *                 Defaults to "Well done!" for correct, "Try again!" for wrong.
-     */
-    private fun showFeedback(correct: Boolean, message: String? = null) {
-        if (correct) {
-            feedbackIcon.setImageResource(R.drawable.correct_answer)
-            feedbackText.text = message ?: "Well done!"
-            feedbackText.setTextColor(Color.parseColor("#388E3C"))
-        } else {
-            feedbackIcon.setImageResource(R.drawable.delete)
-            feedbackText.text = message ?: "Try again!"
-            feedbackText.setTextColor(Color.parseColor("#D32F2F"))
-        }
-        feedbackIcon.visibility    = View.VISIBLE
-        feedbackText.visibility    = View.VISIBLE
-        feedbackOverlay.visibility = View.VISIBLE
-        feedbackOverlay.animate().cancel()
-        feedbackOverlay.alpha = 0f
-        feedbackOverlay.animate().alpha(1f).setDuration(200).start()
-    }
-
-    private fun hideFeedbackAnimated(onDone: () -> Unit) {
-        if (feedbackOverlay.visibility != View.VISIBLE || feedbackOverlay.alpha == 0f) {
-            feedbackOverlay.visibility = View.GONE
-            feedbackIcon.visibility    = View.GONE
-            feedbackText.visibility    = View.GONE
-            onDone()
-            return
-        }
-        feedbackOverlay.animate().cancel()
-        feedbackOverlay.animate().alpha(0f).setDuration(200).withEndAction {
-            feedbackOverlay.visibility = View.GONE
-            feedbackIcon.visibility    = View.GONE
-            feedbackText.visibility    = View.GONE
-            onDone()
-        }.start()
-    }
-
-    private fun hideFeedbackNow() {
-        feedbackOverlay.animate().cancel()
-        feedbackOverlay.alpha      = 0f
-        feedbackOverlay.visibility = View.GONE
-        feedbackIcon.visibility    = View.GONE
-        feedbackText.visibility    = View.GONE
-    }
-
-    // =========================================================================
-    // Round advance
-    // =========================================================================
-
-    private fun advanceRound() {
-        if (isGameFinished) return
-        currentRound++
-        Log.d(TAG, "advanceRound → currentRound=$currentRound / $totalRounds")
-        if (currentRound >= totalRounds) {
-            isGameFinished = true
-            navigateToScoreboard()
-            return
-        }
-        handler.postDelayed({ startNewRound() }, ADVANCE_GAP_MS)
-    }
-
-    // =========================================================================
-    // Audio / score / badge
-    // =========================================================================
-
-    private fun playSound(player: MediaPlayer?) {
-        try {
-            player?.let { if (it.isPlaying) { it.stop(); it.prepare() }; it.start() }
-        } catch (e: Exception) { Log.w(TAG, "Sound error: ${e.message}") }
-    }
-
     private fun updateScore() {
         scoreText.text = "$score/$totalRounds"
         scoreText.animate().scaleX(1.2f).scaleY(1.2f).setDuration(200)
-            .withEndAction { scoreText.animate().scaleX(1f).scaleY(1f).setDuration(200).start() }
-            .start()
+            .withEndAction { scoreText.animate().scaleX(1f).scaleY(1f).setDuration(200).start() }.start()
     }
 
     private fun updateLevelBadge() {
-        val level = when {
-            currentPrediction.rhythmComplexity < 0.33f -> 1
-            currentPrediction.rhythmComplexity < 0.66f -> 2
-            else                                        -> 3
+        val modelTier    = RhythmFlashcardManager.determineTierFromModel(
+            currentPrediction.rhythmComplexity, currentPrediction.optimalDifficulty)
+        val effectiveTier = if (modelTier.ordinal > progressTier.ordinal) modelTier else progressTier
+
+        val (label, colorRes) = when (effectiveTier) {
+            RhythmFlashcardManager.ProgressTier.LOW    -> "Easy"   to R.color.green_dark
+            RhythmFlashcardManager.ProgressTier.MEDIUM -> "Medium" to R.color.dark_orange
+            RhythmFlashcardManager.ProgressTier.HIGH   -> "Hard"   to R.color.pink
         }
-        val (label, colorRes) = when (level) {
-            1    -> "Easy"   to R.color.green_dark
-            2    -> "Medium" to R.color.dark_orange
-            else -> "Hard"   to R.color.pink
-        }
-        currentDifficultyLevel = level
+        currentDifficultyLevel = effectiveTier.ordinal + 1
         levelIndicator.text    = label
         levelBadge.background?.mutate()?.setTint(ContextCompat.getColor(this, colorRes))
-        levelBadge.animate().scaleX(1.1f).scaleY(1.1f).setDuration(200)
-            .withEndAction { levelBadge.animate().scaleX(1f).scaleY(1f).setDuration(200).start() }
-            .start()
     }
 
-    // =========================================================================
-    // Scoreboard navigation
-    // =========================================================================
+    private fun playSound(player: MediaPlayer?) {
+        try { player?.let { if (it.isPlaying) { it.stop(); it.prepare() }; it.start() } }
+        catch (e: Exception) { Log.w(TAG, "Sound error: ${e.message}") }
+    }
+
+    private fun Int.dpToPx() = (this * resources.displayMetrics.density).toInt()
 
     private fun navigateToScoreboard() {
         handler.removeCallbacksAndMessages(null)
 
         val accuracy = if (currentRound > 0) score.toFloat() / currentRound else 0.5f
         val avgRT    = if (responseTimes.isNotEmpty()) responseTimes.average().toFloat() else 3000f
+        val alpha    = try {
+            gameMaster.calculateAlpha(accuracy, avgRT, ChildSession.age, consecutiveWrong)
+        } catch (e: Exception) { 0f }
 
-        val alpha = try {
-            gameMaster.calculateAlpha(
-                accuracy     = accuracy,
-                responseTime = avgRT,
-                age          = AGE_GROUP,
-                errorCount   = consecutiveWrong
-            )
-        } catch (e: Exception) {
-            Log.w(TAG, "calculateAlpha unavailable: ${e.message}")
-            0f
-        }
+        SessionLogger.logRhythmSession(
+            context      = this,
+            childId      = ChildSession.childId,
+            songTitle    = originalSongTitle,
+            tier         = progressTier,
+            shownCount   = summaryKeywordPool.size,
+            summaryWords = summaryKeywordPool.map { it.word },
+            score        = score,
+            totalRounds  = totalRounds
+        )
 
-        Log.d(TAG, "Navigating to scoreboard — score=$score/$totalRounds  alpha=$alpha")
+        ChildProfileManager.updateAfterSession(
+            context                = this,
+            childId                = ChildSession.childId,
+            ageGroup               = ChildSession.ageGroup,
+            gameType               = "rhythm",
+            sessionAccuracy        = accuracy,
+            sessionFrustration     = tracker.frustration,
+            sessionEngagement      = tracker.engagement,
+            sessionJitter          = 0.12f,
+            sessionRt              = avgRT,
+            sessionAlpha           = alpha,
+            peakConsecWrong        = tracker.peakConsecWrong,
+            lastFiveFeatureVectors = tracker.getFlatHistory(),
+            preferredSong          = originalSongTitle
+        )
 
         try {
-            startActivity(
-                Intent(this, RMScoreboardActivity::class.java).apply {
-                    flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
-                    putExtra("SCORE",               score)
-                    putExtra("TOTAL_ROUNDS",        totalRounds)
-                    putExtra("SONG_TITLE",          originalSongTitle)
-                    putExtra("FINAL_LEVEL",         currentDifficultyLevel)
-                    putExtra("MOTIVATION_ID",       currentPrediction.motivation)
-                    putExtra("UNLOCK_GIFT",         currentPrediction.friendAction > 0)
-                    putExtra("AVG_ALPHA",           alpha)
-                    putExtra("AVG_RESPONSE_TIME",   avgRT)
-                    putExtra("CONSECUTIVE_CORRECT", consecutiveCorrect)
-                    putExtra("CONSECUTIVE_WRONG",   consecutiveWrong)
-                    putExtra("ENGAGEMENT_SCORE",    if (accuracy > 0.7f) 0.8f else 0.5f)
-                    putExtra("FRUSTRATION_LEVEL",   if (consecutiveWrong >= 2) 0.7f else 0.2f)
-                    putExtra("ACCURACY",            accuracy)
-                }
-            )
+            startActivity(Intent(this, RMScoreboardActivity::class.java).apply {
+                flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+                putExtra("SCORE",               score)
+                putExtra("TOTAL_ROUNDS",        totalRounds)
+                putExtra("SONG_TITLE",          originalSongTitle)
+                putExtra("FINAL_LEVEL",         currentDifficultyLevel)
+                putExtra("MOTIVATION_ID",       currentPrediction.motivation)
+                putExtra("UNLOCK_GIFT",         currentPrediction.friendAction > 0)
+                putExtra("AVG_ALPHA",           alpha)
+                putExtra("AVG_RESPONSE_TIME",   avgRT)
+                putExtra("CONSECUTIVE_CORRECT", consecutiveCorrect)
+                putExtra("CONSECUTIVE_WRONG",   consecutiveWrong)
+                putExtra("ENGAGEMENT_SCORE",    tracker.engagement)
+                putExtra("FRUSTRATION_LEVEL",   tracker.frustration)
+                putExtra("ACCURACY",            accuracy)
+            })
             finish()
         } catch (e: Exception) {
-            Log.e(TAG, "navigateToScoreboard FAILED: ${e.message}", e)
-            try {
-                startActivity(
-                    Intent(this, GameDashboardActivity::class.java).apply {
-                        flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
-                    }
-                )
-            } catch (_: Exception) {}
+            startActivity(Intent(this, GameDashboardActivity::class.java).apply {
+                flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+            })
             finish()
         }
     }
