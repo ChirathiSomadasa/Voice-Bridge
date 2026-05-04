@@ -23,24 +23,24 @@ class SanitationSymbolsActivity : AppCompatActivity() {
 
     private fun setupIconClickListeners() {
         // Map of image view IDs to drawable resources and phrases
-        val iconData = mapOf(
-            R.id.imgToothbrush to Pair(R.drawable.toothbrush, "I want toothbrush "),
-            R.id.imgToothpaste to Pair(R.drawable.toothpaste, " I want toothpaste"),
-            R.id.imgSoap to Pair(R.drawable.soap, "I want soap "),
-            R.id.imgTowel to Pair(R.drawable.towel, " I want towel"),
-            R.id.imgComb to Pair(R.drawable.comb, "I want comb "),
-            R.id.imgTissues to Pair(R.drawable.tissues, "I want tissue "),
-            R.id.imgShampoo to Pair(R.drawable.shampoo, "I want shampoo "),
-            R.id.imgConditioner to Pair(R.drawable.hair_conditioner, "I want conditioner "),
-            R.id.imgNailClippers to Pair(R.drawable.nail_clippers, "I want nail clipper ")
+        val sanitationList = listOf(
+            SymbolItem(R.id.imgToothbrush, R.drawable.toothbrush, "use", "toothbrush"),
+            SymbolItem(R.id.imgToothpaste, R.drawable.toothpaste, "use", "toothpaste"),
+            SymbolItem(R.id.imgSoap, R.drawable.soap, "use", "soap"),
+            SymbolItem(R.id.imgTowel, R.drawable.towel, "use", "towel"),
+            SymbolItem(R.id.imgComb, R.drawable.comb, "use", "comb"),
+            SymbolItem(R.id.imgTissues, R.drawable.tissues, "need", "tissue"),
+            SymbolItem(R.id.imgShampoo, R.drawable.shampoo, "use", "shampoo"),
+            SymbolItem(R.id.imgConditioner, R.drawable.hair_conditioner, "use", "conditioner"),
+            SymbolItem(R.id.imgNailClippers, R.drawable.nail_clippers, "use", "nail clipper")
         )
 
         // Set click listeners for all icons
-        iconData.forEach { (imageViewId, data) ->
-            val imageView = findViewById<ImageView>(imageViewId)
-            imageView.setOnClickListener {
-                val (drawableRes, phrase) = data
-                navigateToPhraseActivity(drawableRes, phrase)
+        sanitationList.forEach { item ->
+            findViewById<ImageView>(item.id)?.setOnClickListener {
+                // "use toothbrush" wage phrase ekak yawwama Gemini "I want to use my toothbrush" wage hadai
+                val phrase = "${item.verb} ${item.obj}"
+                navigateToPhraseActivity(item.imageRes, phrase)
             }
         }
     }
@@ -49,6 +49,7 @@ class SanitationSymbolsActivity : AppCompatActivity() {
         val intent = Intent(this, PhraseActivity::class.java).apply {
             putExtra("SELECTED_ICON_DRAWABLE", drawableRes)
             putExtra("SELECTED_PHRASE", phrase)
+            putExtra("IS_SYMBOL_MODE", true)
         }
         startActivity(intent)
     }

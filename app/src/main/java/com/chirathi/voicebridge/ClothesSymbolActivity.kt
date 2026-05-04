@@ -21,48 +21,50 @@ class ClothesSymbolActivity : AppCompatActivity() {
     }
 
     private fun setupIconClickListeners() {
-        // Map of image view IDs to drawable resources and phrases
-        val iconData = mapOf(
-            R.id.imgShirt to Pair(R.drawable.shirt, "I want to wear a shirt"),
-            R.id.imgTShirt to Pair(R.drawable.tshirt, "I want to wear a t shirt "),
-            R.id.imgTrouser to Pair(R.drawable.jeans, "I want to wear a trouser "),
-            R.id.imgFrock to Pair(R.drawable.frock, " I want to wear a frock"),
-            R.id.imgShort to Pair(R.drawable.shorts, " I want to wear a short"),
-            R.id.imgRainCoat to Pair(R.drawable.raincoat, "I want to wear a raincoat"),
-            R.id.imgSkirt to Pair(R.drawable.skirt, "I want to wear a skirt "),
-            R.id.imgBlouse to Pair(R.drawable.blouse, "I want to wear a blouse "),
-            R.id.imgNightSuit to Pair(R.drawable.nightsuit, "I want to wear a night suit "),
-            R.id.imgVest to Pair(R.drawable.vest, "I want to wear a vest "),
-            R.id.imgSlippers to Pair(R.drawable.slippers, "I want to wear slippers "),
-            R.id.imgSandals to Pair(R.drawable.sandals, "I want to wear sandals "),
-            R.id.imgWatch to Pair(R.drawable.watch, "I want to wear a watch"),
-            R.id.imgScarf to Pair(R.drawable.scarf, " I want to wear a scarf"),
-            R.id.imgHankerchief to Pair(R.drawable.hankerchief, "I want a hankerchief "),
-            R.id.imgWallet to Pair(R.drawable.wallet, "I want a wallet "),
-            R.id.imgGlasses to Pair(R.drawable.glasses, "I want to wear glasses "),
-            R.id.imgSunGlasses to Pair(R.drawable.sunglasses, "I want to wear sunglass "),
-            R.id.imgSocks to Pair(R.drawable.socks, "I want to wear socks "),
-            R.id.imgUmbrella to Pair(R.drawable.umbrella, " I want umbrella"),
-            R.id.imgTie to Pair(R.drawable.tie, " I want to wear a tie"),
-            R.id.imgBowTie to Pair(R.drawable.bow_tie, "I want to wear a bow tie "),
-            R.id.imgCap to Pair(R.drawable.cap, "I want +a cap "),
-            R.id.imgBelt to Pair(R.drawable.belt, " I want a belt ")
+        val itemList = listOf(
+            SymbolItem(R.id.imgShirt, R.drawable.shirt, "wear", "shirt"),
+            SymbolItem(R.id.imgTShirt, R.drawable.tshirt, "wear", "t-shirt"),
+            SymbolItem(R.id.imgTrouser, R.drawable.jeans, "wear", "trouser"),
+            SymbolItem(R.id.imgFrock, R.drawable.frock, "wear", "frock"),
+            SymbolItem(R.id.imgShort, R.drawable.shorts, "wear", "shorts"),
+            SymbolItem(R.id.imgRainCoat, R.drawable.raincoat, "wear", "raincoat"),
+            SymbolItem(R.id.imgSkirt, R.drawable.skirt, "wear", "skirt"),
+            SymbolItem(R.id.imgBlouse, R.drawable.blouse, "wear", "blouse"),
+            SymbolItem(R.id.imgNightSuit, R.drawable.nightsuit, "wear", "night suit"),
+            SymbolItem(R.id.imgVest, R.drawable.vest, "wear", "vest"),
+            SymbolItem(R.id.imgSlippers, R.drawable.slippers, "wear", "slippers"),
+            SymbolItem(R.id.imgSandals, R.drawable.sandals, "wear", "sandals"),
+            SymbolItem(R.id.imgWatch, R.drawable.watch, "wear", "watch"),
+            SymbolItem(R.id.imgScarf, R.drawable.scarf, "wear", "scarf"),
+            SymbolItem(R.id.imgHankerchief, R.drawable.hankerchief, "want", "handkerchief"),
+            SymbolItem(R.id.imgWallet, R.drawable.wallet, "want", "wallet"),
+            SymbolItem(R.id.imgGlasses, R.drawable.glasses, "wear", "glasses"),
+            SymbolItem(R.id.imgSunGlasses, R.drawable.sunglasses, "wear", "sunglasses"),
+            SymbolItem(R.id.imgSocks, R.drawable.socks, "wear", "socks"),
+            SymbolItem(R.id.imgUmbrella, R.drawable.umbrella, "want", "umbrella"),
+            SymbolItem(R.id.imgTie, R.drawable.tie, "wear", "tie"),
+            SymbolItem(R.id.imgBowTie, R.drawable.bow_tie, "wear", "bow tie"),
+            SymbolItem(R.id.imgCap, R.drawable.cap, "wear", "cap"),
+            SymbolItem(R.id.imgBelt, R.drawable.belt, "want", "belt")
         )
 
-        // Set click listeners for all icons
-        iconData.forEach { (imageViewId, data) ->
-            val imageView = findViewById<ImageView>(imageViewId)
-            imageView.setOnClickListener {
-                val (drawableRes, phrase) = data
-                navigateToPhraseActivity(drawableRes, phrase)
+        findViewById<ImageView>(R.id.back).setOnClickListener { finish() }
+
+        // 3. Dynamic Click Listener Setup
+        itemList.forEach { item ->
+            findViewById<ImageView>(item.id)?.setOnClickListener {
+                // We send verb and object separately to help Gemini/Logic
+                navigateToPhraseActivity(item.imageRes, "${item.verb} ${item.obj}")
             }
         }
+
     }
 
     private fun navigateToPhraseActivity(drawableRes: Int, phrase: String) {
         val intent = Intent(this, PhraseActivity::class.java).apply {
             putExtra("SELECTED_ICON_DRAWABLE", drawableRes)
             putExtra("SELECTED_PHRASE", phrase)
+            putExtra("IS_SYMBOL_MODE", true)
         }
         startActivity(intent)
     }

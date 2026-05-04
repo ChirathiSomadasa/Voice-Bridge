@@ -3,15 +3,12 @@ package com.chirathi.voicebridge
 import android.content.Intent
 import android.os.Bundle
 import android.widget.ImageView
-import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.view.ViewCompat
-import androidx.core.view.WindowInsetsCompat
 
 class EmotionSymbolsActivity : AppCompatActivity() {
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
         setContentView(R.layout.activity_emotion_symbols)
 
         val backBtn = findViewById<ImageView>(R.id.back)
@@ -23,18 +20,16 @@ class EmotionSymbolsActivity : AppCompatActivity() {
     }
 
     private fun setupIconClickListeners() {
-        // Map of image view IDs to drawable resources and phrases
+        // Grammar eka poddak hadala thiyenne Gemini ekata lesi wenna
         val iconData = mapOf(
-            R.id.imgHappy to Pair(R.drawable.happy_emotion, "I am in happy"),
-            R.id.imgSad to Pair(R.drawable.sad_emotion, "I am in sad"),
-            R.id.imgAngry to Pair(R.drawable.angry_emotion, "I am in angry"),
-            R.id.imgAfraid to Pair(R.drawable.afraid_emotion, "I am in afraid")
+            R.id.imgHappy to Pair(R.drawable.happy_emotion, "I am happy"),
+            R.id.imgSad to Pair(R.drawable.sad_emotion, "I am sad"),
+            R.id.imgAngry to Pair(R.drawable.angry_emotion, "I am angry"),
+            R.id.imgAfraid to Pair(R.drawable.afraid_emotion, "I am afraid")
         )
 
-        // Set click listeners for all icons
         iconData.forEach { (imageViewId, data) ->
-            val imageView = findViewById<ImageView>(imageViewId)
-            imageView.setOnClickListener {
+            findViewById<ImageView>(imageViewId)?.setOnClickListener {
                 val (drawableRes, phrase) = data
                 navigateToPhraseActivity(drawableRes, phrase)
             }
@@ -45,6 +40,7 @@ class EmotionSymbolsActivity : AppCompatActivity() {
         val intent = Intent(this, PhraseActivity::class.java).apply {
             putExtra("SELECTED_ICON_DRAWABLE", drawableRes)
             putExtra("SELECTED_PHRASE", phrase)
+            putExtra("MODE", "EMOTION")
         }
         startActivity(intent)
     }
