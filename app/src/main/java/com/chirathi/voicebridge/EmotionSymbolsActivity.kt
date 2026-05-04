@@ -40,7 +40,7 @@ class EmotionSymbolsActivity : AppCompatActivity() {
         val intent = Intent(this, PhraseActivity::class.java).apply {
             putExtra("SELECTED_ICON_DRAWABLE", drawableRes)
             putExtra("SELECTED_PHRASE", phrase)
-            putExtra("MODE", "EMOTION")
+            putExtra("IS_EMOTION_MODE", true)
         }
         startActivity(intent)
     }
