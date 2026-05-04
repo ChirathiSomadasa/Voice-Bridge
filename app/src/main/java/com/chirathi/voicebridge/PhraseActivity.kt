@@ -59,6 +59,9 @@ class PhraseActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
         val selectedIconDrawable = intent.getIntExtra("SELECTED_ICON_DRAWABLE", R.drawable.play)
         selectedPhrase = intent.getStringExtra("SELECTED_PHRASE") ?: "Play doll"
         val isEmotionMode = intent.getBooleanExtra("IS_EMOTION_MODE", false)
+        val isSymbolMode = intent.getBooleanExtra("IS_SYMBOL_MODE", false)
+        val isQuickMode = intent.getBooleanExtra("IS_QUICK_MODE", false)
+        val isPainMode = intent.getBooleanExtra("IS_PAIN_MODE", false)
 
         val quickWordImage = findViewById<ImageView>(R.id.imgQuickWord)
         phraseText = findViewById<TextView>(R.id.tvPhrase)
@@ -86,23 +89,42 @@ class PhraseActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
         lottieThinking.playAnimation()
 
         lifecycleScope.launch {
-            fullSentence = if (isEmotionMode) {
-                selectedPhrase
-            } else {
-                val parts = selectedPhrase.split(", ")
-                val v = parts[0]
-                val o = if (parts.size > 1) parts.drop(1).joinToString(" ") else ""
-                generateSentenceWithLLM(v, o)
+            fullSentence = when {
+                isEmotionMode -> {
+                    selectedPhrase
+                }
+                isQuickMode -> {
+                    selectedPhrase
+                }
+                isPainMode -> {
+                    selectedPhrase
+                }
+                isSymbolMode -> {
+                    val parts = selectedPhrase.split(" ")
+                    val v = parts.getOrElse(0) { "" }
+                    val o = if (parts.size > 1) parts.drop(1).joinToString(" ") else ""
+                    generateSentenceWithLLM(v, o)
+                }
+                else -> {
+                    val parts = selectedPhrase.split(", ")
+                    val v = parts.getOrElse(0) { "detecting" }
+                    val o = if (parts.size > 1) parts.drop(1).joinToString(" ") else ""
+                    generateSentenceWithLLM(v, o)
+                }
             }
 
+            // UI: Hide the thinking animation once the sentence is ready
             lottieThinking.visibility = View.GONE
             lottieThinking.cancelAnimation()
 
+            // Process the full sentence into a version with blanks
             val result = generateMeaningfulBlanks(fullSentence, selectedPhrase)
             phraseText?.text = result.first
 
+            // Short delay for better UX before showing word options
             delay(600)
 
+            // Setup the interactive word bank
             val options = generateOptions(result.second)
             setupWordOptions(options)
             setupDragListener()

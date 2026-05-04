@@ -67,6 +67,7 @@ class QuickWordsChartsActivity : AppCompatActivity() {
         val intent = Intent(this, PhraseActivity::class.java).apply {
             putExtra("SELECTED_ICON_DRAWABLE", drawableRes)
             putExtra("SELECTED_PHRASE", phrase)
+            putExtra("IS_QUICK_MODE", true)
         }
         startActivity(intent)
     }
