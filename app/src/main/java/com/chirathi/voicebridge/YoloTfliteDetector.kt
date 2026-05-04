@@ -45,9 +45,9 @@ class YoloTfliteDetector(context: Context, modelName: String) {
         val intValues = IntArray(640 * 640)
         bitmap.getPixels(intValues, 0, 640, 0, 0, 640, 640)
         for (pixelValue in intValues) {
-            byteBuffer.putFloat(((pixelValue shr 16 and 0xFF) / 255f))
-            byteBuffer.putFloat(((pixelValue shr 8 and 0xFF) / 255f))
-            byteBuffer.putFloat(((pixelValue and 0xFF) / 255f))
+            byteBuffer.putFloat(((pixelValue shr 16 and 0xFF) / 255.0f))
+            byteBuffer.putFloat(((pixelValue shr 8 and 0xFF) / 255.0f))
+            byteBuffer.putFloat(((pixelValue and 0xFF) / 255.0f))
         }
         return byteBuffer
     }

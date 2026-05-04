@@ -17,13 +17,13 @@ object YoloPostProcessor {
         labels: List<String>,
         imgWidth: Int,
         imgHeight: Int,
-        threshold: Float = 0.1f
+        threshold: Float = 0.0001f
     ): BestDetection? {
 
         // Novel Formula Constants
-        val alpha = 0.6f
-        val beta = 0.2f
-        val gamma = 0.2f
+        var alpha: Float
+        var beta: Float
+        var gamma: Float
 
         var bestDetection: BestDetection? = null
         var maxFinalScore = 0f
@@ -49,7 +49,6 @@ object YoloPostProcessor {
             var maxClassScore = 0f
             var classIndex = -1
 
-            // 5 වෙනි index එකේ සිට ඉදිරියට class scores පවතී
             for (c in labels.indices) {
                 val classScore = detection[5 + c]
                 if (classScore > maxClassScore) {
@@ -59,7 +58,7 @@ object YoloPostProcessor {
             }
 
             // 3. Calculate actual confidence
-            val confidence = objectness * maxClassScore
+            val confidence = (objectness * 0.2f) + (maxClassScore * 0.8f)
             if (confidence < threshold) continue
 
             // 4. Coordinates (YOLO format: cx, cy, w, h - Normalized 0 to 1)
@@ -86,7 +85,20 @@ object YoloPostProcessor {
             )
             val centerFactor = 1.0 - (centerDistance / maxDistance)
 
-            // 7. NOVEL SCORING FORMULA
+            if (areaFactor > 0.45f) {
+                alpha = 0.35f  // Confidence
+                beta = 0.45f   // Area
+                gamma = 0.20f
+            } else if (areaFactor < 0.10f) {
+                alpha = 0.60f  // Confidence
+                beta = 0.15f   // Area
+                gamma = 0.25f
+            } else {
+                alpha = 0.5f
+                beta = 0.3f
+                gamma = 0.2f
+            }
+
             val finalScore = (alpha * confidence) +
                     (beta * areaFactor) +
                     (gamma * centerFactor.toFloat())
@@ -107,100 +119,3 @@ object YoloPostProcessor {
         return bestDetection
     }
 }
-
-//package com.chirathi.voicebridge
-//
-//import android.graphics.Rect
-//import kotlin.math.pow
-//
-//data class BestDetection(
-//    val className: String,
-//    val confidence: Float,
-//    val box: Rect,
-//    val score: Float
-//)
-//
-//object YoloPostProcessor {
-//    fun getBestDetectionFromImage(
-//        output: Array<Array<FloatArray>>,
-//        labels: List<String>,
-//        imgWidth: Int,
-//        imgHeight: Int,
-//        threshold: Float = 0.1f
-//    ): BestDetection? {
-//
-//        val alpha = 0.5f
-//        val beta = 0.3f
-//        val gamma = 0.2f
-//
-//        var bestDetection: BestDetection? = null
-//        var bestScore = 0f
-//
-//        val imageArea = imgWidth * imgHeight
-//        val maxDistance = Math.sqrt((imgWidth * imgWidth + imgHeight * imgHeight).toDouble())
-//
-//        for (i in output[0].indices) {
-//            val detection = output[0][i]
-//
-//            val objectness = detection[4]
-//            if (objectness < threshold) continue
-//
-//            // Get best class
-//            var maxClassScore = 0f
-//            var classIndex = -1
-//
-//            for (c in labels.indices) {
-//                val classScore = detection[5 + c]
-//                if (classScore > maxClassScore) {
-//                    maxClassScore = classScore
-//                    classIndex = c
-//                }
-//            }
-//
-//            val confidence = objectness * maxClassScore
-//
-//            // YOLO format (center x,y, width, height)
-//            val cx = detection[0] * imgWidth
-//            val cy = detection[1] * imgHeight
-//            val w = detection[2] * imgWidth
-//            val h = detection[3] * imgHeight
-//
-//            val x1 = (cx - w / 2).toInt()
-//            val y1 = (cy - h / 2).toInt()
-//            val x2 = (cx + w / 2).toInt()
-//            val y2 = (cy + h / 2).toInt()
-//
-//            val box = Rect(x1, y1, x2, y2)
-//
-//            //  AREA FACTOR
-//            val area = w * h
-//            val areaFactor = area / imageArea
-//
-//            // CENTER FACTOR
-//            val centerDistance = Math.sqrt(
-//                ((cx - imgWidth / 2).toDouble().pow(2.0)) +
-//                        ((cy - imgHeight / 2).toDouble().pow(2.0))
-//            )
-//            val centerFactor = 1 - (centerDistance / maxDistance)
-//
-//            //  NOVEL FORMULA
-//            val score = alpha * confidence +
-//                    beta * areaFactor.toFloat() +
-//                    gamma * centerFactor.toFloat()
-//
-//            if (score > bestScore) {
-//                bestScore = score
-//
-//                bestDetection = BestDetection(
-//                    className = labels[classIndex],
-//                    confidence = confidence,
-//                    box = box,
-//                    score = score
-//                )
-//            }
-//        }
-//
-//        return bestDetection
-//    }
-//
-//}

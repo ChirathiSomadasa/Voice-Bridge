@@ -1,12 +1,9 @@
 package com.chirathi.voicebridge
 
 import android.content.ClipData
-import android.content.Intent
 import android.graphics.BitmapFactory
-import android.os.Build
 import android.os.Bundle
 import android.speech.tts.TextToSpeech
-import android.speech.tts.Voice
 import android.util.Log
 import android.view.DragEvent
 import android.view.View
@@ -15,10 +12,20 @@ import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.view.children
 import java.text.SimpleDateFormat
 import java.util.*
+import android.view.animation.AnimationUtils
+import android.view.HapticFeedbackConstants
+import android.media.MediaPlayer
+import com.airbnb.lottie.LottieAnimationView
+import com.google.ai.client.generativeai.GenerativeModel
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import androidx.lifecycle.lifecycleScope
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.delay
 
-// Word and its position in the sentence
 data class BlankWord(
     val index: Int,
     val word: String
@@ -30,159 +37,202 @@ class PhraseActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
     private var speakerBtn: LinearLayout? = null
     private var phraseText: TextView? = null
     private var greetingText: TextView? = null
-    private var selectedPhrase: String = "" // This holds "Action Object" (e.g., "Play doll")
-    private var fullSentence: String = ""   // This holds "I want to play with doll"
+    private var selectedPhrase: String = ""
+    private var fullSentence: String = ""
+    private lateinit var wordContainer: com.google.android.flexbox.FlexboxLayout
+    private lateinit var lottieConfetti: LottieAnimationView
+    private lateinit var lottieThinking: LottieAnimationView
+
+    private val generativeModel = GenerativeModel(
+        modelName = "gemini-1.5-flash",
+        apiKey = BuildConfig.GEMINI_SENTENCE_GENERATE_API_KEY
+    )
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_phrase)
 
-        // 1. Get Data from Intent
+        wordContainer = findViewById(R.id.wordOptions)
+        lottieConfetti = findViewById(R.id.lottieConfetti)
+        lottieThinking = findViewById(R.id.lottieThinking)
+
         val selectedIconDrawable = intent.getIntExtra("SELECTED_ICON_DRAWABLE", R.drawable.play)
         selectedPhrase = intent.getStringExtra("SELECTED_PHRASE") ?: "Play doll"
+        val isEmotionMode = intent.getBooleanExtra("IS_EMOTION_MODE", false)
 
-        // 2. Build the Full Meaningful Sentence
-        fullSentence = buildMeaningfulSentence(selectedPhrase)
-
-        // 3. Initialize Views
         val quickWordImage = findViewById<ImageView>(R.id.imgQuickWord)
         phraseText = findViewById<TextView>(R.id.tvPhrase)
         greetingText = findViewById<TextView>(R.id.tvGreeting)
         val refreshBtn = findViewById<LinearLayout>(R.id.refresh)
         speakerBtn = findViewById(R.id.Speaker)
 
-        // Set UI elements
-        quickWordImage.setImageResource(selectedIconDrawable)
         val imageBytes = intent.getByteArrayExtra("DETECTED_IMAGE")
         if (imageBytes != null) {
             val bitmap = BitmapFactory.decodeByteArray(imageBytes, 0, imageBytes.size)
             quickWordImage.setImageBitmap(bitmap)
+        } else {
+            quickWordImage.setImageResource(selectedIconDrawable)
         }
 
         setTimeAndGreeting()
 
-        // 4. Generate Blanks and Options
-        // We hide the specific action (play) and object (doll)
-        val (blankDisplay, hiddenWords) = generateMeaningfulBlanks(fullSentence, selectedPhrase)
-        phraseText?.text = blankDisplay
-
-        val options = generateOptions(hiddenWords)
-        setupWordOptions(options)
-
-        // 5. Setup Drag and Drop
-        setupDragListener(hiddenWords)
-
-        // 6. TTS Setup
         tts = TextToSpeech(this, this)
         speakerBtn?.isEnabled = false
 
         refreshBtn.setOnClickListener { finish() }
         speakerBtn?.setOnClickListener { speakOut(phraseText?.text.toString()) }
-    }
 
-    /**
-     * Logic to create a natural sentence based on the Action and Object
-     */
-    private fun buildMeaningfulSentence(raw: String): String {
-        val parts = raw.split(" ")
-        if (parts.size < 2) return raw
+        lottieThinking.visibility = View.VISIBLE
+        lottieThinking.playAnimation()
 
-        val verb = parts[0].lowercase()
-        val obj = parts[1].lowercase()
-
-        return when (obj) {
-            // --- Food & Drinks ---
-            "coffee", "tea", "water", "milk" -> "I want to $verb some $obj"
-            "banana", "orange", "apple" -> "I want to $verb the $obj"
-            "cup", "mug", "bottle", "kettle", "teapot" -> {
-                if (verb == "drink") "I want to drink from the $obj"
-                else if (verb == "pour") "I want to pour the $obj"
-                else "I want to $verb the $obj"
+        lifecycleScope.launch {
+            fullSentence = if (isEmotionMode) {
+                selectedPhrase
+            } else {
+                val parts = selectedPhrase.split(", ")
+                val v = parts[0]
+                val o = if (parts.size > 1) parts.drop(1).joinToString(" ") else ""
+                generateSentenceWithLLM(v, o)
             }
 
-            // --- Clothing ---
-            "clothes", "shirt", "blouse", "frock", "jacket", "jean", "short", "slippers", "trouser", "tshirt", "shoes" -> {
-                if (verb == "wear") "I want to wear my $obj"
-                else "I want to $verb the $obj"
-            }
+            lottieThinking.visibility = View.GONE
+            lottieThinking.cancelAnimation()
 
-            // --- Furniture & Large Objects ---
-            "chair", "sofa", "table" -> {
-                if (verb == "sit") "I want to sit on the $obj"
-                else if (verb == "sleep") "I want to sleep on the $obj"
-                else "I want to $verb the $obj"
-            }
-            "fridge" -> {
-                if (verb == "look") "I want to look inside the $obj"
-                else "I want to $verb the $obj"
-            }
+            val result = generateMeaningfulBlanks(fullSentence, selectedPhrase)
+            phraseText?.text = result.first
 
-            // --- Toys & Play ---
-            "doll", "teddy bear", "bricks", "building-box", "ball", "toy car" -> {
-                if (verb == "play") "I want to play with the $obj"
-                else if (verb == "drive") "I want to drive my $obj"
-                else "I want to $verb the $obj"
-            }
+            delay(600)
 
-            // --- Stationery & Small Tools ---
-            "pen", "pencil", "notebook", "eraser", "ruler", "stapler", "correction-pen" -> {
-                if (verb == "write" || verb == "draw") "I want to $verb with my $obj"
-                else "I want to $verb the $obj"
-            }
-
-            // --- Tech & Devices ---
-            "phone", "remote-control" -> {
-                if (verb == "watch") "I want to watch the $obj"
-                else "I want to $verb with the $obj"
-            }
-
-            // Default logic for anything else
-            else -> "I want to $verb the $obj"
+            val options = generateOptions(result.second)
+            setupWordOptions(options)
+            setupDragListener()
         }
     }
 
-    /**
-     * Specifically hides the Verb and Object from the sentence
-     */
+    private suspend fun generateSentenceWithLLM(verb: String, obj: String): String {
+        return withContext(Dispatchers.IO) {
+            Log.d("GEMINI_CHECK", "LLM process started for: $verb + $obj")
+            try {
+                val prompt =  """
+    You are a smart AAC assistant for a child. 
+    Generate a simple, natural 4-6 word sentence using the input.
+    Input:
+    - Verb: '${verb.ifEmpty { "detecting" }}'
+    - Object: '$obj'
+    Instructions:
+    1. Always use correct prepositions (e.g., 'to', 'with', 'in', 'on', 'a', 'the') to make the sentence grammatically perfect.
+    2. If Verb is 'detecting': Use "I see a..." or "There is a...".
+    3. If Verb is 'have' (for pain/feelings): Use "I have a...".
+    4. If Verb is an action (eat, drink, play, etc.): Use "I want to [verb] [object]" or "I want a [object]".
+    5. Keep it very simple for a child.
+    6. Output ONLY the sentence in lowercase without periods.
+""".trimIndent()
+                val response = generativeModel.generateContent(prompt)
+                val text = response.text?.trim()?.lowercase() ?: ""
+
+                withContext(Dispatchers.Main) {
+                    if (text.isNotEmpty()) {
+                        Log.d("GEMINI_CHECK", "Response received: $text")
+                        Toast.makeText(this@PhraseActivity, "Gemini Success: $text", Toast.LENGTH_SHORT).show()
+                    } else {
+                        Log.w("GEMINI_CHECK", "Response is empty!")
+                        Toast.makeText(this@PhraseActivity, "Gemini returned empty response", Toast.LENGTH_SHORT).show()
+                    }
+                }
+
+                if (text.isNotEmpty()) {
+                    text.replaceFirstChar { it.uppercase() }
+                } else {
+                    buildMeaningfulSentence(verb, obj)
+                }
+            } catch (e: Exception) {
+                buildMeaningfulSentence(verb, obj)
+            }
+        }
+    }
+
+    private fun buildMeaningfulSentence(verb: String, obj: String): String {
+        val v = verb.lowercase()
+        val o = obj.lowercase()
+
+        val sentence = when (o) {
+            "coffee", "tea", "water", "milk" -> "I want to $v some $o"
+            "banana", "orange", "apple" -> "I want to $v the $o"
+            "cup", "mug", "bottle", "kettle", "teapot" -> {
+                if (v == "drink") "I want to drink from the $o"
+                else if (v == "pour") "I want to pour the $o"
+                else "I want to $v the $o"
+            }
+            "clothes", "shirt", "blouse", "frock", "jacket", "jean", "short", "slippers", "trouser", "tshirt", "shoes" -> {
+                if (v == "wear") "I want to wear my $o"
+                else "I want to $v the $o"
+            }
+            "chair", "sofa", "table" -> {
+                if (v == "sit") "I want to sit on the $o"
+                else if (v == "sleep") "I want to sleep on the $o"
+                else "I want to $v the $o"
+            }
+            "fridge" -> {
+                if (v == "look") "I want to look inside the $o"
+                else "I want to $v the $o"
+            }
+            "doll", "teddy bear", "bricks", "building-box", "ball", "toy car" -> {
+                if (v == "play") "I want to play with the $o"
+                else if (v == "drive") "I want to drive my $o"
+                else "I want to $v the $o"
+            }
+            "pen", "pencil", "notebook", "eraser", "ruler", "stapler", "correction-pen" -> {
+                if (v == "write" || v == "draw") "I want to $v with my $o"
+                else "I want to $v the $o"
+            }
+            "phone", "remote-control" -> {
+                if (v == "watch") "I want to watch the $o"
+                else "I want to $v with the $o"
+            }
+            else -> "I want to $v the $o"
+        }
+        return sentence.replaceFirstChar { it.uppercase() }
+    }
+
     private fun generateMeaningfulBlanks(sentence: String, rawInput: String): Pair<String, List<BlankWord>> {
         val rawParts = rawInput.split(" ")
-        val verbToHide = rawParts[0]
-        val objectToHide = rawParts[1]
-
         val sentenceWords = sentence.split(" ").toMutableList()
         val blanks = mutableListOf<BlankWord>()
 
-        for (i in sentenceWords.indices) {
-            // If the word matches the verb or object (ignoring case), we blank it
-            if (sentenceWords[i].equals(verbToHide, ignoreCase = true) ||
-                sentenceWords[i].equals(objectToHide, ignoreCase = true)) {
+        for (part in rawParts) {
+            val cleanPart = part.replace(Regex("[^a-zA-Z]"), "")
+            if (cleanPart.isEmpty()) continue
 
-                blanks.add(BlankWord(i, sentenceWords[i]))
-                sentenceWords[i] = "____"
+            for (i in sentenceWords.indices) {
+                val cleanWord = sentenceWords[i].replace(Regex("[^a-zA-Z]"), "")
+                if (cleanWord.equals(cleanPart, ignoreCase = true) && sentenceWords[i] != "____") {
+                    blanks.add(BlankWord(i, sentenceWords[i]))
+                    sentenceWords[i] = "____"
+                    break
+                }
             }
         }
         return Pair(sentenceWords.joinToString(" "), blanks)
     }
 
     private fun setupWordOptions(options: List<String>) {
-        val wordContainer = findViewById<LinearLayout>(R.id.wordOptions)
         wordContainer.removeAllViews()
-
         for (word in options) {
             val tv = TextView(this).apply {
                 text = word
                 textSize = 22f
-                setPadding(30, 20, 30, 20)
+                setPadding(28, 18, 28, 18)
                 setTextColor(android.graphics.Color.WHITE)
                 setBackgroundResource(R.drawable.button_green_light)
 
-                val params = LinearLayout.LayoutParams(
-                    LinearLayout.LayoutParams.WRAP_CONTENT,
-                    LinearLayout.LayoutParams.WRAP_CONTENT
+                val params = com.google.android.flexbox.FlexboxLayout.LayoutParams(
+                    com.google.android.flexbox.FlexboxLayout.LayoutParams.WRAP_CONTENT,
+                    com.google.android.flexbox.FlexboxLayout.LayoutParams.WRAP_CONTENT
                 )
-                params.setMargins(15, 10, 15, 10)
+                params.setMargins(10, 8, 10, 8)
                 layoutParams = params
 
+                setOnClickListener { handleWordSelection(word, this) }
                 setOnLongClickListener {
                     val dragData = ClipData.newPlainText("word", word)
                     startDragAndDrop(dragData, View.DragShadowBuilder(this), this, 0)
@@ -193,28 +243,55 @@ class PhraseActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
         }
     }
 
-    private fun setupDragListener(hiddenWords: List<BlankWord>) {
+    private fun handleWordSelection(word: String, view: View) {
+        val currentText = phraseText?.text.toString()
+        if (currentText.contains("____")) {
+            val updatedText = currentText.replaceFirst("____", word)
+            phraseText?.text = updatedText
+            view.isEnabled = false
+            view.alpha = 0.4f
+            if (!updatedText.contains("____")) checkResult(updatedText)
+        }
+    }
+
+    private fun checkResult(updatedText: String) {
+        if (updatedText.equals(fullSentence, ignoreCase = true)) {
+            speakOut(updatedText)
+            lottieConfetti.visibility = View.VISIBLE
+            lottieConfetti.playAnimation()
+            lottieConfetti.postDelayed({ lottieConfetti.visibility = View.GONE }, 3000)
+            playFeedbackSound(true)
+        } else {
+            Toast.makeText(this, "Try again!", Toast.LENGTH_SHORT).show()
+            wordContainer.startAnimation(AnimationUtils.loadAnimation(this, R.anim.shake))
+            wordContainer.performHapticFeedback(HapticFeedbackConstants.REJECT)
+            playFeedbackSound(false)
+            wordContainer.postDelayed({
+                val result = generateMeaningfulBlanks(fullSentence, selectedPhrase)
+                phraseText?.text = result.first
+                wordContainer.children.forEach { child ->
+                    child.isEnabled = true
+                    child.alpha = 1f
+                }
+            }, 500)
+        }
+    }
+
+    private fun playFeedbackSound(isSuccess: Boolean) {
+        try {
+            val soundRes = if (isSuccess) R.raw.correct_sound else R.raw.wrong_sound
+            MediaPlayer.create(this, soundRes).apply {
+                start()
+                setOnCompletionListener { release() }
+            }
+        } catch (e: Exception) { Log.e("SoundError", "${e.message}") }
+    }
+
+    private fun setupDragListener() {
         phraseText?.setOnDragListener { _, event ->
             if (event.action == DragEvent.ACTION_DROP) {
                 val draggedWord = event.clipData.getItemAt(0).text.toString()
-                val currentText = phraseText?.text.toString()
-
-                // Replace the first available blank
-                val updatedText = currentText.replaceFirst("____", draggedWord)
-                phraseText?.text = updatedText
-
-                // If all blanks are filled, check if correct
-                if (!updatedText.contains("____")) {
-                    if (updatedText.equals(fullSentence, ignoreCase = true)) {
-                        speakOut(updatedText)
-                        Toast.makeText(this, "Excellent!", Toast.LENGTH_SHORT).show()
-                    } else {
-                        Toast.makeText(this, "Not quite, try again!", Toast.LENGTH_SHORT).show()
-                        // Reset blanks so the child can try again
-                        val (resetText, _) = generateMeaningfulBlanks(fullSentence, selectedPhrase)
-                        phraseText?.text = resetText
-                    }
-                }
+                handleWordSelection(draggedWord, View(this))
             }
             true
         }
@@ -228,8 +305,6 @@ class PhraseActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
         return options.shuffled()
     }
 
-    // --- TTS and UI Helpers (Keep as is) ---
-
     private fun setTimeAndGreeting() {
         val sriLankaTimeZone = TimeZone.getTimeZone("Asia/Colombo")
         val calendar = Calendar.getInstance(sriLankaTimeZone)
@@ -237,8 +312,7 @@ class PhraseActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
             timeZone = sriLankaTimeZone
         }
         val currentTime = timeFormat.format(calendar.time)
-        val hour = calendar.get(Calendar.HOUR_OF_DAY)
-        val greeting = when (hour) {
+        val greeting = when (calendar.get(Calendar.HOUR_OF_DAY)) {
             in 5..11 -> "Good Morning!"
             in 12..15 -> "Good Afternoon!"
             in 16..18 -> "Good Evening!"
@@ -250,7 +324,7 @@ class PhraseActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
     override fun onInit(status: Int) {
         if (status == TextToSpeech.SUCCESS) {
             tts?.setLanguage(Locale.US)
-            tts?.setPitch(1.8f) // Child-like pitch
+            tts?.setPitch(1.8f)
             tts?.setSpeechRate(0.9f)
             speakerBtn?.isEnabled = true
         }
