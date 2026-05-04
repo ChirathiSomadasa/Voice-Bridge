@@ -22,24 +22,23 @@ class SanackSymbolActivity : AppCompatActivity() {
 
     private fun setupIconClickListeners() {
         // Map of image view IDs to drawable resources and phrases
-        val iconData = mapOf(
-            R.id.imgIceCream to Pair(R.drawable.ice_cream, "I want ice cream"),
-            R.id.imgChocolate to Pair(R.drawable.chocolate, "I want chocolate"),
-            R.id.imgCrsips to Pair(R.drawable.crisps, " I want crsips"),
-            R.id.imgBiscuit to Pair(R.drawable.biscuit, "I want biscuit "),
-            R.id.imgPeaNuts to Pair(R.drawable.nuts, "I want peanuts "),
-            R.id.imgPop to Pair(R.drawable.pop, "I want lollypop"),
-            R.id.imgYogurt to Pair(R.drawable.yogurt, "I want yogurt"),
-            R.id.imgCake to Pair(R.drawable.cake, "I want cake"),
-            R.id.imgToffee to Pair(R.drawable.toffee, "I want toffee")
+        val snackList = listOf(
+            SymbolItem(R.id.imgIceCream, R.drawable.ice_cream, "eat", "ice cream"),
+            SymbolItem(R.id.imgChocolate, R.drawable.chocolate, "eat", "chocolate"),
+            SymbolItem(R.id.imgCrsips, R.drawable.crisps, "eat", "crisps"),
+            SymbolItem(R.id.imgBiscuit, R.drawable.biscuit, "eat", "biscuit"),
+            SymbolItem(R.id.imgPeaNuts, R.drawable.nuts, "eat", "peanuts"),
+            SymbolItem(R.id.imgPop, R.drawable.pop, "eat", "lollypop"),
+            SymbolItem(R.id.imgYogurt, R.drawable.yogurt, "eat", "yogurt"),
+            SymbolItem(R.id.imgCake, R.drawable.cake, "eat", "cake"),
+            SymbolItem(R.id.imgToffee, R.drawable.toffee, "eat", "toffee")
         )
 
         // Set click listeners for all icons
-        iconData.forEach { (imageViewId, data) ->
-            val imageView = findViewById<ImageView>(imageViewId)
-            imageView.setOnClickListener {
-                val (drawableRes, phrase) = data
-                navigateToPhraseActivity(drawableRes, phrase)
+        snackList.forEach { item ->
+            findViewById<ImageView>(item.id)?.setOnClickListener {
+                val phrase = "${item.verb} ${item.obj}"
+                navigateToPhraseActivity(item.imageRes, phrase)
             }
         }
     }
@@ -48,6 +47,7 @@ class SanackSymbolActivity : AppCompatActivity() {
         val intent = Intent(this, PhraseActivity::class.java).apply {
             putExtra("SELECTED_ICON_DRAWABLE", drawableRes)
             putExtra("SELECTED_PHRASE", phrase)
+            putExtra("IS_SYMBOL_MODE", true)
         }
         startActivity(intent)
     }

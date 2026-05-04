@@ -22,30 +22,29 @@ class FoodSymbolsActivity : AppCompatActivity() {
 
     private fun setupIconClickListeners() {
         // Map of image view IDs to drawable resources and phrases
-        val iconData = mapOf(
-            R.id.imgHotDog to Pair(R.drawable.hot_dog, "I want to eat hot dog"),
-            R.id.imgBurger to Pair(R.drawable.burger, "I want to eat burger"),
-            R.id.imgPizza to Pair(R.drawable.pizza, "I want to eat pizza "),
-            R.id.imgCupCake to Pair(R.drawable.cup_cake, " I want to eat cup cake"),
-            R.id.imgFishBurger to Pair(R.drawable.fish_burger, "I want to eat fish burger "),
-            R.id.imgToast to Pair(R.drawable.toast, "I want to eat toasted bun"),
-            R.id.imgPancake to Pair(R.drawable.pancake, "I want to eat pan cake"),
-            R.id.imgSandwich to Pair(R.drawable.toasted_sandwich, "I want to eat sandwitch "),
-            R.id.imgScrambledEggs to Pair(R.drawable.scrambled_eggs, " I want to eat scrambled egg"),
-            R.id.imgFriedEgg to Pair(R.drawable.fried_egg, "I want to eat fried egg "),
-            R.id.imgCorn to Pair(R.drawable.sweetcorn, " I want to eat corn"),
-            R.id.imgPasta to Pair(R.drawable.pasta, "I want to eat pasta "),
-            R.id.imgNoodles to Pair(R.drawable.noodles, "I want to eat noodles "),
-            R.id.imgCereal to Pair(R.drawable.cereal, " I want to eat cereal"),
-            R.id.imgCheese to Pair(R.drawable.cheese, "I want to eat cheese ")
+        val foodList = listOf(
+            SymbolItem(R.id.imgHotDog, R.drawable.hot_dog, "eat", "hot dog"),
+            SymbolItem(R.id.imgBurger, R.drawable.burger, "eat", "burger"),
+            SymbolItem(R.id.imgPizza, R.drawable.pizza, "eat", "pizza"),
+            SymbolItem(R.id.imgCupCake, R.drawable.cup_cake, "eat", "cupcake"),
+            SymbolItem(R.id.imgFishBurger, R.drawable.fish_burger, "eat", "fish burger"),
+            SymbolItem(R.id.imgToast, R.drawable.toast, "eat", "toasted bun"),
+            SymbolItem(R.id.imgPancake, R.drawable.pancake, "eat", "pancake"),
+            SymbolItem(R.id.imgSandwich, R.drawable.toasted_sandwich, "eat", "sandwich"),
+            SymbolItem(R.id.imgScrambledEggs, R.drawable.scrambled_eggs, "eat", "scrambled egg"),
+            SymbolItem(R.id.imgFriedEgg, R.drawable.fried_egg, "eat", "fried egg"),
+            SymbolItem(R.id.imgCorn, R.drawable.sweetcorn, "eat", "corn"),
+            SymbolItem(R.id.imgPasta, R.drawable.pasta, "eat", "pasta"),
+            SymbolItem(R.id.imgNoodles, R.drawable.noodles, "eat", "noodles"),
+            SymbolItem(R.id.imgCereal, R.drawable.cereal, "eat", "cereal"),
+            SymbolItem(R.id.imgCheese, R.drawable.cheese, "eat", "cheese")
         )
 
         // Set click listeners for all icons
-        iconData.forEach { (imageViewId, data) ->
-            val imageView = findViewById<ImageView>(imageViewId)
-            imageView.setOnClickListener {
-                val (drawableRes, phrase) = data
-                navigateToPhraseActivity(drawableRes, phrase)
+        foodList.forEach { item ->
+            findViewById<ImageView>(item.id)?.setOnClickListener {
+                val phrase = "${item.verb} ${item.obj}"
+                navigateToPhraseActivity(item.imageRes, phrase)
             }
         }
     }
@@ -54,6 +53,7 @@ class FoodSymbolsActivity : AppCompatActivity() {
         val intent = Intent(this, PhraseActivity::class.java).apply {
             putExtra("SELECTED_ICON_DRAWABLE", drawableRes)
             putExtra("SELECTED_PHRASE", phrase)
+            putExtra("IS_SYMBOL_MODE", true)
         }
         startActivity(intent)
     }

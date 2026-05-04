@@ -22,26 +22,25 @@ class DrinkSymbolActivity : AppCompatActivity() {
 
     private fun setupIconClickListeners() {
         // Map of image view IDs to drawable resources and phrases
-        val iconData = mapOf(
-            R.id.imgWater to Pair(R.drawable.water, "I want to drink water"),
-            R.id.imgCoffee to Pair(R.drawable.coffee, "I want to drink coffee"),
-            R.id.imgTea to Pair(R.drawable.tea, " I want to drink tea"),
-            R.id.imgOrangeJuice to Pair(R.drawable.orange_juice, "I want to drink orange juice "),
-            R.id.imgAppleJuice to Pair(R.drawable.apple_juice, "I want to drink apple juice "),
-            R.id.imgGrapeJuice to Pair(R.drawable.grape_juice, "I want to drink grape juice"),
-            R.id.imgPineapple to Pair(R.drawable.pineapple_juice, "I want to drink pineapple juice"),
-            R.id.imgLemonade to Pair(R.drawable.lemonade, "I want to drink lemon juice"),
-            R.id.imgMilkshake to Pair(R.drawable.milkshake, " I want to drink milkshake"),
-            R.id.imgChocolateShake to Pair(R.drawable.chocolate_milkshake, "I want to drink chocolate shake"),
-            R.id.imgMilk to Pair(R.drawable.milk, "I want to drink milk")
+        val drinkList = listOf(
+            SymbolItem(R.id.imgWater, R.drawable.water, "drink", "water"),
+            SymbolItem(R.id.imgCoffee, R.drawable.coffee, "drink", "coffee"),
+            SymbolItem(R.id.imgTea, R.drawable.tea, "drink", "tea"),
+            SymbolItem(R.id.imgOrangeJuice, R.drawable.orange_juice, "drink", "orange juice"),
+            SymbolItem(R.id.imgAppleJuice, R.drawable.apple_juice, "drink", "apple juice"),
+            SymbolItem(R.id.imgGrapeJuice, R.drawable.grape_juice, "drink", "grape juice"),
+            SymbolItem(R.id.imgPineapple, R.drawable.pineapple_juice, "drink", "pineapple juice"),
+            SymbolItem(R.id.imgLemonade, R.drawable.lemonade, "drink", "lemon juice"),
+            SymbolItem(R.id.imgMilkshake, R.drawable.milkshake, "drink", "milkshake"),
+            SymbolItem(R.id.imgChocolateShake, R.drawable.chocolate_milkshake, "drink", "chocolate shake"),
+            SymbolItem(R.id.imgMilk, R.drawable.milk, "drink", "milk")
         )
 
         // Set click listeners for all icons
-        iconData.forEach { (imageViewId, data) ->
-            val imageView = findViewById<ImageView>(imageViewId)
-            imageView.setOnClickListener {
-                val (drawableRes, phrase) = data
-                navigateToPhraseActivity(drawableRes, phrase)
+        drinkList.forEach { item ->
+            findViewById<ImageView>(item.id)?.setOnClickListener {
+                val phrase = "${item.verb} ${item.obj}"
+                navigateToPhraseActivity(item.imageRes, phrase)
             }
         }
     }
@@ -50,6 +49,7 @@ class DrinkSymbolActivity : AppCompatActivity() {
         val intent = Intent(this, PhraseActivity::class.java).apply {
             putExtra("SELECTED_ICON_DRAWABLE", drawableRes)
             putExtra("SELECTED_PHRASE", phrase)
+            putExtra("IS_SYMBOL_MODE", true)
         }
         startActivity(intent)
     }
