@@ -217,18 +217,18 @@ object PersonalizedContentSelector {
 
         val options = when (baseEmotion) {
             "happy", "cheerful" -> listOf("Glad", "Joyful", "Cheerful", "Delighted", "Pleased")
-            "sad"    -> listOf("Down", "Upset", "Gloomy", "Sorrowful")
-            "angry"  -> listOf("Mad", "Fuming", "Furious", "Irritated")
+            "sad"    -> listOf("unhappy", "Upset", "Gloomy", "Sorrowful")
+            "angry"  -> listOf("Mad", "Fuming", "Furious", "Raging")
             "scared", "anxious" -> listOf("Afraid", "Fearful", "Nervous", "Worried")
-            "bored"  -> listOf("Dull", "Uninterested", "Weary")
-            "shy"    -> listOf("Coy", "Timid", "Bashful")
-            "proud"  -> listOf("Proud", "Honored", "Content")
-            "sleepy", "tired" -> listOf("Exhausted", "Fatigued", "Drowsy", "Tired")
+            "bored"  -> listOf("Fed-up", "Uninterested", "Weary")
+            "shy"    -> listOf("Coy", "Timid")
+            "proud"  -> listOf("Proud", "Honored", "Prideful")
+            "sleepy", "tired" -> listOf("Exhausted", "Drowsy", "Tired")
             "surprise" -> listOf("Amazed", "Shocked", "Startled")
-            "jealous" -> listOf("Envious", "Resentful")
-            "disgusted" -> listOf("Repulsed", "Revolted")
-            "greedy" -> listOf("Selfish", "Possessive")
-            "curious" -> listOf("Inquisitive", "Interested")
+            "jealous" -> listOf("Envious")
+            "disgusted" -> listOf("grossed", "displeased")
+            "greedy" -> listOf("Selfish")
+            "curious" -> listOf( "Interested")
             else -> listOf(baseEmotion.replaceFirstChar { it.uppercase() })
         }
 
