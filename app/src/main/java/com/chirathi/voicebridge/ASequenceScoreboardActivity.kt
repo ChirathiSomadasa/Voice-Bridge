@@ -425,6 +425,8 @@ class ASequenceScoreboardActivity : AppCompatActivity(), TextToSpeech.OnInitList
         motivationalQuote.text       = displayText
         motivationalQuote.visibility = View.VISIBLE
         motivationalQuote.alpha      = 0f
+        motivationalQuote.bringToFront()
+        motivationalQuote.elevation = 10f
 
         motivationalQuote.post {
             val starScreenPos = IntArray(2)
@@ -446,31 +448,39 @@ class ASequenceScoreboardActivity : AppCompatActivity(), TextToSpeech.OnInitList
             var targetX: Float
             var targetY: Float
 
-            when (totalSteps) {
-                1 -> {
-                    targetX = starRightInParent + margin
-                    targetY = starMidYInParent - (quoteH / 2f)
-                    if (targetX + quoteW > screenW - margin) {
-                        targetX = starLeftInParent - quoteW - margin
-                    }
-                }
-                3 -> {
-                    targetX = starLeftInParent + (starCharacter.width / 2f) - (quoteW / 2f)
-                    targetY = starTopInParent - quoteH - margin
-                    if (targetY < parentScreenPos[1].toFloat()) {
-                        targetY = starTopInParent + starCharacter.height + margin
-                    }
-                }
-                else -> {
-                    targetX = starLeftInParent - quoteW - margin
-                    targetY = starMidYInParent - (quoteH / 2f)
-                    if (targetX < margin) {
-                        targetX = starRightInParent + margin
-                    }
-                }
-            }
+//            when (totalSteps) {
+//                1 -> {
+//                    targetX = starRightInParent + margin
+//                    targetY = starMidYInParent - (quoteH / 2f)
+//                    if (targetX + quoteW > screenW - margin) {
+//                        targetX = starLeftInParent - quoteW - margin
+//                    }
+//                }
+//                3 -> {
+//                    targetX = starLeftInParent + (starCharacter.width / 2f) - (quoteW / 2f)
+//                    targetY = starTopInParent - quoteH - margin
+//                    if (targetY < parentScreenPos[1].toFloat()) {
+//                        targetY = starTopInParent + starCharacter.height + margin
+//                    }
+//                }
+//                else -> {
+//                    targetX = starLeftInParent - quoteW - margin
+//                    targetY = starMidYInParent - (quoteH / 2f)
+//                    if (targetX < margin) {
+//                        targetX = starRightInParent + margin
+//                    }
+//                }
+//            }
+            targetX = starLeftInParent + (starCharacter.width / 2f) - (quoteW / 2f)
 
+            targetY = starTopInParent - quoteH - margin
+
+
+            if (targetY < margin) {
+                targetY = starTopInParent + starCharacter.height + margin
+            }
             val parentH = (motivationalQuote.parent as View).height.toFloat()
+            targetX = targetX.coerceIn(margin, screenW - quoteW - margin)
             targetY = targetY.coerceIn(margin, parentH - quoteH - margin)
 
             motivationalQuote.x = targetX

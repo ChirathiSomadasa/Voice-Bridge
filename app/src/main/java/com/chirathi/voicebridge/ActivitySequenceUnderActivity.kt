@@ -360,10 +360,10 @@ class ActivitySequenceUnderActivity : AppCompatActivity() {
         }
 
         // Only show visual highlight on actual mistakes, not just idling
-        if (!isIdle && (spec.hintLevel >= 2 || sessionMetrics.errorCount > 1) && zoneIndex >= 0) {
-            visualHintOverlay.visibility = View.VISIBLE
-            Handler(Looper.getMainLooper()).postDelayed({ visualHintOverlay.visibility = View.GONE }, 1500)
-        }
+//        if (!isIdle && (spec.hintLevel >= 2 || sessionMetrics.errorCount > 1) && zoneIndex >= 0) {
+//            visualHintOverlay.visibility = View.VISIBLE
+//            Handler(Looper.getMainLooper()).postDelayed({ visualHintOverlay.visibility = View.GONE }, 1500)
+//        }
 
         lifecycleScope.launch {
             val hintText = DynamicHintGenerator.generateSequenceHint(
