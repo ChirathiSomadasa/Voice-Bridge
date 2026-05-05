@@ -22,8 +22,9 @@ import kotlinx.coroutines.withContext
 
 class SpeechLevel3TaskActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
 
-    // Helper data class to map the Data Pool stories to the UI
     data class SentenceItem(val sentence: String, val imageResourceId: Int)
+
+    private var currentBatchIndex = 0
 
     private var currentBatchList = listOf<SentenceItem>()
     private var currentIndex = 0
@@ -66,11 +67,17 @@ class SpeechLevel3TaskActivity : AppCompatActivity(), TextToSpeech.OnInitListene
         btnNext = findViewById(R.id.btnNext)
         btnBack = findViewById(R.id.btnBack)
 
-
         checkPermissions()
         tts = TextToSpeech(this, this)
 
-        // Load the unique, non-repeating random Story batch
+        // BUG FIX: Retry කරද්දී එන Index එක ගන්නවා, නැත්නම් Prefs වලින් ගන්නවා
+        if (intent.hasExtra("BATCH_INDEX")) {
+            currentBatchIndex = intent.getIntExtra("BATCH_INDEX", 0)
+        } else {
+            val prefs = getSharedPreferences("VoiceBridgePrefs", Context.MODE_PRIVATE)
+            currentBatchIndex = prefs.getInt("SAVED_BATCH_LEVEL_3_$currentUserId", 0)
+        }
+
         loadUserSpecificStoryBatch()
 
         btnNext.isEnabled = false
@@ -102,7 +109,6 @@ class SpeechLevel3TaskActivity : AppCompatActivity(), TextToSpeech.OnInitListene
         btnNext.setOnClickListener {
             moveToNextSentence()
         }
-
     }
 
     private fun loadUserSpecificStoryBatch() {
@@ -112,7 +118,6 @@ class SpeechLevel3TaskActivity : AppCompatActivity(), TextToSpeech.OnInitListene
         val totalStories = allStories.size
 
         var orderString = prefs.getString("STORY_ORDER_$currentUserId", null)
-
         var userOrderList = orderString?.split(",")?.mapNotNull { it.toIntOrNull() } ?: emptyList()
 
         if (orderString == null || userOrderList.size != totalStories) {
@@ -122,9 +127,7 @@ class SpeechLevel3TaskActivity : AppCompatActivity(), TextToSpeech.OnInitListene
             userOrderList = shuffledIndices
         }
 
-        val currentProgressIndex = prefs.getInt("SAVED_BATCH_LEVEL_3_$currentUserId", 0)
-
-        val actualStoryIndexToLoad = userOrderList[currentProgressIndex % totalStories]
+        val actualStoryIndexToLoad = userOrderList[currentBatchIndex % totalStories]
         val selectedStory = allStories[actualStoryIndexToLoad]
 
         currentBatchList = selectedStory.sentences.indices.map { i ->
@@ -269,40 +272,33 @@ class SpeechLevel3TaskActivity : AppCompatActivity(), TextToSpeech.OnInitListene
 
     private fun finishLevel() {
         val progress = calculateProgress()
+        val prefs = getSharedPreferences("VoiceBridgePrefs", Context.MODE_PRIVATE)
+
+        val nextProgressIndex = currentBatchIndex + 1
+        prefs.edit().putInt("SAVED_BATCH_LEVEL_3_$currentUserId", nextProgressIndex).apply()
+
+        if (currentUserId.isNotEmpty() && currentUserId != "guest_user") {
+            val updateMap = hashMapOf("level3_batch" to nextProgressIndex)
+            FirebaseFirestore.getInstance().collection("student_progress")
+                .document(currentUserId)
+                .set(updateMap, SetOptions.merge())
+        }
 
         if (progress >= 75) {
-            val prefs = getSharedPreferences("VoiceBridgePrefs", Context.MODE_PRIVATE)
-            val currentProgressIndex = prefs.getInt("SAVED_BATCH_LEVEL_3_$currentUserId", 0)
-
-            val nextProgressIndex = currentProgressIndex + 1
-            prefs.edit().putInt("SAVED_BATCH_LEVEL_3_$currentUserId", nextProgressIndex).apply()
-
-            if (currentUserId != "guest_user") {
-                val updateMap = hashMapOf("level3_batch" to nextProgressIndex)
-                FirebaseFirestore.getInstance().collection("student_progress")
-                    .document(currentUserId)
-                    .set(updateMap, SetOptions.merge())
-            }
-
             successDialog = SuccessDialog(this)
             successDialog.show()
             successDialog.setOnDismissListener {
-
                 goToProgress(progress, true)
             }
         } else {
-
-            goToProgress(progress, false)
+            goToProgress(progress, true)
         }
     }
 
     private fun goToProgress(score: Int, canContinue: Boolean) {
-        val prefs = getSharedPreferences("VoiceBridgePrefs", Context.MODE_PRIVATE)
-        val currentProgressIndex = prefs.getInt("SAVED_BATCH_LEVEL_3_$currentUserId", 0)
-
         val intent = Intent(this, SentencesProgressActivity::class.java)
         intent.putExtra("PROGRESS_SCORE", score)
-        intent.putExtra("BATCH_INDEX", currentProgressIndex)
+        intent.putExtra("BATCH_INDEX", currentBatchIndex)
         intent.putExtra("CAN_CONTINUE", canContinue)
         startActivity(intent)
         finish()

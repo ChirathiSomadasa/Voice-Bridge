@@ -22,7 +22,6 @@ import kotlinx.coroutines.withContext
 
 class SpeechLevel1TaskActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
 
-    // 1. FULL ALPHABET
     private val fullGraphemeList = listOf(
         "J", "Y", "B", "W", "S",  // Batch 0
         "H", "F", "C", "I", "P",  // Batch 1
@@ -71,18 +70,15 @@ class SpeechLevel1TaskActivity : AppCompatActivity(), TextToSpeech.OnInitListene
         soundManager = SoundManager(this)
 
         auth = FirebaseAuth.getInstance()
-        currentUserId = auth.currentUser?.uid ?: ""
+        currentUserId = auth.currentUser?.uid ?: "guest_user"
         wav2Vec2Scorer = Wav2Vec2Scorer(this)
 
+        // FIX: Getting the correct current index
         if (intent.hasExtra("BATCH_INDEX")) {
             currentBatchIndex = intent.getIntExtra("BATCH_INDEX", 0)
         } else {
-            if (currentUserId.isNotEmpty()) {
-                val prefs = getSharedPreferences("VoiceBridgePrefs", Context.MODE_PRIVATE)
-                currentBatchIndex = prefs.getInt("SAVED_BATCH_LEVEL_1_$currentUserId", 0)
-            } else {
-                currentBatchIndex = 0
-            }
+            val prefs = getSharedPreferences("VoiceBridgePrefs", Context.MODE_PRIVATE)
+            currentBatchIndex = prefs.getInt("SAVED_BATCH_LEVEL_1_$currentUserId", 0)
         }
 
         setupCurrentBatch()
@@ -105,12 +101,12 @@ class SpeechLevel1TaskActivity : AppCompatActivity(), TextToSpeech.OnInitListene
         }
 
         llPlaySound.setOnClickListener {
-            soundManager.playClickSound() // Play UI pop sound
+            soundManager.playClickSound()
             if (isTtsReady) speakLetter(tvLetter.text.toString())
         }
 
         llSpeakSound.setOnClickListener {
-            soundManager.playClickSound() // Play UI pop sound
+            soundManager.playClickSound()
             if (ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED) {
                 assessLetterPronunciation()
             } else {
@@ -122,7 +118,6 @@ class SpeechLevel1TaskActivity : AppCompatActivity(), TextToSpeech.OnInitListene
         btnNext.setOnClickListener {
             moveToNextLetter()
         }
-
     }
 
     private fun setupCurrentBatch() {
@@ -162,16 +157,13 @@ class SpeechLevel1TaskActivity : AppCompatActivity(), TextToSpeech.OnInitListene
 
     private fun assessLetterPronunciation() {
         val letter = currentLetterList[currentIndex]
-        val targetLabel = letter
 
         listeningDialog = ListeningDialog(this)
         listeningDialog.show()
 
         executor.execute {
-            // 1. Audio Recording (2.5 seconds for letters)
             val audioData = wav2Vec2Scorer.recordAudio(2500)
 
-            // 2. Dismiss Listening and Show Processing (Lottie)
             runOnUiThread {
                 if (::listeningDialog.isInitialized && listeningDialog.isShowing) {
                     listeningDialog.dismiss()
@@ -181,7 +173,6 @@ class SpeechLevel1TaskActivity : AppCompatActivity(), TextToSpeech.OnInitListene
             }
 
             if (audioData != null) {
-                // 3. Get Wav2Vec2 Score
                 val (pronunciationType, score, predictedText) = wav2Vec2Scorer.predict(audioData, letter)
 
                 val category = when {
@@ -190,26 +181,18 @@ class SpeechLevel1TaskActivity : AppCompatActivity(), TextToSpeech.OnInitListene
                     else -> "bad"
                 }
 
-                // Save Result to Firebase immediately
                 saveToHistory(letter, score, 1, pronunciationType)
 
-                // 4. Launch Coroutine for API call while Processing Dialog is showing
                 CoroutineScope(Dispatchers.IO).launch {
-
-                    // Call the suspend function from FeedbackGenerator
                     val aiFeedbackText = FeedbackGenerator.getDynamicFeedback(score, category, "letter", letter)
 
-                    // 5. Switch back to Main Thread to update UI
                     withContext(Dispatchers.Main) {
-
-                        // Dismiss Processing Animation
                         if (::processingDialog.isInitialized && processingDialog.isShowing) {
                             processingDialog.dismiss()
                         }
 
                         letterScores[currentIndex] = score
 
-                        // Show Feedback Dialog with the generated text
                         FeedbackDialog(this@SpeechLevel1TaskActivity).show(
                             score = score,
                             category = category,
@@ -236,7 +219,7 @@ class SpeechLevel1TaskActivity : AppCompatActivity(), TextToSpeech.OnInitListene
     }
 
     private fun saveToHistory(content: String, score: Int, level: Int, pronunciationType: String) {
-        if (currentUserId.isEmpty()) return
+        if (currentUserId == "guest_user") return
 
         val category = when {
             score >= 75 -> "good"
@@ -283,27 +266,26 @@ class SpeechLevel1TaskActivity : AppCompatActivity(), TextToSpeech.OnInitListene
     private fun finishLevel() {
         val progressScore = calculateProgress()
 
+        val nextBatch = currentBatchIndex + 1
+
+        if (currentUserId != "guest_user") {
+            val prefs = getSharedPreferences("VoiceBridgePrefs", Context.MODE_PRIVATE)
+            prefs.edit().putInt("SAVED_BATCH_LEVEL_1_$currentUserId", nextBatch).apply()
+
+            val updateMap = hashMapOf("level1_batch" to nextBatch)
+            FirebaseFirestore.getInstance().collection("student_progress")
+                .document(currentUserId)
+                .set(updateMap, SetOptions.merge())
+        }
+
         if (progressScore >= 75) {
-            val nextBatch = currentBatchIndex + 1
-            if (currentUserId.isNotEmpty()) {
-                val prefs = getSharedPreferences("VoiceBridgePrefs", Context.MODE_PRIVATE)
-                prefs.edit().putInt("SAVED_BATCH_LEVEL_1_$currentUserId", nextBatch).apply()
-
-                val updateMap = hashMapOf("level1_batch" to nextBatch)
-                FirebaseFirestore.getInstance().collection("student_progress")
-                    .document(currentUserId)
-                    .set(updateMap, SetOptions.merge())
-            }
-
             successDialog = SuccessDialog(this)
             successDialog.show()
             successDialog.setOnDismissListener {
-
                 goToProgress(progressScore, true)
             }
         } else {
-
-            goToProgress(progressScore, false)
+            goToProgress(progressScore, true)
         }
     }
 
@@ -319,7 +301,6 @@ class SpeechLevel1TaskActivity : AppCompatActivity(), TextToSpeech.OnInitListene
     override fun onDestroy() {
         tts?.stop()
         tts?.shutdown()
-        // Release Sound Pool to avoid memory leaks
         soundManager.release()
         super.onDestroy()
     }

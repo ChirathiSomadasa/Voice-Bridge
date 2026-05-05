@@ -86,28 +86,27 @@ class LetterProgressActivity : AppCompatActivity() {
         }
         animator.start()
 
-        // 7. BUTTON VISIBILITY (Navigation Logic)
-        // Only show "Continue" if they PASSED (>= 75%)
+        // 7. BUTTON VISIBILITY (Always Show All 3 Buttons)
         val retryParams = llTryAgain.layoutParams as LinearLayout.LayoutParams
         val homeParams = llHome.layoutParams as LinearLayout.LayoutParams
         val continueParams = llContinue.layoutParams as LinearLayout.LayoutParams
 
-        if (isPassed && canContinue) {
-            llContinue.visibility = View.VISIBLE
-            retryParams.weight = 1f
-            homeParams.weight = 1f
-            continueParams.weight = 1f
-            llContinue.layoutParams = continueParams
-        } else {
-            // If Failed Hide Continue button so they must Retry
-            llContinue.visibility = View.GONE
-            retryParams.weight = 1.5f
-            homeParams.weight = 1.5f
-        }
+        llContinue.visibility = View.VISIBLE
+        retryParams.weight = 1f
+        homeParams.weight = 1f
+        continueParams.weight = 1f
+        llContinue.layoutParams = continueParams
 
         // 8. BUTTON ACTIONS
         llTryAgain.setOnClickListener {
-            // RETRY: Restarts the SAME batch
+            if (currentUser != null) {
+                val prefs = getSharedPreferences("VoiceBridgePrefs", Context.MODE_PRIVATE)
+                prefs.edit().putInt("SAVED_BATCH_LEVEL_1_${currentUser.uid}", batchIndex).apply()
+
+                val updateMap = hashMapOf("level1_batch" to batchIndex)
+                db.collection("student_progress").document(currentUser.uid).set(updateMap, SetOptions.merge())
+            }
+
             val intent = Intent(this, SpeechLevel1TaskActivity::class.java)
             intent.putExtra("BATCH_INDEX", batchIndex)
             startActivity(intent)
@@ -121,10 +120,9 @@ class LetterProgressActivity : AppCompatActivity() {
         }
 
         llContinue.setOnClickListener {
-            // CONTINUE: Goes to Next Batch (LevelTransition)
             val intent = Intent(this, LevelTransitionActivity::class.java)
             intent.putExtra("NEXT_BATCH_INDEX", batchIndex + 1)
-            intent.putExtra("LEVEL_TYPE", 1) // 1 = Letters
+            intent.putExtra("LEVEL_TYPE", 1) // 1 for Letters
             startActivity(intent)
             finish()
         }

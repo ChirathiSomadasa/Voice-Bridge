@@ -30,7 +30,7 @@
         app:layout_constraintEnd_toEndOf="parent">
 
         <TextView
-            android:text="Level 2 - Sentences\nProgress"
+            android:text="Level 3 - Sentences\nProgress"
             android:textSize="26sp"
             android:textStyle="bold"
             android:textColor="@color/green_dark"

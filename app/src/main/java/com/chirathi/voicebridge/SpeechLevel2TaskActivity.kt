@@ -22,6 +22,7 @@ import kotlinx.coroutines.withContext
 
 class SpeechLevel2TaskActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
 
+    private var currentBatchIndex = 0 // Added to track the current batch
     private var currentBatchList = listOf<TherapyDataPool.WordItem>()
     private var currentIndex = 0
     private lateinit var wordScores: IntArray
@@ -38,7 +39,6 @@ class SpeechLevel2TaskActivity : AppCompatActivity(), TextToSpeech.OnInitListene
     private lateinit var successDialog: SuccessDialog
     private lateinit var soundManager: SoundManager
     private lateinit var btnBack: ImageView
-
 
     private var tts: TextToSpeech? = null
     private var isTtsReady = false
@@ -58,6 +58,14 @@ class SpeechLevel2TaskActivity : AppCompatActivity(), TextToSpeech.OnInitListene
         currentUserId = auth.currentUser?.uid ?: "guest_user"
         wav2Vec2Scorer = Wav2Vec2Scorer(this)
 
+        // FIX: Load the correct batch index
+        if (intent.hasExtra("BATCH_INDEX")) {
+            currentBatchIndex = intent.getIntExtra("BATCH_INDEX", 0)
+        } else {
+            val prefs = getSharedPreferences("VoiceBridgePrefs", Context.MODE_PRIVATE)
+            currentBatchIndex = prefs.getInt("SAVED_BATCH_LEVEL_2_$currentUserId", 0)
+        }
+
         tvWord = findViewById(R.id.tvWord)
         ivWordImage = findViewById(R.id.ivWordImage)
         llPlaySound = findViewById(R.id.llPlaySound)
@@ -68,7 +76,6 @@ class SpeechLevel2TaskActivity : AppCompatActivity(), TextToSpeech.OnInitListene
         checkPermissions()
         tts = TextToSpeech(this, this)
 
-        // Load the unique, non-repeating random word batch for this specific user
         loadUserSpecificWordBatch()
 
         btnNext.isEnabled = false
@@ -100,7 +107,6 @@ class SpeechLevel2TaskActivity : AppCompatActivity(), TextToSpeech.OnInitListene
         btnNext.setOnClickListener {
             moveToNextWord()
         }
-
     }
 
     private fun loadUserSpecificWordBatch() {
@@ -110,7 +116,6 @@ class SpeechLevel2TaskActivity : AppCompatActivity(), TextToSpeech.OnInitListene
         val totalBatches = allBatches.size
 
         var orderString = prefs.getString("WORD_ORDER_$currentUserId", null)
-
         var userOrderList = orderString?.split(",")?.mapNotNull { it.toIntOrNull() } ?: emptyList()
 
         if (orderString == null || userOrderList.size != totalBatches) {
@@ -120,9 +125,8 @@ class SpeechLevel2TaskActivity : AppCompatActivity(), TextToSpeech.OnInitListene
             userOrderList = shuffledIndices
         }
 
-        val currentProgressIndex = prefs.getInt("SAVED_BATCH_LEVEL_2_$currentUserId", 0)
-
-        val actualBatchIndexToLoad = userOrderList[currentProgressIndex % totalBatches]
+        // FIX: Use currentBatchIndex
+        val actualBatchIndexToLoad = userOrderList[currentBatchIndex % totalBatches]
 
         currentBatchList = allBatches[actualBatchIndexToLoad]
         wordScores = IntArray(currentBatchList.size) { 0 }
@@ -213,7 +217,7 @@ class SpeechLevel2TaskActivity : AppCompatActivity(), TextToSpeech.OnInitListene
     }
 
     private fun saveToHistory(content: String, score: Int, level: Int, pronunciationType: String) {
-        if (currentUserId.isEmpty() || currentUserId == "guest_user") return
+        if (currentUserId == "guest_user") return
 
         val category = when {
             score >= 75 -> "good"
@@ -263,41 +267,35 @@ class SpeechLevel2TaskActivity : AppCompatActivity(), TextToSpeech.OnInitListene
 
     private fun finishLevel() {
         val progress = calculateProgress()
+        val prefs = getSharedPreferences("VoiceBridgePrefs", Context.MODE_PRIVATE)
+
+        // Increment index
+        val nextProgressIndex = currentBatchIndex + 1
+        prefs.edit().putInt("SAVED_BATCH_LEVEL_2_$currentUserId", nextProgressIndex).apply()
+
+        if (currentUserId != "guest_user") {
+            val updateMap = hashMapOf("level2_batch" to nextProgressIndex)
+            FirebaseFirestore.getInstance().collection("student_progress")
+                .document(currentUserId)
+                .set(updateMap, SetOptions.merge())
+        }
 
         if (progress >= 75) {
-            val prefs = getSharedPreferences("VoiceBridgePrefs", Context.MODE_PRIVATE)
-            val currentProgressIndex = prefs.getInt("SAVED_BATCH_LEVEL_2_$currentUserId", 0)
-
-            // Increment the completed batch count
-            val nextProgressIndex = currentProgressIndex + 1
-            prefs.edit().putInt("SAVED_BATCH_LEVEL_2_$currentUserId", nextProgressIndex).apply()
-
-            if (currentUserId != "guest_user") {
-                val updateMap = hashMapOf("level2_batch" to nextProgressIndex)
-                FirebaseFirestore.getInstance().collection("student_progress")
-                    .document(currentUserId)
-                    .set(updateMap, SetOptions.merge())
-            }
-
             successDialog = SuccessDialog(this)
             successDialog.show()
             successDialog.setOnDismissListener {
-
                 goToProgress(progress, true)
             }
         } else {
-
-            goToProgress(progress, false)
+            goToProgress(progress, true)
         }
     }
 
     private fun goToProgress(score: Int, canContinue: Boolean) {
-        val prefs = getSharedPreferences("VoiceBridgePrefs", Context.MODE_PRIVATE)
-        val currentProgressIndex = prefs.getInt("SAVED_BATCH_LEVEL_2_$currentUserId", 0)
-
         val intent = Intent(this, WordProgressActivity::class.java)
         intent.putExtra("PROGRESS_SCORE", score)
-        intent.putExtra("BATCH_INDEX", currentProgressIndex)
+        // FIX: Pass the CURRENT index, not the new one
+        intent.putExtra("BATCH_INDEX", currentBatchIndex)
         intent.putExtra("CAN_CONTINUE", canContinue)
         startActivity(intent)
         finish()

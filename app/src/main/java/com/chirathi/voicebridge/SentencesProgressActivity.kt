@@ -83,25 +83,27 @@ class SentencesProgressActivity : AppCompatActivity() {
         }
         animator.start()
 
-        // 7. BUTTON VISIBILITY (Navigation Logic)
+        // 7. BUTTON VISIBILITY (Always Show All 3 Buttons)
         val retryParams = llTryAgain.layoutParams as LinearLayout.LayoutParams
         val homeParams = llHome.layoutParams as LinearLayout.LayoutParams
         val continueParams = llContinue.layoutParams as LinearLayout.LayoutParams
 
-        if (isPassed && canContinue) {
-            llContinue.visibility = View.VISIBLE
-            retryParams.weight = 1f
-            homeParams.weight = 1f
-            continueParams.weight = 1f
-            llContinue.layoutParams = continueParams
-        } else {
-            llContinue.visibility = View.GONE
-            retryParams.weight = 1.5f
-            homeParams.weight = 1.5f
-        }
+        llContinue.visibility = View.VISIBLE
+        retryParams.weight = 1f
+        homeParams.weight = 1f
+        continueParams.weight = 1f
+        llContinue.layoutParams = continueParams
 
         // 8. BUTTON ACTIONS
         llTryAgain.setOnClickListener {
+            if (currentUser != null) {
+                val prefs = getSharedPreferences("VoiceBridgePrefs", Context.MODE_PRIVATE)
+                prefs.edit().putInt("SAVED_BATCH_LEVEL_3_${currentUser.uid}", batchIndex).apply()
+
+                val updateMap = hashMapOf("level3_batch" to batchIndex)
+                db.collection("student_progress").document(currentUser.uid).set(updateMap, SetOptions.merge())
+            }
+
             val intent = Intent(this, SpeechLevel3TaskActivity::class.java)
             intent.putExtra("BATCH_INDEX", batchIndex)
             startActivity(intent)
