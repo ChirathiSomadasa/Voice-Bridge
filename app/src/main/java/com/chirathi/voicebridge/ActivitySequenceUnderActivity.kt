@@ -17,14 +17,19 @@ import android.view.animation.AnimationUtils
 import android.widget.*
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
+import androidx.lifecycle.lifecycleScope
+import kotlinx.coroutines.launch
 import java.util.Locale
 import kotlin.math.sqrt
 
 class ActivitySequenceUnderActivity : AppCompatActivity() {
 
-    // ── Model ─────────────────────────────────────────────────────────────────
+    // ── Model & Tracking ──────────────────────────────────────────────────────
     private lateinit var gameMaster: GameMasterModel
     private var currentPrediction: Prediction = Prediction.defaults()
+
+    private lateinit var tracker: SessionStateTracker
+    private var seqSpec: PersonalizedContentSelector.SequenceRoundSpec? = null
 
     // ── TTS ───────────────────────────────────────────────────────────────────
     private lateinit var textToSpeech: TextToSpeech
@@ -71,12 +76,20 @@ class ActivitySequenceUnderActivity : AppCompatActivity() {
     private var isGameComplete        = false
     private val completedSubRoutines  = mutableSetOf<Pair<Int,Int>>()
 
-    // ── Timer ─────────────────────────────────────────────────────────────────
+    // ── Mini-game state ───────────────────────────────────────────────────────
+    private var miniGameTriggeredThisRound = false
+
+    // ── Timers ────────────────────────────────────────────────────────────────
     private var gameStartTime  = 0L
     private var elapsedTime    = 0L
     private val timerHandler   = Handler(Looper.getMainLooper())
     private lateinit var timerRunnable: Runnable
     private var isTimerRunning = false
+
+    // Idle Timer (Triggers hint if child does nothing for 6 seconds)
+    private val idleHandler = Handler(Looper.getMainLooper())
+    private var idleRunnable: Runnable? = null
+    private val IDLE_TIMEOUT_MS = 6000L
 
     // ── UI ────────────────────────────────────────────────────────────────────
     private lateinit var horizontalContainer: LinearLayout
@@ -127,10 +140,12 @@ class ActivitySequenceUnderActivity : AppCompatActivity() {
 
         sharedPreferences     = getSharedPreferences(BUBBLE_PREFS, Context.MODE_PRIVATE)
         userSelectedRoutineId = intent.getIntExtra("SELECTED_ROUTINE_ID", 0)
+        userAge               = intent.getIntExtra("USER_AGE", 6)
+
+        tracker = SessionStateTracker(ageGroup = userAge)
         loadCompletedSubRoutines()
 
         gameMaster = GameMasterModel(this)
-        Log.d(TAG, "GameMaster initialized  modelLoaded=${gameMaster.modelLoaded}")
 
         initViews()
         initTts()
@@ -143,17 +158,22 @@ class ActivitySequenceUnderActivity : AppCompatActivity() {
     override fun onResume() {
         super.onResume()
         CalmMusicManager.onActivityResume(this)
+        if (verticalContainer.visibility == View.VISIBLE && !isGameComplete) {
+            startIdleTimer()
+        }
     }
 
     override fun onPause() {
         super.onPause()
         CalmMusicManager.onActivityPause()
+        cancelIdleTimer()
     }
 
     override fun onDestroy() {
         super.onDestroy()
         isTimerRunning = false
         timerHandler.removeCallbacks(timerRunnable)
+        cancelIdleTimer()
         if (::textToSpeech.isInitialized) { textToSpeech.stop(); textToSpeech.shutdown() }
         bubblePopSound?.release(); correctSound?.release(); hintSound?.release()
         gameMaster.close()
@@ -163,8 +183,6 @@ class ActivitySequenceUnderActivity : AppCompatActivity() {
         super.onActivityResult(requestCode, resultCode, data)
         if (requestCode == MiniGamesActivitySequence.REQUEST_CODE && resultCode == Activity.RESULT_OK) {
             val passed = data?.getBooleanExtra(MiniGamesActivitySequence.RESULT_PASSED, false) ?: false
-            val score  = data?.getIntExtra(MiniGamesActivitySequence.RESULT_SCORE, 0) ?: 0
-            Log.d(TAG, "Mini-game returned: passed=$passed score=$score")
             if (passed) sessionMetrics.correctCount++
             if (verticalContainer.visibility != View.VISIBLE) {
                 transitionToVerticalLayout()
@@ -222,7 +240,6 @@ class ActivitySequenceUnderActivity : AppCompatActivity() {
     }
 
     private fun loadUserProfile() {
-        userAge = intent.getIntExtra("USER_AGE", 6)
         sessionStart(userAge)
     }
 
@@ -234,15 +251,12 @@ class ActivitySequenceUnderActivity : AppCompatActivity() {
         currentRoutineId = if (userSelectedRoutineId != -1) userSelectedRoutineId else 0
 
         currentPrediction = gameMaster.predictSafe(
-            childId     = 0,
+            childId     = ChildSession.childId,
             age         = age.toFloat(),
             accuracy    = 0.5f,
             engagement  = 0.7f,
             frustration = 0.2f
         )
-
-        Log.d(TAG, "Initial prediction: subRoutine=${currentPrediction.subRoutine} " +
-                "fromModel=${currentPrediction.fromModel}")
 
         selectSubRoutine()
 
@@ -260,7 +274,6 @@ class ActivitySequenceUnderActivity : AppCompatActivity() {
         updateHintIndicator()
     }
 
-    // ── FIX: use actual sub-routine count for the selected routine ────────────
     private fun selectSubRoutine() {
         val maxSub = routines[currentRoutineId]?.keys?.maxOrNull() ?: 0
         val available = (0..maxSub).filter {
@@ -273,7 +286,6 @@ class ActivitySequenceUnderActivity : AppCompatActivity() {
 
         val rec = currentPrediction.subRoutine.coerceIn(0, available.size - 1)
         currentSubRoutineId = available[rec]
-        Log.d(TAG, "SubRoutine selected: $currentSubRoutineId  (routineId=$currentRoutineId)")
     }
 
     private fun resetAllProgress() {
@@ -282,7 +294,7 @@ class ActivitySequenceUnderActivity : AppCompatActivity() {
     }
 
     // =========================================================================
-    // Instruction & hint
+    // Instruction & hints
     // =========================================================================
 
     private fun updateInstruction(isInitialPhase: Boolean = false) {
@@ -303,6 +315,69 @@ class ActivitySequenceUnderActivity : AppCompatActivity() {
 
     private fun updateHintIndicator() {
         runOnUiThread { hintIndicator.visibility = View.GONE }
+    }
+
+    // Idle Timer Logic
+    private fun startIdleTimer() {
+        cancelIdleTimer()
+        if (isGameComplete) return
+
+        idleRunnable = Runnable { deliverIdleHint() }
+        idleHandler.postDelayed(idleRunnable!!, IDLE_TIMEOUT_MS)
+    }
+
+    private fun cancelIdleTimer() {
+        idleRunnable?.let { idleHandler.removeCallbacks(it) }
+        idleRunnable = null
+    }
+
+    private fun deliverIdleHint() {
+        if (isGameComplete) return
+        val expectedIndex = selectedOrder.size
+        if (expectedIndex >= 3) return // Already picked all 3
+
+        Log.d(TAG, "Child is idle. Triggering idle hint for index: $expectedIndex")
+        deliverHint(expectedIndex, isIdle = true)
+
+        // Restart the timer so it hints again if they STILL don't do anything
+        startIdleTimer()
+    }
+
+    private fun deliverHint(zoneIndex: Int = -1, isIdle: Boolean = false) {
+        val spec = seqSpec ?: return
+
+        val expectedStepId = if (zoneIndex >= 0) currentCorrectOrder.getOrNull(zoneIndex) else null
+        val stepName = expectedStepId?.let { displayName(it) } ?: "the next step"
+
+        val previousStepId = if (zoneIndex > 0) currentCorrectOrder.getOrNull(zoneIndex - 1) else null
+        val previousStepName = previousStepId?.let { displayName(it) }
+
+        val routineName = when (currentRoutineId) {
+            0 -> "Morning Routine"
+            1 -> "Mealtime Routine"
+            2 -> "School Routine"
+            else -> "Daily Activity"
+        }
+
+        // Only show visual highlight on actual mistakes, not just idling
+//        if (!isIdle && (spec.hintLevel >= 2 || sessionMetrics.errorCount > 1) && zoneIndex >= 0) {
+//            visualHintOverlay.visibility = View.VISIBLE
+//            Handler(Looper.getMainLooper()).postDelayed({ visualHintOverlay.visibility = View.GONE }, 1500)
+//        }
+
+        lifecycleScope.launch {
+            val hintText = DynamicHintGenerator.generateSequenceHint(
+                context = this@ActivitySequenceUnderActivity,
+                targetStepName = stepName,
+                previousStepName = previousStepName,
+                routineName = routineName,
+                childAge = userAge,
+                isIdle = isIdle
+            )
+            if (isTtsReady) {
+                textToSpeech.speak(hintText, TextToSpeech.QUEUE_FLUSH, null, "hint")
+            }
+        }
     }
 
     // =========================================================================
@@ -413,7 +488,6 @@ class ActivitySequenceUnderActivity : AppCompatActivity() {
                 findViewById<FrameLayout>(R.id.horizontal_frame_2),
                 findViewById<FrameLayout>(R.id.horizontal_frame_3)
             )
-            // ── FIX: pass currentRoutineId as first arg ───────────────────────
             val drawableMap = subRoutineDrawableMap(currentRoutineId, currentSubRoutineId)
 
             for ((index, stepId) in currentCorrectOrder.withIndex()) {
@@ -427,7 +501,6 @@ class ActivitySequenceUnderActivity : AppCompatActivity() {
         }
     }
 
-    // ── FIX: first param is routineId, second is subId ────────────────────────
     private fun subRoutineDrawableMap(routineId: Int, subId: Int): Map<String, Int> = when (routineId) {
         1 -> when (subId) {
             0 -> mapOf(
@@ -446,7 +519,7 @@ class ActivitySequenceUnderActivity : AppCompatActivity() {
             "rtn2_sub1_lunch" to R.drawable.seq_rtn2_sub1_2_lunch,
             "rtn2_sub1_pack"  to R.drawable.seq_rtn2_sub1_3_pack
         )
-        else -> when (subId) {   // routine 0
+        else -> when (subId) {
             1 -> mapOf(
                 "rtn0_sub2_brush" to R.drawable.seq_rtn0_sub2_1_brush,
                 "rtn0_sub2_wash"  to R.drawable.seq_rtn0_sub2_2_wash,
@@ -488,6 +561,7 @@ class ActivitySequenceUnderActivity : AppCompatActivity() {
 
     private fun resetGameState() {
         selectedOrder.clear(); isGameComplete = false
+        miniGameTriggeredThisRound = false
         runOnUiThread {
             tvOrder1.text = "1. "; tvOrder2.text = "2. "; tvOrder3.text = "3. "
             timerTextView.text = "00:00"
@@ -496,30 +570,49 @@ class ActivitySequenceUnderActivity : AppCompatActivity() {
 
     private fun startGame() {
         runOnUiThread { btnStart.visibility = View.GONE }
-        updateInstructionForGameplay()
+        updatePrediction()
         startTimer()
         transitionToVerticalLayout()
+        Handler(Looper.getMainLooper()).postDelayed({ maybeLaunchMiniGame() }, 600)
     }
 
-    private fun updateInstructionForGameplay() {
-        val accuracy    = if (attemptsCount > 0) sessionMetrics.correctCount.toFloat() / attemptsCount else 0.5f
-        val engagement  = if (accuracy > 0.7f) 0.8f else 0.5f
-        val frustration = if (sessionMetrics.errorCount >= 2) 0.7f else 0.2f
-
+    private fun updatePrediction() {
         currentPrediction = gameMaster.predictSafe(
-            childId            = 0,
+            childId            = ChildSession.childId,
             age                = userAge.toFloat(),
-            accuracy           = accuracy,
-            engagement         = engagement,
-            frustration        = frustration,
+            accuracy           = if (attemptsCount > 0) sessionMetrics.correctCount.toFloat() / attemptsCount else 0.5f,
+            engagement         = tracker.engagement,
+            frustration        = tracker.frustration,
             jitter             = calculateJitter(),
             rt                 = avgReactionTime(),
             consecutiveCorrect = sessionMetrics.correctCount.toFloat(),
             consecutiveWrong   = sessionMetrics.errorCount.toFloat()
         )
-
+        seqSpec = PersonalizedContentSelector.selectSequenceRound(userAge, currentPrediction)
         updateInstruction(isInitialPhase = false)
         updateHintIndicator()
+    }
+
+    private fun maybeLaunchMiniGame() {
+        if (miniGameTriggeredThisRound) return
+
+        if (attemptsCount == 0 || sessionMetrics.errorCount < 2) return
+
+        val spec = seqSpec ?: return
+        if (!currentPrediction.minigameTrigger && !currentPrediction.whatsMissingTrigger
+            && !currentPrediction.connectDotsTrigger) return
+
+        miniGameTriggeredThisRound = true
+        startActivityForResult(
+            Intent(this, MiniGamesActivitySequence::class.java).apply {
+                putExtra(MiniGamesActivitySequence.EXTRA_TYPE,           spec.miniGameType)
+                putExtra(MiniGamesActivitySequence.EXTRA_HIDDEN_INDEX,   spec.hiddenStepIndex)
+                putExtra(MiniGamesActivitySequence.EXTRA_ROUTINE_ID,     currentRoutineId)
+                putExtra(MiniGamesActivitySequence.EXTRA_SUB_ROUTINE_ID, currentSubRoutineId)
+                putExtra(MiniGamesActivitySequence.EXTRA_USER_AGE,       userAge)
+            },
+            MiniGamesActivitySequence.REQUEST_CODE
+        )
     }
 
     private fun transitionToVerticalLayout() {
@@ -537,6 +630,10 @@ class ActivitySequenceUnderActivity : AppCompatActivity() {
                 btnClear.animate().alpha(1f).setDuration(300).start()
                 createVerticalLayout()
                 verticalContainer.startAnimation(AnimationUtils.loadAnimation(this, android.R.anim.fade_in))
+
+                // Start waiting for them to make a move
+                startIdleTimer()
+
             }, 300)
         }
     }
@@ -545,7 +642,6 @@ class ActivitySequenceUnderActivity : AppCompatActivity() {
         runOnUiThread {
             verticalContainer.removeAllViews(); verticalImages.clear()
             val shuffled = currentCorrectOrder.shuffled()
-            // ── FIX: pass currentRoutineId as first arg ───────────────────────
             val drawableMap = subRoutineDrawableMap(currentRoutineId, currentSubRoutineId)
 
             for (stepId in shuffled) {
@@ -582,13 +678,22 @@ class ActivitySequenceUnderActivity : AppCompatActivity() {
 
     private fun onImageSelected(imageType: String, imageView: ImageView) {
         if (isGameComplete || selectedOrder.contains(imageType)) return
+
+        cancelIdleTimer() // User made a move
+
         selectedOrder.add(imageType)
         imageView.animate().scaleX(1.2f).scaleY(1.2f).setDuration(200)
             .withEndAction { imageView.animate().scaleX(1f).scaleY(1f).setDuration(200).start() }.start()
         try { correctSound?.seekTo(0); correctSound?.start() } catch (_: Exception) {}
         markImageAsSelected(imageView, selectedOrder.size.toString())
         updateOrderDisplay()
-        if (selectedOrder.size == 3) checkOrder()
+
+        if (selectedOrder.size == 3) {
+            checkOrder()
+        } else {
+            // Still waiting for them to finish picking
+            startIdleTimer()
+        }
     }
 
     private fun markImageAsSelected(imageView: ImageView, orderNumber: String) {
@@ -649,19 +754,39 @@ class ActivitySequenceUnderActivity : AppCompatActivity() {
             if (selectedOrder == currentCorrectOrder) {
                 sessionMetrics.correctCount++
                 correctAnswers = 3
+
+                tracker.update(true, 1, currentPrediction.frustrationRisk, 0)
+                tracker.recordFeatureVector(gameMaster.lastFeatureVector())
+
                 Log.d(TAG, "CORRECT!")
                 popBubble()
             } else {
                 sessionMetrics.errorCount++
                 Log.d(TAG, "WRONG (errors=${sessionMetrics.errorCount})")
+
+                updatePrediction()
+
+                tracker.update(false, 1, currentPrediction.frustrationRisk, sessionMetrics.errorCount)
+
+                var wrongIndex = -1
+                for (i in 0 until 3) {
+                    if (selectedOrder[i] != currentCorrectOrder[i]) {
+                        wrongIndex = i
+                        break
+                    }
+                }
+                deliverHint(wrongIndex, isIdle = false)
+
                 Toast.makeText(this, "Try again!", Toast.LENGTH_SHORT).show()
-                updateInstructionForGameplay()
                 Handler(Looper.getMainLooper()).postDelayed({ resetForRetry() }, 1500)
+                Handler(Looper.getMainLooper()).postDelayed({ maybeLaunchMiniGame() }, 1800)
             }
         }, 500)
     }
 
     private fun popBubble() {
+        isGameComplete = true
+        cancelIdleTimer()
         if (poppedBubbles >= totalBubbles) return
         val bubble = bubbleViews[poppedBubbles]
         bubble.setImageResource(R.drawable.bubble_popped)
@@ -691,12 +816,14 @@ class ActivitySequenceUnderActivity : AppCompatActivity() {
             img.alpha = 1f; img.isClickable = true
             (img.parent as? FrameLayout)?.let { removeBadgesFrom(it) }
         }
+        startIdleTimer()
     }
 
     private fun undoLastSelection() {
         if (selectedOrder.isEmpty()) {
             Toast.makeText(this, "No steps to undo", Toast.LENGTH_SHORT).show(); return
         }
+        cancelIdleTimer()
         val last = selectedOrder.removeLast()
         verticalImages.firstOrNull { it.tag == last }?.let { img ->
             runOnUiThread {
@@ -705,12 +832,14 @@ class ActivitySequenceUnderActivity : AppCompatActivity() {
             }
         }
         updateOrderDisplay()
+        startIdleTimer()
     }
 
     private fun clearAllSelections() {
         if (selectedOrder.isEmpty()) {
             Toast.makeText(this, "Nothing to clear", Toast.LENGTH_SHORT).show(); return
         }
+        cancelIdleTimer()
         selectedOrder.forEach { id ->
             verticalImages.firstOrNull { it.tag == id }?.let { img ->
                 runOnUiThread {
@@ -720,6 +849,7 @@ class ActivitySequenceUnderActivity : AppCompatActivity() {
             }
         }
         selectedOrder.clear(); updateOrderDisplay()
+        startIdleTimer()
     }
 
     // =========================================================================
@@ -759,12 +889,29 @@ class ActivitySequenceUnderActivity : AppCompatActivity() {
             errorCount   = sessionMetrics.errorCount
         )
 
+        val isBestPerformance = sessionMetrics.errorCount == 0
         val stickerKey   = "sticker_won_sub_${currentRoutineId}_${currentSubRoutineId}"
         val alreadyWon   = sharedPreferences.getBoolean(stickerKey, false)
-        val awardSticker = !alreadyWon && !StickerManager.isPoolExhausted(this)
+        val awardSticker = isBestPerformance && !alreadyWon && !StickerManager.isPoolExhausted(this)
+
         if (awardSticker) sharedPreferences.edit().putBoolean(stickerKey, true).apply()
 
         Log.d(TAG, "Session complete: finalAlpha=$finalAlpha awardSticker=$awardSticker")
+
+        ChildProfileManager.updateAfterSession(
+            context                = this,
+            childId                = ChildSession.childId,
+            ageGroup               = userAge,
+            gameType               = "sequence",
+            sessionAccuracy        = sessionMetrics.correctCount.toFloat() / attemptsCount.coerceAtLeast(1),
+            sessionFrustration     = tracker.frustration,
+            sessionEngagement      = tracker.engagement,
+            sessionJitter          = calculateJitter(),
+            sessionRt              = avgReactionTime(),
+            sessionAlpha           = finalAlpha,
+            peakConsecWrong        = tracker.peakConsecWrong,
+            lastFiveFeatureVectors = tracker.getFlatHistory()
+        )
 
         startActivity(Intent(this, ASequenceScoreboardActivity::class.java).apply {
             putExtra("GAME_MODE",             "under")

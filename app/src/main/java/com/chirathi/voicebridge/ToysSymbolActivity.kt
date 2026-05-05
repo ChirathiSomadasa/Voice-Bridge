@@ -22,26 +22,25 @@ class ToysSymbolActivity : AppCompatActivity() {
 
     private fun setupIconClickListeners() {
         // Map of image view IDs to drawable resources and phrases
-        val iconData = mapOf(
-            R.id.imgDoll to Pair(R.drawable.doll, "I want a doll"),
-            R.id.imgTeddyBear to Pair(R.drawable.teddy_bear, "I want teddy bear"),
-            R.id.imgPhone to Pair(R.drawable.toy_telephone, "I want toy phone "),
-            R.id.imgToyBox to Pair(R.drawable.toy_box, " I want toy box"),
-            R.id.imgPullCar to Pair(R.drawable.pull_along_toy, " I want to pull toys"),
-            R.id.imgSoldier to Pair(R.drawable.toy_soldier, " I want toy soldier"),
-            R.id.imgColourBook to Pair(R.drawable.colouring_book, "I want colour book"),
-            R.id.imgBall to Pair(R.drawable.toy_ball, "I want ball "),
-            R.id.imgToyCar to Pair(R.drawable.toy_car, "I want toy car "),
-            R.id.imgKite to Pair(R.drawable.kite, "I want a kite "),
-            R.id.imgBubbles to Pair(R.drawable.bubbles, "I want to play bubble ")
+        val toyList = listOf(
+            SymbolItem(R.id.imgDoll, R.drawable.doll, "play", "doll"),
+            SymbolItem(R.id.imgTeddyBear, R.drawable.teddy_bear, "play", "teddy bear"),
+            SymbolItem(R.id.imgPhone, R.drawable.toy_telephone, "play", "toy phone"),
+            SymbolItem(R.id.imgToyBox, R.drawable.toy_box, "open", "toy box"),
+            SymbolItem(R.id.imgPullCar, R.drawable.pull_along_toy, "pull", "toy car"),
+            SymbolItem(R.id.imgSoldier, R.drawable.toy_soldier, "play", "toy soldier"),
+            SymbolItem(R.id.imgColourBook, R.drawable.colouring_book, "use", "colouring book"),
+            SymbolItem(R.id.imgBall, R.drawable.toy_ball, "play", "ball"),
+            SymbolItem(R.id.imgToyCar, R.drawable.toy_car, "play", "toy car"),
+            SymbolItem(R.id.imgKite, R.drawable.kite, "fly", "kite"),
+            SymbolItem(R.id.imgBubbles, R.drawable.bubbles, "play", "bubbles")
         )
 
         // Set click listeners for all icons
-        iconData.forEach { (imageViewId, data) ->
-            val imageView = findViewById<ImageView>(imageViewId)
-            imageView.setOnClickListener {
-                val (drawableRes, phrase) = data
-                navigateToPhraseActivity(drawableRes, phrase)
+        toyList.forEach { item ->
+            findViewById<ImageView>(item.id)?.setOnClickListener {
+                val phrase = "${item.verb} ${item.obj}"
+                navigateToPhraseActivity(item.imageRes, phrase)
             }
         }
     }
@@ -50,6 +49,7 @@ class ToysSymbolActivity : AppCompatActivity() {
         val intent = Intent(this, PhraseActivity::class.java).apply {
             putExtra("SELECTED_ICON_DRAWABLE", drawableRes)
             putExtra("SELECTED_PHRASE", phrase)
+            putExtra("IS_SYMBOL_MODE", true)
         }
         startActivity(intent)
     }

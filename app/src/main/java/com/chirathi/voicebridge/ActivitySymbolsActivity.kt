@@ -23,30 +23,29 @@ class ActivitySymbolsActivity : AppCompatActivity() {
 
     private fun setupIconClickListeners() {
         // Map of image view IDs to drawable resources and phrases
-        val iconData = mapOf(
-            R.id.imgCycle to Pair(R.drawable.cycle, "I want to cycle a bicycle"),
-            R.id.imgTV to Pair(R.drawable.flatscreen_tv, "I want to watch TV"),
-            R.id.imgStudy to Pair(R.drawable.study, "I want to do my studies"),
-            R.id.imgBathe to Pair(R.drawable.bathe, "I want to have a bathe "),
-            R.id.imgWashFace to Pair(R.drawable.wash_face, " I want to wash my face"),
-            R.id.imgWashHands to Pair(R.drawable.wash_hands, "I want to wash my hands "),
-            R.id.imgRun to Pair(R.drawable.run, "I want to run "),
-            R.id.imgGo to Pair(R.drawable.go, "I want to go"),
-            R.id.imgSit to Pair(R.drawable.sit, "I want to sit"),
-            R.id.imgExercise to Pair(R.drawable.exercise, " I want to do exercise"),
-            R.id.imgSwim to Pair(R.drawable.swim, " I want to swim"),
-            R.id.imgSwing to Pair(R.drawable.swing, " I want to swing"),
-            R.id.imgCelebrate to Pair(R.drawable.celebrate, " I want to celebrate"),
-            R.id.imgCelebrateBirth to Pair(R.drawable.celebrate_birth, "Happy Birthday!"),
-            R.id.imgSleep to Pair(R.drawable.sleep, "I want to sleep ")
+        val activityList = listOf(
+            SymbolItem(R.id.imgCycle, R.drawable.cycle, "ride", "bicycle"),
+            SymbolItem(R.id.imgTV, R.drawable.flatscreen_tv, "watch", "TV"),
+            SymbolItem(R.id.imgStudy, R.drawable.study, "do", "studies"),
+            SymbolItem(R.id.imgBathe, R.drawable.bathe, "take", "bath"),
+            SymbolItem(R.id.imgWashFace, R.drawable.wash_face, "wash", "face"),
+            SymbolItem(R.id.imgWashHands, R.drawable.wash_hands, "wash", "hands"),
+            SymbolItem(R.id.imgRun, R.drawable.run, "go", "run"),
+            SymbolItem(R.id.imgGo, R.drawable.go, "go", "out"),
+            SymbolItem(R.id.imgSit, R.drawable.sit, "sit", "down"),
+            SymbolItem(R.id.imgExercise, R.drawable.exercise, "do", "exercise"),
+            SymbolItem(R.id.imgSwim, R.drawable.swim, "go", "swimming"),
+            SymbolItem(R.id.imgSwing, R.drawable.swing, "play", "swing"),
+            SymbolItem(R.id.imgCelebrate, R.drawable.celebrate, "start", "celebration"),
+            SymbolItem(R.id.imgCelebrateBirth, R.drawable.celebrate_birth, "wish", "happy birthday"),
+            SymbolItem(R.id.imgSleep, R.drawable.sleep, "go", "sleep")
         )
 
         // Set click listeners for all icons
-        iconData.forEach { (imageViewId, data) ->
-            val imageView = findViewById<ImageView>(imageViewId)
-            imageView.setOnClickListener {
-                val (drawableRes, phrase) = data
-                navigateToPhraseActivity(drawableRes, phrase)
+        activityList.forEach { item ->
+            findViewById<ImageView>(item.id)?.setOnClickListener {
+                val phrase = "${item.verb} ${item.obj}"
+                navigateToPhraseActivity(item.imageRes, phrase)
             }
         }
     }
@@ -55,6 +54,7 @@ class ActivitySymbolsActivity : AppCompatActivity() {
         val intent = Intent(this, PhraseActivity::class.java).apply {
             putExtra("SELECTED_ICON_DRAWABLE", drawableRes)
             putExtra("SELECTED_PHRASE", phrase)
+            putExtra("IS_SYMBOL_MODE", true)
         }
         startActivity(intent)
     }
