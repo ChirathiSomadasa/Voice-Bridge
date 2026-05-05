@@ -29,6 +29,7 @@ class MoodMatchSevenDownActivity : AppCompatActivity(), TextToSpeech.OnInitListe
     private val PREFS_NAME = "MoodMatchState"
     private var difficultyState = 0 // 0 to 4
     private val recentEmotions = mutableSetOf<String>()
+    private val sessionEmotions = mutableSetOf<String>()
 
     // Streaks for Difficulty Graduation (First Try Only)
     private var streakFirstTryCorrect = 0
@@ -95,6 +96,7 @@ class MoodMatchSevenDownActivity : AppCompatActivity(), TextToSpeech.OnInitListe
     private var isTtsInitialized = false
     private var pendingSpeech: String? = null
     private var correctSoundPlayer: MediaPlayer? = null
+    private var hasTriggeredMinigameThisSession = false
 
     companion object {
         private const val TAG = "MoodMatchActivity"
@@ -304,16 +306,21 @@ class MoodMatchSevenDownActivity : AppCompatActivity(), TextToSpeech.OnInitListe
             ageGroup        = ageGroup,
             prediction      = currentPrediction,
             difficultyState = difficultyState,
-            recentEmotions  = recentEmotions
+            recentEmotions  = recentEmotions,
+            sessionEmotions = sessionEmotions
         )
-
         currentRoundSpec = spec
 
+        sessionEmotions.add(spec.correctEmotionDrawable)
+        recentEmotions.remove(spec.correctEmotionDrawable)
         recentEmotions.add(spec.correctEmotionDrawable)
-        if (recentEmotions.size > 5) {
+
+        if (recentEmotions.size > 10) {
             val iterator = recentEmotions.iterator()
-            iterator.next()
-            iterator.remove()
+            if (iterator.hasNext()) {
+                iterator.next()
+                iterator.remove()
+            }
         }
 
         applyRoundLayout(spec)
@@ -394,29 +401,27 @@ class MoodMatchSevenDownActivity : AppCompatActivity(), TextToSpeech.OnInitListe
             if (isCorrect) {
                 streakFirstTryCorrect++
                 streakFirstTryWrong = 0
-                consecutiveCorrect++
-                consecutiveWrong = 0
             } else {
                 streakFirstTryWrong++
                 streakFirstTryCorrect = 0
-                consecutiveWrong++
-                consecutiveCorrect = 0
             }
 
             val oldState = difficultyState
             difficultyState = PersonalizedContentSelector.getNewDifficultyState(difficultyState, streakFirstTryCorrect, streakFirstTryWrong)
 
-            if (difficultyState != oldState) {
-                // Note: we do NOT call saveCrossSessionMemory() here mid-game.
-                // It will only be persisted when the game completes normally.
-                if (difficultyState > oldState) {
-                    Log.d(TAG, "State Upgraded! $oldState -> $difficultyState")
-                    streakFirstTryCorrect = 0
-                } else {
-                    Log.d(TAG, "State Downgraded! $oldState -> $difficultyState. Triggering minigame.")
-                    streakFirstTryWrong = 0
+            // FIX: Trigger minigame if state drops OR if they hit a wrong streak at the bottom level
+            if (!hasTriggeredMinigameThisSession) {
+                if (difficultyState < oldState || (difficultyState == 0 && streakFirstTryWrong >= 2)) {
+                    Log.d(TAG, "Brain break triggered. Locking minigame for rest of session.")
                     minigameTriggeredNow = true
+                    hasTriggeredMinigameThisSession = true // LOCK IT
+                    streakFirstTryWrong = 0
                 }
+            }
+
+            if (difficultyState > oldState) {
+                Log.d(TAG, "State Upgraded!")
+                streakFirstTryCorrect = 0
             }
         }
 
@@ -482,8 +487,7 @@ class MoodMatchSevenDownActivity : AppCompatActivity(), TextToSpeech.OnInitListe
 
     @Suppress("DEPRECATION")
     private fun launchMiniGame() {
-        val typeToLaunch = nextMinigameType
-        nextMinigameType = if (nextMinigameType == 0) 1 else 0
+        val typeToLaunch = currentPrediction.minigameType
 
         startActivityForResult(
             Intent(this, MiniGameMoodMatchActivity::class.java).apply {
