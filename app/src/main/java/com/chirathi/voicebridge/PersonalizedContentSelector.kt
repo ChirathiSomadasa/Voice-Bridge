@@ -132,11 +132,12 @@ object PersonalizedContentSelector {
         ageGroup:           Int,
         prediction:         Prediction,
         difficultyState:    Int,
-        recentEmotions:     Set<String>
+        recentEmotions:     Set<String>,
+        sessionEmotions: Set<String>
     ): MoodRoundSpec {
 
         val isYoung = ageGroup <= 7
-        val isScenario = prediction.optimalDifficulty == 3
+        val isScenario = (prediction.optimalDifficulty == 3 && difficultyState >= 2)
 
         // Strict mapping to difficulty state
         val pool = when(difficultyState) {
@@ -148,20 +149,32 @@ object PersonalizedContentSelector {
         val nOptions = if (difficultyState >= 2) 4 else 2
         val useSynonyms = (difficultyState == 4)
 
-        // ── 1. Correct emotion (Avoid repeating recent ones) ─
+        //  1. Correct emotion (Avoid repeating recent ones)
         val correct: String
         val scenarioImage: String
 
         if (isScenario) {
             val scenariosToUse = if (isYoung) A6_SCENARIOS else A8_SCENARIOS
-            var available = scenariosToUse.filter { it.second !in recentEmotions }
-            if (available.isEmpty()) available = scenariosToUse
+            var available = scenariosToUse.filter { it.second !in sessionEmotions }
+
+            val betterAvailable = available.filter { it.second !in recentEmotions }
+            if (betterAvailable.isNotEmpty()) available = betterAvailable
+
+            // If pool is totally empty (shouldn't happen with 5 rounds), fallback to anything but the last one
+            if (available.isEmpty()) available = scenariosToUse.filter { it.second != recentEmotions.lastOrNull() }
+
             val pair = available.random()
             scenarioImage = pair.first
             correct = pair.second
         } else {
-            var available = pool.correctPool.filter { it !in recentEmotions }
+            var available = pool.correctPool.filter { it !in sessionEmotions }
+            val betterAvailable = available.filter { it !in recentEmotions }
+
+            if (available.isEmpty()) {
+                available = pool.correctPool.filter { it !in sessionEmotions }
+            }
             if (available.isEmpty()) available = pool.correctPool
+
             correct = available.random()
             scenarioImage = ""
         }
@@ -185,7 +198,12 @@ object PersonalizedContentSelector {
             word
         }
 
-        val layout = if (isScenario) MoodLayout.SCENARIO else if (nOptions == 4) MoodLayout.FOUR_BUTTON else MoodLayout.TWO_BUTTON
+//        val layout = if (isScenario) MoodLayout.SCENARIO else if (nOptions == 4) MoodLayout.FOUR_BUTTON else MoodLayout.TWO_BUTTON
+        val layout = when {
+            isScenario -> MoodLayout.SCENARIO
+            nOptions == 4 -> MoodLayout.FOUR_BUTTON
+            else -> MoodLayout.TWO_BUTTON
+        }
 
         val timePressureMs = when (prediction.timePressure) {
             1 -> prediction.latencyBufferMs + 3000L
@@ -288,7 +306,7 @@ object PersonalizedContentSelector {
 
     fun buildHint(hintLevel: Int, emotionName: String, isYoung: Boolean): HintSpec = when (hintLevel) {
         0 -> HintSpec(true, if (isYoung) "Look carefully..." else "Take another look...", true, false)
-        1 -> HintSpec(true, if (isYoung) "Look at the faces again..." else "Think about the eyes and the mouth.", true, false)
+        1 -> HintSpec(true, if (isYoung) "Look at the face again..." else "Think about the eyes and the mouth.", true, false)
         else -> HintSpec(true, if (emotionName.isNotBlank()) "It's $emotionName!" else "Look at the glowing option!", true, true)
     }
 
