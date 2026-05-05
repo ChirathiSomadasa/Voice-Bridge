@@ -123,7 +123,7 @@ class FeedbackDialog(private val context: Context) {
                     }
                 }
 
-                // NOW: Compare the target word and the best matched spoken word CHARACTER BY CHARACTER
+                // Compare the target word and the best matched spoken word character by character
                 var pCharIndex = 0
                 for (charOffset in tWord.indices) {
                     val tChar = tWord[charOffset]
@@ -157,8 +157,7 @@ class FeedbackDialog(private val context: Context) {
         }
 
         // Fallback: If the score is moderate (< 75%) but the algorithm found NO errors
-        // (This happens if they said extra words but pronounced the target letters perfectly),
-        // we forcefully turn the last letter red to visually justify the moderate score to the panel.
+        // This happens if they said extra words but pronounced the target letters perfectly
         if (!hasRedCharacter && targetLower.isNotEmpty()) {
             var lastNonSpaceIndex = targetLower.length - 1
             while (lastNonSpaceIndex >= 0 && targetLower[lastNonSpaceIndex] == ' ') {
