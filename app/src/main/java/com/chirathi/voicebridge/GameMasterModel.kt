@@ -126,7 +126,7 @@ class GameMasterModel(private val context: Context) {
 
             if (!jsonLoaded) {
                 // JSON missing — fall back to runtime discovery
-                Log.w(TAG, "⚠️  output_mapping.json not found — using runtime discovery (less reliable)")
+                Log.w(TAG, "  output_mapping.json not found — using runtime discovery (less reliable)")
                 Log.w(TAG, "   Copy output_mapping.json to assets/ after retraining for correct mapping")
                 discoverOutputLayout()
             }
@@ -134,14 +134,14 @@ class GameMasterModel(private val context: Context) {
             verifyOutputMapping()
             modelLoaded = true
 
-            Log.d(TAG, "✅ Model loaded successfully")
+            Log.d(TAG, " Model loaded successfully")
             Log.d(TAG, "   Input tensors:  ${interpreter!!.inputTensorCount}")
             Log.d(TAG, "   Output tensors: ${interpreter!!.outputTensorCount}")
             logInputShapes()
 
         } catch (e: Exception) {
             modelLoaded = false
-            Log.e(TAG, "❌ Model failed to load: ${e.message}")
+            Log.e(TAG, " Model failed to load: ${e.message}")
             Log.e(TAG, "   Game will run with default values — no crash")
         }
     }
@@ -190,7 +190,7 @@ class GameMasterModel(private val context: Context) {
                 outputShapes[tfliteIdx] = shape
                 mappedCount++
 
-                val verifyMark = if (verified) "✅" else "⚠️ "
+                val verifyMark = if (verified) "done" else "issue "
                 Log.d(TAG, "   $verifyMark '$name' → TFLite[$tfliteIdx] shape=${shape.contentToString()}")
             }
 
@@ -204,28 +204,28 @@ class GameMasterModel(private val context: Context) {
                 val nFeatures  = scalerJson.optInt("n_features", NUM_FEATURES)
 
                 if (meanArray.length() != NUM_FEATURES || scaleArray.length() != NUM_FEATURES) {
-                    Log.e(TAG, "   ❌ Scaler size mismatch: JSON has ${meanArray.length()} features, expected $NUM_FEATURES")
+                    Log.e(TAG, "    Scaler size mismatch: JSON has ${meanArray.length()} features, expected $NUM_FEATURES")
                     Log.e(TAG, "      Retrain model and regenerate output_mapping.json")
                 } else {
                     scalerMean  = FloatArray(NUM_FEATURES) { meanArray.getDouble(it).toFloat() }
                     scalerScale = FloatArray(NUM_FEATURES) { scaleArray.getDouble(it).toFloat() }
                     scalerLoaded = true
 
-                    Log.d(TAG, "   ✅ Scaler loaded: $nFeatures features")
+                    Log.d(TAG, "   Scaler loaded: $nFeatures features")
                     Log.d(TAG, "   Scaler mean  (first 5): ${scalerMean.take(5).map { "%.2f".format(it) }}")
                     Log.d(TAG, "   Scaler scale (first 5): ${scalerScale.take(5).map { "%.2f".format(it) }}")
                 }
             } else {
-                Log.w(TAG, "   ⚠️  No scaler in JSON — features will NOT be normalized (predictions may be wrong)")
+                Log.w(TAG, "  ️  No scaler in JSON — features will NOT be normalized (predictions may be wrong)")
                 Log.w(TAG, "      Regenerate output_mapping.json with updated Python export script")
             }
 
             if (!scalerLoaded) {
-                Log.e(TAG, "   ❌ Scaler NOT loaded — raw feature values will produce garbage predictions!")
+                Log.e(TAG, "   Scaler NOT loaded — raw feature values will produce garbage predictions!")
                 Log.e(TAG, "      Example: rt=3000 raw vs rt≈0.1 normalized. Model only understands normalized.")
             }
 
-            Log.d(TAG, "✅ output_mapping.json loaded successfully")
+            Log.d(TAG, " output_mapping.json loaded successfully")
             true
 
         } catch (e: java.io.FileNotFoundException) {
@@ -282,15 +282,15 @@ class GameMasterModel(private val context: Context) {
                 outputNameToIndex[pythonName] = found.first
                 outputShapes[found.first]     = found.third
                 matched++
-                Log.d(TAG, "   ✅ Name-match: '$pythonName' → TFLite[${found.first}]")
+                Log.d(TAG, "    Name-match: '$pythonName' → TFLite[${found.first}]")
             }
         }
 
         Log.d(TAG, "   Name-matched: $matched / ${FALLBACK_ALPHA_ORDER.size}")
 
         if (matched == 0) {
-            Log.w(TAG, "   ⚠️  Zero name matches — using alphabetical positional fallback")
-            Log.w(TAG, "   ⚠️  This is UNRELIABLE. Copy output_mapping.json to assets/ to fix.")
+            Log.w(TAG, "    Zero name matches — using alphabetical positional fallback")
+            Log.w(TAG, "     This is UNRELIABLE. Copy output_mapping.json to assets/ to fix.")
         }
 
         // Positional fallback
@@ -299,7 +299,7 @@ class GameMasterModel(private val context: Context) {
                 val (tfliteIdx, tfliteName, shape) = tfliteOutputs[logicalIdx]
                 outputNameToIndex[pythonName] = tfliteIdx
                 outputShapes[tfliteIdx]       = shape
-                Log.d(TAG, "   📌 Positional[$logicalIdx]: '$tfliteName' → '$pythonName' shape=${shape.contentToString()}")
+                Log.d(TAG, "    Positional[$logicalIdx]: '$tfliteName' → '$pythonName' shape=${shape.contentToString()}")
             }
         }
 
@@ -328,21 +328,21 @@ class GameMasterModel(private val context: Context) {
             val actualSize = shape?.last() ?: -1
 
             if (actualSize == expectedSize) {
-                Log.d(TAG, "   ✅ $name: expected=$expectedSize actual=$actualSize [TFLite[$tfliteIdx]]")
+                Log.d(TAG, "   $name: expected=$expectedSize actual=$actualSize [TFLite[$tfliteIdx]]")
                 passed++
             } else {
-                Log.e(TAG, "   ❌ MISMATCH $name: expected=$expectedSize actual=$actualSize [TFLite[$tfliteIdx]]")
+                Log.e(TAG, "    MISMATCH $name: expected=$expectedSize actual=$actualSize [TFLite[$tfliteIdx]]")
                 failed++
             }
         }
 
         Log.d(TAG, "────────────────────────────────────────")
         if (failed == 0) {
-            Log.d(TAG, "  ✅ Shape verification PASSED: $passed / ${FALLBACK_EXPECTED_SIZES.size}")
-            Log.d(TAG, "  ✅ All outputs mapped correctly")
+            Log.d(TAG, "   Shape verification PASSED: $passed / ${FALLBACK_EXPECTED_SIZES.size}")
+            Log.d(TAG, "  All outputs mapped correctly")
         } else {
-            Log.e(TAG, "  ❌ Shape verification FAILED: $failed mismatches, $passed correct")
-            Log.e(TAG, "  ❌ Regenerate output_mapping.json by re-running Python export script")
+            Log.e(TAG, "   Shape verification FAILED: $failed mismatches, $passed correct")
+            Log.e(TAG, "   Regenerate output_mapping.json by re-running Python export script")
         }
         Log.d(TAG, "────────────────────────────────────────")
     }
@@ -389,14 +389,14 @@ class GameMasterModel(private val context: Context) {
         updateHistory(currentFeatures)   // stores SCALED features
 
         if (!modelLoaded || interpreter == null) {
-            Log.w(TAG, "⚠️ Model not loaded — returning defaults")
+            Log.w(TAG, " Model not loaded — returning defaults")
             return Prediction.defaults()
         }
 
         return try {
             runInference(childId, currentFeatures)
         } catch (e: Exception) {
-            Log.e(TAG, "❌ Inference failed: ${e.message}")
+            Log.e(TAG, "Inference failed: ${e.message}")
             Log.e(TAG, "   Stack: ${e.stackTraceToString().lines().take(5).joinToString("\n   ")}")
             Log.e(TAG, "   Returning safe defaults — game continues")
             Prediction.defaults()
@@ -448,7 +448,7 @@ class GameMasterModel(private val context: Context) {
         Log.d(TAG, "   Raw features (first 8): ${currentFeatures.take(8).map { "%.3f".format(it) }}")
         Log.d(TAG, "   Scaled features (first 8): ${scaledFeatures.take(8).map { "%.3f".format(it) }}")
         if (!scalerLoaded) {
-            Log.e(TAG, "   ❌ WARNING: scaler not loaded — features are raw, predictions are garbage!")
+            Log.e(TAG, "   WARNING: scaler not loaded — features are raw, predictions are garbage!")
         }
         _lastRawFeatures = currentFeatures.copyOf()
 
@@ -469,7 +469,7 @@ class GameMasterModel(private val context: Context) {
         }
 
         interp.runForMultipleInputsOutputs(inputs, outputMap)
-        Log.d(TAG, "   ✅ Inference call completed")
+        Log.d(TAG, "   Inference call completed")
 
         logRawOutputs(outputMap)
 
@@ -636,7 +636,7 @@ class GameMasterModel(private val context: Context) {
         for (path in listOf(MODEL_FILE, "ml/$MODEL_FILE")) {
             try {
                 val fd = context.assets.openFd(path)
-                Log.d(TAG, "✅ Found model at: $path  (${fd.declaredLength / 1024} KB)")
+                Log.d(TAG, " Found model at: $path  (${fd.declaredLength / 1024} KB)")
                 return FileInputStream(fd.fileDescriptor).channel
                     .map(FileChannel.MapMode.READ_ONLY, fd.startOffset, fd.declaredLength)
             } catch (_: Exception) {}
